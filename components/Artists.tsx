@@ -15,12 +15,12 @@ interface Artist {
 export default function ArtistsSection() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [artists] = useState<Artist[]>([
-        { name: "Concert Artist 1", date: "11 Jan 2026", image: "https://picsum.photos/1800/1500?1" },
-        { name: "ARJIT SINGH", date: "11 Jan 2026", image: "https://picsum.photos/1800/1500?2" },
-        { name: "Concert Artist 4", date: "12 Jan 2026", image: "https://picsum.photos/1800/1500?3" },
-        { name: "Concert Artist 5", date: "13 Jan 2026", image: "https://picsum.photos/1800/1500?4" },
-        { name: "Concert Artist 6", date: "14 Jan 2026", image: "https://picsum.photos/3840/2160?5" },
-        { name: "Concert Artist 7", date: "15 Jan 2026", image: "https://picsum.photos/3840/2160?6" }
+        { name: "Sartek", date: "21 Feb 2025", image: "/DJSartek.avif" },
+        { name: "Mohit Chauhan", date: "23 Feb 2025", image: "/MohitChauhan.jpg" },
+        { name: "Nikhil D' Souza", date: "21 Feb 2025", image: "/NikhilDSouza.jpg" },
+        { name: "Shaan", date: "22 Feb 2025", image: "/Shaan.jpg" },
+        { name: "Teri Miko", date: "22 Feb 2025", image: "/TeriMiko.jpg" },
+        { name: "Ravi Gupta", date: "20 Feb 2025", image: "/RaviGupta.jpg" }
     ]);
 
     const artistSectionRef = useRef<HTMLDivElement>(null);

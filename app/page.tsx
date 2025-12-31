@@ -4,16 +4,19 @@ export default function Home() {
 
   return (
     <>
-      <main className="relative min-h-screen bg-black overflow-hidden">
+      <main className="relative min-h-screen bg-black overflow-x-hidden">
         {/* Main Content - Hidden during loading, visible after */}
-        <div 
-          className={`relative w-full transition-opacity duration-500`}
+        <div
+          className={`relative w-full f-full transition-opacity duration-500`}
         >
           <HomeSection />
         </div>
 
       </main>
 
+      {/* Just use this single section as Home Page 
+      <HomeMainSection /> 
+        */}
     </>
   );
 }

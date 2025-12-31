@@ -51,39 +51,27 @@ interface MobileNavMenuProps {
   onClose: () => void;
 }
 
-export const Navbar = ({ children, className }: NavbarProps) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollY } = useScroll({
-    target: ref,
-    offset: ["start start", "end start"],
-  });
-  const [visible, setVisible] = useState<boolean>(false);
-
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    if (latest > 100) {
-      setVisible(true);
-    } else {
-      setVisible(false);
-    }
-  });
-
+export const Navbar = ({
+  children,
+  className,
+  visible = false
+}: NavbarProps & { visible?: boolean }) => {
   return (
     <motion.div
-      ref={ref}
-      // IMPORTANT: Change this to class of `fixed` if you want the navbar to be fixed
       className={cn("fixed inset-x-0 top-0 z-40 w-full", className)}
+      initial={false}
+      animate={{
+        opacity: visible ? 1 : 0,
+        y: visible ? 0 : -80,
+        pointerEvents: visible ? "auto" : "none"
+      }}
+      transition={{ duration: 1, ease: "easeOut" }}
     >
-      {React.Children.map(children, (child) =>
-        React.isValidElement(child)
-          ? React.cloneElement(
-            child as React.ReactElement<{ visible?: boolean }>,
-            { visible },
-          )
-          : child,
-      )}
+      {children}
     </motion.div>
   );
 };
+
 
 export const NavBody = ({ children, className, visible }: NavBodyProps) => {
   return (
@@ -93,7 +81,7 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
         boxShadow: visible
           ? "0 4px 30px rgba(235, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.1)"
           : "none",
-        width: visible ? "50%" : "100%",
+        width: visible ? "80%" : "100%",
         y: visible ? 20 : 0,
       }}
       transition={{
@@ -105,7 +93,7 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
         minWidth: "800px",
       }}
       className={cn(
-        "relative z-[60] mx-auto hidden w-full max-w-7xl flex-row items-center justify-between self-start rounded-full bg-black/40 px-6 py-3 lg:flex border border-white/10",
+        "relative z-[150] mx-auto hidden w-full max-w-[95vw] flex-row items-center justify-between self-start rounded-full bg-black/40 px-6 py-3 lg:flex border border-white/10",
         visible && "bg-black/80",
         className,
       )}
@@ -155,7 +143,7 @@ export const MobileNav = ({ children, className, visible }: MobileNavProps) => {
         boxShadow: visible
           ? "0 4px 30px rgba(235, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.1)"
           : "none",
-        width: visible ? "90%" : "100%",
+        width: visible ? "95%" : "100%",
         paddingRight: visible ? "12px" : "0px",
         paddingLeft: visible ? "12px" : "0px",
         borderRadius: visible ? "8px" : "2rem",
@@ -167,7 +155,7 @@ export const MobileNav = ({ children, className, visible }: MobileNavProps) => {
         damping: 50,
       }}
       className={cn(
-        "relative z-50 mx-auto flex w-full max-w-[calc(100vw-2rem)] flex-col items-center justify-between bg-black/40 px-4 py-3 lg:hidden border border-white/10",
+        "relative z-50 mx-auto flex w-full max-w-[calc(100vw-2rem)] flex-col items-center justify-between bg-black/40 px-4 py-3 border border-white/10",
         visible && "bg-black/80",
         className,
       )}
@@ -241,8 +229,8 @@ export const NavbarLogo = () => {
       <Image
         src="/Synapse Logo.png"
         alt="Synapse Logo"
-        width={32}
-        height={32}
+        width={35}
+        height={35}
         className="object-contain"
         priority
       />
@@ -262,7 +250,7 @@ export const NavbarButton = ({
   as?: React.ElementType;
   children: React.ReactNode;
   className?: string;
-  variant?: "primary" | "secondary" | "dark" | "gradient";
+  variant?: "primary" | "secondary" | "dark" | "gradient" | "register";
 } & (
     | React.ComponentPropsWithoutRef<"a">
     | React.ComponentPropsWithoutRef<"button">
@@ -277,6 +265,7 @@ export const NavbarButton = ({
     dark: "bg-black text-white border-2 border-white shadow-[6px_6px_0px_#EB0000] hover:bg-[#EB0000] hover:text-black hover:border-black",
     gradient:
       "bg-transparent text-white border-2 border-white shadow-[6px_6px_0px_#EB0000] hover:bg-[#EB0000] hover:text-black hover:border-black hover:shadow-[6px_6px_0px_rgba(255,255,255,0.7)] hover:-translate-y-0.5 hover:scale-105",
+    register: "text-[clamp(1.25rem,4vw,1.875rem)] border-[5px] border-white rounded-[10px] bg-transparent text-white shadow-[10px_10px_0px_#EB0000] hover:bg-[#EB0000] hover:text-black hover:border-black hover:scale-105 hover:shadow-[10px_10px_0px_rgba(255,255,255,0.7)] font-normal font-card",
   };
 
   return (

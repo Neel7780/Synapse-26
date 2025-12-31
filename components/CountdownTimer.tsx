@@ -46,23 +46,57 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   ];
 
   return (
-    <div className="flex flex-col gap-2">
-      <h3 className="text-white text-lg font-semibold text-center mb-2">
-        Event Starts In
-      </h3>
-      <div className="flex gap-4 justify-center">
-        {timeUnits.map((unit) => (
-          <div key={unit.label} className="flex flex-col items-center">
-            <div className="text-white text-2xl md:text-3xl font-bold">
-              {unit.value.toString().padStart(2, "0")}
-            </div>
-            <div className="text-white/60 text-xs md:text-sm uppercase tracking-wider">
-              {unit.label}
-            </div>
+    <div
+      className="
+    countdown absolute
+    bottom-[clamp(20px,4vw,32px)]
+    left-[clamp(12px,3vw,32px)]
+    flex
+    gap-[clamp(12px,4vw,36px)]
+  "
+    >
+      {timeUnits.map((unit, index) => (
+        <div
+          key={unit.label}
+          className="relative flex flex-col items-center"
+        >
+          <div
+            className="
+          font-card
+          leading-none
+          tabular-nums
+          text-[clamp(1.4rem,4.5vw,2.4rem)]
+        "
+          >
+            {unit.value.toString().padStart(2, "0")}
           </div>
-        ))}
-      </div>
+          <div
+            className="
+          font-card
+          opacity-85
+          text-[clamp(0.65rem,2vw,1rem)]
+        "
+          >
+            {unit.label}
+          </div>
+          {index !== timeUnits.length - 1 && (
+            <span
+              className="
+            absolute
+            left-full
+            translate-x-[35%]
+            font-card
+            leading-none
+            text-[clamp(1.4rem,4.5vw,2.4rem)]
+          "
+            >
+              :
+            </span>
+          )}
+        </div>
+      ))}
     </div>
+
   );
 }
 

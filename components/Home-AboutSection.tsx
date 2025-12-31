@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useCallback, useLayoutEffect } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -12,6 +12,7 @@ export default function AboutSection() {
     const aboutSectionRef = useRef<HTMLDivElement>(null);
     const singleCardRef = useRef<HTMLImageElement>(null);
     const hasSplitRef = useRef(false);
+    const themeContentRef = useRef<HTMLDivElement>(null);
 
     /* ---------------- TEXT SPLIT (UNCHANGED) ---------------- */
     const splitTextToWords = useCallback((element: HTMLElement) => {
@@ -38,12 +39,11 @@ export default function AboutSection() {
                 if (!word.trim()) fragment.appendChild(document.createTextNode(word));
                 else {
                     const span = document.createElement('span');
-                    span.className = 'word inline-block';
+                    span.className = 'word inline-block whitespace-pre';
                     span.textContent = word;
                     fragment.appendChild(span);
                 }
             });
-
             textNode.parentNode?.replaceChild(fragment, textNode);
         });
     }, []);
@@ -81,28 +81,60 @@ export default function AboutSection() {
         image.style.top = `${yOnLine + offsetPx}px`;
     }, []);
 
+    const splitTitleToLetters = (el: HTMLElement) => {
+        const text = el.textContent || "";
+        el.textContent = "";
+
+        const words = text.trim().split(/\s+/);
+
+        words.forEach((word, index) => {
+            const span = document.createElement("span");
+            span.className = "title-letter inline-block";
+            span.textContent = word;
+
+            el.appendChild(span);
+            el.appendChild(document.createTextNode(" "));
+        });
+    };
+
     /* ---------------- GSAP ---------------- */
     useEffect(() => {
-        const section = aboutSectionRef.current;
+        const section = themeContentRef.current;
         const image = singleCardRef.current;
-        if (!section || !image) return;
+        const titleEl = document.querySelector(".doittitle") as HTMLElement;
+        if (!section || !image || !titleEl) return;
 
         if (!hasSplitRef.current) {
             splitTextToWords(section);
+            splitTitleToLetters(titleEl);
             hasSplitRef.current = true;
         }
 
-        gsap.set('.part3_end .word', { opacity: 0, y: 20 });
+        gsap.set('.Theme_content .word', { opacity: 0, y: 20 });
+        gsap.set('.doittitle .title-letter', { opacity: 0, y: 20 });
 
-        gsap.to('.part3_end .word', {
+        gsap.to('.doittitle .title-letter', {
             opacity: 1,
             y: 0,
             duration: 2,
             ease: 'power2.out',
-            stagger: { each: 0.04 },
+            stagger: { each: 0.1 },
             scrollTrigger: {
                 trigger: '.part3_end',
                 start: 'top center',
+                end: 'top center-=10%',
+                scrub: 1,
+                onRefresh: positionImageFromGradientCenter
+            }
+        });
+        gsap.to('.Theme_content .word', {
+            opacity: 1,
+            y: 0,
+            ease: 'power2.out',
+            stagger: { each: 0.04 },
+            scrollTrigger: {
+                trigger: '.part3_end',
+                start: 'top center-=11%',
                 end: 'bottom bottom',
                 scrub: 1,
                 onRefresh: positionImageFromGradientCenter
@@ -150,24 +182,24 @@ export default function AboutSection() {
                             )`,
             }}
         >
-            <span className="doittitle mb-6 text-white text-[clamp(2.5rem,9vw,4rem)] font-joker tracking-wide">
-                About Synapse
-            </span>
+            <div className="doittitle mb-6 text-white text-[clamp(3rem,15vw,5rem)] font-joker tracking-wide leading-relaxed">
+                about synapse
+            </div>
 
-            <div className="Theme max-w-full md:max-w-[60%]">
-                <div className="Theme_content text-white text-[clamp(0.95rem,2.5vw,2.1rem)] mix-blend-difference leading-relaxed">
+            <div ref={themeContentRef} className="Theme max-w-full md:max-w-[60%]">
+                <div className="Theme_content text-white text-[clamp(1.15rem,1.5vw,2.1rem)] mix-blend-difference leading-relaxed">
                     Synapse is more than a college fest — it&apos;s an experience. A convergence of creativity,
                     competition, culture, and chaos, Synapse brings together minds that dare to think,
-                    perform, and challenge the ordinary.
+                    perform, and challenge the ordinary . 
                     <br /><br />
-                    This year, Synapse &apos;26 invites you into The Joker&apos;s Realm — a world where every
-                    choice is a move, every event is a game, and nothing is ever as simple as it seems.
+                    This year, Synapse&apos;26 invites you into The Joker&apos;s Realm — a world where every
+                    choice is a move, every event is a game, and nothing is ever as simple as it seems . 
                     <br /><br />
                     From high-energy concert nights and intense competitions to immersive events spread
-                    across four action-packed days, Synapse &apos;26 transforms the campus into a playground
-                    of possibilities.
+                    across four action-packed days, Synapse&apos;26 transforms the campus into a playground
+                    of possibilities . 
                     <br /><br />
-                    Step in, choose your game, and remember — in the Joker&apos;s Realm, the game is always watching.
+                    Step in, choose your game, and remember — in the Joker&apos;s Realm, the game is always watching . 
                 </div>
             </div>
 
@@ -175,7 +207,7 @@ export default function AboutSection() {
                 ref={singleCardRef}
                 src="/Group_9.png"
                 alt="Single Card"
-                className="hidden lg:block absolute pointer-events-none object-contain -translate-x-1/2 md:max-w-[60%] min-w-70 max-h-125 rounded-[10px] will-change-[top,left] w-[clamp(300px,30vw,380px)]"
+                className="hidden md:block absolute pointer-events-none object-contain -translate-x-1/2 md:max-w-[60%] min-w-70 max-h-125 rounded-[10px] will-change-[top,left] w-[clamp(300px,30vw,380px)]"
             />
         </section>
     );

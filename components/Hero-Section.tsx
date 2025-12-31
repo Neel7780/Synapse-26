@@ -16,27 +16,34 @@ import {
     NavbarLogo,
     NavbarButton,
 } from "@/components/ui/Resizable-navbar";
+import { Layout } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 gsap.registerPlugin(ScrollTrigger);
 
 const navItems = [
     { name: "Home", link: "/" },
     { name: "Events", link: "/events" },
-    { name: "Merchandise", link: "/merchandise" },
     { name: "Contact", link: "/contact" },
+    { name: "Terms And Conditions", link: "/termsandconditions" },
 ];
 
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 const SYMBOLS = "!@#$%^&*()_+-=[]{}|;:,.<>?";
 const NUMBERS = "0123456789";
-const FIRST_PHASE_TIME = 3000;
+const FIRST_PHASE_TIME = 4000;
 
-export default function HeroSection() {
+type HeroSectionProps = {
+    onEnter: () => void;
+};
+
+export default function HeroSection({ onEnter }: HeroSectionProps) {
+
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
     const [showEnter, setShowEnter] = useState(false);
     const [loadingProgress, setLoadingProgress] = useState(0);
-    const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+    const [showNavbar, setShowNavbar] = useState(false);
     const [part3Active, setPart3Active] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -48,21 +55,23 @@ export default function HeroSection() {
     const maskLayerRef = useRef<HTMLDivElement>(null);
     const heroRef = useRef<HTMLDivElement>(null);
     const audioRef = useRef<HTMLAudioElement>(null);
-    const toggleRef = useRef<HTMLDivElement>(null);
     const part3Ref = useRef<HTMLDivElement>(null);
     const part3_2Ref = useRef<HTMLDivElement>(null);
     const screenContainerRef = useRef<HTMLDivElement>(null);
+    const frontScreenRef = useRef<HTMLDivElement>(null);
     const flipCardRef = useRef<HTMLDivElement>(null);
     const titleRef = useRef<HTMLHeadingElement>(null);
-    const daysRef = useRef<HTMLHeadingElement>(null);
-    const hoursRef = useRef<HTMLHeadingElement>(null);
-    const minutesRef = useRef<HTMLHeadingElement>(null);
+    const prevOverflow = useRef<{ html: string; body: string }>({
+        html: "",
+        body: "",
+    });
 
     const assetsRef = useRef({
         paths: [] as SVGPathElement[],
         loaded: 0,
         total: 0,
         finished: false,
+        finishing: false,
         strokeProgress: 0,
         strokeStartTime: 0,
         assetProgress: 0,
@@ -71,9 +80,10 @@ export default function HeroSection() {
     });
     const PRELOAD_ASSETS = [
         // Hero visuals
-        "/RedHand.png",
-        "/redcard3.png",
+        "/RedHand2.jpeg",
+        "/redcard4.png",
         "/card_center.png",
+        "/Logo_Synapse.png",
 
         // About section
         "/Group_9.png",
@@ -85,6 +95,7 @@ export default function HeroSection() {
         if (progressTextRef.current) {
             progressTextRef.current.textContent = `Loading ${Math.round(progress * 100)}%`;
         }
+        // console.log(progress);
         setLoadingProgress(Math.round(progress * 100));
     }, []);
 
@@ -164,6 +175,7 @@ export default function HeroSection() {
     }, []);
 
     const revealFill = useCallback(() => {
+        updateProgressText(1);
         if (progressTextRef.current) {
             progressTextRef.current.style.opacity = "0";
         }
@@ -175,20 +187,28 @@ export default function HeroSection() {
         }, 600);
     }, []);
 
+    const FINISH_EASE = 0.25;
+    const FINISH_THRESHOLD = 0.99;
+
     const drawStroke = useCallback(() => {
         const now = Date.now();
         const elapsed = now - assetsRef.current.strokeStartTime;
 
-        // Time-based (0 → 50%)
         const timeProgress = Math.min(1, elapsed / FIRST_PHASE_TIME);
-
-        // Asset-based (50 → 100%)
         const combinedProgress =
             0.5 * timeProgress +
             0.5 * assetsRef.current.assetProgress;
 
+        const target = assetsRef.current.finishing
+            ? 1
+            : combinedProgress;
+
+        const ease = assetsRef.current.finishing
+            ? FINISH_EASE
+            : 0.12;
+
         assetsRef.current.strokeProgress +=
-            (combinedProgress - assetsRef.current.strokeProgress) * 0.12;
+            (target - assetsRef.current.strokeProgress) * ease;
 
         assetsRef.current.paths.forEach(p => {
             p.style.strokeDashoffset =
@@ -200,7 +220,23 @@ export default function HeroSection() {
         const timeDone = elapsed >= FIRST_PHASE_TIME;
         const assetsDone = assetsRef.current.assetProgress >= 0.9;
 
-        if (timeDone && assetsDone && !assetsRef.current.finished) {
+        // 🔑 enter finishing phase (once)
+        if (timeDone && assetsDone && !assetsRef.current.finishing) {
+            assetsRef.current.finishing = true;
+        }
+
+        // ✅ final snap & completion
+        if (
+            assetsRef.current.finishing &&
+            assetsRef.current.strokeProgress >= FINISH_THRESHOLD
+        ) {
+            assetsRef.current.strokeProgress = 1;
+
+            assetsRef.current.paths.forEach(p => {
+                p.style.strokeDashoffset = "0";
+            });
+
+            updateProgressText(0.99);
             assetsRef.current.finished = true;
             revealFill();
             return;
@@ -262,45 +298,34 @@ export default function HeroSection() {
     }, [loadSVG, drawStroke]);
 
     const lockScroll = useCallback(() => {
+        prevOverflow.current.html = document.documentElement.style.overflow;
+        prevOverflow.current.body = document.body.style.overflow;
+
         document.documentElement.style.overflow = "hidden";
         document.body.style.overflow = "hidden";
     }, []);
 
     const unlockScroll = useCallback(() => {
-        document.documentElement.style.overflow = "";
-        document.body.style.overflow = "";
+        document.documentElement.style.overflow = prevOverflow.current.html;
+        document.body.style.overflow = prevOverflow.current.body;
+
         ScrollTrigger.refresh(true);
     }, []);
 
-    const toggleMusic = useCallback(async () => {
-        if (!audioRef.current) return;
-
-        try {
-            if (audioRef.current.paused) {
-                await audioRef.current.play();
-                setIsMusicPlaying(true);
-            } else {
-                audioRef.current.pause();
-                setIsMusicPlaying(false);
-            }
-        } catch (e) {
-            console.log("Audio play blocked:", e);
-        }
-    }, []);
-
+    useEffect(() => {
+        lockScroll();
+    }, [lockScroll]);
 
     const handleEnter = useCallback((): void => {
-        // Disable button immediately
         if (enterBtnRef.current) {
             enterBtnRef.current.style.pointerEvents = "none";
             enterBtnRef.current.style.opacity = "0";
         }
 
-        setIsMusicPlaying(true);
         audioRef.current?.play().catch(() => { });
 
-        // 🔑 Trigger render of maskLayer
         setIsLoading(false);
+        onEnter();
     }, []);
 
     const initScrollAnimations = useCallback(() => {
@@ -324,14 +349,14 @@ export default function HeroSection() {
             scrollTrigger: {
                 trigger: heroRef.current,
                 start: "top top",
-                end: "+=500%",
+                end: "+=300%",
                 scrub: 2.5,
                 pin: true,
                 pinSpacing: false,
                 anticipatePin: 1.2,
                 onUpdate: (self) => {
                     // Enable pointer-events when we're in the part3 visible range (~35-55% of scroll)
-                    if (self.progress > 0.35 && self.progress < 0.55) {
+                    if (self.progress > 0.35 && self.progress < 0.5) {
                         setPart3Active(true);
                     } else {
                         setPart3Active(false);
@@ -347,26 +372,49 @@ export default function HeroSection() {
             .to("#redCard", {
                 rotation: 180,
                 scale: 0.5,
-                duration: 1,
+                duration: 2,
                 ease: "none"
-            })
+            }, 0)
+            // BORDER fades IN during flip
+            .to(
+                frontScreenRef.current,
+                {
+                    borderColor: "rgba(250,235,215,0.8)",
+                    duration: 0.6,
+                    ease: "power2.out"
+                },
+                0.3 // shortly after flip starts
+            )
+            .to(flipCardRef.current, {
+                rotationY: 90,
+                duration: 2,
+                ease: "none"
+            }, 0)
+            .to(
+                frontScreenRef.current,
+                {
+                    borderColor: "rgba(250,235,215,0)",
+                    duration: 0.6,
+                    ease: "power2.in"
+                },
+                3.3 // near end of flip
+            )
             .to(flipCardRef.current, {
                 rotationY: 180,
-                duration: 1,
+                duration: 2,
                 ease: "none"
-            },)
+            }, 2)
             .to("#part3_2", {
                 rotation: 360,
-                duration: 1.5,
+                duration: 2,
                 scale: 1,
                 ease: "none"
-            })
+            }, 2)
             .addLabel("part3Reveal")
             .set("#part3", { opacity: 1 }, "part3Reveal")
             .from(
                 [
                     "#part3 nav .fa-bars",
-                    "#part3 #musicToggle",
                     "#part3 .register-btn"
                 ],
                 {
@@ -378,7 +426,7 @@ export default function HeroSection() {
                 "part3Reveal+=0.4"
             )
             .from(
-                ["#part3 nav .logo", "#part3 .countdown .time-block"],
+                ["#part3 nav .logo", "#part3 .countdown"],
                 {
                     x: -100,
                     opacity: 0,
@@ -393,15 +441,18 @@ export default function HeroSection() {
                 "part3Reveal"
             )
             .add(
-                scrambleTween(titleRef.current, "Synapse'26"),
+                scrambleTween(titleRef.current, "synapse'26"),
                 "part3Reveal+=0.2"
-            )
+            ).add(() => {
+                setShowNavbar(true);
+            }, "part3Reveal")
+            .add(() => {
+                setShowNavbar(false);
+            }, "part3Reveal-=0.01")
             .to(".screen-container", { duration: 0.5, ease: "power2.inOut" })
             .addLabel("part3Hide")
             .to(
                 [
-                    "#part3 nav .fa-bars",
-                    "#part3 #musicToggle",
                     "#part3 .register-btn"
                 ],
                 {
@@ -414,8 +465,7 @@ export default function HeroSection() {
             )
             .to(
                 [
-                    "#part3 nav .logo",
-                    "#part3 .countdown .time-block"
+                    "#part3 .countdown"
                 ],
                 {
                     x: -100,
@@ -429,16 +479,27 @@ export default function HeroSection() {
                 "#part3 .title-wrapper",
                 { opacity: 0 },
                 "part3Hide+=0.15"
+            ).addLabel("together")
+            .to(
+                frontScreenRef.current,
+                {
+                    borderColor: "rgba(250,235,215,0.8)",
+                    duration: 0.6,
+                    ease: "power2.out"
+                },
+                "together-=0.1" // shortly after flip starts
             )
-            .to(".screen-container", { rotationZ: 185, duration: 1.5, scale: 0.25, ease: "none" })
-            .to(".screen-container", { rotationY: 180, duration: 1, ease: "none" })
-            .to(".screen-container", { rotationZ: 420, duration: 2, scale: 0.15, ease: "none" })
+            .to(".screen-container", { rotationZ: 185, duration: 1.5, scale: 0.25, ease: "none" }, "together")
+            .to(".screen-container", { rotationY: 90, duration: 1.5, ease: "none" }, "together")
+            .addLabel("together2")
+            .to(".screen-container", { rotationY: 180, duration: 1.5, ease: "none" }, "together2")
+            .to(".screen-container", { rotationZ: 420, duration: 2, scale: 0.15, ease: "none" }, "together2")
             .to(".screen-container", { duration: 2, ease: "none" });
 
     }, [scrambleTween]);
     const hasRunMaskRef = useRef(false);
 
-    useLayoutEffect(() => {
+    useEffect(() => {
         if (isLoading) return;
         if (!maskLayerRef.current) return;
         if (hasRunMaskRef.current) return;
@@ -455,17 +516,8 @@ export default function HeroSection() {
 
                 initScrollAnimations();
 
-                const endSection = document.querySelector(".end");
-                if (endSection) {
-                    (endSection as HTMLElement).style.display = "flex";
-                }
-
                 unlockScroll();
-
-                // Ensure all scroll triggers refresh after sections become visible
-                setTimeout(() => {
-                    ScrollTrigger.refresh(true);
-                }, 100);
+                ScrollTrigger.refresh(true);
             }
         });
     }, [isLoading, initScrollAnimations, unlockScroll]);
@@ -493,18 +545,8 @@ export default function HeroSection() {
                 </>
             ) : (
                 <>
-                    {/* Navbar - only shows after loading */}
-                    <Navbar>
-                        <NavBody>
-                            <NavbarLogo />
-                            <NavItems items={navItems} />
-                            <div className="flex items-center gap-4">
-                                <NavbarButton href="/register" variant="gradient">
-                                    Register
-                                </NavbarButton>
-                            </div>
-                        </NavBody>
-                        <MobileNav>
+                    <Navbar visible={showNavbar}>
+                        <MobileNav visible={showNavbar}>
                             <MobileNavHeader>
                                 <NavbarLogo />
                                 <MobileNavToggle
@@ -548,10 +590,10 @@ export default function HeroSection() {
                             maskPosition: 'center',
                             maskSize: '0% 0%',
                         }}>
-                            <img id="coloredImage" src="/RedHand.png" alt="Red Hand" ref={coloredImageRef} className="absolute inset-0 h-full w-full object-cover pointer-events-none" />
+                            <img id="coloredImage" src="/RedHand2.jpeg" alt="Red Hand" ref={coloredImageRef} className="absolute inset-0 h-full w-full object-cover pointer-events-none" />
 
                             <div id="flipCard" className="absolute inset-0 transform-3d" ref={flipCardRef}>
-                                <img id="redCard" className="absolute inset-0 w-full h-full object-cover pointer-events-none backface-hidden" src="/redcard3.png" alt="Red Card" ref={cardRef} />
+                                <img id="redCard" className="absolute inset-0 w-full h-full object-cover pointer-events-none backface-hidden" src="/redcard4.png" alt="Red Card" ref={cardRef} />
 
                                 <div id="part3_2" ref={part3_2Ref} style={{
                                     backgroundImage:
@@ -560,7 +602,7 @@ export default function HeroSection() {
                                     backgroundPosition: "center",
                                 }} className=" absolute inset-0 flex flex-col items-center justify-center opacity-100 will-change-transform backface-hidden transform-[rotateY(180deg)]">
                                     <div className="screen-container relative w-screen h-screen flex items-center justify-center perspective-[1000px] transform-3d" ref={screenContainerRef}>
-                                        <div className="screen-front absolute inset-0 bg-black bg-[url('/part3-image.png')] bg-no-repeat bg-center bg-contain z-2 backface-hidden"></div>
+                                        <div ref={frontScreenRef} className="screen-front absolute inset-0 bg-black bg-[url('/part3-image.png')] bg-no-repeat bg-center bg-contain z-2 backface-hidden border-4 border-solid rounded " style={{ borderColor: "rgba(250,235,215,0)" }}></div>
                                         <div className="center-joker-container absolute inset-0 flex items-center justify-center transform-[rotateY(180deg)] backface-hidden z-1">
                                             <img src="/card_center.png" className="center-joker w-full h-auto rotate-[-64deg] object-contain" alt="Joker Card" />
                                         </div>
@@ -568,9 +610,14 @@ export default function HeroSection() {
                                 </div>
 
                                 <div id="part3" ref={part3Ref} className={`absolute inset-0 w-full h-screen transform-[rotateY(180deg)] backface-hidden ${part3Active ? "pointer-events-auto" : "pointer-events-none"}`}>
+                                    <div className="register-btn absolute bottom-[40px] right-[40px]">
+                                        <NavbarButton href="/register" variant="register">
+                                            Register
+                                        </NavbarButton>
+                                    </div>
 
                                     <div className="title-wrapper flex justify-center pt-[60px] md:pt-[120px] h-[calc(100vh-120px)] md:h-[calc(100vh-200px)]">
-                                        <h1 className="title text-[clamp(48px,15vw,140px)] font-joker leading-none text-center px-4" ref={titleRef}>Synapse&apos;26</h1>
+                                        <h1 className="title text-[clamp(48px,15vw,140px)] font-joker leading-none text-center px-4" ref={titleRef}>unleash?2_</h1>
                                     </div>
 
                                     <CountdownTimer targetDate={new Date("2026-02-26 00:00:00")} />
@@ -580,16 +627,16 @@ export default function HeroSection() {
                         </div>
                     </div>
                 </>
-            )}
+            )
+            }
 
             <audio
                 ref={audioRef}
                 id="bgMusic"
                 src="/Synapse_Music.mp3"
-                loop
                 preload="auto"
             />
-        </div>
+        </div >
     );
 
 }

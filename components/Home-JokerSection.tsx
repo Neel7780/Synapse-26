@@ -209,7 +209,7 @@ export default function JokerSection() {
 
             const getCardY = (i: number) => {
                 const vh = window.innerHeight;
-                return [-0.1, -0.25, -0.05, -0.18][i] * vh;
+                return [-0.1, -0.2, -0.05, -0.18][i] * vh;
             };
 
             const getCardR = (i: number) => [-12, 6, -6, 12][i];
@@ -241,14 +241,6 @@ export default function JokerSection() {
                     duration: 2,
                     ease: "expo.out"
                 }, "<+0.3");
-
-            jokerTl.to(".card-container", {
-                y: (i: number) => (i % 2 == 0 ? -40 : 40), // Reduced floating distance
-                rotation: 0,
-                x: (i: number) => getCardX(i),
-                duration: 1,
-                ease: "power3.out"
-            }, "+=0.1");
 
             const cardInners = gsap.utils.toArray(".card-inner");
             const shuffledCards = cardInners.sort(() => Math.random() - 0.5);
@@ -291,8 +283,8 @@ export default function JokerSection() {
     const cards = [
         { id: 'c1', name: 'Ace of Heart', image: '/Ace_Heart.png', day: 'Day 1', isRed: true },
         { id: 'c2', name: 'Ace of Clubs', image: '/Ace_Clubs.png', day: 'Day 2' },
-        { id: 'c3', name: 'Ace of Spades', image: '/Ace_Spades.png', day: 'Day 3' },
-        { id: 'c4', name: 'Ace of Diamond', image: '/Ace_Diamond.png', day: 'Day 4', isRed: true },
+        { id: 'c3', name: 'Ace of Diamond', image: '/Ace_Diamond.png', day: 'Day 3', isRed: true },
+        { id: 'c4', name: 'Ace of Spades', image: '/Ace_Spades.png', day: 'Day 4' },
     ];
 
     return (
@@ -316,7 +308,7 @@ export default function JokerSection() {
                             className="door-title left-title absolute bottom-8 w-full font-joker text-[clamp(2.5rem,6vw,4.5rem)] tracking-[0.35em] text-black pointer-events-none will-change-transform text-right"
                             ref={leftTitleRef}
                         >
-                            Joker&apos;s
+                            joker&apos;s
                         </div>
                     </div>
 
@@ -333,7 +325,7 @@ export default function JokerSection() {
                             className="door-title right-title absolute bottom-8 w-full font-joker text-[clamp(2.5rem,6vw,4.5rem)] tracking-[0.35em] text-black pointer-events-none will-change-transform text-left pl-10"
                             ref={rightTitleRef}
                         >
-                            Realm
+                            realm
                         </div>
                     </div>
 
@@ -342,7 +334,7 @@ export default function JokerSection() {
                             id="title2"
                             className="font-joker text-center text-[clamp(3rem,8vw,8rem)] w-11/12 z-2 mb-8"
                         >
-                            Explore Events
+                            explore events
                         </h1>
 
                         <div className="watermark-container absolute flex flex-col leading-[0.8] select-none z-1">
@@ -375,7 +367,7 @@ export default function JokerSection() {
                             ref={jokerDotRef}
                         ></div>
 
-                        <div className="burst-zone relative w-full h-[70vh] flex justify-center items-center z-10">
+                        <div className="burst-zone relative w-full h-[70vh] pointer-events-auto flex justify-center items-center z-10">
                             {cards.map((card, index) => (
                                 <div
                                     key={card.id}
@@ -393,7 +385,7 @@ export default function JokerSection() {
                                         style={{ transformStyle: 'preserve-3d' }}
                                     >
                                         <div
-                                            className="card-front absolute inset-0 backface-hidden rounded-lg shadow-[0_15px_35px_rgba(0,0,0,0.6)] font-joker"
+                                            className="card-front absolute inset-0 backface-hidden lowercase rounded-lg shadow-[0_15px_35px_rgba(0,0,0,0.6)] font-joker"
                                             style={{
                                                 background: `url(${card.image}) no-repeat center center`,
                                                 backgroundSize: 'contain',
@@ -402,7 +394,7 @@ export default function JokerSection() {
                                         >
                                         </div>
                                         <div
-                                            className="card-back absolute inset-0 backface-hidden rounded-lg shadow-[0_15px_35px_rgba(0,0,0,0.6)] font-joker flex flex-col gap-4 items-center justify-center p-8 text-center"
+                                            className="card-back absolute inset-0 backface-hidden rounded-lg lowercase shadow-[0_15px_35px_rgba(0,0,0,0.6)] font-joker flex flex-col gap-4 items-center justify-center p-8 text-center"
                                             style={{
                                                 background: "url('/card_back.png') no-repeat center center",
                                                 backgroundSize: 'contain',

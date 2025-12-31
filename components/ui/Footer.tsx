@@ -99,14 +99,6 @@ const ContactFooter: React.FC = () => {
 
                     <nav className="flex flex-wrap justify-center gap-4 sm:gap-6 md:gap-8 lg:gap-10 mt-auto pb-6 sm:pb-4 md:pb-2.5">
                         <Link
-                            href="https://facebook.com"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-white no-underline text-sm sm:text-base md:text-lg font-bold tracking-widest hover:text-[#667eea] hover:-translate-y-0.5 transition-all duration-300 ease-in-out px-2 py-1"
-                        >
-                            FACEBOOK
-                        </Link>
-                        <Link
                             href="https://instagram.com"
                             target="_blank"
                             rel="noopener noreferrer"
