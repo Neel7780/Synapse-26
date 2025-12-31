@@ -1,10 +1,22 @@
-import Profile from "@/components/user-profile"
-import Timeline from "@/components/timeline"
+"use client";
+import HomeSection from "@/app/synapse/page";
+export default function Home() {
 
-export default function Page() {
   return (
-    <main>
-      <Profile />
-    </main>
-  )
+    <>
+      <main className="relative min-h-screen bg-black overflow-hidden">
+        {/* Main Content - Hidden during loading, visible after */}
+        <div 
+          className={`relative w-full transition-opacity duration-500`}
+        >
+          <HomeSection />
+        </div>
+
+      </main>
+
+      {/* Just use this single section as Home Page 
+      <HomeMainSection /> 
+      */}
+    </>
+  );
 }
