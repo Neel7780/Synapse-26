@@ -23,6 +23,7 @@ export default function EventCards({ cards }: { cards: EventCard[] }) {
                                     src={card.image}
                                     alt={card.name}
                                     fill
+                                    sizes="(max-width: 640px) 100vw, 500px"
                                     className="object-cover"
                                 />
                             </div>

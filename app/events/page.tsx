@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Footer from "@/components/ui/Footer";
@@ -60,6 +60,7 @@ export default function EventsPage() {
                         alt="Events"
                         fill
                         priority
+                        sizes="100vw"
                         className="object-cover grayscale object-[50%_85%]"
                     />
                     <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/60 to-black" />
@@ -88,9 +89,8 @@ export default function EventsPage() {
                             const isFlipped = revealAll || revealed[event.slug];
 
                             return (
-                                <>
-                                    {/* CARD */}
-                                    <div key={event.slug} className="flex justify-center">
+                                < React.Fragment key={event.slug} >
+                                    <div className="flex justify-center">
                                         <div
                                             onClick={() => handleCardClick(event.slug)}
                                             className={`relative w-[700px] h-[600px] cursor-pointer ${isFlipped ? "group" : ""
@@ -116,6 +116,7 @@ export default function EventsPage() {
                                                         src="/card.png"
                                                         alt=""
                                                         fill
+                                                        sizes="(max-width: 768px) 100vw, 700px"
                                                         className="object-cover rounded-md"
                                                     />
                                                 </div>
@@ -132,6 +133,7 @@ export default function EventsPage() {
                                                         src={event.cover}
                                                         alt={event.title}
                                                         fill
+                                                        sizes="(max-width: 768px) 100vw, 700px"
                                                         className="object-cover rounded-md"
                                                     />
 
@@ -163,13 +165,13 @@ export default function EventsPage() {
 
                                     {/* EMPTY COLUMN — creates cross pattern */}
                                     {index !== EVENTS.length - 1 && <div />}
-                                </>
+                                </React.Fragment>
                             );
                         })}
                     </div>
                 </section>
                 <Footer />
-            </main>
+            </main >
         </>
     );
 }

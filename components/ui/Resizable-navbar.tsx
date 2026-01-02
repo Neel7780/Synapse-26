@@ -301,7 +301,7 @@ export const NavbarLogo = () => {
         alt="Synapse Logo"
         width={35}
         height={35}
-        className="object-contain"
+        className="w-auto h-[35px]"
         priority
       />
     </Link>

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback, useLayoutEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { CountdownTimer } from './CountdownTimer';
@@ -10,9 +9,6 @@ import {
     NavbarButton
 } from "@/components/ui/Resizable-navbar";
 import NavigationPanel from '@/components/ui/NavigationPanel';
-import Link from "next/link"
-import { Layout } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -25,13 +21,23 @@ type HeroSectionProps = {
     onEnter: () => void;
 };
 
+let check = false;
+
 export default function HeroSection({ onEnter }: HeroSectionProps) {
-    const [isLoading, setIsLoading] = useState(true);
+    const INTRO_KEY = "synapse_has_entered";
+
+    const [isLoading, setIsLoading] = useState(() => {
+        if (typeof window === "undefined") return true;
+        return sessionStorage.getItem(INTRO_KEY) !== "true";
+    });
+
     const [showEnter, setShowEnter] = useState(false);
     const [loadingProgress, setLoadingProgress] = useState(0);
     const [showNavbar, setShowNavbar] = useState(false);
     const [part3Active, setPart3Active] = useState(false);
 
+    const hasRunMaskRef = useRef(false);
+    const enterTriggeredRef = useRef(false);
     const scrollHintRef = useRef<HTMLDivElement>(null);
     const svgContainerRef = useRef<HTMLDivElement>(null);
     const progressTextRef = useRef<HTMLDivElement>(null);
@@ -298,37 +304,25 @@ export default function HeroSection({ onEnter }: HeroSectionProps) {
 
         ScrollTrigger.refresh(true);
     }, []);
-    useEffect(() => {
-        if (!scrollHintRef.current) return;
 
-        gsap.fromTo(
-            scrollHintRef.current,
-            { y: 0 },
-            {
-                y: 20,
-                duration: 1.4,
-                ease: "power1.inOut",
-                repeat: -1,
-                yoyo: true,
-                overwrite: false,
-                id: "scrollHintIdle",
-            }
-        );
-    }, []);
+    const enterSilently = useCallback(() => {
+        if (enterTriggeredRef.current) return;
+        enterTriggeredRef.current = true;
 
-    useEffect(() => {
-        lockScroll();
-    }, [lockScroll]);
-
-    const handleEnter = useCallback((): void => {
+        sessionStorage.setItem(INTRO_KEY, "true");
         setIsLoading(false);
-        if (enterBtnRef.current) {
-            enterBtnRef.current.style.pointerEvents = "none";
-            enterBtnRef.current.style.opacity = "0";
-        }
-
         onEnter();
-    }, []);
+    }, [onEnter]);
+
+    const handleEnterClick = useCallback(() => {
+        if (enterTriggeredRef.current) return;
+        enterTriggeredRef.current = true;
+        check = true;
+
+        sessionStorage.setItem(INTRO_KEY, "true");
+        setIsLoading(false);
+        onEnter();
+    }, [onEnter]);
 
     const initScrollAnimations = useCallback(() => {
         if (!screenContainerRef.current || !part3_2Ref.current || !flipCardRef.current ||
@@ -456,6 +450,7 @@ export default function HeroSection({ onEnter }: HeroSectionProps) {
             ).add(() => {
                 setShowNavbar(true);
             }, "part3Reveal")
+            .to(".screen-container", {duration: 0.5})
             .add(() => {
                 setShowNavbar(false);
             }, "part3Reveal-=0.01")
@@ -507,52 +502,50 @@ export default function HeroSection({ onEnter }: HeroSectionProps) {
             .to(".screen-container", { duration: 2, ease: "none" });
 
     }, [scrambleTween]);
-    const hasRunMaskRef = useRef(false);
+
     useEffect(() => {
-        if (isLoading) return;
+        if (isLoading) {
+            lockScroll();
+            return;
+        }
+        if (!scrollHintRef.current) return;
 
-        const audio = audioRef.current;
-        if (!audio) return;
-
-        const id = requestAnimationFrame(() => {
-            audio.muted = false;
-            audio.volume = 0;
-            audio.play().catch(() => { });
-
-            gsap.to(audio, {
-                volume: 1,
-                duration: 1.2,
-                ease: "power2.out",
-            });
-        });
-
-        return () => cancelAnimationFrame(id);
-    }, [isLoading]);
-    useEffect(() => {
-        const unlockAudio = () => {
-            const audio = audioRef.current;
-            if (!audio) return;
-
-            audio.muted = true;
-            audio.volume = 0;
-
-            audio.play()
-                .then(() => {
-                    audio.pause();
-                    audio.currentTime = 0;
-                })
-                .catch(() => { });
-
-            window.removeEventListener("pointerdown", unlockAudio);
-            window.removeEventListener("keydown", unlockAudio);
-        };
-
-        window.addEventListener("pointerdown", unlockAudio);
-        window.addEventListener("keydown", unlockAudio);
+        gsap.fromTo(
+            scrollHintRef.current,
+            { y: 0 },
+            {
+                y: 20,
+                duration: 1.4,
+                ease: "power1.inOut",
+                repeat: -1,
+                yoyo: true,
+                overwrite: false,
+                id: "scrollHintIdle",
+            }
+        );
 
         return () => {
-            window.removeEventListener("pointerdown", unlockAudio);
-            window.removeEventListener("keydown", unlockAudio);
+            gsap.getById("scrollHintIdle")?.kill();
+        };
+    }, [isLoading]);
+
+    useEffect(() => {
+        const clearIntroOnReload = () => {
+            sessionStorage.removeItem(INTRO_KEY);
+        };
+
+        window.addEventListener("beforeunload", clearIntroOnReload);
+
+        requestAnimationFrame(() => {
+            loadAssets();
+        });
+
+        if (!isLoading) {
+            enterSilently();
+        }
+
+        return () => {
+            window.removeEventListener("beforeunload", clearIntroOnReload);
         };
     }, []);
 
@@ -562,12 +555,24 @@ export default function HeroSection({ onEnter }: HeroSectionProps) {
         if (hasRunMaskRef.current) return;
 
         hasRunMaskRef.current = true;
-
         gsap.to(maskLayerRef.current, {
-            duration: 4,
+            duration: check ? 4 : 0.1,
             ease: "none",
             webkitMaskSize: "cover",
             maskSize: "cover",
+            onStart: () => {
+                const audio = audioRef.current;
+                if (audio && check) {
+                    audio.muted = false;
+                    audio.volume = 0;
+                    audio.play().catch(() => { });
+                    gsap.to(audio, {
+                        volume: 1,
+                        duration: 1.2,
+                        ease: "power2.out",
+                    });
+                }
+            },
             onComplete: () => {
                 if (svgContainerRef.current) {
                     svgContainerRef.current.style.display = "none";
@@ -577,15 +582,10 @@ export default function HeroSection({ onEnter }: HeroSectionProps) {
 
                 unlockScroll();
                 ScrollTrigger.refresh(true);
+                check = false;
             }
         });
     }, [isLoading, initScrollAnimations, unlockScroll]);
-
-    useEffect(() => {
-        requestAnimationFrame(() => {
-            loadAssets();
-        });
-    }, []);
 
     return (
         <div>
@@ -596,7 +596,7 @@ export default function HeroSection({ onEnter }: HeroSectionProps) {
                     <div id="progress" ref={progressTextRef} className="fixed bottom-[5%] right-[2%] text-white text-[clamp(20px,5vw,40px)] tracking-[2px] z-11 transition-opacity duration-600">
                         Loading {loadingProgress}%
                     </div>
-                    <button id="enterBtn" ref={enterBtnRef} onClick={handleEnter} className={`fixed left-1/2 -translate-x-1/2 bottom-[10%] scale-90 px-[clamp(20px,5vw,40px)] py-[8px] text-[clamp(24px,5vw,40px)] text-white bg-transparent border-[3px] md:border-[5px] border-white rounded-[10px] cursor-pointer opacity-0 z-40 shadow-[5px_5px_0px_#ff0000] md:shadow-[10px_10px_0px_#ff0000] transition-all duration-200 font-['Roboto',sans-serif] pointer-events-auto hover:bg-[#EB0000] hover:text-black hover:border-black hover:shadow-[5px_5px_0px_#ffffff] md:hover:shadow-[10px_10px_0px_#ffffff] ${showEnter
+                    <button id="enterBtn" ref={enterBtnRef} onClick={handleEnterClick} className={`fixed left-1/2 -translate-x-1/2 bottom-[10%] scale-90 px-[clamp(20px,5vw,40px)] py-[8px] text-[clamp(24px,5vw,40px)] text-white bg-transparent border-[3px] md:border-[5px] border-white rounded-[10px] cursor-pointer opacity-0 z-40 shadow-[5px_5px_0px_#ff0000] md:shadow-[10px_10px_0px_#ff0000] transition-all duration-200 font-['Roboto',sans-serif] pointer-events-auto hover:bg-[#EB0000] hover:text-black hover:border-black hover:shadow-[5px_5px_0px_#ffffff] md:hover:shadow-[10px_10px_0px_#ffffff] ${showEnter
                         ? "opacity-100 scale-100 pointer-events-auto"
                         : "opacity-0 scale-90 pointer-events-none"}`}>
                         Enter
