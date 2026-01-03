@@ -1,34 +1,18 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback, useLayoutEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { CountdownTimer } from './CountdownTimer';
 import {
     Navbar,
-    MobileNav,
-    MobileNavHeader,
-    MobileNavMenu,
-    MobileNavToggle,
-    NavbarLogo,
-    NavbarButton,
-    MobileAnimatedMenuItem
+    NavbarButton
 } from "@/components/ui/Resizable-navbar";
-import Link from "next/link"
-import { Layout } from 'lucide-react';
-import { motion } from 'framer-motion';
+import NavigationPanel from '@/components/ui/NavigationPanel';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const navItems = [
-    { name: "Home", link: "/" },
-    { name: "Events", link: "/events" },
-    { name: "Contact Us", link: "#contact", isContact: true },
-    { name: "Terms And Conditions", link: "/terms-and-conditions" },
-];
-
-const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+const LETTERS = "abcdefghijklmnopqrstuvwxyz";
 const SYMBOLS = "!@#$%^&*()_+-=[]{}|;:,.<>?";
 const NUMBERS = "0123456789";
 const FIRST_PHASE_TIME = 4000;
@@ -37,14 +21,23 @@ type HeroSectionProps = {
     onEnter: () => void;
 };
 
+let check = false;
+
 export default function HeroSection({ onEnter }: HeroSectionProps) {
-    const [isLoading, setIsLoading] = useState(true);
+    const INTRO_KEY = "synapse_has_entered";
+
+    const [isLoading, setIsLoading] = useState(() => {
+        if (typeof window === "undefined") return true;
+        return sessionStorage.getItem(INTRO_KEY) !== "true";
+    });
+
     const [showEnter, setShowEnter] = useState(false);
     const [loadingProgress, setLoadingProgress] = useState(0);
     const [showNavbar, setShowNavbar] = useState(false);
     const [part3Active, setPart3Active] = useState(false);
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+    const hasRunMaskRef = useRef(false);
+    const enterTriggeredRef = useRef(false);
     const scrollHintRef = useRef<HTMLDivElement>(null);
     const svgContainerRef = useRef<HTMLDivElement>(null);
     const progressTextRef = useRef<HTMLDivElement>(null);
@@ -59,7 +52,9 @@ export default function HeroSection({ onEnter }: HeroSectionProps) {
     const screenContainerRef = useRef<HTMLDivElement>(null);
     const frontScreenRef = useRef<HTMLDivElement>(null);
     const flipCardRef = useRef<HTMLDivElement>(null);
-    const titleRef = useRef<HTMLHeadingElement>(null);
+    const titleRef = useRef<HTMLHeadingElement>(null)
+    const scrollTrackRef = useRef<HTMLDivElement>(null);
+    const scrollFillRef = useRef<HTMLDivElement>(null);
     const prevOverflow = useRef<{ html: string; body: string }>({
         html: "",
         body: "",
@@ -82,32 +77,18 @@ export default function HeroSection({ onEnter }: HeroSectionProps) {
         "/RedHand2.jpeg",
         "/redcard4.png",
         "/card_center.png",
-        "/Logo_Synapse.png",
         "/Synapse_Music.mp3",
         "/inkReveal2.gif",
 
         // About section
         "/Group_9.png",
-
     ];
-    const handleContactClick = (e: any) => {
-        e.preventDefault();
-        setMobileMenuOpen(false);
-
-        const footer = document.getElementById("contact");
-        if (!footer) return;
-
-        footer.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-        });
-    };
 
     const updateProgressText = useCallback((progress: number) => {
         if (progressTextRef.current) {
             progressTextRef.current.textContent = `Loading ${Math.round(progress * 100)}%`;
         }
-        // console.log(progress);
+
         setLoadingProgress(Math.round(progress * 100));
     }, []);
 
@@ -185,6 +166,21 @@ export default function HeroSection({ onEnter }: HeroSectionProps) {
 
         }
     }, []);
+    async function decodeImages(urls: string[]) {
+        const imageUrls = urls.filter(src =>
+            /\.(png|jpg|jpeg|gif|webp)$/i.test(src)
+        );
+
+        await Promise.all(
+            imageUrls.map(async (src) => {
+                const res = await fetch(src);
+                const blob = await res.blob();
+
+                // Forces decode + rasterization
+                await createImageBitmap(blob);
+            })
+        );
+    }
 
     const revealFill = useCallback(() => {
         updateProgressText(1);
@@ -257,18 +253,25 @@ export default function HeroSection({ onEnter }: HeroSectionProps) {
         requestAnimationFrame(drawStroke);
     }, [updateProgressText, revealFill]);
 
-    const loadAssets = useCallback(() => {
+    const loadAssets = useCallback(async () => {
         // Reset loader state
         assetsRef.current.loaded = 0;
         assetsRef.current.total = PRELOAD_ASSETS.length;
         assetsRef.current.assetProgress = 0;
         assetsRef.current.finished = false;
 
-        // Load SVG immediately (not part of progress math)
+        // 1️⃣ Start SVG loader immediately
         loadSVG().then(() => {
             assetsRef.current.strokeStartTime = Date.now();
             drawStroke();
         });
+
+        // 2️⃣ REAL preload (decode + bitmap)
+        try {
+            await decodeImages(PRELOAD_ASSETS);
+        } catch (e) {
+            console.warn("Image decode preload failed", e);
+        }
 
         const markLoaded = () => {
             assetsRef.current.loaded += 1;
@@ -279,32 +282,21 @@ export default function HeroSection({ onEnter }: HeroSectionProps) {
         };
 
         PRELOAD_ASSETS.forEach(src => {
-            // IMAGE
             if (/\.(png|jpg|jpeg|gif|svg|webp)$/i.test(src)) {
                 const img = new Image();
                 img.src = src;
-
-                if (img.complete) {
-                    markLoaded();
-                } else {
-                    img.onload = markLoaded;
-                    img.onerror = markLoaded;
-                }
+                img.complete ? markLoaded() : (img.onload = img.onerror = markLoaded);
                 return;
             }
 
-            // AUDIO / VIDEO
             if (/\.(mp3|wav|ogg|mp4|webm)$/i.test(src)) {
                 const media = document.createElement("audio");
                 media.src = src;
                 media.preload = "auto";
 
-                if (media.readyState >= 3) {
-                    markLoaded();
-                } else {
-                    media.addEventListener("canplaythrough", markLoaded, { once: true });
-                    media.addEventListener("error", markLoaded, { once: true });
-                }
+                media.readyState >= 3
+                    ? markLoaded()
+                    : media.addEventListener("canplaythrough", markLoaded, { once: true });
             }
         });
     }, [loadSVG, drawStroke]);
@@ -323,37 +315,25 @@ export default function HeroSection({ onEnter }: HeroSectionProps) {
 
         ScrollTrigger.refresh(true);
     }, []);
-    useEffect(() => {
-        if (!scrollHintRef.current) return;
 
-        gsap.fromTo(
-            scrollHintRef.current,
-            { y: 0 },
-            {
-                y: 20,
-                duration: 1.4,
-                ease: "power1.inOut",
-                repeat: -1,
-                yoyo: true,
-                overwrite: false,
-                id: "scrollHintIdle",
-            }
-        );
-    }, []);
+    const enterSilently = useCallback(() => {
+        if (enterTriggeredRef.current) return;
+        enterTriggeredRef.current = true;
 
-    useEffect(() => {
-        lockScroll();
-    }, [lockScroll]);
-
-    const handleEnter = useCallback((): void => {
+        sessionStorage.setItem(INTRO_KEY, "true");
         setIsLoading(false);
-        if (enterBtnRef.current) {
-            enterBtnRef.current.style.pointerEvents = "none";
-            enterBtnRef.current.style.opacity = "0";
-        }
-
         onEnter();
-    }, []);
+    }, [onEnter]);
+
+    const handleEnterClick = useCallback(() => {
+        if (enterTriggeredRef.current) return;
+        enterTriggeredRef.current = true;
+        check = true;
+
+        sessionStorage.setItem(INTRO_KEY, "true");
+        setIsLoading(false);
+        onEnter();
+    }, [onEnter]);
 
     const initScrollAnimations = useCallback(() => {
         if (!screenContainerRef.current || !part3_2Ref.current || !flipCardRef.current ||
@@ -400,7 +380,6 @@ export default function HeroSection({ onEnter }: HeroSectionProps) {
             opacity: 0,
             ease: "none",
             onStart: () => {
-                // stop idle animation once scroll begins
                 gsap.getById("scrollHintIdle")?.kill();
             },
         }, 0.05)
@@ -448,10 +427,7 @@ export default function HeroSection({ onEnter }: HeroSectionProps) {
             .addLabel("part3Reveal")
             .set("#part3", { opacity: 1 }, "part3Reveal")
             .from(
-                [
-                    "#part3 nav .fa-bars",
-                    "#part3 .register-btn"
-                ],
+                "#part3 .register-btn",
                 {
                     x: 100,
                     opacity: 0,
@@ -461,7 +437,7 @@ export default function HeroSection({ onEnter }: HeroSectionProps) {
                 "part3Reveal+=0.4"
             )
             .from(
-                ["#part3 nav .logo", "#part3 .countdown"],
+                "#part3 .countdown",
                 {
                     x: -100,
                     opacity: 0,
@@ -481,6 +457,7 @@ export default function HeroSection({ onEnter }: HeroSectionProps) {
             ).add(() => {
                 setShowNavbar(true);
             }, "part3Reveal")
+            .to(".screen-container", { duration: 0.5, ease: "power2.inOut" })
             .add(() => {
                 setShowNavbar(false);
             }, "part3Reveal-=0.01")
@@ -532,52 +509,65 @@ export default function HeroSection({ onEnter }: HeroSectionProps) {
             .to(".screen-container", { duration: 2, ease: "none" });
 
     }, [scrambleTween]);
-    const hasRunMaskRef = useRef(false);
-    useEffect(() => {
-        if (isLoading) return;
 
-        const audio = audioRef.current;
-        if (!audio) return;
+    const initScrollProgress = useCallback(() => {
+        ScrollTrigger.create({
+            start: 0,
+            end: () =>
+                document.documentElement.scrollHeight - window.innerHeight,
+            onUpdate: (self) => {
+                const progress = self.progress;
 
-        const id = requestAnimationFrame(() => {
-            audio.muted = false;
-            audio.volume = 0;
-            audio.play().catch(() => { });
-
-            gsap.to(audio, {
-                volume: 1,
-                duration: 1.2,
-                ease: "power2.out",
-            });
+                if (scrollFillRef.current) {
+                    scrollFillRef.current.style.height = `${(progress) * 100}%`;
+                }
+            }
         });
+    }, []);
 
-        return () => cancelAnimationFrame(id);
-    }, [isLoading]);
     useEffect(() => {
-        const unlockAudio = () => {
-            const audio = audioRef.current;
-            if (!audio) return;
+        if (isLoading) {
+            lockScroll();
+            return;
+        }
+        if (!scrollHintRef.current) return;
 
-            audio.muted = true;
-            audio.volume = 0;
-
-            audio.play()
-                .then(() => {
-                    audio.pause();
-                    audio.currentTime = 0;
-                })
-                .catch(() => { });
-
-            window.removeEventListener("pointerdown", unlockAudio);
-            window.removeEventListener("keydown", unlockAudio);
-        };
-
-        window.addEventListener("pointerdown", unlockAudio);
-        window.addEventListener("keydown", unlockAudio);
+        gsap.fromTo(
+            scrollHintRef.current,
+            { y: 0 },
+            {
+                y: 20,
+                duration: 1.4,
+                ease: "power1.inOut",
+                repeat: -1,
+                yoyo: true,
+                overwrite: false,
+                id: "scrollHintIdle",
+            }
+        );
 
         return () => {
-            window.removeEventListener("pointerdown", unlockAudio);
-            window.removeEventListener("keydown", unlockAudio);
+            gsap.getById("scrollHintIdle")?.kill();
+        };
+    }, [isLoading]);
+
+    useEffect(() => {
+        const clearIntroOnReload = () => {
+            sessionStorage.removeItem(INTRO_KEY);
+        };
+
+        window.addEventListener("beforeunload", clearIntroOnReload);
+
+        requestAnimationFrame(() => {
+            loadAssets();
+        });
+
+        if (!isLoading) {
+            enterSilently();
+        }
+
+        return () => {
+            window.removeEventListener("beforeunload", clearIntroOnReload);
         };
     }, []);
 
@@ -587,12 +577,26 @@ export default function HeroSection({ onEnter }: HeroSectionProps) {
         if (hasRunMaskRef.current) return;
 
         hasRunMaskRef.current = true;
-
         gsap.to(maskLayerRef.current, {
-            duration: 4,
-            ease: "none",
+            duration: check ? 4 : 0.1,
+            ease: "expo.out",
             webkitMaskSize: "cover",
             maskSize: "cover",
+            onStart: () => {
+                requestAnimationFrame(() => {
+                    const audio = audioRef.current;
+                    if (!check || !audio) return;
+                    
+                    audio.muted = false;
+                    audio.volume = 0;
+                    audio.play().catch(() => { });
+                    gsap.to(audio, {
+                        volume: 1,
+                        duration: 5,
+                        ease: "power2.out",
+                    });
+                });
+            },
             onComplete: () => {
                 if (svgContainerRef.current) {
                     svgContainerRef.current.style.display = "none";
@@ -602,15 +606,12 @@ export default function HeroSection({ onEnter }: HeroSectionProps) {
 
                 unlockScroll();
                 ScrollTrigger.refresh(true);
+
+                initScrollProgress();
+                check = false;
             }
         });
     }, [isLoading, initScrollAnimations, unlockScroll]);
-
-    useEffect(() => {
-        requestAnimationFrame(() => {
-            loadAssets();
-        });
-    }, []);
 
     return (
         <div>
@@ -621,7 +622,7 @@ export default function HeroSection({ onEnter }: HeroSectionProps) {
                     <div id="progress" ref={progressTextRef} className="fixed bottom-[5%] right-[2%] text-white text-[clamp(20px,5vw,40px)] tracking-[2px] z-11 transition-opacity duration-600">
                         Loading {loadingProgress}%
                     </div>
-                    <button id="enterBtn" ref={enterBtnRef} onClick={handleEnter} className={`fixed left-1/2 -translate-x-1/2 bottom-[10%] scale-90 px-[clamp(20px,5vw,40px)] py-[8px] text-[clamp(24px,5vw,40px)] text-white bg-transparent border-[3px] md:border-[5px] border-white rounded-[10px] cursor-pointer opacity-0 z-40 shadow-[5px_5px_0px_#ff0000] md:shadow-[10px_10px_0px_#ff0000] transition-all duration-200 font-['Roboto',sans-serif] pointer-events-auto hover:bg-[#EB0000] hover:text-black hover:border-black hover:shadow-[5px_5px_0px_#ffffff] md:hover:shadow-[10px_10px_0px_#ffffff] ${showEnter
+                    <button id="enterBtn" ref={enterBtnRef} onClick={handleEnterClick} className={`fixed left-1/2 -translate-x-1/2 bottom-[10%] scale-90 px-[clamp(20px,5vw,40px)] py-[8px] text-[clamp(24px,5vw,40px)] text-white bg-transparent border-[3px] md:border-[5px] border-white rounded-[10px] cursor-pointer opacity-0 z-40 shadow-[5px_5px_0px_#ff0000] md:shadow-[10px_10px_0px_#ff0000] transition-all duration-200 font-['Roboto',sans-serif] pointer-events-auto hover:bg-[#EB0000] hover:text-black hover:border-black hover:shadow-[5px_5px_0px_#ffffff] md:hover:shadow-[10px_10px_0px_#ffffff] ${showEnter
                         ? "opacity-100 scale-100 pointer-events-auto"
                         : "opacity-0 scale-90 pointer-events-none"}`}>
                         Enter
@@ -630,35 +631,7 @@ export default function HeroSection({ onEnter }: HeroSectionProps) {
             ) : (
                 <>
                     <Navbar visible={showNavbar}>
-                        <MobileNav>
-                            <MobileNavHeader>
-                                <NavbarLogo />
-                                <MobileNavToggle
-                                    isOpen={mobileMenuOpen}
-                                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                                />
-                            </MobileNavHeader>
-
-                            <MobileNavMenu
-                                isOpen={mobileMenuOpen}
-                                onClose={() => setMobileMenuOpen(false)}
-                            >
-                                {navItems.map((item, idx) => (
-                                    <MobileAnimatedMenuItem
-                                        key={idx}
-                                        name={item.name}
-                                        link={item.link}
-                                        onClick={(e) => {
-                                            if (item.isContact) {
-                                                handleContactClick(e);
-                                            } else {
-                                                setMobileMenuOpen(false);
-                                            }
-                                        }}
-                                    />
-                                ))}
-                            </MobileNavMenu>
-                        </MobileNav>
+                        <NavigationPanel />
                     </Navbar>
 
                     <div className="hero relative inset-0 h-screen z-25" ref={heroRef}>
@@ -721,7 +694,22 @@ export default function HeroSection({ onEnter }: HeroSectionProps) {
                 src="/Synapse_Music.mp3"
                 preload="auto"
             />
+
+            <div
+                ref={scrollTrackRef}
+                className="fixed right-[24px] top-1/2 -translate-y-1/2 z-[9999]
+               h-[300px] w-[10px] rounded-full border border-solid border-gray-700
+               bg-gray-200 pointer-events-none transition duration-500"
+                style={{
+                    opacity: showNavbar ? 1 : 0
+                }}
+            >
+                <div
+                    ref={scrollFillRef}
+                    className="absolute top-0 left-0 w-full h-0 z-[9999]
+                   bg-red-600 rounded-full"
+                />
+            </div>
         </div >
     );
-
 }

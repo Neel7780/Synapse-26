@@ -1,24 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-    Navbar,
-    MobileNav,
-    MobileNavHeader,
-    MobileNavMenu,
-    MobileNavToggle,
-    NavbarLogo,
-    MobileAnimatedMenuItem
-} from "@/components/ui/Resizable-navbar";
+import { Navbar } from "@/components/ui/Resizable-navbar";
+import NavigationPanel from "@/components/ui/NavigationPanel";
 import Footer from "@/components/ui/Footer";
 import Link from 'next/link';
-
-const navItems = [
-    { name: "Home", link: "/" },
-    { name: "Events", link: "/events" },
-    { name: "Contact Us", link: "#contact", isContact: true },
-    { name: "Terms And Conditions", link: "/terms-and-conditions" },
-];
 
 const TERMS_CONTENT = [
     {
@@ -71,53 +57,11 @@ const styles = {
 };
 
 export default function Terms() {
-    const handleContactClick = (e: any) => {
-        e.preventDefault();
-        setMobileMenuOpen(false);
-
-        const footer = document.getElementById("contact");
-        if (!footer) return;
-
-        footer.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-        });
-    };
-
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     return (
         <div className="relative w-screen min-h-screen overflow-x-hidden text-white">
             <Navbar visible ={true}>
-                <MobileNav>
-                    <MobileNavHeader>
-                        <NavbarLogo />
-                        <MobileNavToggle
-                            isOpen={mobileMenuOpen}
-                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        />
-                    </MobileNavHeader>
-
-                    <MobileNavMenu
-                        isOpen={mobileMenuOpen}
-                        onClose={() => setMobileMenuOpen(false)}
-                    >
-                        {navItems.map((item, idx) => (
-                            <MobileAnimatedMenuItem
-                                key={idx}
-                                name={item.name}
-                                link={item.link}
-                                onClick={(e) => {
-                                    if (item.isContact) {
-                                        handleContactClick(e);
-                                    } else {
-                                        setMobileMenuOpen(false);
-                                    }
-                                }}
-                            />
-                        ))}
-                    </MobileNavMenu>
-                </MobileNav>
+                <NavigationPanel />
             </Navbar>
 
             <div

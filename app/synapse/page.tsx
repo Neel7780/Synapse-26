@@ -8,16 +8,13 @@ import JokerSection from "@/components/Home-JokerSection";
 import ArtistsSection from "@/components/Artists";
 import HallOfFame from "@/components/Home-HallOfFame";
 import Footer from "@/components/ui/Footer";
-
-import { SmoothScroller } from "@/components/ui/SmoothScroller";
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import FluidCanvas from "@/components/FluidCanvas";
-
-import { ScrollTrigger } from "gsap/ScrollTrigger"; // ✅ IMPORTANT
 
 export default function HomeSection() {
   const [entered, setEntered] = useState(false);
 
-  // 🔄 Refresh GSAP after .end mounts
+  // Refresh GSAP after .end mounts
   useEffect(() => {
     if (entered) {
       requestAnimationFrame(() => {
@@ -27,16 +24,11 @@ export default function HomeSection() {
   }, [entered]);
 
   return (
-    <SmoothScroller>
-      <main className="flex flex-col min-h-screen relative">
-
-        {/* 🔥 GLOBAL FLUID BACKGROUND */}
-        <FluidCanvas />
-
-        <HeroSection onEnter={() => setEntered(true)} />
-
-        <div
-          className={`
+    <main className="flex flex-col min-h-screen relative">
+      {entered ? <FluidCanvas /> : ""}
+      <HeroSection onEnter={() => setEntered(true)} />
+      <div
+        className={`
             end
             overflow-x-hidden
             w-full
@@ -47,15 +39,13 @@ export default function HomeSection() {
             duration-700
             ${entered ? "flex opacity-100" : "hidden opacity-0"}
           `}
-        >
-          <AboutSection />
-          <JokerSection />
-          <ArtistsSection />
-          <HallOfFame />
-          <Footer />
-        </div>
-
-      </main>
-    </SmoothScroller>
+      >
+        <AboutSection />
+        <JokerSection />
+        <ArtistsSection />
+        <HallOfFame />
+        <Footer />
+      </div>
+    </main>
   );
 }
