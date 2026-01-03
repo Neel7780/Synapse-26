@@ -80,6 +80,7 @@
   --font-card: "CardCharacter", sans-serif;
   --font-joker: "Joker", sans-serif;
   --font-poppins: "Poppins", system-ui, sans-serif;
+  --font-jqka: "jqka", sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -189,6 +190,15 @@ html.lenis body {
   font-style: normal;
   font-display: swap;
 }
+
+@font-face {
+  font-family: "jqka";
+  src: url("/fonts/jkq.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 
 @keyframes fadeIn {
   from {
