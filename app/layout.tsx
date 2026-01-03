@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Bebas_Neue, Inter, Roboto, Poppins } from "next/font/google";
-import { SmoothScroller } from "@/components/ui/SmoothScroller";
 import "./globals.css";
-import FluidCanvas from "@/components/FluidCanvas";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,9 +31,9 @@ const roboto = Roboto({
 });
 
 const poppins = Poppins({
-  variable: "--font-poppins",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-poppins",
   display: "swap",
 });
 
@@ -60,10 +58,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${bebasNeue.variable} ${inter.variable} ${roboto.variable} ${poppins.variable} antialiased bg-black`}
       >
-        <SmoothScroller >
-          {/* <FluidCanvas /> */}
-          {children}
-        </SmoothScroller>
+        {children}
       </body>
     </html>
   );

@@ -187,7 +187,7 @@ export default function AboutSection() {
             </div>
 
             <div ref={themeContentRef} className="Theme max-w-full md:max-w-[60%]">
-                <div className="Theme_content text-white text-[clamp(1.15rem,1.5vw,2.1rem)] font-jqka mix-blend-difference leading-relaxed">
+                <div className="Theme_content text-white text-[clamp(1.15rem,1.5vw,2.1rem)] mix-blend-difference leading-relaxed">
                     Synapse is more than a college fest — it&apos;s an experience. A convergence of creativity,
                     competition, culture, and chaos, Synapse brings together minds that dare to think,
                     perform, and challenge the ordinary . 

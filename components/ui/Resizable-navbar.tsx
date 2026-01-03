@@ -301,31 +301,30 @@ export const NavbarLogo = () => {
         alt="Synapse Logo"
         width={35}
         height={35}
-        className="w-auto h-[35px]"
+        className="object-contain"
         priority
       />
     </Link>
   );
 };
 
-type NavbarButtonProps<T extends React.ElementType> = {
-  as?: T;
-  href?: string;
-  children: React.ReactNode;
-  className?: string;
-  variant?: "primary" | "secondary" | "dark" | "gradient" | "register";
-} & Omit<React.ComponentPropsWithoutRef<T>, "as" | "children">;
-
-export const NavbarButton = <T extends React.ElementType = "a">({
+export const NavbarButton = ({
   href,
-  as,
+  as: Tag = "a",
   children,
   className,
   variant = "primary",
   ...props
-}: NavbarButtonProps<T>) => {
-  const Tag = as || "a";
-
+}: {
+  href?: string;
+  as?: React.ElementType;
+  children: React.ReactNode;
+  className?: string;
+  variant?: "primary" | "secondary" | "dark" | "gradient" | "register";
+} & (
+    | React.ComponentPropsWithoutRef<"a">
+    | React.ComponentPropsWithoutRef<"button">
+  )) => {
   const baseStyles =
     "px-6 py-2 rounded-[10px] text-sm font-bold relative cursor-pointer transition-all duration-300 inline-block text-center font-['Roboto',sans-serif]";
 
@@ -333,21 +332,19 @@ export const NavbarButton = <T extends React.ElementType = "a">({
     primary:
       "bg-transparent text-white border-2 border-white shadow-[6px_6px_0px_#EB0000] hover:bg-[#EB0000] hover:text-black hover:border-black hover:shadow-[6px_6px_0px_rgba(255,255,255,0.7)] hover:-translate-y-0.5",
     secondary: "bg-transparent text-white/80 hover:text-white border-0",
-    dark:
-      "bg-black text-white border-2 border-white shadow-[6px_6px_0px_#EB0000] hover:bg-[#EB0000] hover:text-black hover:border-black",
+    dark: "bg-black text-white border-2 border-white shadow-[6px_6px_0px_#EB0000] hover:bg-[#EB0000] hover:text-black hover:border-black",
     gradient:
       "bg-transparent text-white border-2 border-white shadow-[6px_6px_0px_#EB0000] hover:bg-[#EB0000] hover:text-black hover:border-black hover:shadow-[6px_6px_0px_rgba(255,255,255,0.7)] hover:-translate-y-0.5 hover:scale-105",
-    register:
-      "text-[clamp(1.25rem,4vw,1.875rem)] border-[5px] border-white rounded-[10px] bg-transparent text-white shadow-[10px_10px_0px_#EB0000] hover:bg-[#EB0000] hover:text-black hover:border-black hover:scale-105 hover:shadow-[10px_10px_0px_rgba(255,255,255,0.7)] font-normal font-jakass",
+    register: "text-[clamp(1.25rem,4vw,1.875rem)] border-[5px] border-white rounded-[10px] bg-transparent text-white shadow-[10px_10px_0px_#EB0000] hover:bg-[#EB0000] hover:text-black hover:border-black hover:scale-105 hover:shadow-[10px_10px_0px_rgba(255,255,255,0.7)] font-normal font-card",
   };
 
-  return React.createElement(
-    Tag,
-    {
-      ...(href ? { href } : {}),
-      className: cn(baseStyles, variantStyles[variant], className),
-      ...props,
-    },
-    children
+  return (
+    <Tag
+      href={href || undefined}
+      className={cn(baseStyles, variantStyles[variant], className)}
+      {...props}
+    >
+      {children}
+    </Tag>
   );
 };

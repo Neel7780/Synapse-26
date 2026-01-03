@@ -3,7 +3,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import Tilt from "react-parallax-tilt";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -18,10 +17,6 @@ export default function JokerSection() {
     const rightTitleRef = useRef<HTMLDivElement>(null);
     const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
     const scrollHintRef = useRef<HTMLDivElement>(null);
-    const exploreTitleRef = useRef<HTMLHeadingElement>(null);
-    const exploreWordRef = useRef<HTMLSpanElement>(null);
-    const fullImageRef = useRef<HTMLDivElement>(null);
-    const eventsWordRef = useRef<HTMLSpanElement>(null);
 
     const generateViewportPath = useCallback(() => {
         if (typeof window === 'undefined') return '';
@@ -148,18 +143,14 @@ export default function JokerSection() {
                 scrollTrigger: {
                     trigger: jokerSectionRef.current,
                     start: "top top",
-                    end: "+=300%",
-                    scrub: 3,
+                    end: "+=400%",
+                    scrub: 1,
                     pin: true,
                     pinSpacing: true,
                     anticipatePin: 1,
                     invalidateOnRefresh: true,
                     onUpdate: (self) => {
                         const progress = self.progress;
-                        if (fullImageRef.current) {
-                            fullImageRef.current.style.display =
-                                progress < 0.05 ? "block" : "none";
-                        }
                         const point = jokerPath.getPointAtLength(jokerPathLength * progress);
                         const rect = jokerSvg.getBoundingClientRect();
 
@@ -187,7 +178,7 @@ export default function JokerSection() {
                 }
             });
             jokerTl.set(scrollHintRef.current, { opacity: 1 });
-            jokerTl.to({}, { duration: 0.5 });
+
             jokerTl.to(scrollHintRef.current, {
                 opacity: 0,
                 duration: 0.8,
@@ -198,7 +189,7 @@ export default function JokerSection() {
                 y: -40,
                 duration: 2,
                 ease: "power2.out"
-            }, ">")
+            }, 0)
                 .to(rightTitle, {
                     y: 40,
                     duration: 2,
@@ -208,39 +199,13 @@ export default function JokerSection() {
             jokerTl.to(leftDoor, {
                 x: "-100%",
                 duration: 4,
-                ease: "power2.inOut"
+                ease: "expo.in"
             }, "<")
                 .to(rightDoor, {
                     x: "100%",
                     duration: 4,
-                    ease: "power2.inOut"
+                    ease: "expo.in"
                 }, "<");
-            gsap.set(exploreTitleRef.current, {
-                opacity: 0,
-                y: 80,
-                scale: 1.1,
-                color: "#9ca3af" // gray-400
-            });
-            jokerTl.to(exploreTitleRef.current, {
-                opacity: 1,
-                y: 40,
-                duration: 1.2,
-                ease: "power2.out"
-            }, "<+0.3");
-
-            jokerTl.to(exploreTitleRef.current, {
-                y: -window.innerHeight * 0.25,
-                scale: 1,
-                color: "#ffffff",
-                duration: 2.5,
-                ease: "power1.out"
-            }, ">+0.8");
-            jokerTl.to(exploreTitleRef.current, {
-                top: "6%",
-                y: -10,
-                duration: 1.8,
-                ease: "power2.inOut"
-            }, ">");
 
             const getCardX = (i: number) => {
                 const vw = window.innerWidth;
@@ -250,7 +215,7 @@ export default function JokerSection() {
 
             const getCardY = (i: number) => {
                 const vh = window.innerHeight;
-                return [0.1, -0.03, 0.11, -0.02][i] * vh;
+                return [-0.1, -0.2, -0.05, -0.18][i] * vh;
             };
 
             const getCardR = (i: number) => [-12, 6, -6, 12][i];
@@ -288,10 +253,10 @@ export default function JokerSection() {
 
             jokerTl.to(shuffledCards, {
                 rotateY: 180,
-                duration: 1,
+                duration: 0.5,
                 stagger: 2,
                 ease: "power1.inOut"
-            }, "+=0.5")
+            }, "+=0.3")
                 .to(shuffledCards, {
                     duration: 1,
                     ease: "none",
@@ -356,7 +321,6 @@ export default function JokerSection() {
         >
             <div className="joker-content relative top-0 h-screen overflow-hidden">
                 <div className="viewport-wrapper absolute inset-0 flex overflow-hidden z-10">
-                    
                     <div
                         className="door door-left absolute top-0 w-1/2 h-full bg-white z-100"
                         id="leftDoor"
@@ -367,16 +331,7 @@ export default function JokerSection() {
                         }}
                     >
                         <div
-                            className="door-title left-title absolute bottom-8
-             right-0
-             font-joker
-             text-[clamp(3.5rem,8vw,7rem)]
-             tracking-[0.12em]
-             text-black
-             pointer-events-none
-             will-change-transform
-             text-right
-             pr-12"
+                            className="door-title left-title absolute bottom-8 w-full font-joker text-[clamp(3rem,7vw,5rem)] tracking-[0.35em] text-black pointer-events-none will-change-transform text-right"
                             ref={leftTitleRef}
                         >
                             joker&apos;s
@@ -393,16 +348,7 @@ export default function JokerSection() {
                         }}
                     >
                         <div
-                            className="door-title right-title absolute bottom-8
-             left-0
-             font-joker
-             text-[clamp(3.5rem,8vw,7rem)]
-             tracking-[0.12em]
-             text-black
-             pointer-events-none
-             will-change-transform
-             text-left
-             pl-12"
+                            className="door-title right-title absolute bottom-8 w-full font-joker text-[clamp(3rem,7vw,5rem)] tracking-[0.35em] text-black pointer-events-none will-change-transform text-left pl-10"
                             ref={rightTitleRef}
                         >
                             realm
@@ -411,25 +357,16 @@ export default function JokerSection() {
 
                     <div className="main-content absolute inset-0 flex flex-col items-center justify-center bg-black z-5">
                         <h1
-                            ref={exploreTitleRef}
-                            className="font-joker text-center
-    text-[clamp(3rem,8vw,8rem)]
-    w-11/12
-    z-2
-    absolute
-    top-1/2
-    -translate-y-1/2
-    text-gray-500
-    will-change-transform
-    origin-center"
+                            id="title2"
+                            className="font-joker text-center text-[clamp(3rem,8vw,8rem)] w-11/12 z-2 mb-8"
                         >
                             explore events
                         </h1>
 
-                        {/* <div className="watermark-container absolute flex flex-col leading-[0.8] select-none z-1">
+                        <div className="watermark-container absolute flex flex-col leading-[0.8] select-none z-1">
                             <span className="watermark-text font-italic uppercase text-[clamp(4rem,12vw,10rem)] text-[rgba(128,128,128,0.12)]">Explore</span>
                             <span className="watermark-text font-italic uppercase text-[clamp(4rem,12vw,10rem)] text-[rgba(128,128,128,0.12)]">Events</span>
-                        </div> */}
+                        </div>
 
                         <svg
                             id="jokerPath"
@@ -452,7 +389,7 @@ export default function JokerSection() {
 
                         <div
                             id="jokerPathDot"
-                            className="fixed w-22.5 h-22.5 bg-[#cf0000] rounded-full blur-[30px] pointer-events-none z-5 opacity-0 -translate-x-1/2 -translate-y-1/2"
+                            className="fixed w-22.5 h-22.5 bg-[#ff3c3c] rounded-full blur-[30px] pointer-events-none z-5 opacity-0 -translate-x-1/2 -translate-y-1/2"
                             ref={jokerDotRef}
                         ></div>
 
@@ -491,8 +428,8 @@ export default function JokerSection() {
                                                 transform: 'rotateY(180deg)'
                                             }}
                                         >
-                                            <h2 className="text-black text-3xl font-bold">{card.day}</h2>
-                                            <h2 className={card.isRed ? 'text-[#cf0000] font-jakass text-4xl font-bold' : 'text-black text-4xl font-jakass font-bold'}>{card.name}</h2>
+                                            <h2 className="text-black text-2xl font-bold">{card.day}</h2>
+                                            <h2 className={card.isRed ? 'text-[#ff3c3c] text-2xl font-bold' : 'text-black text-2xl font-bold'}>{card.name}</h2>
                                         </div>
                                     </div>
                                 </div>

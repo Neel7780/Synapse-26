@@ -62,7 +62,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
         >
           <div
             className="
-          font-joker
+          font-card
           leading-none
           tabular-nums
           text-[clamp(1.4rem,4.5vw,2.4rem)]
@@ -72,7 +72,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
           </div>
           <div
             className="
-          font-joker
+          font-card
           opacity-85
           text-[clamp(0.65rem,2vw,1rem)]
         "
@@ -85,7 +85,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
             absolute
             left-full
             translate-x-[35%]
-            font-joker
+            font-card
             leading-none
             text-[clamp(1.4rem,4.5vw,2.4rem)]
           "
