@@ -455,7 +455,9 @@ export type Database = {
       users: {
         Row: {
           college: string | null
+          dob: string | null
           email: string
+          gender: string | null
           phone: string | null
           registration_date: string | null
           user_id: string
@@ -463,7 +465,9 @@ export type Database = {
         }
         Insert: {
           college?: string | null
+          dob?: string | null
           email: string
+          gender?: string | null
           phone?: string | null
           registration_date?: string | null
           user_id: string
@@ -471,7 +475,9 @@ export type Database = {
         }
         Update: {
           college?: string | null
+          dob?: string | null
           email?: string
+          gender?: string | null
           phone?: string | null
           registration_date?: string | null
           user_id?: string

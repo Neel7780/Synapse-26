@@ -24,19 +24,9 @@
 // }
 
 
+import { checkAdmin } from '@/lib/checkAdmin'
 import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
-
-async function checkAdmin(supabase: any) {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return false
-
-  const allowedAdmins = ['admin@yourcollege.edu', 'organizer@gmail.com']
-  if (user.email && allowedAdmins.includes(user.email)) {
-    return true
-  }
-  return false
-}
 
 export async function GET() {
   const supabase = await createClient()
