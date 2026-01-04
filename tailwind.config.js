@@ -1,17 +1,23 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-    content: [
-        "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-        "./components/**/*.{js,ts,jsx,tsx,mdx}",
-        "./app/**/*.{js,ts,jsx,tsx,mdx}",
-    ],
-    theme: {
-        extend: {
-            fontFamily: {
-                joker: ["Joker", "serif"],
-                jackass: ["JackassWild", "cursive"],
-            },
-        },
+  theme: {
+    extend: {
+      colors: {
+        background: 'var(--background)',
+        foreground: 'var(--foreground)',
+        border: 'var(--border)',
+        ring: 'var(--ring)',
+        // Add other custom colors as needed
+      },
+      fontFamily: {
+        card: ["var(--font-card)"],
+        joker: ["var(--font-joker)"],
+        poppins: ["var(--font-poppins)"],
+        jakass: ["var(--font-jakass)"],
+        roboto: ["var(--font-roboto)"],
+        'jqka': ['var(--font-jqka)', 'sans-serif'],
+      },
     },
-    plugins: [],
-};
+  },
+  // ...other config...
+}
