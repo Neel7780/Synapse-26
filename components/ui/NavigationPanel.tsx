@@ -12,6 +12,7 @@ import {
 
 const navItems = [
     { name: "Home", link: "/" },
+    { name: "About Us", link: "/about" },
     { name: "Events", link: "/events" },
     { name: "Contact Us", link: "#contact", isContact: true },
     { name: "Timeline", link: "/timeline" },
