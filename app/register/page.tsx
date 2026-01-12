@@ -22,7 +22,7 @@ export default function RegisterPage() {
               className="object-contain"
               priority
             />
-            </Link>
+            {/* </Link> */}
           </div>
         </div>
 
