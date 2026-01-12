@@ -6,7 +6,9 @@ import { ScrollTrigger } from "gsap/ScrollTrigger"
 
 gsap.registerPlugin(ScrollTrigger)
 
-/* types */
+/* =======================
+   TYPES
+======================= */
 
 interface Event {
   name: string
@@ -19,7 +21,9 @@ interface DaySchedule {
   events: Event[]
 }
 
-/* data */
+/* =======================
+   DATA
+======================= */
 
 const schedule: DaySchedule[] = [
   {
@@ -48,49 +52,41 @@ const schedule: DaySchedule[] = [
   },
 ]
 
-/* component */
+/* =======================
+   COMPONENT
+======================= */
 
 export default function TimelineContent() {
   const sectionsRef = useRef<(HTMLDivElement | null)[]>([])
 
   useEffect(() => {
-    // 1️⃣ Kill any existing triggers (important on route change)
-    ScrollTrigger.getAll().forEach((t) => t.kill());
+    ScrollTrigger.getAll().forEach((t) => t.kill())
 
-    // 2️⃣ Let the browser finish layout + images
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
+      sectionsRef.current.forEach((section) => {
+        if (!section) return
 
-        sectionsRef.current.forEach((section) => {
-          if (!section) return;
+        gsap.fromTo(
+          section,
+          { opacity: 0, y: 80 },
+          {
+            opacity: 1,
+            y: 0,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: section,
+              start: "top 85%",
+              scrub: 1,
+            },
+          }
+        )
+      })
 
-          gsap.fromTo(
-            section,
-            { opacity: 0, y: 120 },
-            {
-              opacity: 1,
-              y: 0,
-              duration: 1,
-              ease: "power3.out",
-              scrollTrigger: {
-                trigger: section,
-                start: "top 90%",
-                scrub: 1,
-              },
-            }
-          );
-        });
+      ScrollTrigger.refresh()
+    })
 
-        // 3️⃣ Force GSAP to recalc everything
-        ScrollTrigger.refresh();
-      });
-    });
-
-    // 4️⃣ Cleanup on unmount
-    return () => {
-      ScrollTrigger.getAll().forEach((t) => t.kill());
-    };
-  }, []);
+    return () => ScrollTrigger.getAll().forEach((t) => t.kill())
+  }, [])
 
   return (
     <div
@@ -98,68 +94,84 @@ export default function TimelineContent() {
       style={{ backgroundImage: "url('/images_timeline/bg.jpg')" }}
     >
       {/* Overlay */}
-      <div className="absolute inset-0 bg-black/40 pointer-events-none" />
+      <div className="absolute inset-0 bg-black/50 pointer-events-none" />
 
       {/* Content */}
       <div className="relative">
-        {/* header */}
-        <div className="max-w-7xl mx-auto px-4 pt-24 pb-32 text-center">
-          <h1
-            className={`text-4xl md:text-9xl mb-4 tracking-wide text-white font-joker`}>
+        {/* Header */}
+        <div className="max-w-7xl mx-auto px-4 pt-14 md:pt-24 pb-16 md:pb-32 text-center">
+          <h1 className="text-3xl sm:text-4xl md:text-7xl lg:text-9xl tracking-wide text-white font-joker">
             timeline
           </h1>
         </div>
 
-        {/* timeline */}
-        <div className="space-y-40 pb-32">
+        {/* Timeline */}
+        <div className="space-y-20 sm:space-y-24 md:space-y-40 pb-20 md:pb-32">
           {schedule.map((daySchedule, index) => (
             <div
               key={daySchedule.day}
               ref={(el) => {
                 sectionsRef.current[index] = el
               }}
-              className="max-w-7xl mx-auto px-4 space-y-12"
+              className="max-w-7xl mx-auto px-3 sm:px-4 space-y-6 md:space-y-12"
             >
-              {/* Day heading (Joker) */}
-              <h2
-                className={`text-[72px] md:text-[100px] lg:text-[120px] 
-                            font-normal text-center leading-none tracking-wide 
-                            text-red-600 font-joker`}
-              >
+              {/* Day heading */}
+              <h2 className="text-4xl sm:text-5xl md:text-[100px] lg:text-[120px] text-center leading-none tracking-wide text-red-600 font-joker">
                 day {daySchedule.day}
               </h2>
 
-              {/* Table (Roboto) */}
-              <table
-                className={`w-full table-fixed bg-black/30 backdrop-blur-sm rounded-lg overflow-hidden font-roboto`}
-              >
+              {/* Table */}
+              <table className="w-full table-fixed bg-black/30 backdrop-blur-sm rounded-lg font-roboto">
                 <thead>
                   <tr>
-                    <th className="text-center py-4 px-4 md:px-8 text-sm font-semibold uppercase tracking-wide text-white/70">
+                    <th className="py-3 px-2 sm:px-4 md:px-6 text-xs sm:text-sm uppercase tracking-wide text-white/70 text-center">
                       Event
                     </th>
-                    <th className="text-center py-4 px-4 md:px-8 text-sm font-semibold uppercase tracking-wide text-white/70">
+                    <th className="py-3 px-2 sm:px-4 md:px-6 text-xs sm:text-sm uppercase tracking-wide text-white/70 text-center">
                       Time
                     </th>
-                    <th className="text-center py-4 px-4 md:px-8 text-sm font-semibold uppercase tracking-wide text-white/70">
+                    <th className="py-3 px-2 sm:px-4 md:px-6 text-xs sm:text-sm uppercase tracking-wide text-white/70 text-center">
                       Venue
                     </th>
                   </tr>
                 </thead>
 
-                <tbody className="text-lg">
+                <tbody>
                   {daySchedule.events.map((event, i) => (
                     <tr
                       key={i}
-                      className="hover:bg-white/10 transition-colors"
+                      className="border-b border-white/10 hover:bg-white/10 transition-colors"
                     >
-                      <td className="py-5 px-4 md:px-8 text-2xl text-center font-medium text-white">
+                      <td
+                        className="
+                          py-3 px-2 sm:px-4 md:px-6
+                          text-sm sm:text-base md:text-xl
+                          text-white text-center
+                          break-words whitespace-normal
+                        "
+                      >
                         {event.name}
                       </td>
-                      <td className="py-5 px-4 md:px-8 text-2xl text-center text-white/80">
+
+                      <td
+                        className="
+                          py-3 px-2 sm:px-4 md:px-6
+                          text-sm sm:text-base md:text-xl
+                          text-white/80 text-center
+                          break-words whitespace-normal
+                        "
+                      >
                         {event.time}
                       </td>
-                      <td className="py-5 px-4 md:px-8 text-2xl text-center text-white/80">
+
+                      <td
+                        className="
+                          py-3 px-2 sm:px-4 md:px-6
+                          text-sm sm:text-base md:text-xl
+                          text-white/80 text-center
+                          break-words whitespace-normal
+                        "
+                      >
                         {event.venue}
                       </td>
                     </tr>
