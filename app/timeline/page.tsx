@@ -13,7 +13,7 @@ export default function page() {
         <Navbar visible={true}><NavigationPanel />
 </Navbar>
       
-      <div className="mt-12.5">
+      <div>
         <Timeline />
       </div>
       <Footer />

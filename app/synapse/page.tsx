@@ -31,6 +31,7 @@ export default function HomeSection() {
       });
     }
   }, [entered]);
+  
 
   return (
     <main className="flex flex-col min-h-screen relative">
