@@ -3,8 +3,8 @@
 import React from 'react'
 
 export default function Svg() {
-    //@ts-ignore
-    const preserve = window.innerWidth > 450
+    // Check if window is available (client-side only)
+    const preserve = typeof window !== 'undefined' && window.innerWidth > 450
         ? "xMidYMid slice"
         : "xMidYMid meet";
     return (

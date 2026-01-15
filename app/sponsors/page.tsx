@@ -1,3 +1,4 @@
+import HeroSection from "@/components/HeroSection";
 import SponsorTier from "@/components/SponsorTier";
 import Footer from "@/components/ui/Footer";
 
@@ -31,6 +32,7 @@ export default function SponsorsPage() {
 
     return (
         <main className="bg-black text-white flex flex-col items-center min-h-screen w-full overflow-x-hidden">
+            <HeroSection />
 
             {/* MAIN CONTENT CONTAINER */}
             <div className="w-full flex flex-col items-center gap-y-2 md:gap-y-6 pb-40">
