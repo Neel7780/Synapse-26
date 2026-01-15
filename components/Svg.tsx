@@ -1,12 +1,19 @@
 'use client';
-
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 
 export default function Svg() {
-    // Check if window is available (client-side only)
-    const preserve = typeof window !== 'undefined' && window.innerWidth > 450
-        ? "xMidYMid slice"
-        : "xMidYMid meet";
+    const [preserve, setPreserve] = useState(() =>
+        typeof window !== 'undefined' && window.innerWidth > 450 ? 'xMidYMid slice' : 'xMidYMid meet'
+    );
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const handleResize = () => {
+            setPreserve(window.innerWidth > 450 ? 'xMidYMid slice' : 'xMidYMid meet');
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
     return (
         <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 3072 2048" preserveAspectRatio={preserve}>
             <g
