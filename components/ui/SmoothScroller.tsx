@@ -1,54 +1,66 @@
 "use client";
 
-import { useEffect, useRef, ReactNode } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Lenis from "lenis";
-
-// Register GSAP plugins
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
-}
+import { useEffect, useRef, ReactNode, useState } from "react";
 
 interface SmoothScrollerProps {
   children: ReactNode;
 }
 
 export function SmoothScroller({ children }: SmoothScrollerProps) {
-  const lenisRef = useRef<Lenis | null>(null);
+  const lenisRef = useRef<any>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    // Initialize Lenis with optimized settings
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Smooth exponential easing
-      orientation: "vertical",
-      gestureOrientation: "vertical",
-      smoothWheel: true,
-      touchMultiplier: 2,
-    });
+    setIsMounted(true);
+  }, []);
 
-    lenisRef.current = lenis;
+  useEffect(() => {
+    if (!isMounted || typeof window === "undefined") return;
 
-    // Integrate Lenis with GSAP ScrollTrigger
-    lenis.on("scroll", ScrollTrigger.update);
+    // Dynamically import Lenis and GSAP only on client side
+    const initLenis = async () => {
+      const { gsap } = await import("gsap");
+      const { ScrollTrigger } = await import("gsap/ScrollTrigger");
+      const { default: Lenis } = await import("lenis");
 
-    // Use GSAP ticker for smooth animation frame updates
-    gsap.ticker.add((time) => {
-      lenis.raf(time * 1000);
-    });
+      gsap.registerPlugin(ScrollTrigger);
 
-    // Disable GSAP's default lag smoothing for buttery performance
-    gsap.ticker.lagSmoothing(0);
+      // Initialize Lenis with optimized settings
+      const lenis = new Lenis({
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Smooth exponential easing
+        orientation: "vertical",
+        gestureOrientation: "vertical",
+        smoothWheel: true,
+        touchMultiplier: 2,
+      });
 
-    // Refresh ScrollTrigger after Lenis is ready
-    ScrollTrigger.refresh();
+      lenisRef.current = lenis;
+
+      // Integrate Lenis with GSAP ScrollTrigger
+      lenis.on("scroll", ScrollTrigger.update);
+
+      // Use GSAP ticker for smooth animation frame updates
+      gsap.ticker.add((time) => {
+        lenis.raf(time * 1000);
+      });
+
+      // Disable GSAP's default lag smoothing for buttery performance
+      gsap.ticker.lagSmoothing(0);
+
+      // Refresh ScrollTrigger after Lenis is ready
+      ScrollTrigger.refresh();
+    };
+
+    initLenis();
 
     return () => {
-      lenis.destroy();
-      gsap.ticker.remove(lenis.raf);
+      if (lenisRef.current) {
+        lenisRef.current.destroy();
+      }
     };
-  }, []);
+  }, [isMounted]);
 
   return <div id="smooth-wrapper">{children}</div>;
 }
+

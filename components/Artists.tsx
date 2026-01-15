@@ -5,7 +5,9 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Image from "next/image"
 
-gsap.registerPlugin(ScrollTrigger);
+if (typeof window !== 'undefined') {
+    gsap.registerPlugin(ScrollTrigger);
+}
 
 type Artist = {
     name: string;
@@ -122,7 +124,7 @@ export default function ArtistsSection() {
                 zIndex = 10;
                 opacity = 1;
             } else {
-                element.classList.remove("center"); 
+                element.classList.remove("center");
 
                 if (window.innerWidth < 360) {
                     // Force invisible on mobile to avoid overlap

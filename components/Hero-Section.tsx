@@ -7,10 +7,12 @@ import { CountdownTimer } from './CountdownTimer';
 import {
     NavbarButton
 } from "@/components/ui/Resizable-navbar";
-import Svg from "@/components/Svg";
+// import Svg from "@/components/Svg";
 import { ChevronDown } from 'lucide-react';
 
-gsap.registerPlugin(ScrollTrigger);
+if (typeof window !== 'undefined') {
+    gsap.registerPlugin(ScrollTrigger);
+}
 
 const FIRST_PHASE_TIME = 1000;
 
@@ -84,7 +86,7 @@ export default function HeroSection({ onEnter, setShowNavbar, showNavbar }: Hero
         const svg = svgContainerRef.current?.querySelector("svg");
         if (svg) {
             svg.style.height = "100%";
-            if(window.innerWidth > 450){svg.style.width = "100%";}
+            if (window.innerWidth > 450) { svg.style.width = "100%"; }
             const pathsArray = Array.from(svg.querySelectorAll("path")) as SVGPathElement[];
             assetsRef.current.paths = pathsArray;
 
@@ -592,7 +594,7 @@ export default function HeroSection({ onEnter, setShowNavbar, showNavbar }: Hero
     return (
         <div>
             <div id="svgContainer" className="fixed inset-0 z-10 transition-opacity duration-2400" ref={svgContainerRef} >
-                <Svg />
+                {/* <Svg /> */}
             </div>
 
             {isLoading ? (

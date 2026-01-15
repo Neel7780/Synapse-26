@@ -5,7 +5,9 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
 
-gsap.registerPlugin(ScrollTrigger);
+if (typeof window !== 'undefined') {
+    gsap.registerPlugin(ScrollTrigger);
+}
 
 export default function HallOfFame() {
     const hallContainerRef = useRef<HTMLDivElement>(null);
@@ -21,6 +23,7 @@ export default function HallOfFame() {
         desktop: [],
     });
     const getActiveMode = () => {
+        if (typeof window === 'undefined') return "desktop";
         const w = window.innerWidth;
         if (w < 768) return "mobile";
         if (w < 1024) return "tablet";
@@ -282,6 +285,9 @@ export default function HallOfFame() {
     ];
 
     const getGridMetrics = () => {
+        if (typeof window === 'undefined') {
+            return { cellW: 0, cellH: 0, heroCols: 2, heroRows: 2 };
+        }
         const w = window.innerWidth;
         const h = window.innerHeight;
 
@@ -311,6 +317,7 @@ export default function HallOfFame() {
         };
     };
     const getActiveHeroIndex = () => {
+        if (typeof window === 'undefined') return 2;
         const w = window.innerWidth;
         if (w < 768) return 0;
         if (w < 1024) return 1;
@@ -318,6 +325,7 @@ export default function HallOfFame() {
     };
 
     const isItemVisible = (image: any) => {
+        if (typeof window === 'undefined') return true;
         const w = window.innerWidth;
         if (w < 768) return !image.mobileHidden;
         if (w < 1024) return !image.tabletHidden;
@@ -356,26 +364,26 @@ export default function HallOfFame() {
             hero = hallRef.current[index] ?? null;
             return hero;
         };
-            gsap.to(scrollIndicatorRef.current, {
-                opacity: 0,
-                pointerEvents: "none",
-                scrollTrigger: {
-                    trigger: hallContainerRef.current,
-                    start: "top top",
-                    end: "+=20%",
-                    scrub: true,
-                },
-            });
+        gsap.to(scrollIndicatorRef.current, {
+            opacity: 0,
+            pointerEvents: "none",
+            scrollTrigger: {
+                trigger: hallContainerRef.current,
+                start: "top top",
+                end: "+=20%",
+                scrub: true,
+            },
+        });
 
-            gsap.to('.hof-title', {
-                opacity: 0,
-                scrollTrigger: {
-                    trigger: hallContainerRef.current,
-                    start: "top top",
-                    end: "+=70%",
-                    scrub: true,
-                },
-            });
+        gsap.to('.hof-title', {
+            opacity: 0,
+            scrollTrigger: {
+                trigger: hallContainerRef.current,
+                start: "top top",
+                end: "+=70%",
+                scrub: true,
+            },
+        });
 
         const calculateStartScale = () => {
             hero = resolveHero();

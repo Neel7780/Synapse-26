@@ -5,7 +5,9 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ChevronDown } from 'lucide-react';
 
-gsap.registerPlugin(ScrollTrigger);
+if (typeof window !== 'undefined') {
+    gsap.registerPlugin(ScrollTrigger);
+}
 
 type JokerSectionProps = {
     setShowNavbar: React.Dispatch<React.SetStateAction<boolean>>;
@@ -325,7 +327,7 @@ export default function JokerSection({ setShowNavbar, showNavbar }: JokerSection
                 duration: 2,
                 ease: "expo.out"
             }, ">+0.5");
-            
+
             const cardInners = gsap.utils.toArray(".card-inner");
             const shuffledCards = cardInners.sort(() => Math.random() - 0.5);
 

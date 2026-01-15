@@ -5,7 +5,9 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Image from 'next/image';
 
-gsap.registerPlugin(ScrollTrigger);
+if (typeof window !== 'undefined') {
+    gsap.registerPlugin(ScrollTrigger);
+}
 
 const GRADIENT = { angle: 195, stop: 0.6, offsetRatio: -0.4 };
 
@@ -191,16 +193,16 @@ export default function AboutSection() {
                 <div className="Theme_content text-white text-[clamp(1.15rem,1.5vw,2.1rem)] font-jqka mix-blend-difference leading-relaxed">
                     Synapse is more than a college fest — it&apos;s an experience. A convergence of creativity,
                     competition, culture, and chaos, Synapse brings together minds that dare to think,
-                    perform, and challenge the ordinary . 
+                    perform, and challenge the ordinary .
                     <br /><br />
                     This year, Synapse&apos;26 invites you into The Joker&apos;s Realm — a world where every
-                    choice is a move, every event is a game, and nothing is ever as simple as it seems . 
+                    choice is a move, every event is a game, and nothing is ever as simple as it seems .
                     <br /><br />
                     From high-energy concert nights and intense competitions to immersive events spread
                     across four action-packed days, Synapse&apos;26 transforms the campus into a playground
-                    of possibilities . 
+                    of possibilities .
                     <br /><br />
-                    Step in, choose your game, and remember — in the Joker&apos;s Realm, the game is always watching . 
+                    Step in, choose your game, and remember — in the Joker&apos;s Realm, the game is always watching .
                 </div>
             </div>
 
