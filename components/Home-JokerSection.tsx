@@ -476,28 +476,28 @@ export default function JokerSection({
     },
   ];
 
-    return (
-        <div className='relative'>
-            <div
-                className="joker-section relative h-[100dvh] overflow-hidden"
-                id="jokerSection"
-                ref={jokerSectionRef}
-            >
-                <div className="joker-content relative top-0 h-[100dvh] overflow-hidden">
-                    <div className="viewport-wrapper absolute inset-0 flex overflow-hidden z-10">
+  return (
+    <div className='relative'>
+      <div
+        className="joker-section relative h-[100dvh] overflow-hidden"
+        id="jokerSection"
+        ref={jokerSectionRef}
+      >
+        <div className="joker-content relative top-0 h-[100dvh] overflow-hidden">
+          <div className="viewport-wrapper absolute inset-0 flex overflow-hidden z-10">
 
-                        {/* LEFT DOOR */}
-                        <div
-                            className="door door-left absolute top-0 w-1/2 h-full bg-white z-[100]"
-                            id="leftDoor"
-                            ref={leftDoorRef}
-                            style={{
-                                background: "white url('/images_home/left.png') no-repeat right center",
-                                backgroundSize: 'contain'
-                            }}
-                        >
-                            <div
-                                className="door-title left-title absolute 
+            {/* LEFT DOOR */}
+            <div
+              className="door door-left absolute top-0 w-1/2 h-full bg-white z-[100]"
+              id="leftDoor"
+              ref={leftDoorRef}
+              style={{
+                background: "white url('/images_home/left.png') no-repeat right center",
+                backgroundSize: 'contain'
+              }}
+            >
+              <div
+                className="door-title left-title absolute 
                             bottom-20 md:bottom-8 
                             right-0
                             font-joker
@@ -589,7 +589,7 @@ export default function JokerSection({
               ></div>
 
               {/* CARD BURST ZONE */}
-              <div className="burst-zone relative w-full h-[60vh] md:h-[70vh] pointer-events-auto flex justify-center items-center z-10">
+              <div className="burst-zone relative w-full h-[60dvh] md:h-[70dvh] pointer-events-auto flex justify-center items-center z-10">
                 {cards.map((card, index) => (
                   <div
                     key={card.id}
@@ -598,7 +598,7 @@ export default function JokerSection({
                       // Modified clamps for better mobile aspect ratio
                       width: "clamp(90px, 20vw, 240px)",
                       height: "clamp(120px, 25vw, 300px)",
-                      transform: "translateY(120vh)",
+                      transform: "translateY(120dvh)",
                     }}
                     id={card.id}
                     ref={(el) => {
@@ -666,9 +666,9 @@ export default function JokerSection({
         </div>
       </div>
 
-            <div className='h-[100dvh]' />
-            <div className='h-[100dvh]' />
-            <div className='h-[100dvh]' />
-        </div>
-    );
+      <div className='h-[100dvh]' />
+      <div className='h-[100dvh]' />
+      <div className='h-[100dvh]' />
+    </div>
+  );
 }

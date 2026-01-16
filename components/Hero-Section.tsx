@@ -99,13 +99,32 @@ export default function HeroSection({
     setLoadingProgress(Math.round(progress * 100));
   }, []);
 
-    const loadSVG = useCallback(async () => {
-        const svg = svgContainerRef.current?.querySelector("svg");
-        if (svg) {
-            svg.style.height = "100%";
-            svg.style.width = "100%";
-            const pathsArray = Array.from(svg.querySelectorAll("path")) as SVGPathElement[];
-            assetsRef.current.paths = pathsArray;
+  const loadSVG = useCallback(async () => {
+    const svg = svgContainerRef.current?.querySelector("svg");
+    if (svg) {
+      const g = svg.querySelector("g");
+      svg.style.height = "100%";
+      svg.style.width = "100%";
+      if (window.innerWidth < 600) {
+        svg.classList.add("scale-250");
+        svg.classList.remove("scale-100");
+        if (g) {
+          g.setAttribute("transform", "rotate(270 1536 1024)");
+        }
+      } else {
+        svg.classList.add("scale-100");
+        svg.classList.remove("scale-250");
+        if (g) {
+          g.removeAttribute("transform");
+        }
+      }
+      if (window.innerWidth > 1000) {
+        svg.setAttribute("preserveAspectRatio", "xMidYMid slice");
+      } else {
+        svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+      }
+      const pathsArray = Array.from(svg.querySelectorAll("path")) as SVGPathElement[];
+      assetsRef.current.paths = pathsArray;
 
       pathsArray.forEach((p) => {
         p.style.fillOpacity = "0";
@@ -198,9 +217,8 @@ export default function HeroSection({
       (target - assetsRef.current.strokeProgress) * ease;
 
     assetsRef.current.paths.forEach((p) => {
-      p.style.strokeDashoffset = `${
-        Number((p as any).dataset.len) * (1 - assetsRef.current.strokeProgress)
-      }`;
+      p.style.strokeDashoffset = `${Number((p as any).dataset.len) * (1 - assetsRef.current.strokeProgress)
+        }`;
     });
 
     updateProgressText(assetsRef.current.strokeProgress);
@@ -536,7 +554,7 @@ export default function HeroSection({
         },
         "together2"
       )
-      .to(".screen-container", { duration: 5, ease: "none" });
+      .to(".screen-container", { duration: 1, ease: "none" });
   }, []);
 
   const initScrollProgress = useCallback(() => {
@@ -622,7 +640,7 @@ export default function HeroSection({
 
           audio.muted = false;
           audio.volume = 0;
-          audio.play().catch(() => {});
+          audio.play().catch(() => { });
           gsap.to(audio, {
             volume: 1,
             duration: 5,
@@ -714,65 +732,65 @@ export default function HeroSection({
         <Svg />
       </div>
 
-            {isLoading ? (
-                <>
-                    <div id="progress" ref={progressTextRef} className="fixed bottom-[5%] right-[2%] text-white text-[clamp(20px,5vw,40px)] tracking-[2px] z-11 transition-opacity duration-600 font-jqka">
-                        Loading {loadingProgress}%
-                    </div>
-                    <button id="enterBtn" ref={enterBtnRef} onClick={handleEnterClick} className={`fixed left-1/2 -translate-x-1/2 bottom-[10%] scale-90 px-[clamp(20px,5vw,40px)] py-[8px] text-[clamp(24px,5vw,40px)] text-white bg-black border-[3px] md:border-[5px] border-white rounded-[10px] cursor-pointer opacity-0 z-40 shadow-[5px_5px_0px_#ff0000] md:shadow-[10px_10px_0px_#ff0000] transition-all duration-200 font-jqka pointer-events-auto hover:bg-[#EB0000] hover:text-black hover:border-black hover:shadow-[5px_5px_0px_#ffffff] md:hover:shadow-[10px_10px_0px_#ffffff] ${showEnter
-                        ? "opacity-100 scale-100 pointer-events-auto"
-                        : "opacity-0 scale-90 pointer-events-none"}`}>
-                        Enter
-                    </button>
-                </>
-            ) : <></>
-            }
-            <>
+      {isLoading ? (
+        <>
+          <div id="progress" ref={progressTextRef} className="fixed bottom-[5%] right-[2%] text-white text-[clamp(20px,5vw,40px)] tracking-[2px] z-11 transition-opacity duration-600 font-jqka">
+            Loading {loadingProgress}%
+          </div>
+          <button id="enterBtn" ref={enterBtnRef} onClick={handleEnterClick} className={`fixed left-1/2 -translate-x-1/2 bottom-[10%] scale-90 px-[clamp(20px,5vw,40px)] py-[8px] text-[clamp(24px,5vw,40px)] text-white bg-black border-[3px] md:border-[5px] border-white rounded-[10px] cursor-pointer opacity-0 z-40 shadow-[5px_5px_0px_#ff0000] md:shadow-[10px_10px_0px_#ff0000] transition-all duration-200 font-jqka pointer-events-auto hover:bg-[#EB0000] hover:text-black hover:border-black hover:shadow-[5px_5px_0px_#ffffff] md:hover:shadow-[10px_10px_0px_#ffffff] ${showEnter
+            ? "opacity-100 scale-100 pointer-events-auto"
+            : "opacity-0 scale-90 pointer-events-none"}`}>
+            Enter
+          </button>
+        </>
+      ) : <></>
+      }
+      <>
 
 
-                <div className="hero relative inset-0 h-[100dvh] z-25" ref={heroRef}>
-                    <div id="maskLayer" className="absolute inset-0 opacity-100 " ref={maskLayerRef} style={{
-                        WebkitMaskImage: 'url("/images_home/inkReveal2.gif")',
-                        WebkitMaskRepeat: 'no-repeat',
-                        WebkitMaskPosition: 'center',
-                        WebkitMaskSize: '0% 0%',
-                        maskImage: 'url("/images_home/inkReveal2.gif")',
-                        maskRepeat: 'no-repeat',
-                        maskPosition: 'center',
-                        maskSize: '0% 0%',
-                    }}>
-                        <img id="coloredImage" src="/images_home/RedHand2.jpeg" alt="Red Hand" ref={coloredImageRef} className="absolute inset-0 h-full w-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none max-[600px]:scale-250" />
+        <div className="hero relative inset-0 h-[100dvh] z-25" ref={heroRef}>
+          <div id="maskLayer" className="absolute inset-0 opacity-100 " ref={maskLayerRef} style={{
+            WebkitMaskImage: 'url("/images_home/inkReveal2.gif")',
+            WebkitMaskRepeat: 'no-repeat',
+            WebkitMaskPosition: 'center',
+            WebkitMaskSize: '0% 0%',
+            maskImage: 'url("/images_home/inkReveal2.gif")',
+            maskRepeat: 'no-repeat',
+            maskPosition: 'center',
+            maskSize: '0% 0%',
+          }}>
+            <img id="coloredImage" src="/images_home/RedHand2.jpeg" alt="Red Hand" ref={coloredImageRef} className="absolute inset-0 h-full w-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none max-[600px]:scale-250" />
 
-                        <div id="flipCard" className="absolute inset-0 transform-3d" ref={flipCardRef}>
-                            <img id="redCard" className="absolute inset-0 w-full h-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none backface-hidden max-[600px]:scale-250" src="/images_home/redcard4.png" alt="Red Card" ref={cardRef} />
+            <div id="flipCard" className="absolute inset-0 transform-3d" ref={flipCardRef}>
+              <img id="redCard" className="absolute inset-0 w-full h-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none backface-hidden max-[600px]:scale-250" src="/images_home/redcard4.png" alt="Red Card" ref={cardRef} />
 
-                            <div id="part3_2" ref={part3_2Ref} style={{
-                                backgroundImage:
-                                    "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.15) 35%, rgba(0,0,0,0.45) 65%, rgba(0,0,0,0.75) 85%, #000 100%), url(/images_home/image_part3_2.png)",
-                                backgroundSize: "cover",
-                                backgroundPosition: "center",
-                            }} className=" absolute inset-0 flex flex-col items-center justify-center opacity-100 will-change-transform backface-hidden transform-[rotateY(180deg)]">
-                                <div className="screen-container relative w-screen h-[100dvh] flex items-center justify-center perspective-[1000px] transform-3d" ref={screenContainerRef}>
-                                    <div ref={frontScreenRef} className="screen-front absolute inset-0 bg-black bg-[url('/images_home/part3-image.png')] bg-no-repeat bg-center bg-contain z-2 backface-hidden border-4 border-solid rounded " style={{ borderColor: "rgba(250,235,215,0)" }}></div>
-                                    <div className="center-joker-container absolute inset-0 flex items-center justify-center transform-[rotateY(180deg)] backface-hidden z-1">
-                                        <img src="/images_home/card_center.png" className="center-joker w-full h-auto rotate-[-64deg] object-contain" alt="Joker Card" />
-                                    </div>
-                                </div>
-                            </div>
+              <div id="part3_2" ref={part3_2Ref} style={{
+                backgroundImage:
+                  "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.15) 35%, rgba(0,0,0,0.45) 65%, rgba(0,0,0,0.75) 85%, #000 100%), url(/images_home/image_part3_2.png)",
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }} className=" absolute inset-0 flex flex-col items-center justify-center opacity-100 will-change-transform backface-hidden transform-[rotateY(180deg)]">
+                <div className="screen-container relative w-screen h-[100dvh] flex items-center justify-center perspective-[1000px] transform-3d" ref={screenContainerRef}>
+                  <div ref={frontScreenRef} className="screen-front absolute inset-0 bg-black bg-[url('/images_home/part3-image.png')] bg-no-repeat bg-center bg-contain z-2 backface-hidden border-4 border-solid rounded " style={{ borderColor: "rgba(250,235,215,0)" }}></div>
+                  <div className="center-joker-container absolute inset-0 flex items-center justify-center transform-[rotateY(180deg)] backface-hidden z-1">
+                    <img src="/images_home/card_center.png" className="center-joker w-full h-auto rotate-[-64deg] object-contain" alt="Joker Card" />
+                  </div>
+                </div>
+              </div>
 
-                            <div id="part3" ref={part3Ref} className={`absolute inset-0 w-full h-[100dvh] transform-[rotateY(180deg)] backface-hidden ${part3Active ? "pointer-events-auto" : "pointer-events-none"}`}>
-                                <div className="register-btn absolute bottom-2/5  max-[450px]:left-1/2 min-[450px]:bottom-[40px] min-[450px]:right-[40px] md:bottom-[60px] md:right-[60px]">
-                                    <NavbarButton href="/auth" variant="register">
-                                        Register
-                                    </NavbarButton>
-                                </div>
+              <div id="part3" ref={part3Ref} className={`absolute inset-0 w-full h-[100dvh] transform-[rotateY(180deg)] backface-hidden ${part3Active ? "pointer-events-auto" : "pointer-events-none"}`}>
+                <div className="register-btn absolute bottom-2/5  max-[450px]:left-1/2 min-[450px]:bottom-[40px] min-[450px]:right-[40px] md:bottom-[60px] md:right-[60px]">
+                  <NavbarButton href="/auth" variant="register">
+                    Register
+                  </NavbarButton>
+                </div>
 
-                                <div className="title-wrapper flex justify-center pt-[80px] sm:pt-[60px] md:pt-[120px] h-[calc(100dvh-120px)] md:h-[calc(100dvh-200px)]">
-                                    <h1 className="title text-4xl min-[450px]:text-6xl sm:text-7xl md:text-[clamp(40px,12vw,140px)] font-joker leading-none text-center px-4" ref={titleRef}>synapse' 26</h1>
-                                </div>
-                                <div
-                                    ref={scrollHintHomeRef}
-                                    className="scroll-hint-home fixed bottom-0 left-1/2 -translate-x-1/2 z-50
+                <div className="title-wrapper flex justify-center pt-[80px] sm:pt-[60px] md:pt-[120px] h-[calc(100dvh-120px)] md:h-[calc(100dvh-200px)]">
+                  <h1 className="title text-4xl min-[450px]:text-6xl sm:text-7xl md:text-[clamp(40px,12vw,140px)] font-joker leading-none text-center px-4" ref={titleRef}>synapse' 26</h1>
+                </div>
+                <div
+                  ref={scrollHintHomeRef}
+                  className="scroll-hint-home fixed bottom-0 left-1/2 -translate-x-1/2 z-50
                text-white select-none pointer-events-none"
                 >
                   <ChevronDown className="stroke-[3px] h-4 w-5 sm:w-8 sm:h-8 translate-y-full" />

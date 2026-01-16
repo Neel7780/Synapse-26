@@ -246,7 +246,7 @@ export default function ArtistsSection() {
 
   return (
     <div
-      className="artists-section relative bg-black h-[115vh]"
+      className="artists-section relative bg-black h-[115dvh]"
       id="artistsSection"
       ref={artistSectionRef}
     >
@@ -277,7 +277,7 @@ export default function ArtistsSection() {
           ARTISTS
         </h1>
 
-        <div className="carousel relative flex-1 overflow-hidden flex items-center justify-center pb-[5vh]">
+        <div className="carousel relative flex-1 overflow-hidden flex items-center justify-center pb-[5dvh]">
           <div className="black-line absolute left-0 right-0 top-[45%] h-1 bg-white -translate-y-1/2 z-0"></div>
 
           <div

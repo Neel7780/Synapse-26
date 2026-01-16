@@ -55,7 +55,7 @@ export default function EventsPage() {
   return (
     <main className="bg-black text-white overflow-x-hidden">
       {/* HERO */}
-      <section className="relative h-[45vh] w-full">
+      <section className="relative h-[45dvh] w-full">
         <Image
           src="/top.jpg"
           alt="Events"

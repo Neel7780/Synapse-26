@@ -23,7 +23,7 @@ export default function EventDetailPage() {
 
 
       {/* TRIANGLE HEADER */}
-      <header className="relative w-full h-[55vh] min-h-[520px]">
+      <header className="relative w-full h-[55dvh] min-h-[520px]">
         <Image
           src="/images_events/upper.png"
           alt=""

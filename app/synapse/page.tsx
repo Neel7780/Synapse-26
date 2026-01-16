@@ -52,7 +52,7 @@ export default function HomeSection() {
             w-full
             flex-col
             z-30
-            mt-[200vh]
+            mt-[300dvh]
             transition-opacity
             duration-700
             ${entered ? "flex opacity-100" : "hidden opacity-0"}

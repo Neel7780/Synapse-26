@@ -16,7 +16,7 @@ const galleryImages = [
 
 export default function ProniteGallery() {
   return (
-    <section className="relative w-full h-[120vh] bg-black overflow-hidden flex items-center justify-center">
+    <section className="relative w-full h-[120dvh] bg-black overflow-hidden flex items-center justify-center">
       {/* Tilted Grid Container */}
       <div className="absolute inset-0 w-[150%] h-[130%] -left-[25%] -top-[25%] rotate-[-16deg] flex flex-wrap gap-x-4 gap-y-0 p-8 opacity-90">
         {galleryImages.map((src, i) => (
