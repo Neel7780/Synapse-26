@@ -1,10 +1,10 @@
-# Synapse' 26
+# Synapse '26
 
-This is the official codebase for the Synapse 2026 Website
+The official codebase for the Synapse 2026 Website.
 
-# DA Ka Tyohaar
+## DA Ka Tyohaar
 
-## Getting Started
+### Getting Started
 
 First, run the development server:
 
@@ -16,7 +16,9 @@ yarn dev
 pnpm dev
 # or
 bun dev
-## Synapse '26 — Official Website
+```
+
+### Overview
 
 A Next.js web application powering the Synapse 2026 website. This repository contains the frontend application, admin interfaces, API routes, components, utilities, and integration code used to run and maintain the public site and admin panels.
 
@@ -24,7 +26,7 @@ A Next.js web application powering the Synapse 2026 website. This repository con
 
 **Tech stack (high level):** Next.js, React, Tailwind CSS, Supabase, various React animation/3D libraries (GSAP, react-three), and TypeScript.
 
-**Contents of this README**
+### Contents of this README
 - **Overview:** project purpose and features
 - **Repository structure:** high-level folder map
 - **Local setup:** prerequisites, install, run
@@ -35,7 +37,7 @@ A Next.js web application powering the Synapse 2026 website. This repository con
 
 **Project status:** actively used for Synapse 2026 event site and admin workflows.
 
-**Quick start**
+### Quick Start
 
 1. Install dependencies:
 
@@ -49,9 +51,9 @@ npm install
 npm run dev
 ```
 
-3. Open http://localhost:3000 in your browser.
+3. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-**Scripts**
+### Scripts
 - **dev**: runs the app in development mode (`next dev`)
 - **build**: builds the production app (`next build`)
 - **start**: runs the built app (`next start`)
@@ -59,7 +61,7 @@ npm run dev
 
 See `package.json` for the exact script definitions.
 
-**Repository structure (high level)**
+### Repository Structure (high level)
 
 - `app/` — Next.js App Router pages and layouts for the public site and admin sections
 - `components/` — shared React components (UI, admin, pages, and utilities)
@@ -74,13 +76,13 @@ See `package.json` for the exact script definitions.
 
 This repository follows a conventional Next.js layout with App Router routing and server/client components. The `admin` subtree contains routes and components used for administrative workflows (managing events, artists, sponsors, users, etc.).
 
-Development notes
+### Development Notes
 
 - Recommended Node.js: 18 or newer.
 - Package manager: `npm` is used in examples; `pnpm` or `yarn` can also be used.
 - TypeScript is enabled; ensure your editor picks up the workspace `tsconfig.json`.
 
-Environment variables
+### Environment Variables
 
 The app integrates with Supabase and third-party services. Do not commit secrets. Example variables (names may vary in your deployment):
 
@@ -99,23 +101,23 @@ RAZORPAY_KEY_ID=rzp_test_...
 RAZORPAY_KEY_SECRET=...
 ```
 
-Authentication and admin
+### Authentication and Admin
 
 - Auth flows are implemented under `app/auth` and `app/admin`. The `components/admin/AdminAuthGuard.tsx` component controls protected admin routes.
 - `lib/checkAdmin.ts` contains helper logic for server-side admin checks.
 
-Styling and assets
+### Styling and Assets
 
 - Tailwind CSS is used for styling. Custom tokens live in `styles/design-tokens.css` and `tailwind.config.js`.
 - Static images and fonts are in `public/` organized by domain (home, events, merch, sponsors, etc.).
 
-Third-party services & libraries
+### Third-party Services & Libraries
 
 - Supabase for authentication and data
 - Razorpay for payments
 - GSAP and `react-three` libraries for animations and 3D visuals
 
-Building for production
+### Building for Production
 
 1. Create a production build:
 
@@ -129,36 +131,37 @@ npm run build
 npm start
 ```
 
-Deployment
+### Deployment
 
 - The project is compatible with Vercel (Next.js recommended), Netlify, or other Node.js hosts. If deploying to Vercel, set the environment variables in the project settings and enable any preview branch protections you need.
 - Make sure server-only secrets (like `SUPABASE_SERVICE_ROLE_KEY`) are stored only in secure environment settings and never exposed to client bundles.
 
-Contributing
+### Contributing
 
 - Fork the repo and open pull requests for changes.
 - Keep UI and behavior consistent with existing components in `components/`.
 - Run `npm run lint` and fix lint errors before submitting PRs.
 
-Maintainers & contact
+### Maintainers & Contact
 
 - Project maintainers and event leads typically manage this repo. For questions about deployment or admin access, contact the Synapse web team (contact details not stored in repo).
 
-License
+### License
 
 - See the `LICENSE` file at the repository root for license details.
 
-Files to review first
+### Files to Review First
 
 - `app/layout.tsx` — application-level layout and providers
 - `app/page.tsx` — public home page entry
 - `app/admin/layout.tsx` — admin-specific layout and middleware
 - `utils/supabase/` — Supabase client and server helpers
 
-More information
+### More Information
 
 If you need a walkthrough of any specific area (auth flow, payments, admin tables, or component patterns), open an issue or request a guided code tour.
 
 ---
 
 This README was updated to reflect the repository layout and provide actionable setup and development guidance.
+

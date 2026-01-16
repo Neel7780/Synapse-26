@@ -15,9 +15,9 @@ import { Navbar } from "@/components/ui/Resizable-navbar";
 
 // Dynamic import with SSR disabled to prevent "window is not defined" error
 // from @react-three/fiber which accesses window at import time
-const FluidCanvas = dynamic(() => import("@/components/FluidCanvas"), {
-  ssr: false,
-});
+// const FluidCanvas = dynamic(() => import("@/components/FluidCanvas"), {
+//   ssr: false,
+// });
 
 export default function HomeSection() {
   const [entered, setEntered] = useState(false);
@@ -34,7 +34,8 @@ export default function HomeSection() {
 
   return (
     <main className="flex flex-col min-h-screen relative">
-      {entered ? <FluidCanvas /> : ""}
+      {/* {entered ? <FluidCanvas /> : ""} */}
+      {entered ? "" : ""}
       <Navbar visible={showNavbar}>
         <NavigationPanel />
       </Navbar>
