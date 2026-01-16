@@ -476,28 +476,28 @@ export default function JokerSection({
     },
   ];
 
-  return (
-    <div className="relative">
-      <div
-        className="joker-section relative h-screen overflow-hidden"
-        id="jokerSection"
-        ref={jokerSectionRef}
-      >
-        <div className="joker-content relative top-0 h-screen overflow-hidden">
-          <div className="viewport-wrapper absolute inset-0 flex overflow-hidden z-10">
-            {/* LEFT DOOR */}
+    return (
+        <div className='relative'>
             <div
-              className="door door-left absolute top-0 w-1/2 h-full bg-white z-[100]"
-              id="leftDoor"
-              ref={leftDoorRef}
-              style={{
-                background:
-                  "white url('/images_home/left.png') no-repeat right center",
-                backgroundSize: "contain",
-              }}
+                className="joker-section relative h-[100dvh] overflow-hidden"
+                id="jokerSection"
+                ref={jokerSectionRef}
             >
-              <div
-                className="door-title left-title absolute 
+                <div className="joker-content relative top-0 h-[100dvh] overflow-hidden">
+                    <div className="viewport-wrapper absolute inset-0 flex overflow-hidden z-10">
+
+                        {/* LEFT DOOR */}
+                        <div
+                            className="door door-left absolute top-0 w-1/2 h-full bg-white z-[100]"
+                            id="leftDoor"
+                            ref={leftDoorRef}
+                            style={{
+                                background: "white url('/images_home/left.png') no-repeat right center",
+                                backgroundSize: 'contain'
+                            }}
+                        >
+                            <div
+                                className="door-title left-title absolute 
                             bottom-20 md:bottom-8 
                             right-0
                             font-joker
@@ -666,10 +666,9 @@ export default function JokerSection({
         </div>
       </div>
 
-      {/* Spacers for scroll animation context */}
-      <div className="h-screen" />
-      <div className="h-screen" />
-      <div className="h-screen" />
-    </div>
-  );
+            <div className='h-[100dvh]' />
+            <div className='h-[100dvh]' />
+            <div className='h-[100dvh]' />
+        </div>
+    );
 }

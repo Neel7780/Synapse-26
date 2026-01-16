@@ -10,14 +10,14 @@ interface FluidCanvasProps {
 }
 
 const FluidCanvas: FC<FluidCanvasProps> = ({ className }) => {
-  return (
-    <Canvas
-      className={className}
-      style={{
-        position: "fixed",
-        inset: 0,
-        width: "100vw",
-        height: "100vh",
+    return (
+        <Canvas
+            className={className}
+            style={{
+                position: "fixed",
+                inset: 0,
+                width: "100vw",
+                height: "100dvh",
 
         zIndex: 9999,
         mixBlendMode: "lighten",

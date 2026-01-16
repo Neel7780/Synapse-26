@@ -78,11 +78,8 @@ export default function ProductPage() {
   // placeholder thumbnails (same image for now)
   const images = [product.image, product.image, product.image];
 
-  return (
-    <div className="w-full bg-black text-white min-h-screen pt-20">
-      <Navbar visible={true}>
-        <NavigationPanel />
-      </Navbar>
+    return (
+        <div className="w-full bg-black text-white min-h-[100dvh] pt-20">
 
       {/* BREADCRUMB */}
       <div className="text-sm px-4 md:px-6 mb-4 flex items-center gap-2 flex-wrap">

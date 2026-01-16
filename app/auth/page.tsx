@@ -26,7 +26,7 @@ export default function AuthFlipPage() {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-[100dvh]">
       {/* Left Side - Joker Card Image (shared) */}
       <div className="fixed hidden md:flex md:w-1/2 h-full bg-[#1a1a1a]">
         {/* Dice Logo */}
@@ -56,7 +56,7 @@ export default function AuthFlipPage() {
       </div>
 
       {/* Right Side - Flip Container */}
-      <div className="flex max-h-screen w-full md:w-1/2 md:ml-auto items-center justify-center bg-[#050505] px-6 py-12">
+      <div className="flex max-h-[100dvh] w-full md:w-1/2 md:ml-auto items-center justify-center bg-[#050505] px-6 py-12">
         <div className="w-full max-w-[582px] [perspective:1200px] flex items-center justify-center min-h-[600px]">
           <div
             className={`

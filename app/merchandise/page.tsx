@@ -34,7 +34,8 @@ export default function MerchPage() {
   ];
 
   return (
-    <div className="w-full bg-black text-white min-h-screen">
+    <div className="w-full bg-black text-white min-h-[100dvh]">
+
       {/* HERO */}
       <div className="relative w-full h-[clamp(320px,55vh,520px)] overflow-hidden">
         <Navbar visible={true}>

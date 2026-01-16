@@ -51,12 +51,12 @@ export default function About() {
                 </p>
 
                 <p>
-                  From [dates], Synapse’26 unveils The Joker’s Realm — a world
-                  where laughter hides secrets, madness fuels art, and
-                  unpredictability is the only constant. Expect three explosive
-                  concert nights with artists who’ll shake your reality, a
-                  riotous stand-up comedy night, and 25+ high-energy events
-                  designed to test your talent, nerve, and wit.
+                  From 26th February to 1st March, Synapse’26 unveils The Joker’s Realm — a world where
+                  laughter hides secrets, madness fuels art, and unpredictability is
+                  the only constant. Expect three explosive concert nights with
+                  artists who’ll shake your reality, a riotous stand-up comedy night,
+                  and 25+ high-energy events designed to test your talent, nerve, and
+                  wit.
                 </p>
 
                 <p>
@@ -85,7 +85,6 @@ export default function About() {
             </div>
           </div>
         </section>
-        {/* FOOTER (same as Events page) */}
         <Footer />
       </main>
     </>

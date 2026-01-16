@@ -99,10 +99,7 @@ export default function UserProfile() {
   };
 
   return (
-    <div
-      ref={ref}
-      className="min-h-screen bg-background px-4 py-6 md:px-8 md:py-12"
-    >
+    <div ref={ref} className="min-h-[100dvh] bg-background px-4 py-6 md:px-8 md:py-12">
       {/* HEADER */}
       <div className="max-w-7xl mx-auto mb-6 md:mb-10">
         <button

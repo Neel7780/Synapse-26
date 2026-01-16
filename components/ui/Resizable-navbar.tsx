@@ -175,16 +175,32 @@ export const MobileAnimatedMenuItem = ({
   link,
   onClick,
 }: AnimatedMenuItemProps) => {
+  const movedRef = React.useRef(false);
   return (
     <Link
       href={link}
-      onClick={(e) => onClick?.(e)}
-      className="
-        group w-full
-        grid grid-cols-[1fr_auto] items-center
-        cursor-pointer select-none
-        text-white font-joker
-      "
+      className="group w-full grid grid-cols-[1fr_auto] items-center cursor-pointer select-none text-white font-joker"
+      onTouchStart={() => {
+        movedRef.current = false;
+      }}
+      onTouchMove={() => {
+        movedRef.current = true;
+      }}
+      onTouchEnd={(e) => {
+        if (movedRef.current) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+      }}
+      onClick={(e) => {
+        if (movedRef.current) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+        onClick?.(e);
+      }}
     >
       {/* TEXT */}
       <div className="relative overflow-hidden h-[clamp(32px,7vw,64px)]">
@@ -244,8 +260,8 @@ export const MobileNavHeader = ({
   return (
     <div
       className={cn(
-        "flex w-full px-4 py-2 flex-row items-center justify-between",
-        className
+        "flex w-full z-9999 px-4 py-4 flex-row items-center justify-between",
+        className,
       )}
     >
       {children}
@@ -253,30 +269,43 @@ export const MobileNavHeader = ({
   );
 };
 
-export const MobileNavMenu = forwardRef<HTMLDivElement, MobileNavMenuProps>(
-  function MobileNavMenu({ children, className, isOpen }, ref) {
-    return (
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            ref={ref}
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className={cn(
-              "absolute inset-x-0 top-5 max-h-[70vh] overflow-y-auto z-150 flex w-[calc(100%-130px)] flex-col left-[75px] items-start justify-start gap-4 rounded-lg bg-black/95 px-4 py-8 border border-white/10 shadow-[0_4px_30px_rgba(235,0,0,0.15)] overscroll-contain",
-              className
-            )}
-            onWheel={(e) => e.stopPropagation()}
-            onTouchMove={(e) => e.stopPropagation()}
-          >
-            {children}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    );
+export const MobileNavMenu = forwardRef<
+  HTMLDivElement,
+  MobileNavMenuProps & {
+    onClose: () => void;
   }
-);
+>(function MobileNavMenu(
+  { children, className, isOpen, onClose },
+  ref
+) {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          ref={ref}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+          className={cn(
+            "fixed inset-x-0 top-2 z-[999] mx-auto w-[calc(100%-16px)] rounded-xl bg-black/95 border border-white/10 shadow-[0_4px_30px_rgba(235,0,0,0.15)]",
+            className
+          )}
+          onWheel={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
+        >
+          <div className="sticky top-0 z-150 h-[70px] flex items-center justify-between px-4 py-5 bg-black/95">
+          </div>
+
+          {/* MENU ITEMS */}
+          <div className="flex flex-col gap-6 px-8 pb-6 max-h-[70dvh] overflow-y-auto overscroll-contain">
+            {children}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+});
 
 export const MobileNavToggle = ({
   isOpen,
@@ -286,17 +315,9 @@ export const MobileNavToggle = ({
   onClick: () => void;
 }) => {
   return isOpen ? (
-    <IconX
-      size={35}
-      className="text-white cursor-pointer hover:text-[#EB0000] transition-colors"
-      onClick={onClick}
-    />
+    <IconX size={35} className=" z-9999 text-white cursor-pointer hover:text-[#EB0000] transition-colors" onClick={onClick} />
   ) : (
-    <IconMenu3
-      size={35}
-      className="text-white scale-[0.9] md:scale-[1] cursor-pointer hover:text-[#EB0000] transition-colors"
-      onClick={onClick}
-    />
+    <IconMenu3 size={35} className=" text-white scale-[0.9] md:scale-[1] cursor-pointer hover:text-[#EB0000] transition-colors" onClick={onClick} />
   );
 };
 
@@ -304,7 +325,7 @@ export const NavbarLogo = () => {
   return (
     <Link
       href="/"
-      className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-black dark:text-white"
+      className="relative mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-black dark:text-white"
     >
       <Image
         src="/Synapse Logo.png"

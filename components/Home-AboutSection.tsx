@@ -163,10 +163,10 @@ export default function AboutSection() {
     };
   }, [splitTextToWords, positionImageFromGradientCenter]);
 
-  return (
-    <section
-      ref={aboutSectionRef}
-      className="part3_end relative min-h-screen w-full
+    return (
+        <section
+            ref={aboutSectionRef}
+            className="part3_end relative min-h-[100dvh] w-full
                     flex flex-col
                     px-[clamp(1.5rem,4vw,3.75rem)]
                     py-[clamp(1.2rem,5vh,5rem)]

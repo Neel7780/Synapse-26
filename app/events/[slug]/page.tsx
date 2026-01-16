@@ -15,10 +15,12 @@ export default function EventDetailPage() {
   if (!page) return notFound();
 
   return (
-    <main className="bg-black text-white min-h-screen overflow-x-hidden">
+    <main className="bg-black text-white min-h-[100dvh] overflow-x-hidden">
+
       <Navbar visible={true}>
         <NavigationPanel />
       </Navbar>
+
 
       {/* TRIANGLE HEADER */}
       <header className="relative w-full h-[55vh] min-h-[520px]">

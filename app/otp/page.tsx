@@ -60,7 +60,7 @@ export default function OTPPage() {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-[100dvh]">
       {/* Left Side - Joker Card Image */}
       <div className="relative hidden w-1/2 lg:block">
         <Image

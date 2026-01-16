@@ -132,14 +132,12 @@ export function AccommodationComponent() {
     );
   };
 
-  return (
-    <div className="min-h-screen bg-black text-white font-jqka">
-      {/* Header */}
-      <div className="pb-6 md:pb-8 text-center px-4">
-        <h1 className="pt-5 text-3xl md:text-6xl lg:text-8xl font-joker mb-2">
-          accommodation
-        </h1>
-      </div>
+    return (
+        <div className="min-h-[100dvh] bg-black text-white font-jqka">
+            {/* Header */}
+            <div className="pb-6 md:pb-8 text-center px-4">
+                <h1 className="pt-5 text-3xl md:text-6xl lg:text-8xl font-joker mb-2">accommodation</h1>
+            </div>
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 md:px-6 py-6 md:py-8">

@@ -51,238 +51,238 @@ export default function HallOfFame() {
     []
   );
 
-  const gridImages = [
-    // Row 1 (Top)
-    {
-      src: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400",
-      alt: "Concert crowd",
-      gridPosition: { col: 0, row: 0 },
-      colSpan: 2,
-      rowSpan: 1,
-      startX: -500,
-      startY: -400,
-      delay: 0.05,
-      mobileCol: 0,
-      mobileRow: 0,
-      mobileColSpan: 2,
-      tabletCol: 0,
-      tabletRow: 0,
-      tabletColSpan: 2,
-    },
-    {
-      src: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400",
-      alt: "Festival crowd energy",
-      gridPosition: { col: 2, row: 0 },
-      colSpan: 1,
-      rowSpan: 1,
-      startX: 0,
-      startY: -450,
-      delay: 0.07,
-      mobileHidden: true,
-      tabletCol: 2,
-      tabletRow: 0,
-    },
-    {
-      src: "https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=400",
-      alt: "Festival vibes",
-      gridPosition: { col: 3, row: 0 },
-      colSpan: 1,
-      rowSpan: 1,
-      startX: 100,
-      startY: -450,
-      delay: 0.09,
-      mobileHidden: true,
-      tabletCol: 3,
-      tabletRow: 0,
-    },
-    {
-      src: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400",
-      alt: "Festival friends",
-      gridPosition: { col: 4, row: 0 },
-      colSpan: 1,
-      rowSpan: 1,
-      startX: 200,
-      startY: -400,
-      delay: 0.1,
-      mobileCol: 2,
-      mobileRow: 0,
-      mobileColSpan: 1,
-      tabletCol: 4,
-      tabletRow: 0,
-    },
-    {
-      src: "https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?w=400",
-      alt: "Concert energy",
-      gridPosition: { col: 5, row: 0 },
-      colSpan: 1,
-      rowSpan: 1,
-      startX: 600,
-      startY: -400,
-      delay: 0.11,
-      mobileHidden: true,
-      tabletHidden: true,
-    },
+    const gridImages = [
+        // Row 1 (Top)
+        {
+            src: '/images_halloffame/6.jpeg',
+            alt: 'Concert crowd',
+            gridPosition: { col: 0, row: 0 },
+            colSpan: 2,
+            rowSpan: 1,
+            startX: -500,
+            startY: -400,
+            delay: 0.05,
+            mobileCol: 0,
+            mobileRow: 0,
+            mobileColSpan: 2,
+            tabletCol: 0,
+            tabletRow: 0,
+            tabletColSpan: 2,
+        },
+        {
+            src: '/images_halloffame/11.jpeg',
+            alt: 'Festival crowd energy',
+            gridPosition: { col: 2, row: 0 },
+            colSpan: 1,
+            rowSpan: 1,
+            startX: 0,
+            startY: -450,
+            delay: 0.07,
+            mobileHidden: true,
+            tabletCol: 2,
+            tabletRow: 0,
+        },
+        {
+            src: '/images_halloffame/14.jpeg',
+            alt: 'Festival vibes',
+            gridPosition: { col: 3, row: 0 },
+            colSpan: 1,
+            rowSpan: 1,
+            startX: 100,
+            startY: -450,
+            delay: 0.09,
+            mobileHidden: true,
+            tabletCol: 3,
+            tabletRow: 0,
+        },
+        {
+            src: '/images_halloffame/15.jpeg',
+            alt: 'Festival friends',
+            gridPosition: { col: 4, row: 0 },
+            colSpan: 1,
+            rowSpan: 1,
+            startX: 200,
+            startY: -400,
+            delay: 0.1,
+            mobileCol: 2,
+            mobileRow: 0,
+            mobileColSpan: 1,
+            tabletCol: 4,
+            tabletRow: 0,
+        },
+        {
+            src: '/images_halloffame/1.jpeg',
+            alt: 'Concert energy',
+            gridPosition: { col: 5, row: 0 },
+            colSpan: 1,
+            rowSpan: 1,
+            startX: 600,
+            startY: -400,
+            delay: 0.11,
+            mobileHidden: true,
+            tabletHidden: true,
+        },
 
-    // Row 2
-    {
-      src: "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=400",
-      alt: "Dancers",
-      gridPosition: { col: 0, row: 1 },
-      colSpan: 1,
-      rowSpan: 1,
-      startX: -600,
-      startY: -50,
-      delay: 0.12,
-      mobileCol: 0,
-      mobileRow: 1,
-      mobileColSpan: 1,
-      tabletCol: 0,
-      tabletRow: 1,
-    },
-    {
-      src: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400",
-      alt: "Concert lights",
-      gridPosition: { col: 5, row: 1 },
-      colSpan: 1,
-      rowSpan: 2,
-      startX: 600,
-      startY: 0,
-      delay: 0.14,
-      mobileCol: 2,
-      mobileRow: 1,
-      mobileColSpan: 1,
-      tabletCol: 4,
-      tabletRow: 1,
-      tabletRowSpan: 2,
-    },
+        // Row 2
+        {
+            src: '/images_halloffame/4.jpeg',
+            alt: 'Dancers',
+            gridPosition: { col: 0, row: 1 },
+            colSpan: 1,
+            rowSpan: 1,
+            startX: -600,
+            startY: -50,
+            delay: 0.12,
+            mobileCol: 0,
+            mobileRow: 1,
+            mobileColSpan: 1,
+            tabletCol: 0,
+            tabletRow: 1,
+        },
+        {
+            src: '/images_halloffame/12.jpeg',
+            alt: 'Concert lights',
+            gridPosition: { col: 5, row: 1 },
+            colSpan: 1,
+            rowSpan: 2,
+            startX: 600,
+            startY: 0,
+            delay: 0.14,
+            mobileCol: 2,
+            mobileRow: 1,
+            mobileColSpan: 1,
+            tabletCol: 4,
+            tabletRow: 1,
+            tabletRowSpan: 2,
+        },
 
-    // Row 3
-    {
-      src: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400",
-      alt: "Stage show",
-      gridPosition: { col: 0, row: 2 },
-      colSpan: 1,
-      startX: -600,
-      startY: 50,
-      delay: 0.16,
-      mobileCol: 0,
-      mobileRow: 2,
-      mobileColSpan: 1,
-      tabletCol: 0,
-      tabletRow: 2,
-      tabletRowSpan: 2,
-    },
-    {
-      src: "https://images.unsplash.com/photo-1506157786151-b8491531f063?w=400",
-      alt: "Fireworks",
-      gridPosition: { col: 1, row: 1 },
-      colSpan: 1,
-      rowSpan: 2,
-      startX: -400,
-      startY: 100,
-      delay: 0.17,
-      mobileHidden: true,
-      tabletCol: 1,
-      tabletRow: 2,
-      tabletHidden: true,
-    },
-    {
-      src: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400",
-      alt: "Festival food",
-      gridPosition: { col: 4, row: 1 },
-      colSpan: 1,
-      rowSpan: 2,
-      startX: 400,
-      startY: 100,
-      delay: 0.18,
-      mobileHidden: true,
-      tabletCol: 3,
-      tabletRow: 1,
-      tabletHidden: true,
-    },
+        // Row 3
+        {
+            src: '/images_halloffame/13.jpeg',
+            alt: 'Stage show',
+            gridPosition: { col: 0, row: 2 },
+            colSpan: 1,
+            startX: -600,
+            startY: 50,
+            delay: 0.16,
+            mobileCol: 0,
+            mobileRow: 2,
+            mobileColSpan: 1,
+            tabletCol: 0,
+            tabletRow: 2,
+            tabletRowSpan: 2,
+        },
+        {
+            src: '/images_halloffame/3.jpeg',
+            alt: 'Fireworks',
+            gridPosition: { col: 1, row: 1 },
+            colSpan: 1,
+            rowSpan: 2,
+            startX: -400,
+            startY: 100,
+            delay: 0.17,
+            mobileHidden: true,
+            tabletCol: 1,
+            tabletRow: 2,
+            tabletHidden: true,
+        },
+        {
+            src: '/images_halloffame/16.jpeg',
+            alt: 'Festival food',
+            gridPosition: { col: 4, row: 1 },
+            colSpan: 1,
+            rowSpan: 2,
+            startX: 400,
+            startY: 100,
+            delay: 0.18,
+            mobileHidden: true,
+            tabletCol: 3,
+            tabletRow: 1,
+            tabletHidden: true,
+        },
 
-    // Row 4 (Bottom)
-    {
-      src: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400",
-      alt: "Festival lights",
-      gridPosition: { col: 0, row: 3 },
-      colSpan: 1,
-      rowSpan: 1,
-      startX: -600,
-      startY: 400,
-      delay: 0.19,
-      mobileHidden: true,
-      tabletHidden: true,
-    },
-    {
-      src: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=400",
-      alt: "Festival art",
-      gridPosition: { col: 1, row: 3 },
-      colSpan: 1,
-      rowSpan: 1,
-      startX: -400,
-      startY: 400,
-      delay: 0.2,
-      mobileCol: 1,
-      mobileRow: 2,
-      mobileColSpan: 1,
-      tabletCol: 1,
-      tabletRow: 3,
-    },
-    {
-      src: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400",
-      alt: "Art gallery",
-      gridPosition: { col: 2, row: 3 },
-      colSpan: 1,
-      rowSpan: 1,
-      startX: -200,
-      startY: 450,
-      delay: 0.22,
-      mobileHidden: true,
-      tabletCol: 2,
-      tabletRow: 3,
-    },
-    {
-      src: "https://images.unsplash.com/photo-1470229538611-16ba8c7ffbd7?w=400",
-      alt: "Live music",
-      gridPosition: { col: 3, row: 3 },
-      colSpan: 1,
-      rowSpan: 1,
-      startX: 200,
-      startY: 450,
-      delay: 0.24,
-      mobileHidden: true,
-      tabletCol: 3,
-      tabletRow: 3,
-    },
-    {
-      src: "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=400",
-      alt: "Festival stage",
-      gridPosition: { col: 4, row: 3 },
-      colSpan: 1,
-      rowSpan: 1,
-      startX: 400,
-      startY: 400,
-      delay: 0.25,
-      mobileHidden: true,
-      tabletCol: 4,
-      tabletRow: 3,
-    },
-    {
-      src: "https://images.unsplash.com/photo-1549451371-64aa98a6f660?w=400",
-      alt: "Festival sunset",
-      gridPosition: { col: 5, row: 3 },
-      colSpan: 1,
-      rowSpan: 1,
-      startX: 600,
-      startY: 400,
-      delay: 0.26,
-      mobileCol: 2,
-      mobileRow: 2,
-      mobileColSpan: 1,
-      tabletHidden: true,
-    },
-  ];
+        // Row 4 (Bottom)
+        {
+            src: '/images_halloffame/5.jpeg',
+            alt: 'Festival lights',
+            gridPosition: { col: 0, row: 3 },
+            colSpan: 1,
+            rowSpan: 1,
+            startX: -600,
+            startY: 400,
+            delay: 0.19,
+            mobileHidden: true,
+            tabletHidden: true,
+        },
+        {
+            src: '/images_halloffame/7.jpeg',
+            alt: 'Festival art',
+            gridPosition: { col: 1, row: 3 },
+            colSpan: 1,
+            rowSpan: 1,
+            startX: -400,
+            startY: 400,
+            delay: 0.2,
+            mobileCol: 1,
+            mobileRow: 2,
+            mobileColSpan: 1,
+            tabletCol: 1,
+            tabletRow: 3,
+        },
+        {
+            src: '/images_halloffame/2.jpeg',
+            alt: 'Art gallery',
+            gridPosition: { col: 2, row: 3 },
+            colSpan: 1,
+            rowSpan: 1,
+            startX: -200,
+            startY: 450,
+            delay: 0.22,
+            mobileHidden: true,
+            tabletCol: 2,
+            tabletRow: 3,
+        },
+        {
+            src: '/images_halloffame/10.jpeg',
+            alt: 'Live music',
+            gridPosition: { col: 3, row: 3 },
+            colSpan: 1,
+            rowSpan: 1,
+            startX: 200,
+            startY: 450,
+            delay: 0.24,
+            mobileHidden: true,
+            tabletCol: 3,
+            tabletRow: 3,
+        },
+        {
+            src: '/images_halloffame/9.jpeg',
+            alt: 'Festival stage',
+            gridPosition: { col: 4, row: 3 },
+            colSpan: 1,
+            rowSpan: 1,
+            startX: 400,
+            startY: 400,
+            delay: 0.25,
+            mobileHidden: true,
+            tabletCol: 4,
+            tabletRow: 3,
+        },
+        {
+            src: '/images_halloffame/8.jpeg',
+            alt: 'Festival sunset',
+            gridPosition: { col: 5, row: 3 },
+            colSpan: 1,
+            rowSpan: 1,
+            startX: 600,
+            startY: 400,
+            delay: 0.26,
+            mobileCol: 2,
+            mobileRow: 2,
+            mobileColSpan: 1,
+            tabletHidden: true,
+        },
+    ];
 
   const getGridMetrics = () => {
     if (typeof window === "undefined") {
@@ -480,21 +480,21 @@ export default function HallOfFame() {
     { scope: hallContainerRef }
   );
 
-  return (
-    <div className="relative overflow-hidden w-full bg-black">
-      <div ref={hallContainerRef} className="relative">
-        <div className="h-screen w-full bg-black">
-          {/* Mobile Grid (3x3) */}
-          <div className="md:hidden absolute inset-0 flex items-center justify-center p-2">
-            <div
-              className="relative w-full h-full grid gap-1"
-              style={{
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gridTemplateRows: "repeat(3, 1fr)",
-              }}
-            >
-              {gridImages.map((image, index) => {
-                if (image.mobileHidden) return null;
+    return (
+        <div className="relative overflow-hidden w-full bg-black">
+            <div ref={hallContainerRef} className="relative">
+                <div className="h-[100dvh] w-full bg-black">
+                    {/* Mobile Grid (3x3) */}
+                    <div className="md:hidden absolute inset-0 flex items-center justify-center p-2">
+                        <div
+                            className="relative w-full h-full grid gap-1"
+                            style={{
+                                gridTemplateColumns: 'repeat(3, 1fr)',
+                                gridTemplateRows: 'repeat(3, 1fr)',
+                            }}
+                        >
+                            {gridImages.map((image, index) => {
+                                if (image.mobileHidden) return null;
 
                 return (
                   <div
@@ -662,31 +662,25 @@ export default function HallOfFame() {
             </div>
           </div>
 
-          {/* Scroll indicator */}
-          <div
-            ref={scrollIndicatorRef}
-            className="absolute top-30 right-2 sm:right-10 flex flex-col items-center gap-2 text-white z-20"
-          >
-            <span className="text-xl md:text-3xl tracking-widest uppercase font-jqka">
-              Scroll to explore
-            </span>
-          </div>
+                    {/* Scroll indicator */}
+                    <div
+                        ref={scrollIndicatorRef}
+                        className="absolute top-30 right-2 sm:right-10 flex flex-col items-center gap-2 text-white z-20"
+                    >
+                        <span className="text-xl md:text-3xl tracking-widest uppercase font-jqka">Scroll to explore</span>
+                    </div>
+                </div>
+            </div>
+            <div className="relative w-full overflow-hidden py-5 mb-5 bg-black">
+                <div className="flex w-max animate-marquee">
+                    <span className="font-jqka uppercase text-3xl lg:text-5xl whitespace-nowrap">
+                        Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26 #joker's realm •
+                    </span>
+                    <span className="font-jqka uppercase text-3xl lg:text-5xl whitespace-nowrap">
+                        Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26 #joker's realm •
+                    </span>
+                </div>
+            </div>
         </div>
-      </div>
-      <div className="relative w-full overflow-hidden py-5 mb-5 bg-black">
-        <div className="flex w-max animate-marquee">
-          <span className="font-jqka uppercase text-3xl whitespace-nowrap">
-            Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse'
-            26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26
-            #joker's realm • Synapse' 26 #joker's realm •
-          </span>
-          <span className="font-jqka uppercase text-3xl whitespace-nowrap">
-            Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse'
-            26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26
-            #joker's realm • Synapse' 26 #joker's realm •
-          </span>
-        </div>
-      </div>
-    </div>
-  );
+    );
 }

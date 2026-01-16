@@ -105,10 +105,7 @@ export default function UserProfile() {
   }, []);
 
   return (
-    <div
-      ref={profileRef}
-      className="min-h-screen bg-background py-12 px-4 md:py-20"
-    >
+    <div ref={profileRef} className="min-h-[100dvh] bg-background py-12 px-4 md:py-20">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-12">
         <button className="group relative -left-4 inline-flex items-center justify-center text-muted-foreground hover:text-foreground transition-all-ml-5">
@@ -706,7 +703,7 @@ export default function UserProfile() {
 //     return (
 //         <div className="relative w-full bg-black">
 //             <div ref={hallContainerRef} className="relative">
-//                 <div className="h-screen w-full bg-black">
+//                 <div className="h-[100dvh] w-full bg-black">
 //                     {/* Mobile Grid (3x3) */}
 //                     <div className="md:hidden absolute inset-0 flex items-center justify-center p-2">
 //                         <div

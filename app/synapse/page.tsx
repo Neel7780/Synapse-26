@@ -32,8 +32,9 @@ export default function HomeSection() {
     }
   }, [entered]);
 
+
   return (
-    <main className="flex flex-col min-h-screen relative">
+    <main className="flex flex-col min-h-[100dvh] relative">
       {entered ? <FluidCanvas /> : ""}
       <Navbar visible={showNavbar}>
         <NavigationPanel />
