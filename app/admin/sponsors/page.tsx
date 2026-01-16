@@ -41,6 +41,9 @@ import {
   Globe,
   Loader2,
   AlertCircle,
+  Crown,
+  Trophy,
+  Medal,
 } from "lucide-react";
 
 type Sponsor = {
@@ -50,6 +53,7 @@ type Sponsor = {
   website_url: string;
   logo_url: string;
   description?: string;
+  display_order?: number;
 };
 
 const tierConfig: Record<string, { bg: string; text: string; border: string; Icon: React.ComponentType<{ className?: string }> }> = {
@@ -66,6 +70,7 @@ export default function SponsorsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const fetchSponsors = async () => {
     setLoading(true);
@@ -100,18 +105,18 @@ export default function SponsorsPage() {
         const response = await fetch("/api/admin/sponsors");
         if (!response.ok) throw new Error("Failed to fetch sponsors");
         const data = await response.json();
-        
+
         // Ensure each sponsor has a display_order
         const sponsorsWithOrder = data.sponsors.map((sponsor: Sponsor, index: number) => ({
           ...sponsor,
           display_order: sponsor.display_order ?? index + 1,
         }));
-        
+
         // Sort by display_order
-        sponsorsWithOrder.sort((a: Sponsor, b: Sponsor) => 
+        sponsorsWithOrder.sort((a: Sponsor, b: Sponsor) =>
           (a.display_order ?? 0) - (b.display_order ?? 0)
         );
-        
+
         setSponsors(sponsorsWithOrder);
       } catch (error) {
         console.error("Error fetching sponsors:", error);
@@ -249,7 +254,7 @@ export default function SponsorsPage() {
             <Card key={tier} className="border-border/40">
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-2xl">{style.icon}</span>
+                  <style.Icon className="h-8 w-8" />
                   <Badge className={`${style.bg} ${style.text} ${style.border}`}>{tier}</Badge>
                 </div>
                 <p className="text-2xl font-bold">{count}</p>
@@ -294,7 +299,7 @@ export default function SponsorsPage() {
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
                         <div className="h-12 w-12 rounded-xl bg-secondary flex items-center justify-center text-xl">
-                          {style.icon}
+                          <style.Icon className="h-6 w-6" />
                         </div>
                         <div>
                           <h3 className="font-semibold">{sponsor.name}</h3>
