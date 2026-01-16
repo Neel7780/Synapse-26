@@ -14,8 +14,13 @@ interface AccommodationData {
   available?: boolean;
 }
 
-interface Accommodation extends AccommodationData {
+interface Accommodation {
   id: number;
+  type: string;
+  price: number;
+  startDate: string;
+  endDate: string;
+  description: string;
   available: boolean;
 }
 
