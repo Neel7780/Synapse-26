@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { AdminPageHeader } from "@/components/admin/ui/AdminSidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
@@ -17,6 +18,7 @@ import {
     ArrowDown,
     BarChart3,
     Activity,
+    Loader2,
 } from "lucide-react";
 import {
     Area,
@@ -33,28 +35,50 @@ import {
     PieChart,
     Pie,
     Cell,
+    Legend,
 } from "recharts";
 
-// Mock analytics data
-const overviewStats = [
-    { title: "Page Views", value: "12,847", change: "+12.5%", up: true, icon: Eye },
-    { title: "Unique Visitors", value: "4,523", change: "+8.3%", up: true, icon: Users },
-    { title: "Avg. Session", value: "3m 42s", change: "-2.1%", up: false, icon: Clock },
-    { title: "Bounce Rate", value: "42.3%", change: "-5.2%", up: true, icon: TrendingUp },
-];
+// Types for analytics data
+interface AnalyticsData {
+    overview: {
+        pageViews: string;
+        uniqueVisitors: string;
+        avgSession: string;
+        bounceRate: string;
+        pageViewsChange: string;
+        visitorsChange: string;
+        sessionChange: string;
+        bounceRateChange: string;
+    };
+    pageViews: Array<{ day: string; views: number; visitors: number }>;
+    trafficSources: Array<{ name: string; value: number; color: string }>;
+    hourlyTraffic: Array<{ hour: string; visitors: number }>;
+    topPages: Array<{ path: string; views: number; change: string }>;
+    deviceStats: Array<{ device: string; percentage: number; sessions: string }>;
+    realtimeVisitors: Array<{ page: string; visitors: number }>;
+}
 
-// Chart data - Page views over last 7 days
-const pageViewsData = [
-    { day: "Mon", views: 1420, visitors: 890 },
-    { day: "Tue", views: 1680, visitors: 1020 },
-    { day: "Wed", views: 2100, visitors: 1350 },
-    { day: "Thu", views: 1890, visitors: 1180 },
-    { day: "Fri", views: 2450, visitors: 1520 },
-    { day: "Sat", views: 2780, visitors: 1780 },
-    { day: "Sun", views: 2420, visitors: 1490 },
-];
+// Default mock data for fallback
+const defaultData: AnalyticsData = {
+    overview: {
+        pageViews: "0",
+        uniqueVisitors: "0",
+        avgSession: "0m 0s",
+        bounceRate: "0%",
+        pageViewsChange: "0%",
+        visitorsChange: "0%",
+        sessionChange: "0%",
+        bounceRateChange: "0%",
+    },
+    pageViews: [],
+    trafficSources: [],
+    hourlyTraffic: [],
+    topPages: [],
+    deviceStats: [],
+    realtimeVisitors: [],
+};
 
-// Registrations by event category
+// Registrations by event category (this could also come from your database)
 const registrationsByCategory = [
     { category: "Technical", count: 186, fill: "hsl(var(--primary))" },
     { category: "Cultural", count: 124, fill: "hsl(var(--chart-2))" },
@@ -63,68 +87,42 @@ const registrationsByCategory = [
     { category: "Gaming", count: 23, fill: "hsl(var(--chart-5))" },
 ];
 
-// Hourly traffic today
-const hourlyTraffic = [
-    { hour: "6am", visitors: 45 },
-    { hour: "8am", visitors: 120 },
-    { hour: "10am", visitors: 280 },
-    { hour: "12pm", visitors: 420 },
-    { hour: "2pm", visitors: 380 },
-    { hour: "4pm", visitors: 520 },
-    { hour: "6pm", visitors: 680 },
-    { hour: "8pm", visitors: 590 },
-    { hour: "10pm", visitors: 320 },
-];
-
-// Traffic sources for pie chart
-const trafficSources = [
-    { name: "Direct", value: 45, color: "#dc2626" },
-    { name: "Social", value: 28, color: "#f97316" },
-    { name: "Organic", value: 18, color: "#eab308" },
-    { name: "Referral", value: 9, color: "#22c55e" },
-];
-
-// Weekly revenue
-const weeklyRevenue = [
-    { week: "Week 1", revenue: 24500, registrations: 89 },
-    { week: "Week 2", revenue: 32800, registrations: 124 },
-    { week: "Week 3", revenue: 45200, registrations: 167 },
-    { week: "Week 4", revenue: 52100, registrations: 198 },
-];
-
-const topPages = [
-    { path: "/events", views: 3421, change: "+15%" },
-    { path: "/register", views: 2847, change: "+23%" },
-    { path: "/pronite", views: 2156, change: "+8%" },
-    { path: "/merchandise", views: 1823, change: "+12%" },
-    { path: "/sponsors", views: 987, change: "-3%" },
-];
-
-const deviceStats = [
-    { device: "Desktop", icon: Monitor, percentage: 52, sessions: "6,678" },
-    { device: "Mobile", icon: Smartphone, percentage: 41, sessions: "5,267" },
-    { device: "Tablet", icon: Tablet, percentage: 7, sessions: "903" },
-];
-
-const realtimeVisitors = [
-    { page: "/events/hackathon-2025", visitors: 23 },
-    { page: "/register", visitors: 18 },
-    { page: "/pronite", visitors: 12 },
-    { page: "/merchandise", visitors: 8 },
-    { page: "/", visitors: 6 },
-];
-
-// Custom tooltip style
+// Enhanced Custom Tooltip
 const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number; name: string; color: string }>; label?: string }) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-card border border-border rounded-lg shadow-xl p-3">
-                <p className="text-sm font-medium mb-1">{label}</p>
-                {payload.map((entry, index) => (
-                    <p key={index} className="text-sm" style={{ color: entry.color }}>
-                        {entry.name}: {typeof entry.value === 'number' ? entry.value.toLocaleString() : entry.value}
-                    </p>
-                ))}
+            <div className="bg-card/95 backdrop-blur-sm border border-border rounded-xl shadow-2xl p-4 min-w-[160px] animate-in fade-in-0 zoom-in-95 duration-200">
+                <p className="text-sm font-semibold mb-3 text-foreground border-b border-border/50 pb-2">{label}</p>
+                <div className="space-y-2">
+                    {payload.map((entry, index) => (
+                        <div key={index} className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-2">
+                                <div 
+                                    className="w-2.5 h-2.5 rounded-full" 
+                                    style={{ backgroundColor: entry.color }}
+                                />
+                                <span className="text-xs text-muted-foreground font-medium">{entry.name}</span>
+                            </div>
+                            <span className="text-sm font-bold" style={{ color: entry.color }}>
+                                {typeof entry.value === 'number' ? entry.value.toLocaleString() : entry.value}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+    return null;
+};
+
+// Enhanced Pie Tooltip
+const PieTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ value: number; name: string }> }) => {
+    if (active && payload && payload.length) {
+        const data = payload[0];
+        return (
+            <div className="bg-card/95 backdrop-blur-sm border border-border rounded-xl shadow-2xl p-3 animate-in fade-in-0 zoom-in-95 duration-200">
+                <p className="text-sm font-semibold mb-1">{data.name}</p>
+                <p className="text-lg font-bold text-primary">{data.value}%</p>
             </div>
         );
     }
@@ -132,6 +130,96 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
 };
 
 export default function AnalyticsPage() {
+    const [analyticsData, setAnalyticsData] = useState<AnalyticsData>(defaultData);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        async function fetchAnalytics() {
+            try {
+                setLoading(true);
+                const response = await fetch("/api/admin/analytics");
+                
+                if (!response.ok) {
+                    throw new Error("Failed to fetch analytics data");
+                }
+
+                const data = await response.json();
+                setAnalyticsData(data);
+                setError(null);
+            } catch (err) {
+                console.error("Error fetching analytics:", err);
+                setError(err instanceof Error ? err.message : "Failed to load analytics");
+                // Use default/fallback data on error
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchAnalytics();
+    }, []);
+
+    // Transform data for display
+    const overviewStats = [
+        { title: "Page Views", value: analyticsData.overview.pageViews, change: analyticsData.overview.pageViewsChange, up: !analyticsData.overview.pageViewsChange.startsWith("-"), icon: Eye },
+        { title: "Unique Visitors", value: analyticsData.overview.uniqueVisitors, change: analyticsData.overview.visitorsChange, up: !analyticsData.overview.visitorsChange.startsWith("-"), icon: Users },
+        { title: "Avg. Session", value: analyticsData.overview.avgSession, change: analyticsData.overview.sessionChange, up: !analyticsData.overview.sessionChange.startsWith("-"), icon: Clock },
+        { title: "Bounce Rate", value: analyticsData.overview.bounceRate, change: analyticsData.overview.bounceRateChange, up: !analyticsData.overview.bounceRateChange.startsWith("-"), icon: TrendingUp },
+    ];
+
+    const pageViewsData = analyticsData.pageViews.length > 0 
+        ? analyticsData.pageViews 
+        : Array.from({ length: 7 }, (_, i) => ({ day: "Mon", views: 0, visitors: 0 }));
+
+    const trafficSources = analyticsData.trafficSources.length > 0 
+        ? analyticsData.trafficSources 
+        : [{ name: "No data", value: 100, color: "#666" }];
+
+    const hourlyTraffic = analyticsData.hourlyTraffic.length > 0 
+        ? analyticsData.hourlyTraffic 
+        : Array.from({ length: 9 }, (_, i) => ({ hour: "0am", visitors: 0 }));
+
+    const topPages = analyticsData.topPages.length > 0 
+        ? analyticsData.topPages 
+        : [{ path: "No data available", views: 0, change: "0%" }];
+
+    const deviceStats = analyticsData.deviceStats.length > 0 
+        ? analyticsData.deviceStats.map(stat => ({
+            ...stat,
+            icon: stat.device === "Desktop" ? Monitor : stat.device === "Mobile" ? Smartphone : Tablet,
+        }))
+        : [
+            { device: "Desktop", icon: Monitor, percentage: 0, sessions: "0" },
+            { device: "Mobile", icon: Smartphone, percentage: 0, sessions: "0" },
+            { device: "Tablet", icon: Tablet, percentage: 0, sessions: "0" },
+        ];
+
+    const realtimeVisitors = analyticsData.realtimeVisitors.length > 0 
+        ? analyticsData.realtimeVisitors 
+        : [{ page: "No active visitors", visitors: 0 }];
+
+    const totalRealtimeVisitors = realtimeVisitors.reduce((sum, v) => sum + v.visitors, 0);
+
+    if (loading) {
+        return (
+            <div className="space-y-6 pb-8">
+                <AdminPageHeader
+                    title="Website Analytics"
+                    subtitle="Analytics"
+                    badge={
+                        <Badge className="bg-emerald-500/10 text-emerald-400 border-0 flex items-center gap-1.5">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            Loading...
+                        </Badge>
+                    }
+                />
+                <div className="flex items-center justify-center py-20">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6 pb-8">
             <AdminPageHeader
@@ -140,29 +228,46 @@ export default function AnalyticsPage() {
                 badge={
                     <Badge className="bg-emerald-500/10 text-emerald-400 border-0 flex items-center gap-1.5">
                         <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                        Live
+                        {error ? "Using Mock Data" : "Live"}
                     </Badge>
                 }
             />
+            
+            {error && (
+                <Card className="border-yellow-500/50 bg-yellow-500/10">
+                    <CardContent className="p-4">
+                        <p className="text-sm text-yellow-400">
+                            ⚠️ {error}. Displaying fallback data. Please configure Vercel Analytics API to see real data.
+                        </p>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Overview Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {overviewStats.map((stat) => {
+                {overviewStats.map((stat, index) => {
                     const Icon = stat.icon;
                     return (
-                        <Card key={stat.title} className="border-border/40">
+                        <Card 
+                            key={stat.title} 
+                            className="border-border/40 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 group animate-in fade-in slide-in-from-bottom-4"
+                            style={{ 
+                                animationDelay: `${index * 100}ms`,
+                                animationFillMode: 'both'
+                            }}
+                        >
                             <CardContent className="p-5">
                                 <div className="flex items-center justify-between mb-3">
-                                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                                        <Icon className="h-5 w-5 text-primary" />
+                                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors duration-300">
+                                        <Icon className="h-5 w-5 text-primary group-hover:scale-110 transition-transform duration-300" />
                                     </div>
-                                    <div className={`flex items-center gap-1 text-sm font-medium ${stat.up ? "text-emerald-400" : "text-red-400"}`}>
+                                    <div className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md ${stat.up ? "text-emerald-400 bg-emerald-500/10" : "text-red-400 bg-red-500/10"}`}>
                                         {stat.up ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
                                         {stat.change}
                                     </div>
                                 </div>
-                                <p className="text-2xl font-bold">{stat.value}</p>
-                                <p className="text-sm text-muted-foreground">{stat.title}</p>
+                                <p className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300">{stat.value}</p>
+                                <p className="text-sm text-muted-foreground mt-1">{stat.title}</p>
                             </CardContent>
                         </Card>
                     );
@@ -183,62 +288,80 @@ export default function AnalyticsPage() {
                         </div>
                     </CardHeader>
                     <CardContent className="pt-4">
-                        <div className="h-[280px]">
+                        <div className="h-[320px]">
                             <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={pageViewsData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                <AreaChart 
+                                    data={pageViewsData} 
+                                    margin={{ top: 15, right: 15, left: -10, bottom: 5 }}
+                                >
                                     <defs>
                                         <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#dc2626" stopOpacity={0.3} />
-                                            <stop offset="95%" stopColor="#dc2626" stopOpacity={0} />
+                                            <stop offset="0%" stopColor="#dc2626" stopOpacity={0.4} />
+                                            <stop offset="50%" stopColor="#dc2626" stopOpacity={0.15} />
+                                            <stop offset="100%" stopColor="#dc2626" stopOpacity={0} />
                                         </linearGradient>
                                         <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
-                                            <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
+                                            <stop offset="0%" stopColor="#f97316" stopOpacity={0.4} />
+                                            <stop offset="50%" stopColor="#f97316" stopOpacity={0.15} />
+                                            <stop offset="100%" stopColor="#f97316" stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
+                                    <CartesianGrid 
+                                        strokeDasharray="3 3" 
+                                        stroke="hsl(var(--border))" 
+                                        opacity={0.3}
+                                        vertical={false}
+                                    />
                                     <XAxis
                                         dataKey="day"
                                         stroke="hsl(var(--muted-foreground))"
                                         fontSize={12}
                                         tickLine={false}
                                         axisLine={false}
+                                        tickMargin={10}
+                                        tick={{ fill: 'hsl(var(--muted-foreground))' }}
                                     />
                                     <YAxis
                                         stroke="hsl(var(--muted-foreground))"
                                         fontSize={12}
                                         tickLine={false}
                                         axisLine={false}
-                                        tickFormatter={(value) => `${value / 1000}k`}
+                                        tickMargin={10}
+                                        tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                                        tickFormatter={(value) => value >= 1000 ? `${value / 1000}k` : value.toString()}
                                     />
-                                    <Tooltip content={<CustomTooltip />} />
+                                    <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'hsl(var(--border))', strokeWidth: 1, strokeDasharray: '5 5' }} />
                                     <Area
                                         type="monotone"
                                         dataKey="views"
                                         name="Page Views"
                                         stroke="#dc2626"
-                                        strokeWidth={2}
+                                        strokeWidth={2.5}
                                         fill="url(#colorViews)"
+                                        activeDot={{ r: 5, fill: '#dc2626', strokeWidth: 2, stroke: '#fff' }}
+                                        animationDuration={1000}
                                     />
                                     <Area
                                         type="monotone"
                                         dataKey="visitors"
-                                        name="Visitors"
+                                        name="Unique Visitors"
                                         stroke="#f97316"
-                                        strokeWidth={2}
+                                        strokeWidth={2.5}
                                         fill="url(#colorVisitors)"
+                                        activeDot={{ r: 5, fill: '#f97316', strokeWidth: 2, stroke: '#fff' }}
+                                        animationDuration={1000}
                                     />
                                 </AreaChart>
                             </ResponsiveContainer>
                         </div>
-                        <div className="flex items-center justify-center gap-6 mt-4 text-sm">
-                            <div className="flex items-center gap-2">
-                                <div className="h-3 w-3 rounded-full bg-red-500" />
-                                <span className="text-muted-foreground">Page Views</span>
+                        <div className="flex items-center justify-center gap-8 mt-6 text-sm">
+                            <div className="flex items-center gap-2.5 group cursor-pointer">
+                                <div className="h-3.5 w-3.5 rounded-full bg-red-500 shadow-sm shadow-red-500/50 group-hover:scale-125 transition-transform duration-200" />
+                                <span className="text-muted-foreground font-medium">Page Views</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <div className="h-3 w-3 rounded-full bg-orange-500" />
-                                <span className="text-muted-foreground">Unique Visitors</span>
+                            <div className="flex items-center gap-2.5 group cursor-pointer">
+                                <div className="h-3.5 w-3.5 rounded-full bg-orange-500 shadow-sm shadow-orange-500/50 group-hover:scale-125 transition-transform duration-200" />
+                                <span className="text-muted-foreground font-medium">Unique Visitors</span>
                             </div>
                         </div>
                     </CardContent>
@@ -254,43 +377,54 @@ export default function AnalyticsPage() {
                         <CardDescription>Where visitors come from</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[200px] relative">
+                        <div className="h-[240px] relative">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
                                         data={trafficSources}
                                         cx="50%"
                                         cy="50%"
-                                        innerRadius={50}
-                                        outerRadius={80}
-                                        paddingAngle={3}
+                                        innerRadius={60}
+                                        outerRadius={90}
+                                        paddingAngle={4}
                                         dataKey="value"
+                                        animationBegin={0}
+                                        animationDuration={800}
                                     >
                                         {trafficSources.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                            <Cell 
+                                                key={`cell-${index}`} 
+                                                fill={entry.color}
+                                                stroke="hsl(var(--card))"
+                                                strokeWidth={2}
+                                            />
                                         ))}
                                     </Pie>
-                                    <Tooltip
-                                        formatter={(value: number) => [`${value}%`, 'Share']}
-                                        contentStyle={{
-                                            backgroundColor: 'hsl(var(--card))',
-                                            border: '1px solid hsl(var(--border))',
-                                            borderRadius: '8px'
-                                        }}
-                                    />
+                                    <Tooltip content={<PieTooltip />} />
                                 </PieChart>
                             </ResponsiveContainer>
                             <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
-                                <span className="text-2xl font-bold">12.8K</span>
-                                <span className="text-xs text-muted-foreground">Total</span>
+                                <span className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                                    {trafficSources.reduce((sum, s) => sum + (s.value || 0), 0) > 0 
+                                        ? `${Math.round(trafficSources.reduce((sum, s) => sum + (s.value || 0), 0) / 10)}K`
+                                        : '0K'}
+                                </span>
+                                <span className="text-xs text-muted-foreground font-medium mt-1">Total Visits</span>
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-2 mt-4">
-                            {trafficSources.map((source) => (
-                                <div key={source.name} className="flex items-center gap-2 text-sm">
-                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: source.color }} />
-                                    <span className="text-muted-foreground">{source.name}</span>
-                                    <span className="ml-auto font-medium">{source.value}%</span>
+                        <div className="grid grid-cols-2 gap-3 mt-6">
+                            {trafficSources.map((source, index) => (
+                                <div 
+                                    key={source.name} 
+                                    className="flex items-center gap-2.5 text-sm p-2 rounded-lg hover:bg-secondary/30 transition-colors duration-200 group cursor-pointer"
+                                    style={{ animationDelay: `${index * 100}ms` }}
+                                >
+                                    <div 
+                                        className="w-3 h-3 rounded-full shadow-sm transition-transform duration-200 group-hover:scale-125" 
+                                        style={{ backgroundColor: source.color, boxShadow: `0 0 8px ${source.color}40` }}
+                                    />
+                                    <span className="text-muted-foreground font-medium flex-1">{source.name}</span>
+                                    <span className="font-bold text-foreground">{source.value}%</span>
                                 </div>
                             ))}
                         </div>
@@ -310,11 +444,29 @@ export default function AnalyticsPage() {
                         <CardDescription>Total registrations per event category</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-4">
-                        <div className="h-[240px]">
+                        <div className="h-[280px]">
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={registrationsByCategory} layout="vertical" margin={{ top: 0, right: 20, left: 0, bottom: 0 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} horizontal={false} />
-                                    <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                                <BarChart 
+                                    data={registrationsByCategory} 
+                                    layout="vertical" 
+                                    margin={{ top: 5, right: 25, left: 5, bottom: 5 }}
+                                >
+                                    <CartesianGrid 
+                                        strokeDasharray="3 3" 
+                                        stroke="hsl(var(--border))" 
+                                        opacity={0.3} 
+                                        horizontal={false}
+                                        vertical={false}
+                                    />
+                                    <XAxis 
+                                        type="number" 
+                                        stroke="hsl(var(--muted-foreground))" 
+                                        fontSize={12} 
+                                        tickLine={false} 
+                                        axisLine={false}
+                                        tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                                        tickMargin={10}
+                                    />
                                     <YAxis
                                         type="category"
                                         dataKey="category"
@@ -322,22 +474,27 @@ export default function AnalyticsPage() {
                                         fontSize={12}
                                         tickLine={false}
                                         axisLine={false}
-                                        width={80}
+                                        width={90}
+                                        tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                                        tickMargin={10}
                                     />
-                                    <Tooltip
-                                        contentStyle={{
-                                            backgroundColor: 'hsl(var(--card))',
-                                            border: '1px solid hsl(var(--border))',
-                                            borderRadius: '8px'
-                                        }}
-                                        formatter={(value: number) => [value, 'Registrations']}
+                                    <Tooltip 
+                                        content={<CustomTooltip />}
+                                        cursor={{ fill: 'hsl(var(--muted)/0.1)' }}
                                     />
                                     <Bar
                                         dataKey="count"
-                                        radius={[0, 4, 4, 0]}
+                                        radius={[0, 8, 8, 0]}
+                                        animationDuration={1200}
+                                        animationBegin={0}
                                     >
                                         {registrationsByCategory.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                                            <Cell 
+                                                key={`cell-${index}`} 
+                                                fill={entry.fill}
+                                                stroke="hsl(var(--card))"
+                                                strokeWidth={1}
+                                            />
                                         ))}
                                     </Bar>
                                 </BarChart>
@@ -356,38 +513,74 @@ export default function AnalyticsPage() {
                         <CardDescription>Visitors by hour of day</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-4">
-                        <div className="h-[240px]">
+                        <div className="h-[280px]">
                             <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={hourlyTraffic} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
+                                <LineChart 
+                                    data={hourlyTraffic} 
+                                    margin={{ top: 15, right: 15, left: -10, bottom: 5 }}
+                                >
+                                    <defs>
+                                        <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stopColor="#22c55e" stopOpacity={0.3} />
+                                            <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid 
+                                        strokeDasharray="3 3" 
+                                        stroke="hsl(var(--border))" 
+                                        opacity={0.3}
+                                        vertical={false}
+                                    />
                                     <XAxis
                                         dataKey="hour"
                                         stroke="hsl(var(--muted-foreground))"
                                         fontSize={11}
                                         tickLine={false}
                                         axisLine={false}
+                                        tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                                        tickMargin={10}
                                     />
                                     <YAxis
                                         stroke="hsl(var(--muted-foreground))"
                                         fontSize={12}
                                         tickLine={false}
                                         axisLine={false}
+                                        tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                                        tickMargin={10}
                                     />
-                                    <Tooltip
-                                        contentStyle={{
-                                            backgroundColor: 'hsl(var(--card))',
-                                            border: '1px solid hsl(var(--border))',
-                                            borderRadius: '8px'
-                                        }}
-                                        formatter={(value: number) => [value, 'Visitors']}
+                                    <Tooltip 
+                                        content={<CustomTooltip />}
+                                        cursor={{ stroke: '#22c55e', strokeWidth: 1, strokeDasharray: '5 5', opacity: 0.5 }}
                                     />
                                     <Line
                                         type="monotone"
                                         dataKey="visitors"
+                                        name="Visitors"
                                         stroke="#22c55e"
-                                        strokeWidth={2}
-                                        dot={{ fill: '#22c55e', strokeWidth: 0, r: 3 }}
-                                        activeDot={{ r: 5, fill: '#22c55e' }}
+                                        strokeWidth={3}
+                                        dot={{ 
+                                            fill: '#22c55e', 
+                                            strokeWidth: 2, 
+                                            stroke: '#fff',
+                                            r: 4,
+                                            className: 'drop-shadow-sm'
+                                        }}
+                                        activeDot={{ 
+                                            r: 6, 
+                                            fill: '#22c55e',
+                                            strokeWidth: 3,
+                                            stroke: '#fff',
+                                            className: 'drop-shadow-md'
+                                        }}
+                                        animationDuration={1000}
+                                        animationBegin={0}
+                                    />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="visitors"
+                                        stroke="none"
+                                        fill="url(#lineGradient)"
+                                        animationDuration={1000}
                                     />
                                 </LineChart>
                             </ResponsiveContainer>
@@ -479,7 +672,7 @@ export default function AnalyticsPage() {
                                 </div>
                                 <Badge className="bg-emerald-500/10 text-emerald-400 border-0 flex items-center gap-1.5">
                                     <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                                    67 online
+                                    {totalRealtimeVisitors} online
                                 </Badge>
                             </div>
                         </CardHeader>

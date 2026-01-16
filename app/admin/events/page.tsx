@@ -327,7 +327,7 @@ export default function EventsPage() {
       <Card className="border-border/50">
         <CardHeader className="border-b border-border/50">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 to-rose-700 text-white">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-linear-to-br from-red-600 to-rose-700 text-white">
               <Plus className="h-5 w-5" />
             </div>
             <div>
@@ -343,7 +343,7 @@ export default function EventsPage() {
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g., Hackathon 2025"
+                placeholder="e.g., Synapse 2026"
                 required
                 className="bg-muted/50 border-border/50"
               />

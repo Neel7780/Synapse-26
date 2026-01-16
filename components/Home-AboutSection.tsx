@@ -111,32 +111,52 @@ export default function AboutSection() {
 
     gsap.set(".Theme_content .word", { opacity: 0, y: 20 });
     gsap.set(".doittitle .title-letter", { opacity: 0, y: 20 });
+    gsap.set(image, { opacity: 0 });
 
     gsap.to(".doittitle .title-letter", {
       opacity: 1,
       y: 0,
-      duration: 2,
-      ease: "power2.out",
-      stagger: { each: 0.1 },
+      duration: 3,
+      ease: "power3.out",
+      stagger: { each: 0.15 },
       scrollTrigger: {
         trigger: ".part3_end",
         start: "top center",
         end: "top center-=10%",
-        scrub: 1,
+        scrub: 2,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
         onRefresh: positionImageFromGradientCenter,
       },
     });
     gsap.to(".Theme_content .word", {
       opacity: 1,
       y: 0,
-      ease: "power2.out",
-      stagger: { each: 0.04 },
+      ease: "power3.out",
+      stagger: { each: 0.06 },
       scrollTrigger: {
         trigger: ".part3_end",
         start: "top center-=11%",
         end: "bottom bottom",
-        scrub: 1,
+        scrub: 2,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
         onRefresh: positionImageFromGradientCenter,
+      },
+    });
+
+    // Add image fade-in animation
+    gsap.to(image, {
+      opacity: 1,
+      duration: 2,
+      ease: "power3.out",
+      scrollTrigger: {
+        trigger: ".part3_end",
+        start: "top center-=5%",
+        end: "top center-=15%",
+        scrub: 2,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
       },
     });
 
@@ -163,10 +183,10 @@ export default function AboutSection() {
     };
   }, [splitTextToWords, positionImageFromGradientCenter]);
 
-    return (
-        <section
-            ref={aboutSectionRef}
-            className="part3_end relative min-h-[100dvh] w-full
+  return (
+    <section
+      ref={aboutSectionRef}
+      className="part3_end relative min-h-[100dvh] w-full
                     flex flex-col
                     px-[clamp(1.5rem,4vw,3.75rem)]
                     py-[clamp(1.2rem,5vh,5rem)]

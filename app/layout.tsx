@@ -48,7 +48,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "SYNAPSE'26 | DA Ka Tyohaar",
+  title: "SYNAPSE' 26 | DA Ka Tyohaar",
   description:
     "SYNAPSE'26 - The Ultimate Tech-Cultural Festival. Register now for the most anticipated event of the year.",
   keywords: [
@@ -61,8 +61,12 @@ export const metadata: Metadata = {
     "gujarat",
     "DAkaTyohaar",
   ],
+  icons: {
+    icon: "/Synapse Logo.png",
+    apple: "/Synapse Logo.png",
+  },
   openGraph: {
-    title: "SYNAPSE'26",
+    title: "SYNAPSE' 26",
     description: "The Ultimate Techno-Cultural Festival",
     type: "website",
   },
