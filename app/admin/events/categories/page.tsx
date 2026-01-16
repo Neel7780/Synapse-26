@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-
+import Image from "next/image";
 type Category = {
   id: number;
   name: string;
@@ -26,13 +26,7 @@ export default function CategoriesPage() {
       eventCount: 4,
       imageUrl: "",
     },
-    {
-      id: 3,
-      name: "Sports",
-      description: "Gaming, E-sports",
-      eventCount: 3,
-      imageUrl: "",
-    },
+ 
   ]);
 
   const [formData, setFormData] = useState({
@@ -194,8 +188,8 @@ export default function CategoriesPage() {
               {/* Outer wrapper scaled down but same ratio (457x640) */}
               <div className="relative w-full max-w-[457px] aspect-[457/640] rounded-xl overflow-hidden shadow-lg bg-black">
                 {/* Background image */}
-                <img
-                  src={previewImage || "/card.png"}
+                <Image
+                  src={previewImage || "/images_events/card.png"}
                   alt="Card background"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
@@ -203,7 +197,7 @@ export default function CategoriesPage() {
                 {/* Category image overlay */}
                 {previewImage && (
                   <div className="absolute inset-0">
-                    <img
+                    <Image
                       src={previewImage}
                       alt="Category"
                       className="w-full h-full object-cover opacity-90"
@@ -238,7 +232,7 @@ export default function CategoriesPage() {
                 >
                   {/* Thumbnail */}
                   {category.imageUrl ? (
-                    <img
+                    <Image
                       src={category.imageUrl}
                       alt={category.name}
                       className="h-16 w-16 rounded-md object-cover border"

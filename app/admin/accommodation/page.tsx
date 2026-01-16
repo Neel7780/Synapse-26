@@ -32,7 +32,6 @@ import {
   DollarSign,
   CheckCircle,
   XCircle,
-  Users,
 } from "lucide-react";
 
 interface Accommodation {
