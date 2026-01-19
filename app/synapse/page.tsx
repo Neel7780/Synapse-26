@@ -46,7 +46,15 @@ export default function HomeSection() {
         setShowNavbar={setShowNavbar}
         showNavbar={showNavbar}
       />
-      <div className={`w-full flex-col z-30 ${entered ? "flex" : "hidden"}`}>
+      <div
+        className={`
+            mt-[200svh]
+            w-full
+            flex-col
+            z-30
+            ${entered ? "flex" : "hidden"}
+          `}
+      >
         <AboutSection />
         <JokerSection />
         <ArtistsSection />

@@ -1,5 +1,3 @@
-'use client';
-
 import HeroSection from "@/components/Hero-Section-Sponsors";
 import SponsorTier from "@/components/SponsorTier";
 import Footer from "@/components/ui/Footer";

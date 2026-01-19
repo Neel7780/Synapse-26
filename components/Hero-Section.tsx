@@ -350,7 +350,7 @@ export default function HeroSection({
         end: "+=300%",
         scrub: 2.5,
         pin: true,
-        pinSpacing: true,
+        pinSpacing: false,
         anticipatePin: 1.2,
         onUpdate: (self) => {
           if (self.progress > 0.35 && self.progress < 0.5) {
@@ -747,7 +747,7 @@ export default function HeroSection({
         </>
       ) : <></>
       }
-      <div className="hero relative inset-0 h-svh z-25" ref={heroRef}>
+      <div className="hero relative inset-0 h-[100svh] z-25" ref={heroRef}>
         <div id="maskLayer" className="absolute inset-0 opacity-100 " ref={maskLayerRef} style={{
           WebkitMaskImage: 'url("/images_home/inkReveal2.gif")',
           WebkitMaskRepeat: 'no-repeat',
@@ -769,7 +769,7 @@ export default function HeroSection({
               backgroundSize: "cover",
               backgroundPosition: "center",
             }} className=" absolute inset-0 flex flex-col items-center justify-center opacity-100 will-change-transform backface-hidden transform-[rotateY(180deg)]">
-              <div className="screen-container relative w-screen h-svh flex items-center justify-center perspective-[1000px] transform-3d" ref={screenContainerRef}>
+              <div className="screen-container relative w-screen h-[100svh] flex items-center justify-center perspective-[1000px] transform-3d" ref={screenContainerRef}>
                 <div ref={frontScreenRef} className="screen-front absolute inset-0 bg-black bg-[url('/images_home/part3-image.png')] bg-no-repeat bg-center bg-contain z-2 backface-hidden border-4 border-solid rounded " style={{ borderColor: "rgba(250,235,215,0)" }}></div>
                 <div className="center-joker-container absolute inset-0 flex items-center justify-center transform-[rotateY(180deg)] backface-hidden z-1">
                   <img src="/images_home/card_center.png" className="center-joker w-full h-auto rotate-[-64deg] object-contain" alt="Joker Card" />
@@ -777,7 +777,7 @@ export default function HeroSection({
               </div>
             </div>
 
-            <div id="part3" ref={part3Ref} className={`absolute inset-0 w-full h-svh transform-[rotateY(180deg)] backface-hidden ${part3Active ? "pointer-events-auto" : "pointer-events-none"}`}>
+            <div id="part3" ref={part3Ref} className={`absolute inset-0 w-full h-[100svh] transform-[rotateY(180deg)] backface-hidden ${part3Active ? "pointer-events-auto" : "pointer-events-none"}`}>
               <div className="register-btn absolute bottom-2/5  max-[450px]:left-1/2 min-[450px]:bottom-[40px] min-[450px]:right-[40px] md:bottom-[60px] md:right-[60px]">
                 <NavbarButton href="/auth" variant="register">
                   Register
@@ -803,7 +803,7 @@ export default function HeroSection({
           </div>
           <div
             ref={scrollHintRef}
-            className=" absolute left-1/2 -translate-x-1/2  bottom-5 md:bottom-[30px] z-50 flex flex-col items-center justify-center gap-1 w-[50px] h-[100px]  md:w-[70px] md:h-[120px] font-jqka text-amber-50 text-[10px] md:text-xs  leading-tight tracking-wide uppercase border border-amber-50  rounded-full backdrop-blur-[2px]"
+            className=" absolute left-1/2 -translate-x-1/2  bottom-5 md:bottom-[30px] z-[100] flex flex-col items-center justify-center gap-1 w-[50px] h-[100px]  md:w-[70px] md:h-[120px] font-jqka text-amber-50 text-[10px] md:text-xs  leading-tight tracking-wide uppercase border border-amber-50  rounded-full backdrop-blur-[2px]"
           >
             <span className="text-center">
               Scroll <br /> To <br /> Explore
@@ -825,7 +825,7 @@ export default function HeroSection({
         ref={scrollTrackRef}
         className="
     fixed right-[12px] md:right-[24px]
-    top-1/2 -translate-y-1/2 z-50
+    top-1/2 -translate-y-1/2 z-[999]
     h-[180px] md:h-[300px]
     w-[5px] md:w-[10px]
     rounded-full border border-solid border-gray-700
@@ -837,7 +837,7 @@ export default function HeroSection({
       >
         <div
           ref={scrollFillRef}
-          className="absolute top-0 left-0 w-full h-0 z-10
+          className="absolute top-0 left-0 w-full h-0 z-[9990]
                    bg-red-600 rounded-full"
         />
       </div>

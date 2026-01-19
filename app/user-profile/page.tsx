@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import gsap from "gsap";
 import UserProfile from "@/components/user-profile";
@@ -12,6 +12,7 @@ const normalizeScroll = () => {
   });
 };
 
+import { useNavigationState } from "@/lib/useNavigationState";
 
 export default function UserProfilePage() {
   useEffect(() => {

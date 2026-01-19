@@ -83,6 +83,7 @@ export default function ArtistsSection() {
   const artistSectionRef = useRef<HTMLDivElement>(null);
   const artistSvgRef = useRef<SVGSVGElement>(null);
   const artistPathRef = useRef<SVGPathElement>(null);
+  const artistDotRef = useRef<HTMLDivElement>(null);
   const imagesContainerRef = useRef<HTMLDivElement>(null);
   const carouselTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -195,9 +196,12 @@ export default function ArtistsSection() {
   }, [startCarouselTimer]);
 
   useEffect(() => {
-    if (artistSvgRef.current && artistPathRef.current) {
+    if (artistSvgRef.current && artistPathRef.current && artistDotRef.current) {
       const artistSvg = artistSvgRef.current;
       const artistPath = artistPathRef.current;
+      const artistDot = artistDotRef.current;
+
+      const jokerDot = document.getElementById("jokerPathDot");
 
       const path = generateViewportPath();
       artistPath.setAttribute("d", path);
@@ -208,12 +212,30 @@ export default function ArtistsSection() {
         start: "top bottom",
         end: "bottom top",
         scrub: true,
+        onEnter: () => {
+          if (jokerDot) jokerDot.style.opacity = "0";
+          if (artistDot) artistDot.style.opacity = "1";
+        },
+        onLeave: () => {
+          if (jokerDot) jokerDot.style.opacity = "0";
+          if (artistDot) artistDot.style.opacity = "0";
+        },
+        onEnterBack: () => {
+          if (jokerDot) jokerDot.style.opacity = "0";
+          if (artistDot) artistDot.style.opacity = "1";
+        },
         onUpdate: (self) => {
           const progress = self.progress;
-          // Keep computation to ensure path/trigger stays “live” and refreshes correctly.
-          // (No visible pointer/dot anymore.)
-          artistPath.getPointAtLength(progress * artistPathLength);
-          artistSvg.getBoundingClientRect();
+          const point = artistPath.getPointAtLength(
+            progress * artistPathLength
+          );
+          const rect = artistSvg.getBoundingClientRect();
+
+          const x = rect.left + (point.x / 1000) * rect.width;
+          const y = rect.top + (point.y / 1000) * rect.height;
+
+          artistDot.style.left = `${x}px`;
+          artistDot.style.top = `${y}px`;
         },
       });
 
@@ -246,7 +268,7 @@ export default function ArtistsSection() {
         height: "100svh",
       }}
     >
-      <div className="artists-content relative top-[-1.6px] -right-px h-full flex flex-col">
+      <div className="artists-content relative top-[-1.6px] right-[-1px] h-full flex flex-col">
         <svg
           id="artistPath"
           width="100%"
@@ -267,7 +289,7 @@ export default function ArtistsSection() {
         </svg>
 
         {/* Title at top */}
-        <div className="shrink-0 pt-1 pb-12">
+        <div className="flex-shrink-0 pt-1 pb-12">
           <h1
             id="artistsTitle"
             className="font-joker text-[clamp(2.5rem,10vw,6rem)] px-8 leading-none text-white lowercase text-center"
@@ -280,6 +302,12 @@ export default function ArtistsSection() {
         <div className="carousel relative flex-1 min-h-0 flex items-center justify-center">
           {/* White line through center - Perfectly centered */}
           <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[2px] bg-white z-0"></div>
+
+          <div
+            id="artistPathDot"
+            className="fixed w-14 h-14 md:w-22.5 md:h-22.5 bg-[#ff0000] rounded-full blur-[20px] pointer-events-none z-5 opacity-0 -translate-x-1/2 -translate-y-1/2"
+            ref={artistDotRef}
+          ></div>
 
           {/* Images Container - Centered */}
           <div
@@ -394,7 +422,7 @@ export default function ArtistsSection() {
         </div>
 
         {/* Artist Info at bottom */}
-        <div className="shrink-0 pb-6 sm:pb-8 pt-4 flex justify-center px-4 mb-8">
+        <div className="flex-shrink-0 pb-6 sm:pb-8 pt-4 flex justify-center px-4 mb-8">
           <div className="border-t-2 border-b-2 border-white py-3 px-6 text-center text-white bg-black/50 backdrop-blur-sm w-full max-w-md">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-jqka uppercase">
               {artists[currentIndex].name}

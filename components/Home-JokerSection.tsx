@@ -13,6 +13,7 @@ export default function JokerSection() {
   const jokerSectionRef = useRef<HTMLDivElement>(null);
   const jokerSvgRef = useRef<SVGSVGElement>(null);
   const jokerPathRef = useRef<SVGPathElement>(null);
+  const jokerDotRef = useRef<HTMLDivElement>(null);
   const leftDoorRef = useRef<HTMLDivElement>(null);
   const rightDoorRef = useRef<HTMLDivElement>(null);
   const leftTitleRef = useRef<HTMLDivElement>(null);
@@ -129,6 +130,7 @@ export default function JokerSection() {
     if (
       jokerSvgRef.current &&
       jokerPathRef.current &&
+      jokerDotRef.current &&
       leftDoorRef.current &&
       rightDoorRef.current &&
       leftTitleRef.current &&
@@ -136,6 +138,7 @@ export default function JokerSection() {
     ) {
       const jokerSvg = jokerSvgRef.current;
       const jokerPath = jokerPathRef.current;
+      const jokerDot = jokerDotRef.current;
       const leftDoor = leftDoorRef.current;
       const rightDoor = rightDoorRef.current;
       const leftTitle = leftTitleRef.current;
@@ -153,9 +156,37 @@ export default function JokerSection() {
           end: "+=300%",
           scrub: 2.5,
           pin: true,
-          pinSpacing: true,
+          pinSpacing: false,
           anticipatePin: 1.2,
           invalidateOnRefresh: true,
+          onUpdate: (self) => {
+            const progress = self.progress;
+            const point = jokerPath.getPointAtLength(
+              jokerPathLength * progress
+            );
+            const rect = jokerSvg.getBoundingClientRect();
+
+            const x = rect.left + (point.x / 1000) * rect.width;
+            const y = rect.top + (point.y / 1000) * rect.height;
+
+            jokerDot.style.left = `${x}px`;
+            jokerDot.style.top = `${y}px`;
+          },
+          onEnter: () => {
+            jokerDot.style.opacity = "1";
+            const artistDot = document.getElementById("artistPathDot");
+            if (artistDot) artistDot.style.opacity = "0";
+          },
+          onLeave: () => {
+            jokerDot.style.opacity = "0";
+            const artistDot = document.getElementById("artistPathDot");
+            if (artistDot) artistDot.style.opacity = "1";
+          },
+          onEnterBack: () => {
+            jokerDot.style.opacity = "1";
+            const artistDot = document.getElementById("artistPathDot");
+            if (artistDot) artistDot.style.opacity = "0";
+          },
         },
       });
       jokerTl.set(scrollHintRef.current, { opacity: 1 });
@@ -425,16 +456,16 @@ export default function JokerSection() {
   return (
     <div className='relative'>
       <div
-        className="joker-section relative h-screen overflow-hidden"
+        className="joker-section relative h-[100vh] overflow-hidden"
         id="jokerSection"
         ref={jokerSectionRef}
       >
-        <div className="joker-content relative top-0 h-screen overflow-hidden">
+        <div className="joker-content relative top-0 h-[100vh] overflow-hidden">
           <div className="viewport-wrapper absolute inset-0 flex overflow-hidden z-10">
 
             {/* LEFT DOOR */}
             <div
-              className="door door-left absolute top-0 w-1/2 h-full bg-white z-50 bg-cover md:bg-contain bg-no-repeat"
+              className="door door-left absolute top-0 w-1/2 h-full bg-white z-[100] bg-cover md:bg-contain bg-no-repeat"
               id="leftDoor"
               ref={leftDoorRef}
               style={{
@@ -451,7 +482,7 @@ export default function JokerSection() {
                             leading-none
                             text-black
                             pointer-events-none
-                            lg:tracking-widest
+                            lg:tracking-[0.1em]
                             will-change-transform
                             text-right
                             pr-4 md:pr-12"
@@ -479,7 +510,7 @@ export default function JokerSection() {
                             text-[clamp(2rem,10vw,5rem)]
                             leading-none
                             text-black
-                            lg:tracking-widest
+                            lg:tracking-[0.1em]
                             pointer-events-none
                             will-change-transform
                             text-left
@@ -529,6 +560,12 @@ export default function JokerSection() {
                   ref={jokerPathRef}
                 />
               </svg>}
+
+              <div
+                id="jokerPathDot"
+                className="fixed w-14 h-14 md:w-22.5 md:h-22.5 bg-[#ff0000] rounded-full blur-[15px] md:blur-[20px] pointer-events-none z-5 opacity-0 -translate-x-1/2 -translate-y-1/2"
+                ref={jokerDotRef}
+              ></div>
 
               {/* CARD BURST ZONE */}
               <div className="burst-zone relative w-full h-[60vh] md:h-[70vh] pointer-events-auto flex justify-center items-center z-10">
@@ -607,6 +644,10 @@ export default function JokerSection() {
           </div>
         </div>
       </div>
+
+      <div className='h-[100svh]' />
+      <div className='h-[100svh]' />
+      <div className='h-[100svh]' />
     </div>
   );
 }

@@ -64,12 +64,12 @@ export const Navbar = ({
 }: NavbarProps & { visible?: boolean }) => {
   return (
     <motion.div
-      className={cn("fixed inset-x-0 top-0 z-50 w-full", className)}
+      className={cn("fixed z-9990 inset-x-0 top-0 z-40 w-full", className)}
       initial={false}
       animate={{
         opacity: visible ? 1 : 0,
         y: visible ? 0 : -80,
-        pointerEvents: visible ? "auto" : "none",
+        pointerEvents: "none",
       }}
       transition={{ duration: 0.3, ease: "easeOut" }}
     >
@@ -98,7 +98,7 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
         minWidth: "800px",
       }}
       className={cn(
-        "relative z-150 mx-auto hidden w-full max-w-[95vw] flex-row items-center justify-between self-start rounded-full bg-black/40 px-6 py-3 lg:flex border border-white/10 pointer-events-auto",
+        "relative z-[150] mx-auto hidden w-full max-w-[95vw] flex-row items-center justify-between self-start rounded-full bg-black/40 px-6 py-3 lg:flex border border-white/10 pointer-events-auto",
         visible && "bg-black/80",
         className
       )}
@@ -161,7 +161,7 @@ export const MobileNav = ({ children, className, visible }: MobileNavProps) => {
         paddingRight: visible ? "12px" : "0px",
         paddingLeft: visible ? "12px" : "0px",
         y: visible ? 20 : 0,
-        pointerEvents: visible ? "auto" : "none",
+        pointerEvents: "none",
       }}
       transition={{
         type: "spring",
@@ -169,7 +169,7 @@ export const MobileNav = ({ children, className, visible }: MobileNavProps) => {
         damping: 50,
       }}
       className={cn(
-        "relative z-50 mx-auto flex w-full flex-col items-center justify-between px-4",
+        "relative z-50 z-9990 mx-auto flex w-full flex-col items-center justify-between px-4",
         visible,
         className
       )}
@@ -236,7 +236,7 @@ export const MobileNavHeader = ({
   return (
     <div
       className={cn(
-        "flex w-full z-50 px-4 py-4 flex-row items-center justify-between pointer-events-none",
+        "flex w-full z-9990 px-4 py-4 flex-row items-center justify-between pointer-events-none",
         className,
       )}
     >
@@ -291,17 +291,9 @@ export const MobileNavToggle = ({
   onClick: () => void;
 }) => {
   return isOpen ? (
-    <IconX
-      size={35}
-      className=" z-50 text-white cursor-pointer hover:text-[#EB0000] transition-colors pointer-events-auto"
-      onClick={onClick}
-    />
+    <IconX size={35} className=" z-9999 text-white cursor-pointer hover:text-[#EB0000] transition-colors pointer-events-auto" onClick={onClick} />
   ) : (
-    <IconMenu3
-      size={35}
-      className="z-50 text-white scale-[0.9] md:scale-[1] cursor-pointer hover:text-[#EB0000] transition-colors pointer-events-auto"
-      onClick={onClick}
-    />
+    <IconMenu3 size={35} className="z-9999 text-white scale-[0.9] md:scale-[1] cursor-pointer hover:text-[#EB0000] transition-colors pointer-events-auto" onClick={onClick} />
   );
 };
 
