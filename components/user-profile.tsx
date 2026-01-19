@@ -74,9 +74,12 @@ const registeredEvents = [
 const hasAccommodation = true;
 
 /* data */
+import { useNavigationState } from "@/lib/useNavigationState";
+
 export default function UserProfile() {
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const { startTransition } = useNavigationState();
 
   useEffect(() => {
     if (!ref.current) return;
@@ -91,6 +94,7 @@ export default function UserProfile() {
     };
   }, []);
   const handleBack = () => {
+    startTransition();
     if (window.history.length > 1) {
       router.back();
     } else {
@@ -202,8 +206,8 @@ export default function UserProfile() {
                       </h3>
                       <span
                         className={`px-2 py-0.5 md:px-3 md:py-1 rounded-full text-xs md:text-sm whitespace-nowrap font-medium ${event.status === "Registered"
-                            ? "bg-green-500/20 text-green-400"
-                            : "bg-orange-500/20 text-orange-400"
+                          ? "bg-green-500/20 text-green-400"
+                          : "bg-orange-500/20 text-orange-400"
                           }`}
                       >
                         {event.status}
@@ -235,8 +239,8 @@ export default function UserProfile() {
                 </p>
                 <span
                   className={`px-3 py-1 rounded-full text-xs md:text-sm font-medium ${hasAccommodation
-                      ? "bg-green-500/20 text-green-400"
-                      : "bg-orange-500/20 text-orange-400"
+                    ? "bg-green-500/20 text-green-400"
+                    : "bg-orange-500/20 text-orange-400"
                     }`}
                 >
                   {hasAccommodation ? "Registered" : "Unregistered"}

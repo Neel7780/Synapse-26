@@ -39,10 +39,10 @@ export default function TransitionOverlay() {
 
     /* ---------------- POSITIONS ---------------- */
     const entryFromCorners = [
-        { x: "-100vw", y: "-100vh", rotate: -25 },
-        { x: "100vw", y: "-100vh", rotate: 25 },
-        { x: "-100vw", y: "100vh", rotate: 25 },
-        { x: "100vw", y: "100vh", rotate: -25 },
+        { x: "-100vw", y: "-100vh", rotate: -45 },
+        { x: "100vw", y: "-100vh", rotate: 45 },
+        { x: "-100vw", y: "100vh", rotate: 45 },
+        { x: "100vw", y: "100vh", rotate: -45 },
     ];
 
     const exitWithDoors = [
@@ -70,11 +70,19 @@ export default function TransitionOverlay() {
             aria-hidden={isHidden}
         >
             {/* LOADING TEXT - Only visible during enter phase */}
-            <div className={`absolute inset-0 flex items-center justify-center z-50 pointer-events-none mix-blend-difference transition-opacity duration-300 ${phase === "enter" ? "opacity-100" : "opacity-0"}`}>
-                <h1 className="text-[#E5E5E5] text-xl md:text-2xl font-joker lowercase tracking-widest animate-pulse">
+            <div
+                className={`
+    absolute z-50 pointer-events-none transition-opacity duration-300
+    inset-0 flex items-center justify-center font-black
+    lg:inset-auto lg:bottom-8 lg:right-8 [text-shadow:0_2px_6px_rgba(0,0,0,0.85)]
+    ${phase === "enter" ? "opacity-100" : "opacity-0"}
+  `}
+            >
+                <h1 className="text-[#E5E5E5] text-2xl md:text-4xl lg:text-3xl font-joker lowercase tracking-widest animate-pulse">
                     loading...
                 </h1>
             </div>
+
 
             {/* BLACK BASE - Visible during delay, enter, and exit (not idle) */}
             <div className={`absolute inset-0 bg-black z-0 transition-opacity duration-0 ${phase === "exit" || phase === "idle" ? "opacity-0" : "opacity-100"}`} />
@@ -106,7 +114,7 @@ export default function TransitionOverlay() {
                         }
                         transition={{
                             duration: phase === "enter" ? 1.6 : (phase === "exit" ? 3 : 0), // Instant reset if not entering/exiting
-                            delay: phase === "enter" ? i * 0.25 : 0,
+                            delay: phase === "enter" ? i * 0.35 : 0,
                             ease: [0.22, 1, 0.36, 1],
                         }}
                     >

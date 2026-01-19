@@ -121,7 +121,7 @@ export default function AboutSection() {
       scrollTrigger: {
         trigger: ".part3_end",
         start: "top center",
-        end: "top center-=30%",
+        end: "top center-=10%",
         scrub: 2,
         anticipatePin: 1,
         invalidateOnRefresh: true,
@@ -151,9 +151,8 @@ export default function AboutSection() {
       ease: "power3.out",
       scrollTrigger: {
         trigger: ".part3_end",
-        // Sync triggers with visual position
-        start: "top center-=5%",
-        end: "top center-=15%",
+        start: "top center-=15%",
+        end: "top center-=35%",
         scrub: 2,
         anticipatePin: 1,
         invalidateOnRefresh: true,

@@ -134,7 +134,7 @@ export default function EventsPage() {
                                                         className="absolute inset-0 rounded-lg overflow-hidden"
                                                         style={{
                                                             backfaceVisibility: "hidden",
-                                                            backgroundImage: "url(/images_events/card.png)",
+                                                            backgroundImage: "url(/images_events/card.jpeg)",
                                                             backgroundRepeat: "no-repeat",
                                                             backgroundPosition: "center",
                                                             backgroundSize: "contain",

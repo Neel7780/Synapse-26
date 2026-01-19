@@ -12,9 +12,8 @@ if (typeof window !== "undefined") {
 
 export default function Home() {
   useEffect(() => {
-    ScrollTrigger.normalizeScroll({
-      allowNestedScroll: true,
-    });
+    // ScrollTrigger.normalizeScroll removed to prevent conflict with Lenis (SmoothScroller)
+    // resulting in "up and down" jitter.
   }, []);
   return (
     <>

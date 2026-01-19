@@ -9,6 +9,7 @@ import { useNavigationState } from "@/lib/useNavigationState";
 import { useEffect } from "react";
 
 export default function MerchPage() {
+  const { startTransition } = useNavigationState();
 
   const products = [
     {
@@ -120,7 +121,7 @@ export default function MerchPage() {
             </div>
 
             {/* BUY NOW */}
-            <Link href={`/merchandise/${product.slug}`} className="w-full">
+            <Link href={`/merchandise/${product.slug}`} className="w-full" onClick={() => startTransition()}>
               <button
                 className="
         mt-4
