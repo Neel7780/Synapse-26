@@ -147,7 +147,18 @@ export default function EventPage() {
 
                                         <Button
                                             className="w-full mt-2 py-3 text-lg font-jqka tracking-widest uppercase bg-[#b41c32] hover:bg-[#901628] transition-all cursor-pointer rounded-sm shadow-[0_0_15px_rgba(180,28,50,0.3)] hover:shadow-[0_0_25px_rgba(180,28,50,0.5)]"
-                                            onClick={() => alert(`Registering for ${fee.type} - ₹${fee.price}`)}
+                                            onClick={() => {
+                                                const params = new URLSearchParams({
+                                                    fee_id: String(fee.fee_id || 0),
+                                                    type: fee.type,
+                                                    price: String(fee.price),
+                                                    min: String(fee.min_members || 1),
+                                                    max: String(fee.max_members || 1),
+                                                    qr_url: fee.qr_url || "",
+                                                    event_id: String(fee.event_id || 0),
+                                                });
+                                                router.push(`/events/${slug}/${eventNameSlug}/register?${params.toString()}`);
+                                            }}
                                         >
                                             Register
                                         </Button>

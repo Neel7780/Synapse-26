@@ -48,6 +48,8 @@ import {
   XCircle,
   Loader2,
   AlertCircle,
+  Upload,
+  QrCode,
 } from "lucide-react";
 
 type ParticipationCategory = {
@@ -55,6 +57,7 @@ type ParticipationCategory = {
   fee: number;
   minParticipants: number;
   maxParticipants: number;
+  qrUrl: string;
 };
 
 type LocalEvent = {
@@ -127,18 +130,21 @@ export default function EventsPage() {
               fee: solo?.fee.price || 0,
               minParticipants: solo?.fee.min_members || 1,
               maxParticipants: solo?.fee.max_members || 1,
+              qrUrl: (solo as any)?.payment_qr_url || "",
             },
             duet: {
               enabled: !!duet,
               fee: duet?.fee.price || 0,
               minParticipants: duet?.fee.min_members || 2,
               maxParticipants: duet?.fee.max_members || 2,
+              qrUrl: (duet as any)?.payment_qr_url || "",
             },
             group: {
               enabled: !!group,
               fee: group?.fee.price || 0,
               minParticipants: group?.fee.min_members || 3,
               maxParticipants: group?.fee.max_members || 8,
+              qrUrl: (group as any)?.payment_qr_url || "",
             },
           },
         };
@@ -612,21 +618,39 @@ export default function EventsPage() {
                     />
                   </div>
                   {editingEvent.participationCategories.solo.enabled && (
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="number"
-                        value={editingEvent.participationCategories.solo.fee}
-                        onChange={(e) => setEditingEvent({
-                          ...editingEvent,
-                          participationCategories: {
-                            ...editingEvent.participationCategories,
-                            solo: { ...editingEvent.participationCategories.solo, fee: parseInt(e.target.value) || 0 }
-                          }
-                        })}
-                        className="w-32 bg-muted/50 border-border/50"
-                      />
-                      <span className="text-sm text-muted-foreground">per person</span>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        <Input
+                          type="number"
+                          value={editingEvent.participationCategories.solo.fee}
+                          onChange={(e) => setEditingEvent({
+                            ...editingEvent,
+                            participationCategories: {
+                              ...editingEvent.participationCategories,
+                              solo: { ...editingEvent.participationCategories.solo, fee: parseInt(e.target.value) || 0 }
+                            }
+                          })}
+                          className="w-32 bg-muted/50 border-border/50"
+                        />
+                        <span className="text-sm text-muted-foreground">per person</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <QrCode className="h-4 w-4 text-muted-foreground" />
+                        <Input
+                          type="text"
+                          value={editingEvent.participationCategories.solo.qrUrl}
+                          onChange={(e) => setEditingEvent({
+                            ...editingEvent,
+                            participationCategories: {
+                              ...editingEvent.participationCategories,
+                              solo: { ...editingEvent.participationCategories.solo, qrUrl: e.target.value }
+                            }
+                          })}
+                          placeholder="Payment QR Code URL"
+                          className="flex-1 bg-muted/50 border-border/50"
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
@@ -649,21 +673,39 @@ export default function EventsPage() {
                     />
                   </div>
                   {editingEvent.participationCategories.duet.enabled && (
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="number"
-                        value={editingEvent.participationCategories.duet.fee}
-                        onChange={(e) => setEditingEvent({
-                          ...editingEvent,
-                          participationCategories: {
-                            ...editingEvent.participationCategories,
-                            duet: { ...editingEvent.participationCategories.duet, fee: parseInt(e.target.value) || 0 }
-                          }
-                        })}
-                        className="w-32 bg-muted/50 border-border/50"
-                      />
-                      <span className="text-sm text-muted-foreground">per team</span>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        <Input
+                          type="number"
+                          value={editingEvent.participationCategories.duet.fee}
+                          onChange={(e) => setEditingEvent({
+                            ...editingEvent,
+                            participationCategories: {
+                              ...editingEvent.participationCategories,
+                              duet: { ...editingEvent.participationCategories.duet, fee: parseInt(e.target.value) || 0 }
+                            }
+                          })}
+                          className="w-32 bg-muted/50 border-border/50"
+                        />
+                        <span className="text-sm text-muted-foreground">per team</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <QrCode className="h-4 w-4 text-muted-foreground" />
+                        <Input
+                          type="text"
+                          value={editingEvent.participationCategories.duet.qrUrl}
+                          onChange={(e) => setEditingEvent({
+                            ...editingEvent,
+                            participationCategories: {
+                              ...editingEvent.participationCategories,
+                              duet: { ...editingEvent.participationCategories.duet, qrUrl: e.target.value }
+                            }
+                          })}
+                          placeholder="Payment QR Code URL"
+                          className="flex-1 bg-muted/50 border-border/50"
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
@@ -735,6 +777,22 @@ export default function EventsPage() {
                           />
                         </div>
                         <span className="text-sm text-muted-foreground">members</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <QrCode className="h-4 w-4 text-muted-foreground" />
+                        <Input
+                          type="text"
+                          value={editingEvent.participationCategories.group.qrUrl}
+                          onChange={(e) => setEditingEvent({
+                            ...editingEvent,
+                            participationCategories: {
+                              ...editingEvent.participationCategories,
+                              group: { ...editingEvent.participationCategories.group, qrUrl: e.target.value }
+                            }
+                          })}
+                          placeholder="Payment QR Code URL"
+                          className="flex-1 bg-muted/50 border-border/50"
+                        />
                       </div>
                     </div>
                   )}

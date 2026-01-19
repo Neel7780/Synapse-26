@@ -5,6 +5,10 @@ export type EventFee = {
   price: number;
   min_members: number;
   max_members: number;
+  // Optional fields for database integration
+  fee_id?: number;
+  qr_url?: string;
+  event_id?: number;
 };
 
 export type EventCard = {
