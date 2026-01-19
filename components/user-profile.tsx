@@ -1,102 +1,163 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 gsap.registerPlugin(ScrollTrigger);
 
-/**
- * NOTE FOR BACKEND / INTEGRATION:
- * ---------------------------------------------------------
- * The data objects below (`userDetails`, `registeredEvents`,
- * `hasAccommodation`) are TEMPORARY placeholders used only
- * for UI development and layout testing.
- *
- * When integrating with the backend:
- * 1. Replace these constants with data fetched from the API
- *    (e.g. via server actions, API routes, or client-side fetch).
- * 2. Map API response fields directly to the props/fields
- *    used in this component (keep the same shape if possible).
- * 3. This component assumes:
- *    - `userDetails` represents the logged-in user profile
- *    - `registeredEvents` is an array of events the user has
- *      registered for
- *    - `hasAccommodation` is a boolean derived from user data
- *
- * IMPORTANT:
- * - Do NOT change layout or animation logic when wiring data.
- * - Component is already backend-ready; only data source
- *   replacement is required.
- * ---------------------------------------------------------
- */
-
-/* data */
-const userDetails = {
-  firstName: "Alex",
-  lastName: "Johnson",
-  phone: "+01 123-456-7890",
-  dateOfBirth: "March 15, 1998",
-  gender: "Male",
-  university: "DAIICT",
-  email: "202601111@dau.ac.in",
-};
-
-const registeredEvents = [
-  {
-    id: 1,
-    name: "Tech Summit 2024",
-    category: "Business",
-    status: "Registered",
-  },
-  {
-    id: 2,
-    name: "AI & Machine Learning Conference",
-    category: "Technology",
-    status: "Form Incomplete",
-  },
-  {
-    id: 3,
-    name: "User-experience Workshop",
-    category: "Design",
-    status: "Registered",
-  },
-  {
-    id: 4,
-    name: "Advanced Frontend Systems",
-    category: "Technology",
-    status: "Form Incomplete",
-  },
-];
-
-const hasAccommodation = true;
-
-/* data */
 export default function UserProfile() {
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+
+  const [userDetails, setUserDetails] = useState<{
+    firstName: string;
+    lastName: string;
+    phone: string;
+    dateOfBirth: string;
+    gender: string;
+    university: string;
+    email: string;
+  } | null>(null);
+
+  const [registeredEvents, setRegisteredEvents] = useState<any[]>([]);
+  const [hasAccommodation, setHasAccommodation] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
-    if (!ref.current) return;
-    const tween = gsap.fromTo(
-      ref.current.querySelectorAll(".animate"),
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, stagger: 0.05 }
-    );
+    if (authLoading) return;
+    if (!user) {
+      router.push("/auth");
+      return;
+    }
+
+    const fetchData = async () => {
+      setDataLoading(true);
+      const supabase = createClient();
+
+      try {
+        // 1. Fetch User Details
+        const { data: userData, error: userError } = await supabase
+          .from("users")
+          .select("*")
+          .eq("user_id", user.id)
+          .single();
+
+        if (userData) {
+          const fullName = userData.user_name || "";
+          const nameParts = fullName.split(" ");
+          const firstName = nameParts[0] || "";
+          const lastName = nameParts.slice(1).join(" ") || "";
+
+          setUserDetails({
+            firstName,
+            lastName,
+            phone: userData.phone || "N/A",
+            dateOfBirth: userData.dob || "N/A",
+            gender: userData.gender || "N/A",
+            university: userData.college || "N/A",
+            email: userData.email || user.email || "N/A"
+          });
+        }
+
+        // 2. Fetch Registered Events
+        // The relation path is event_registrations -> event_fee -> event -> event_category
+        // We need to use the correct syntax for nested joins. 
+        // Based on types, event_registrations has FK to event_fee (composite).
+        // Let's try to join via event_fee.
+        const { data: regData, error: regError } = await supabase
+          .from("event_registrations")
+          .select(`
+            *,
+            event_fee (
+              event (
+                event_name,
+                event_category (
+                  category_name
+                )
+              )
+            )
+          `)
+          .eq("registered_by_user_id", user.id);
+
+        if (regData) {
+          const mappedEvents = regData.map((reg: any) => {
+            // reg.event_fee is likely an object because event_registrations -> event_fee is N:1
+            const eventObj = reg.event_fee?.event;
+            const categoryObj = eventObj?.event_category;
+
+            return {
+              id: reg.registration_id,
+              name: eventObj?.event_name || "Unknown Event",
+              category: categoryObj?.category_name || "General",
+              status: reg.payment_status === "done" ? "Registered" : "Payment Pending",
+            };
+          });
+          setRegisteredEvents(mappedEvents);
+        }
+
+        // 3. Accommodation
+        const { data: accData } = await supabase
+          .from("accommodation_bookings")
+          .select("booking_id")
+          .eq("user_id", user.id);
+
+        setHasAccommodation(accData && accData.length > 0 ? true : false);
+
+      } catch (error) {
+        console.error("Error fetching profile data:", error);
+      } finally {
+        setDataLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [user, authLoading, router]);
+
+  useEffect(() => {
+    if (dataLoading || !ref.current) return;
+    const ctx = gsap.context(() => {
+      const tween = gsap.fromTo(
+        ".animate",
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, stagger: 0.05 }
+      );
+    }, ref);
 
     return () => {
-      tween.kill?.();
+      ctx.revert();
     };
-  }, []);
+  }, [dataLoading]);
+
   const handleBack = () => {
     if (window.history.length > 1) {
       router.back();
     } else {
-      router.push("/"); // fallback route
+      router.push("/");
     }
   };
+
+  if (authLoading || dataLoading) {
+    return (
+      <div className="min-h-[100svh] bg-black flex items-center justify-center text-white">
+        Loading Profile...
+      </div>
+    );
+  }
+
+  if (!userDetails) {
+    return (
+      <div className="min-h-[100svh] bg-background px-4 py-6 md:px-8 md:py-12 flex flex-col items-center justify-center">
+        <div className="text-white mb-4">Failed to load profile.</div>
+        <button onClick={handleBack} className="text-white underline">Go Back</button>
+      </div>
+    );
+  }
 
   return (
     <div ref={ref} className="min-h-[100svh] bg-background px-4 py-6 md:px-8 md:py-12">
@@ -202,8 +263,8 @@ export default function UserProfile() {
                       </h3>
                       <span
                         className={`px-2 py-0.5 md:px-3 md:py-1 rounded-full text-xs md:text-sm whitespace-nowrap font-medium ${event.status === "Registered"
-                            ? "bg-green-500/20 text-green-400"
-                            : "bg-orange-500/20 text-orange-400"
+                          ? "bg-green-500/20 text-green-400"
+                          : "bg-orange-500/20 text-orange-400"
                           }`}
                       >
                         {event.status}
@@ -235,8 +296,8 @@ export default function UserProfile() {
                 </p>
                 <span
                   className={`px-3 py-1 rounded-full text-xs md:text-sm font-medium ${hasAccommodation
-                      ? "bg-green-500/20 text-green-400"
-                      : "bg-orange-500/20 text-orange-400"
+                    ? "bg-green-500/20 text-green-400"
+                    : "bg-orange-500/20 text-orange-400"
                     }`}
                 >
                   {hasAccommodation ? "Registered" : "Unregistered"}

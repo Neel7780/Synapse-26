@@ -61,6 +61,24 @@ export type Database = {
           }
         ];
       },
+      app_settings: {
+        Row: {
+          key: string;
+          value: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          key: string;
+          value?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          key?: string;
+          value?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
       accommodation_type: {
         Row: {
           description: string | null;
@@ -156,6 +174,7 @@ export type Database = {
       event: {
         Row: {
           category_id: number | null;
+          coordinator_id: string | null;
           description: string | null;
           event_date: string;
           event_id: number;
@@ -167,6 +186,7 @@ export type Database = {
         };
         Insert: {
           category_id?: number | null;
+          coordinator_id?: string | null;
           description?: string | null;
           event_date: string;
           event_id?: number;
@@ -178,6 +198,7 @@ export type Database = {
         };
         Update: {
           category_id?: number | null;
+          coordinator_id?: string | null;
           description?: string | null;
           event_date?: string;
           event_id?: number;
@@ -222,14 +243,17 @@ export type Database = {
         Row: {
           event_id: number;
           fee_id: number;
+          payment_qr_url: string | null;
         };
         Insert: {
           event_id: number;
           fee_id: number;
+          payment_qr_url?: string | null;
         };
         Update: {
           event_id?: number;
           fee_id?: number;
+          payment_qr_url?: string | null;
         };
         Relationships: [
           {
@@ -255,6 +279,7 @@ export type Database = {
           fee_id: number | null;
           gross_amount: number | null;
           payment_method_id: number | null;
+          payment_screenshot_url: string | null;
           payment_status: Database["public"]["Enums"]["payment_status"] | null;
           registered_by_user_id: string | null;
           registration_date: string | null;
@@ -267,6 +292,7 @@ export type Database = {
           fee_id?: number | null;
           gross_amount?: number | null;
           payment_method_id?: number | null;
+          payment_screenshot_url?: string | null;
           payment_status?: Database["public"]["Enums"]["payment_status"] | null;
           registered_by_user_id?: string | null;
           registration_date?: string | null;
@@ -279,6 +305,7 @@ export type Database = {
           fee_id?: number | null;
           gross_amount?: number | null;
           payment_method_id?: number | null;
+          payment_screenshot_url?: string | null;
           payment_status?: Database["public"]["Enums"]["payment_status"] | null;
           registered_by_user_id?: string | null;
           registration_date?: string | null;
@@ -502,6 +529,7 @@ export type Database = {
       users: {
         Row: {
           college: string | null;
+          coordinator_status: boolean | null;
           dob: string | null;
           email: string;
           gender: string | null;
@@ -512,6 +540,7 @@ export type Database = {
         };
         Insert: {
           college?: string | null;
+          coordinator_status?: boolean | null;
           dob?: string | null;
           email: string;
           gender?: string | null;
@@ -522,6 +551,7 @@ export type Database = {
         };
         Update: {
           college?: string | null;
+          coordinator_status?: boolean | null;
           dob?: string | null;
           email?: string;
           gender?: string | null;

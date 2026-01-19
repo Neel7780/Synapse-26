@@ -21,7 +21,6 @@ import {
   ArrowRight,
   TrendingUp,
   Eye,
-  MousePointer,
   Plus,
   ArrowUpRight,
   CheckCircle,
