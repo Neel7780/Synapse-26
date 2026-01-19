@@ -78,7 +78,7 @@ export default function AdminDashboard() {
       {/* Welcome Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Welcome Card */}
-        <Card className="lg:col-span-2 border-border/40 bg-gradient-to-br from-card via-card to-secondary/20">
+        <Card className="lg:col-span-2 border-border/40 bg-linear-to-r from-card via-card to-secondary/20">
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div>

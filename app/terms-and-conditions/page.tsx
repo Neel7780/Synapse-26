@@ -1,6 +1,5 @@
-"use client";
+'use client';
 
-import React from "react";
 import { Navbar } from "@/components/ui/Resizable-navbar";
 import NavigationPanel from "@/components/ui/NavigationPanel";
 import Footer from "@/components/ui/Footer";
@@ -17,7 +16,7 @@ const TERMS_CONTENT = [
   {
     title: "Behavioral Expectations",
     points: [
-      "Synapse’26 is a safe and inclusive space for everyone.",
+      "Synapse&apos;26 is a safe and inclusive space for everyone.",
       "Any form of nuisance, harassment, or vandalism will not be tolerated.",
       "Attendees may face immediate removal and legal consequences.",
     ],
@@ -54,15 +53,11 @@ const styles = {
   ul: "max-w-[1000px] ml-4 sm:ml-5 mb-4 list-disc list-inside",
   li: "text-sm sm:text-base lg:text-[25px] leading-relaxed text-[#dddddd] mb-2",
 };
-
-import { useNavigationState } from "@/lib/useNavigationState";
-import { useEffect } from "react";
-
 export default function Terms() {
   // Manual transition end moved to global TransitionProvider
 
   return (
-    <div className="relative w-screen min-h-[100svh] overflow-x-hidden  text-white">
+    <div className="relative w-screen min-h-svh overflow-x-hidden  text-white">
       <Navbar visible={true}>
         <NavigationPanel />
       </Navbar>
@@ -102,10 +97,10 @@ export default function Terms() {
         ))}
 
         <p className="mb-10 mt-10 sm:mb-14 lg:mb-16 sm:mt-14 lg:mt-16 max-w-[1000px] text-sm sm:text-base lg:text-[25px] leading-relaxed text-[#e6e6e6]">
-          By attending Synapse'26, you agree to abide by these terms and
+          By attending Synapse&apos;26, you agree to abide by these terms and
           conditions. Failure to comply may result in removal from the festival
           premises without any refund. We appreciate your cooperation in making
-          Synapse'26 a memorable and magical experience for everyone!
+          Synapse&apos;26 a memorable and magical experience for everyone!
         </p>
       </div>
       <Footer />
