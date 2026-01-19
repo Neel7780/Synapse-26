@@ -488,11 +488,11 @@ export default function JokerSection() {
   return (
     <div className='relative'>
       <div
-        className="joker-section relative h-[100vh] overflow-hidden"
+        className="joker-section relative h-[100dvh] overflow-hidden"
         id="jokerSection"
         ref={jokerSectionRef}
       >
-        <div className="joker-content relative top-0 h-[100vh] overflow-hidden">
+        <div className="joker-content relative top-0 h-[100dvh] overflow-hidden">
           <div className="viewport-wrapper absolute inset-0 flex overflow-hidden z-10">
 
             {/* LEFT DOOR */}
@@ -502,7 +502,7 @@ export default function JokerSection() {
               ref={leftDoorRef}
               style={{
                 background: "white url('/images_home/left.png') no-repeat right center",
-                backgroundSize: "min(200%, 100svh)",
+                backgroundSize: "min(200%, 100vh)",
               }}
             >
               <div
@@ -531,7 +531,7 @@ export default function JokerSection() {
               ref={rightDoorRef}
               style={{
                 background: "white url('/images_home/right.png') no-repeat left center",
-                backgroundSize: "min(200%, 100svh)",
+                backgroundSize: "min(200%, 100dvh)",
               }}
             >
               <div
@@ -682,9 +682,9 @@ export default function JokerSection() {
         </div>
       </div>
 
-      <div className='h-[100svh]' />
-      <div className='h-[100svh]' />
-      <div className='h-[100svh]' />
+      <div className='h-[100vh]' />
+      <div className='h-[100vh]' />
+      <div className='h-[100vh]' />
     </div>
   );
 }

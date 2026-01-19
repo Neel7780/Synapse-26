@@ -103,7 +103,7 @@ export default function UserProfile() {
   }, []);
 
   return (
-    <div ref={profileRef} className="min-h-[100svh] bg-background py-12 px-4 md:py-20">
+    <div ref={profileRef} className="min-h-[100dvh] bg-background py-12 px-4 md:py-20">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-12">
         <button className="group relative -left-4 inline-flex items-center justify-center text-muted-foreground hover:text-foreground transition-all-ml-5">
@@ -207,8 +207,8 @@ export default function UserProfile() {
 
                     <span
                       className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap ${event.status === "Registered"
-                          ? "bg-green-500/20 text-green-400"
-                          : "bg-orange-500/20 text-orange-400"
+                        ? "bg-green-500/20 text-green-400"
+                        : "bg-orange-500/20 text-orange-400"
                         }`}
                     >
                       {event.status}
@@ -232,8 +232,8 @@ export default function UserProfile() {
 
               <span
                 className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap ${hasAccommodation
-                    ? "bg-green-500/20 text-green-400"
-                    : "bg-orange-500/20 text-orange-400"
+                  ? "bg-green-500/20 text-green-400"
+                  : "bg-orange-500/20 text-orange-400"
                   }`}
               >
                 {hasAccommodation ? "Registered" : "Unregistered"}

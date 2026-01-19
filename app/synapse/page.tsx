@@ -36,31 +36,31 @@ export default function HomeSection() {
   }, [entered]);
 
   return (
-    <main className="flex flex-col min-h-svh overflow-x-hidden relative">
+    <main className="flex flex-col min-h-dvh overflow-x-hidden relative">
       {entered ? <FluidCanvas /> : ""}
       <Navbar visible={showNavbar}>
         <NavigationPanel />
       </Navbar>
-      <HeroSection
+      {/* <HeroSection
         onEnter={() => setEntered(true)}
         setShowNavbar={setShowNavbar}
         showNavbar={showNavbar}
       />
       <div
         className={`
-            mt-[200svh]
+            mt-[200vh]
             w-full
             flex-col
             z-30
             ${entered ? "flex" : "hidden"}
           `}
-      >
-        <AboutSection />
-        <JokerSection />
-        <ArtistsSection />
-        <HallOfFame />
-        <Footer />
-      </div>
+      > */}
+      <AboutSection />
+      <JokerSection />
+      <ArtistsSection />
+      <HallOfFame />
+      <Footer />
+      {/* </div> */}
     </main>
   );
 }

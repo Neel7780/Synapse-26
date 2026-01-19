@@ -483,7 +483,7 @@ export default function HallOfFame() {
   return (
     <div className="relative overflow-hidden w-full bg-black">
       <div ref={hallContainerRef} className="relative">
-        <div className="h-[100svh] w-full bg-black">
+        <div className="h-[100dvh] w-full bg-black">
           {/* Mobile Grid (3x3) */}
           <div className="md:hidden absolute inset-0 flex items-center justify-center p-2">
             <div

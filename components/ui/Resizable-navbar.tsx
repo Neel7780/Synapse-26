@@ -274,7 +274,7 @@ export const MobileNavMenu = forwardRef<
           </div>
 
           {/* MENU ITEMS */}
-          <div className="flex flex-col gap-6 px-8 pb-6 max-h-[70svh] overflow-y-auto overscroll-contain">
+          <div className="flex flex-col gap-6 px-8 pb-6 max-h-[70dvh] overflow-y-auto overscroll-contain">
             {children}
           </div>
         </motion.div>
