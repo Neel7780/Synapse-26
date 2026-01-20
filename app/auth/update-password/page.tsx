@@ -92,8 +92,12 @@ function UpdatePasswordForm() {
       setTimeout(() => {
         router.push("/auth");
       }, 2000);
-    } catch (err: any) {
-      setError(err.message || "Failed to update password");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || "Failed to update password");
+      } else {
+        setError("Failed to update password");
+      }
     } finally {
       setIsLoading(false);
     }

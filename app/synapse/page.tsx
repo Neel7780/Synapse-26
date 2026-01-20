@@ -13,6 +13,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import NavigationPanel from "@/components/ui/NavigationPanel";
 import { Navbar } from "@/components/ui/Resizable-navbar";
+import FluidCanvas from "@/components/FluidCanvas";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);

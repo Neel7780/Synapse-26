@@ -55,10 +55,11 @@ export async function POST(request: NextRequest) {
             invalidEmails: [],
             message: "All team members are registered"
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Error in validate-team:", error);
+        const message = error instanceof Error ? error.message : "Internal server error";
         return NextResponse.json(
-            { error: error.message || "Internal server error" },
+            { error: message },
             { status: 500 }
         );
     }

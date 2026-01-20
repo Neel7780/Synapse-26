@@ -793,7 +793,7 @@ export default function HeroSection({
             <div id="part3" ref={part3Ref} className={`absolute inset-0 w-full h-full transform-[rotateY(180deg)] backface-hidden ${part3Active ? "pointer-events-auto" : "pointer-events-none"}`}>
               <div className="register-btn absolute bottom-2/5  max-[450px]:left-1/2 min-[450px]:bottom-[40px] min-[450px]:right-[40px] md:bottom-[60px] md:right-[60px]">
                 {isAuthenticated ? (
-                  <NavbarButton onClick={logout} variant="register">
+                  <NavbarButton onClick={() => { logout(); }} variant="register">
                     Logout
                   </NavbarButton>
                 ) : (

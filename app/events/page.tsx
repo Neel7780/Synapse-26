@@ -12,7 +12,7 @@ import { useNavigationState } from "@/lib/useNavigationState";
 import { useImagePreload } from "@/hooks/useImagePreload";
 
 if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
+    gsap.registerPlugin(ScrollTrigger);
 }
 
 type EventItem = {
@@ -52,7 +52,7 @@ const EventCard = memo(function EventCard({
         if (!innerRef.current) return;
 
         const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        
+
         gsap.to(innerRef.current, {
             rotateY: isFlipped ? 180 : 0,
             duration: prefersReducedMotion ? 0 : 0.8,
@@ -136,8 +136,8 @@ const EventCard = memo(function EventCard({
                     key={i}
                     className="sparkle absolute w-2 h-2 bg-yellow-400 rounded-full pointer-events-none z-20"
                     style={{
-                        left: `${20 + Math.random() * 60}%`,
-                        top: `${20 + Math.random() * 60}%`,
+                        left: `${20 + ((i * 17) % 60)}%`,
+                        top: `${20 + ((i * 23) % 60)}%`,
                     }}
                 />
             ))}
@@ -339,7 +339,7 @@ export default function EventsPage() {
                 </section>
 
                 <section className="relative py-10">
-                    <h1 
+                    <h1
                         ref={titleRef}
                         className="text-center text-[3rem] sm:text-[4.5rem] lg:text-8xl tracking-[0.2em] sm:tracking-[0.25em] lg:tracking-[0.3em] lowercase font-joker"
                     >
@@ -405,7 +405,7 @@ export default function EventsPage() {
                                                     <div
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            handleCardClick(event.slug, isFlipped);
+                                                            handleCardClick(event.slug);
                                                         }}
                                                         className="absolute inset-0 rounded-lg overflow-hidden cursor-pointer"
                                                         style={{

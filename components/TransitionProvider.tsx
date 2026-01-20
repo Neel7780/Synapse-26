@@ -11,6 +11,7 @@ export default function TransitionProvider({
     children: React.ReactNode;
 }) {
     const { isTransitioning, endTransition, loadingCount } = useNavigationState();
+    const pathname = usePathname();
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
     // Smart Loading Logic
@@ -61,7 +62,11 @@ export default function TransitionProvider({
             }
         }, 100);
 
-        return () => clearInterval(interval);
+        return () => {
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+            }
+        };
     }, [isTransitioning, loadingCount, endTransition, pathname]);
 
     return (

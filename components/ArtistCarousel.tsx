@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
 
 const artistData = [
   {
@@ -71,7 +71,7 @@ interface CardProps {
   data: typeof artistData[0];
   index: number;
   total: number;
-  progress: any;
+  progress: MotionValue<number>;
 }
 
 const Card = ({ data, index, total, progress }: CardProps) => {

@@ -13,6 +13,7 @@ if (typeof window !== "undefined") {
 const PlayingCard = memo(function PlayingCard({
   card,
   cardRef,
+  children,
 }: {
   card: {
     id: string;
@@ -22,6 +23,7 @@ const PlayingCard = memo(function PlayingCard({
     isRed?: boolean;
   };
   cardRef: (el: HTMLDivElement | null) => void;
+  children?: React.ReactNode;
 }) {
   return (
     <div
@@ -34,44 +36,46 @@ const PlayingCard = memo(function PlayingCard({
       id={card.id}
       ref={cardRef}
     >
-      <div
-        className="card-inner w-full h-full transform-style-preserve-3d transition-transform duration-100 ease-in-out"
-        style={{ transformStyle: "preserve-3d" }}
-      >
-        {/* Card Front */}
+      {children || (
         <div
-          className="card-front absolute inset-0 backface-hidden lowercase font-joker"
-          style={{
-            backgroundImage: `image-set(url(${card.image.avif}) type("image/avif"),url(${card.image.png}) type("image/png"))`,
-            backgroundRepeat: "no-repeat",
-            backgroundPosition: "center",
-            backgroundSize: "contain",
-            backfaceVisibility: "hidden",
-          }}
-        />
-
-        {/* Card Back */}
-        <div
-          className="card-back absolute inset-0 backface-hidden lowercase font-joker flex flex-col gap-2 md:gap-4 items-center justify-center p-4 md:p-8 text-center"
-          style={{
-            background: "url('/images_home/card_back.avif') no-repeat center center",
-            backgroundSize: "contain",
-            backfaceVisibility: "hidden",
-            transform: "rotateY(180deg)",
-          }}
+          className="card-inner w-full h-full transform-style-preserve-3d transition-transform duration-100 ease-in-out"
+          style={{ transformStyle: "preserve-3d" }}
         >
-          <h2 className="text-black text-sm md:text-xl lg:text-3xl font-bold">{card.day}</h2>
-          <h2
-            className={
-              card.isRed
-                ? "text-[#cf0000] font-jqka max-w-[70%] md:max-w-full text-base md:text-xl lg:text-4xl font-bold"
-                : "text-black max-w-[70%] md:max-w-full text-base md:text-xl lg:text-4xl font-jqka font-bold"
-            }
+          {/* Card Front */}
+          <div
+            className="card-front absolute inset-0 backface-hidden lowercase font-joker"
+            style={{
+              backgroundImage: `image-set(url(${card.image.avif}) type("image/avif"),url(${card.image.png}) type("image/png"))`,
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "center",
+              backgroundSize: "contain",
+              backfaceVisibility: "hidden",
+            }}
+          />
+
+          {/* Card Back */}
+          <div
+            className="card-back absolute inset-0 backface-hidden lowercase font-joker flex flex-col gap-2 md:gap-4 items-center justify-center p-4 md:p-8 text-center"
+            style={{
+              background: "url('/images_home/card_back.avif') no-repeat center center",
+              backgroundSize: "contain",
+              backfaceVisibility: "hidden",
+              transform: "rotateY(180deg)",
+            }}
           >
-            {card.name}
-          </h2>
+            <h2 className="text-black text-sm md:text-xl lg:text-3xl font-bold">{card.day}</h2>
+            <h2
+              className={
+                card.isRed
+                  ? "text-[#cf0000] font-jqka max-w-[70%] md:max-w-full text-base md:text-xl lg:text-4xl font-bold"
+                  : "text-black max-w-[70%] md:max-w-full text-base md:text-xl lg:text-4xl font-jqka font-bold"
+              }
+            >
+              {card.name}
+            </h2>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 });
@@ -549,7 +553,7 @@ export default function JokerSection() {
       window.addEventListener("resize", handleResize);
 
       const sectionRef = jokerSectionRef.current;
-      
+
       return () => {
         window.removeEventListener("resize", handleResize);
         jokerTl.scrollTrigger?.kill();
@@ -782,7 +786,7 @@ export default function JokerSection() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </PlayingCard>
                 ))}
               </div>
             </div>

@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useNavigationState } from "@/lib/useNavigationState";
 import { usePathname } from "next/navigation";
 
-import React, { useRef, useState, forwardRef } from "react";
+import React, { useRef, useState, forwardRef, memo } from "react";
 
 interface NavbarProps {
   children: React.ReactNode;
