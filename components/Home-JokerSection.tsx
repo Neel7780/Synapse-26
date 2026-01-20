@@ -317,9 +317,10 @@ export default function JokerSection() {
         const isother = vw < 1000;
 
         if (isMobile) {
-          const spread = Math.min(vw * 0.4, 160);
-          return (((i > 1 ? 3.7 : 1.2) - 2.5)) * (spread / 2.2);
-        } else if (isTablet) {
+          const offset = Math.min(vw * 0.12, 240);
+          return i % 2 === 0 ? -offset : offset;
+        }
+        else if (isTablet) {
           const spread = Math.min(vw * 0.4, 290);
 
           return (i - 1.5) * (spread / 2.5);
@@ -340,8 +341,8 @@ export default function JokerSection() {
         const isother = window.innerWidth < 1000;
 
         if (isMobile) {
-          const mobileStagger = [-0.18, 0.15, 0, 0.3];
-          return mobileStagger[i] * vh;
+          const step = vh * 0.18;
+          return i * step - vh * 0.15;
         } else if (isTablet) {
           const TabletStagger = [0.07, -0.1, 0.07, -0.07];
           return TabletStagger[i] * vh;
@@ -358,7 +359,7 @@ export default function JokerSection() {
         const isTablet = window.innerWidth < 769;
 
         if (isMobile) {
-          return [-15, -10, 10, 15][i];
+          return i % 2 === 0 ? -6 : 6;
         }
         if (isTablet) {
           return [-15, 10, 5, 15][i];
@@ -531,7 +532,7 @@ export default function JokerSection() {
               ref={rightDoorRef}
               style={{
                 background: "white url('/images_home/right.png') no-repeat left center",
-                backgroundSize: "min(200%, 100dvh)",
+                backgroundSize: "min(200%, 100vh)",
               }}
             >
               <div

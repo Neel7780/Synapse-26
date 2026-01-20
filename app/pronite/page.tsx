@@ -53,29 +53,6 @@ export default function PronitePage() {
           you&apos;ll wish you were part of.
         </p>
 
-        {!isAuthenticated ? (
-          <div className="flex justify-center">
-            <NavbarButton href="/auth" variant="register">
-              REGISTER
-            </NavbarButton>
-          </div>
-        ) : (
-          <div className="flex justify-center">
-            <NavbarButton
-              variant="register"
-              onClick={async () => {
-                const { createClient } = await import(
-                  "@/utils/supabase/client"
-                );
-                const supabase = createClient();
-                await supabase.auth.signOut();
-                window.location.href = "/";
-              }}
-            >
-              LOGOUT
-            </NavbarButton>
-          </div>
-        )}
       </section>
 
       <Footer />

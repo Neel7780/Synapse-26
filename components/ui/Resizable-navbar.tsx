@@ -10,6 +10,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useNavigationState } from "@/lib/useNavigationState";
+import { usePathname } from "next/navigation";
 
 import React, { useRef, useState, forwardRef } from "react";
 
@@ -212,16 +213,16 @@ export const MobileAnimatedMenuItem = ({
       className="group w-full grid grid-cols-[1fr_auto] items-center cursor-pointer select-none text-white font-joker hover:text-red-600"
     >
       {/* TEXT */}
-      <div className="relative overflow-hidden h-[clamp(32px,7vw,64px)]">
-        <span className="absolute inset-0 transition-transform duration-500 ease-out group-hover:-translate-y-full text-[clamp(18px,4.5vw,42px)] leading-[clamp(32px,7vw,64px)] font-joker">
+      <div className="relative overflow-hidden h-[clamp(28px,6vw,54px)]">
+        <span className="absolute inset-0 transition-transform duration-500 ease-out group-hover:-translate-y-full text-[clamp(18px,4.5vw,36px)] leading-[clamp(28px,6vw,54px)] font-joker">
           {name}
         </span>
-        <span className="absolute inset-0 translate-y-full transition-transform duration-500 ease-out group-hover:translate-y-0 text-[clamp(18px,4.5vw,42px)] leading-[clamp(32px,7vw,64px)] font-joker">
+        <span className="absolute inset-0 translate-y-full transition-transform duration-500 ease-out group-hover:translate-y-0 text-[clamp(18px,4.5vw,36px)] leading-[clamp(28px,6vw,54px)] font-joker">
           {name}
         </span>
       </div>
 
-      <span className="ml-[clamp(8px,1.5vw,16px)] text-[clamp(20px,5vw,48px)] transition-all duration-300 ease-out group-hover:translate-x-1.5">
+      <span className="ml-[clamp(10px,2vw,20px)] text-[clamp(20px,4.5vw,36px)] transition-all duration-300 ease-out group-hover:translate-x-1.5">
         ↗
       </span>
     </Link>
@@ -274,7 +275,7 @@ export const MobileNavMenu = forwardRef<
           </div>
 
           {/* MENU ITEMS */}
-          <div className="flex flex-col gap-6 px-8 pb-6 max-h-[70dvh] overflow-y-auto overscroll-contain">
+          <div className="flex flex-col gap-2 px-8 pb-6 lg:gap-0.5 max-h-[75dvh] overflow-y-auto overscroll-contain">
             {children}
           </div>
         </motion.div>
@@ -299,11 +300,19 @@ export const MobileNavToggle = ({
 
 export const NavbarLogo = () => {
   const { startTransition } = useNavigationState();
+  const pathname = usePathname();
 
   return (
     <Link
       href="/"
-      onClick={() => startTransition()}
+      onClick={(e) => {
+        if (pathname === "/") {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          return;
+        }
+        startTransition();
+      }}
       className="relative mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-black dark:text-white pointer-events-auto"
     >
       <Image

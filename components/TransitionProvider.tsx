@@ -3,8 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { useNavigationState } from "@/lib/useNavigationState";
-import TransitionOverlay from "./TransitionOverlay";
-
+import TransitionOverlay from "@/components/TransitionOverlay";
 
 export default function TransitionProvider({
     children,

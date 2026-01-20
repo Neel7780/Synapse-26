@@ -609,7 +609,13 @@ export default function HeroSection({
       sessionStorage.removeItem(INTRO_KEY);
     };
 
+
+    const handleResize = () => {
+      ScrollTrigger.refresh();
+    };
+
     window.addEventListener("beforeunload", clearIntroOnReload);
+    window.addEventListener("resize", handleResize);
 
     requestAnimationFrame(() => {
       startBrowserPreloadTracking();
@@ -621,6 +627,7 @@ export default function HeroSection({
 
     return () => {
       window.removeEventListener("beforeunload", clearIntroOnReload);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
@@ -651,6 +658,12 @@ export default function HeroSection({
         });
       },
       onComplete: () => {
+        // Set mask size after animation completes
+        gsap.set(maskLayerRef.current, {
+          webkitMaskSize: "cover",
+          maskSize: "cover",
+        });
+
         if (svgContainerRef.current) {
           svgContainerRef.current.style.display = "none";
         }
@@ -747,7 +760,7 @@ export default function HeroSection({
         </>
       ) : <></>
       }
-      <div className="hero relative inset-0 h-[100svh] z-25" ref={heroRef}>
+      <div className="hero relative inset-0 h-[100dvh] z-25" ref={heroRef}>
         <div id="maskLayer" className="absolute inset-0 opacity-100 " ref={maskLayerRef} style={{
           WebkitMaskImage: 'url("/images_home/inkReveal2.gif")',
           WebkitMaskRepeat: 'no-repeat',
@@ -769,7 +782,7 @@ export default function HeroSection({
               backgroundSize: "cover",
               backgroundPosition: "center",
             }} className=" absolute inset-0 flex flex-col items-center justify-center opacity-100 will-change-transform backface-hidden transform-[rotateY(180deg)]">
-              <div className="screen-container relative w-screen h-[100svh] flex items-center justify-center perspective-[1000px] transform-3d" ref={screenContainerRef}>
+              <div className="screen-container relative w-screen h-full flex items-center justify-center perspective-[1000px] transform-3d" ref={screenContainerRef}>
                 <div ref={frontScreenRef} className="screen-front absolute inset-0 bg-black bg-[url('/images_home/part3-image.png')] bg-no-repeat bg-center bg-contain z-2 backface-hidden border-4 border-solid rounded " style={{ borderColor: "rgba(250,235,215,0)" }}></div>
                 <div className="center-joker-container absolute inset-0 flex items-center justify-center transform-[rotateY(180deg)] backface-hidden z-1">
                   <img src="/images_home/card_center.png" className="center-joker w-full h-auto rotate-[-64deg] object-contain" alt="Joker Card" />
@@ -777,14 +790,14 @@ export default function HeroSection({
               </div>
             </div>
 
-            <div id="part3" ref={part3Ref} className={`absolute inset-0 w-full h-[100svh] transform-[rotateY(180deg)] backface-hidden ${part3Active ? "pointer-events-auto" : "pointer-events-none"}`}>
+            <div id="part3" ref={part3Ref} className={`absolute inset-0 w-full h-full transform-[rotateY(180deg)] backface-hidden ${part3Active ? "pointer-events-auto" : "pointer-events-none"}`}>
               <div className="register-btn absolute bottom-2/5  max-[450px]:left-1/2 min-[450px]:bottom-[40px] min-[450px]:right-[40px] md:bottom-[60px] md:right-[60px]">
                 <NavbarButton href="/auth" variant="register">
                   Register
                 </NavbarButton>
               </div>
 
-              <div className="title-wrapper flex justify-center pt-[80px] sm:pt-[60px] md:pt-[120px] h-[calc(100svh-120px)] md:h-[calc(100svh-200px)]">
+              <div className="title-wrapper flex justify-center pt-[80px] sm:pt-[60px] md:pt-[120px] h-[calc(100dvh-120px)] md:h-[calc(100dvh-200px)]">
                 <h1 className="title text-4xl min-[450px]:text-6xl sm:text-7xl md:text-[clamp(40px,12vw,140px)] font-joker leading-none text-center px-4" ref={titleRef}>synapse' 26</h1>
               </div>
               <div

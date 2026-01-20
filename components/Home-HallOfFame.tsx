@@ -370,7 +370,7 @@ export default function HallOfFame() {
         pointerEvents: "none",
         scrollTrigger: {
           trigger: hallContainerRef.current,
-          start: "top top",
+          start: "top top+=5%",
           end: "+=20%",
           scrub: true,
         },
@@ -380,7 +380,7 @@ export default function HallOfFame() {
         opacity: 0,
         scrollTrigger: {
           trigger: hallContainerRef.current,
-          start: "top top",
+          start: "top top+=5%",
           end: "+=70%",
           scrub: true,
         },
@@ -414,7 +414,7 @@ export default function HallOfFame() {
 
         ScrollTrigger.create({
           trigger: hallContainerRef.current!,
-          start: "top top",
+          start: "top top-=5%",
           end: "bottom top",
           scrub: true,
           pin: true,
@@ -483,7 +483,7 @@ export default function HallOfFame() {
   return (
     <div className="relative overflow-hidden w-full bg-black">
       <div ref={hallContainerRef} className="relative">
-        <div className="h-[100dvh] w-full bg-black">
+        <div className="h-[100svh] w-full bg-black">
           {/* Mobile Grid (3x3) */}
           <div className="md:hidden absolute inset-0 flex items-center justify-center p-2">
             <div
@@ -532,7 +532,7 @@ export default function HallOfFame() {
                 <img
                   src="/images_home/HallOfFame.png"
                   alt="Hall of Fame"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover z-80"
                 />
                 <span className="hof-title absolute bottom-5 text-xl text-center w-full z-5 font-white font-joker">
                   hall of fame

@@ -41,7 +41,7 @@ export default function HomeSection() {
       <Navbar visible={showNavbar}>
         <NavigationPanel />
       </Navbar>
-      {/* <HeroSection
+      <HeroSection
         onEnter={() => setEntered(true)}
         setShowNavbar={setShowNavbar}
         showNavbar={showNavbar}
@@ -54,13 +54,13 @@ export default function HomeSection() {
             z-30
             ${entered ? "flex" : "hidden"}
           `}
-      > */}
-      <AboutSection />
-      <JokerSection />
-      <ArtistsSection />
-      <HallOfFame />
-      <Footer />
-      {/* </div> */}
+      >
+        <AboutSection />
+        <JokerSection />
+        <ArtistsSection />
+        <HallOfFame />
+        <Footer />
+      </div>
     </main>
   );
 }

@@ -118,7 +118,7 @@ export default function EventsPage() {
                                             style={{ perspective: "1500px" }}
                                         >
                                             {/* CARD FRAME — responsive sizing */}
-                                            <div className="relative w-[110px] xs:w-[130px] sm:w-[180px] md:w-[220px] lg:w-[260px] xl:w-[320px] 2xl:w-[400px] aspect-[457/640]">
+                                            <div className="relative w-[110px] xs:w-[130px] sm:w-[180px] md:w-[220px] lg:w-[260px] xl:w-[320px] 2xl:w-[400px] aspect-[401/600]">
                                                 <div
                                                     className="relative w-full h-full transition-transform ease-in-out"
                                                     style={{
