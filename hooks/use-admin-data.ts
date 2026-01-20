@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import * as adminApi from "@/lib/admin-api";
 
 type UseDataResult<T> = {
@@ -16,34 +16,47 @@ type UseDataResult<T> = {
 };
 
 /**
- * Generic hook for fetching data
+ * Generic hook for fetching data with a stable key for refetching
+ * @param fetchFn - Function that returns a promise of the API response
+ * @param key - Stable key to trigger refetch when changed (use JSON.stringify for objects)
  */
 function useAdminData<T>(
     fetchFn: () => Promise<adminApi.ApiResponse<T>>,
-    deps: any[] = []
+    key: string = ""
 ): UseDataResult<T> {
     const [data, setData] = useState<T | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [refetchTrigger, setRefetchTrigger] = useState(0);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
         setError(null);
-        const response = await fetchFn();
-        if (response.error) {
-            setError(response.error);
+        try {
+            const response = await fetchFn();
+            if (response.error) {
+                setError(response.error);
+                setData(null);
+            } else {
+                setData(response.data || null);
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Unknown error");
             setData(null);
-        } else {
-            setData(response.data || null);
         }
         setLoading(false);
-    }, deps);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [key, refetchTrigger]);
 
     useEffect(() => {
         fetchData();
     }, [fetchData]);
 
-    return { data, loading, error, refetch: fetchData };
+    const refetch = useCallback(async () => {
+        setRefetchTrigger(prev => prev + 1);
+    }, []);
+
+    return { data, loading, error, refetch };
 }
 
 // ============================================================================
@@ -51,7 +64,8 @@ function useAdminData<T>(
 // ============================================================================
 
 export function useEvents() {
-    return useAdminData(() => adminApi.eventsApi.getAll(), []);
+    const fetchFn = useCallback(() => adminApi.eventsApi.getAll(), []);
+    return useAdminData(fetchFn, "events");
 }
 
 export function useCreateEvent() {
@@ -119,7 +133,8 @@ export function useDeleteEvent() {
 // ============================================================================
 
 export function useCategories() {
-    return useAdminData(() => adminApi.categoriesApi.getAll(), []);
+    const fetchFn = useCallback(() => adminApi.categoriesApi.getAll(), []);
+    return useAdminData(fetchFn, "categories");
 }
 
 // ============================================================================
@@ -127,15 +142,18 @@ export function useCategories() {
 // ============================================================================
 
 export function useRegistrations(filters: adminApi.RegistrationFilters = {}) {
-    const filtersKey = JSON.stringify(filters);
-    return useAdminData(
+    const filtersKey = useMemo(() => JSON.stringify(filters), [filters]);
+    const fetchFn = useCallback(
         () => adminApi.registrationsApi.getAll(filters),
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         [filtersKey]
     );
+    return useAdminData(fetchFn, `registrations-${filtersKey}`);
 }
 
 export function useRegistrationEventList() {
-    return useAdminData(() => adminApi.registrationsApi.getEventList(), []);
+    const fetchFn = useCallback(() => adminApi.registrationsApi.getEventList(), []);
+    return useAdminData(fetchFn, "registration-events");
 }
 
 // ============================================================================
@@ -143,12 +161,18 @@ export function useRegistrationEventList() {
 // ============================================================================
 
 export function useUsers(filters: adminApi.UserFilters = {}) {
-    const filtersKey = JSON.stringify(filters);
-    return useAdminData(() => adminApi.usersApi.getAll(filters), [filtersKey]);
+    const filtersKey = useMemo(() => JSON.stringify(filters), [filters]);
+    const fetchFn = useCallback(
+        () => adminApi.usersApi.getAll(filters),
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [filtersKey]
+    );
+    return useAdminData(fetchFn, `users-${filtersKey}`);
 }
 
 export function useUserEventList() {
-    return useAdminData(() => adminApi.usersApi.getEventList(), []);
+    const fetchFn = useCallback(() => adminApi.usersApi.getEventList(), []);
+    return useAdminData(fetchFn, "user-events");
 }
 
 // ============================================================================
@@ -156,11 +180,16 @@ export function useUserEventList() {
 // ============================================================================
 
 export function useSponsors() {
-    return useAdminData(() => adminApi.sponsorsApi.getAll(), []);
+    const fetchFn = useCallback(() => adminApi.sponsorsApi.getAll(), []);
+    return useAdminData(fetchFn, "sponsors");
 }
 
 export function useSponsorById(id: number) {
-    return useAdminData(() => adminApi.sponsorsApi.getById(id), [id]);
+    const fetchFn = useCallback(
+        () => adminApi.sponsorsApi.getById(id),
+        [id]
+    );
+    return useAdminData(fetchFn, `sponsor-${id}`);
 }
 
 export function useCreateSponsor() {
@@ -225,7 +254,8 @@ export function useDeleteSponsor() {
 // ============================================================================
 
 export function useArtists() {
-    return useAdminData(() => adminApi.artistsApi.getAll(), []);
+    const fetchFn = useCallback(() => adminApi.artistsApi.getAll(), []);
+    return useAdminData(fetchFn, "artists");
 }
 
 export function useCreateArtist() {
@@ -271,9 +301,11 @@ export function useDeleteArtist() {
 // ============================================================================
 
 export function useMerchandiseProducts() {
-    return useAdminData(() => adminApi.merchandiseApi.products.getAll(), []);
+    const fetchFn = useCallback(() => adminApi.merchandiseApi.products.getAll(), []);
+    return useAdminData(fetchFn, "merchandise-products");
 }
 
 export function useMerchandiseOrders() {
-    return useAdminData(() => adminApi.merchandiseApi.orders.getAll(), []);
+    const fetchFn = useCallback(() => adminApi.merchandiseApi.orders.getAll(), []);
+    return useAdminData(fetchFn, "merchandise-orders");
 }

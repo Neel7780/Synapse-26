@@ -1,8 +1,9 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useNavigationState } from "@/lib/useNavigationState";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import Image from "next/image";
 
 type Phase = "idle" | "delay" | "enter" | "exit";
 
@@ -15,27 +16,38 @@ const images = [
 
 export default function TransitionOverlay() {
     const { isTransitioning, isFirstLoad } = useNavigationState();
-
-    // Start in 'idle' so it's hidden but mounted
     const [phase, setPhase] = useState<Phase>("idle");
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    /* ---------------- PHASE CONTROL ---------------- */
+    // Memoized phase transition handler to avoid unnecessary re-renders
+    const handlePhaseTransition = useCallback((newPhase: Phase, delay: number = 0) => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+        if (delay > 0) {
+            timeoutRef.current = setTimeout(() => setPhase(newPhase), delay);
+        } else {
+            setPhase(newPhase);
+        }
+    }, []);
+
     useEffect(() => {
         if (isTransitioning) {
             // Start sequence: idle -> delay -> enter
-            setPhase("delay");
-            const t = setTimeout(() => setPhase("enter"), 300);
-            return () => clearTimeout(t);
-        } else {
+            handlePhaseTransition("delay");
+            handlePhaseTransition("enter", 300);
+        } else if (phase !== "idle") {
             // End sequence: enter -> exit -> idle
-            // Only trigger exit if we were actually active (not already idle)
-            if (phase !== "idle") {
-                setPhase("exit");
-                const t = setTimeout(() => setPhase("idle"), 3200); // Wait for exit animation
-                return () => clearTimeout(t);
-            }
+            handlePhaseTransition("exit");
+            handlePhaseTransition("idle", 3200);
         }
-    }, [isTransitioning]);
+
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, [isTransitioning, handlePhaseTransition]); // Removed 'phase' from deps to prevent loop
 
     /* ---------------- POSITIONS ---------------- */
     const entryFromCorners = [
@@ -85,21 +97,19 @@ export default function TransitionOverlay() {
             <div className={`absolute inset-0 bg-black z-0 transition-opacity duration-0 ${phase === "exit" || phase === "idle" ? "opacity-0" : "opacity-100"}`} />
             <div className={`absolute inset-0 bg-black z-0 ${phase === "exit" ? "hidden" : "block"}`} />
 
-
             {/* CARDS */}
             <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 z-20">
                 {images.map((src, i) => (
                     <motion.div
                         key={i}
                         className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden"
-                        // Force initial state when idle or delay so they are ready
                         initial={entryFromCorners[i]}
                         animate={
                             phase === "enter"
                                 ? { x: 0, y: 0, rotate: 0 }
                                 : phase === "exit"
                                     ? exitWithDoors[i]
-                                    : entryFromCorners[i] // Reset to corners when idle/delay
+                                    : entryFromCorners[i]
                         }
                         transition={{
                             duration: phase === "enter" ? 1.6 : (phase === "exit" ? 3 : 0), // Instant reset if not entering/exiting
@@ -107,10 +117,14 @@ export default function TransitionOverlay() {
                             ease: [0.22, 1, 0.36, 1],
                         }}
                     >
-                        <img
+                        <Image
                             src={src}
                             alt=""
+                            fill
+                            sizes="50vw"
                             className="object-fill transform origin-center w-[50dvh] h-[50vw] rotate-90 md:w-full md:h-full md:rotate-0"
+                            priority={i < 2}
+                            loading={i < 2 ? "eager" : "lazy"}
                         />
                     </motion.div>
                 ))}

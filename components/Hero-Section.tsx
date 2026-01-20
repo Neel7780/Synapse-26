@@ -44,7 +44,7 @@ export default function HeroSection({
   const [showEnter, setShowEnter] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [part3Active, setPart3Active] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
 
   const hasRunMaskRef = useRef(false);
   const enterTriggeredRef = useRef(false);
@@ -347,11 +347,11 @@ export default function HeroSection({
       scrollTrigger: {
         trigger: heroRef.current,
         start: "top top",
-        end: "+=300%",
-        scrub: 2.5,
+        end: "+=200%",
+        scrub: 1.5,
         pin: true,
         pinSpacing: false,
-        anticipatePin: 1.2,
+        anticipatePin: 1,
         onUpdate: (self) => {
           if (self.progress > 0.35 && self.progress < 0.5) {
             setPart3Active(true);
@@ -792,9 +792,15 @@ export default function HeroSection({
 
             <div id="part3" ref={part3Ref} className={`absolute inset-0 w-full h-full transform-[rotateY(180deg)] backface-hidden ${part3Active ? "pointer-events-auto" : "pointer-events-none"}`}>
               <div className="register-btn absolute bottom-2/5  max-[450px]:left-1/2 min-[450px]:bottom-[40px] min-[450px]:right-[40px] md:bottom-[60px] md:right-[60px]">
-                <NavbarButton href="/auth" variant="register">
-                  Register
-                </NavbarButton>
+                {isAuthenticated ? (
+                  <NavbarButton onClick={logout} variant="register">
+                    Logout
+                  </NavbarButton>
+                ) : (
+                  <NavbarButton href="/auth" variant="register">
+                    Register
+                  </NavbarButton>
+                )}
               </div>
 
               <div className="title-wrapper flex justify-center pt-[80px] sm:pt-[60px] md:pt-[120px] h-[calc(100dvh-120px)] md:h-[calc(100dvh-200px)]">

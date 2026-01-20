@@ -9,6 +9,10 @@ export type EventFee = {
   date?: string;
   time?: string;
   venue?: string;
+  // Optional fields for database integration
+  fee_id?: number;
+  qr_url?: string;
+  event_id?: number;
 };
 
 export type EventCard = {

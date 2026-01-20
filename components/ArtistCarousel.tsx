@@ -1,15 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import React, { useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 
 const artistData = [
   {
     day: "DAY 01",
     tag: "HEART",
     artist: "ADITYA GADHAVI",
-    description:
-      "THE VOICE THAT CARRIES GUJARAT'S SOUL AND STORIES, READY TO ECHO ACROSS THE NIGHT.",
+    description: "THE VOICE THAT CARRIES GUJARAT'S SOUL AND STORIES, READY TO ECHO ACROSS THE NIGHT.",
     image: "/images_home/part3-image.png",
     hexColor: "#FE431F",
   },
@@ -17,8 +16,7 @@ const artistData = [
     day: "DAY 02",
     tag: "SOUL",
     artist: "MOHIT CHAUHAN",
-    description:
-      "A LEGENDARY VOICE THAT HAS DEFINED ROMANCE AND SOUL IN INDIAN MUSIC FOR DECADES.",
+    description: "A LEGENDARY VOICE THAT HAS DEFINED ROMANCE AND SOUL IN INDIAN MUSIC FOR DECADES.",
     image: "/images_home/MohitChauhan.jpg",
     hexColor: "#317D5F",
   },
@@ -26,8 +24,7 @@ const artistData = [
     day: "DAY 03",
     tag: "VIBE",
     artist: "SHAAN",
-    description:
-      "THE MOST VERSATILE VOICE THAT BRINGS UNMATCHED ENERGY AND JOY TO EVERY PERFORMANCE.",
+    description: "THE MOST VERSATILE VOICE THAT BRINGS UNMATCHED ENERGY AND JOY TO EVERY PERFORMANCE.",
     image: "/images_home/Shaan.jpg",
     hexColor: "#0A7CC1",
   },
@@ -35,120 +32,144 @@ const artistData = [
     day: "DAY 04",
     tag: "BASS",
     artist: "DJ SARTEK",
-    description:
-      "THE MAN WHO HAS BEEN ROCKING THE DANCE FLOORS ACROSS THE GLOBE WITH HIS INFECTIOUS BEATS.",
+    description: "THE MAN WHO HAS BEEN ROCKING THE DANCE FLOORS ACROSS THE GLOBE WITH HIS INFECTIOUS BEATS.",
     image: "/images_home/DJSartek.jpg",
     hexColor: "#DDB100",
   },
 ];
 
 export default function ArtistCarousel() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + 1) % artistData.length);
-  };
-
-  const prevSlide = () => {
-    setCurrentIndex(
-      (prev) => (prev - 1 + artistData.length) % artistData.length
-    );
-  };
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"]
+  });
 
   return (
-    <section className="relative bg-black py-20 overflow-hidden flex flex-col items-center">
-      <div className="relative w-full max-w-6xl h-[600px] flex items-center justify-center px-4">
-        {/* Navigation Buttons */}
-        <button
-          onClick={prevSlide}
-          className="absolute left-0 md:left--1 z-50 p-2 text-white/50 hover:text-white transition-colors cursor-pointer"
-        >
-          <ChevronLeft size={64} strokeWidth={1} />
-        </button>
-
-        <button
-          onClick={nextSlide}
-          className="absolute right-0 md:right--1 z-50 p-2 text-white/50 hover:text-white transition-colors cursor-pointer"
-        >
-          <ChevronRight size={64} strokeWidth={1} />
-        </button>
-
-        {/* Stacked Cards Container */}
-        <div className="relative w-full max-w-5xl h-[550px]">
+    <div ref={containerRef} className="relative h-[400vh] bg-black">
+      <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
+        {/* Adjusted height to be more responsive and ensuring center alignment */}
+        <div className="relative w-full max-w-6xl h-[min(600px,80vh)] px-4">
           {artistData.map((data, index) => {
-            let offset = index - currentIndex;
-            // Handle circular wrapping for stacking effect
-            if (offset < 0) offset += artistData.length;
-
-            const isCenter = offset === 0;
-            const zIndex = artistData.length - offset;
-            const translateY = offset * 25; // Slightly more vertical separation
-            const scale = isCenter ? 1 : 0.95 - offset * 0.02;
-            const opacity = isCenter ? 1 : 0.4 - offset * 0.1;
-
             return (
-              <div
+              <Card
                 key={index}
-                className={`absolute inset-0 w-full h-full rounded-[40px] overflow-hidden transition-all duration-700 ease-in-out`}
-                style={{
-                  backgroundColor: data.hexColor,
-                  transform: `translateY(${translateY}px) scale(${scale})`,
-                  zIndex: zIndex,
-                  opacity: Math.max(0, opacity),
-                  pointerEvents: isCenter ? "auto" : "none",
-                }}
-              >
-                {/* Card Content Layout */}
-                <div className="relative w-full h-full p-10 md:p-14 flex flex-col text-white font-mono uppercase italic-none">
-                  {/* Vertical Text - Left Side */}
-                  <div className="absolute left-8 top-12 flex flex-col justify-between h-[calc(100%-100px)] pointer-events-none">
-                    <span className="[writing-mode:vertical-lr] rotate-180 font-jqka text-xl tracking-[0.2em] font-black">
-                      {data.day}
-                    </span>
-                    <span className="[writing-mode:vertical-lr] rotate-180 font-jqka text-xl tracking-[0.3em] font-black">
-                      {data.tag}
-                    </span>
-                  </div>
-
-                  {/* Top Info Area */}
-                  <div className="ml-20 md:ml-24 mb-6">
-                    <h2 className="text-4xl md:text-5xl font-black font-jqka tracking-tighter mb-1 leading-none">
-                      {data.artist}
-                    </h2>
-                    <p className="text-[10px] md:text-sm max-w-2xl opacity-80 font-jqka font-bold leading-tight tracking-tight">
-                      {data.description}
-                    </p>
-                  </div>
-
-                  {/* Central Inset Image Area */}
-                  <div className="relative flex-1 mt-2 mb-4 ml-20 md:ml-24 mr-4 md:mr-8 h-[520px] rounded-[25px] overflow-hidden shadow-2xl border border-white/10">
-                    <img
-                      src={data.image}
-                      alt={data.artist}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-              </div>
+                data={data}
+                index={index}
+                total={artistData.length}
+                progress={scrollYProgress}
+              />
             );
           })}
         </div>
       </div>
-
-      {/* Pagination indicators */}
-      <div className="flex gap-4 mt-12">
-        {artistData.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setCurrentIndex(i)}
-            className={`h-1.5 transition-all duration-500 rounded-full ${
-              i === currentIndex
-                ? "w-16 bg-white"
-                : "w-8 bg-white/20 hover:bg-white/40"
-            }`}
-          />
-        ))}
-      </div>
-    </section>
+    </div>
   );
 }
+
+interface CardProps {
+  data: typeof artistData[0];
+  index: number;
+  total: number;
+  progress: any;
+}
+
+const Card = ({ data, index, total, progress }: CardProps) => {
+  const isFirst = index === 0;
+  const isLast = index === total - 1;
+  const sectionSize = 1 / total;
+
+  const startFocus = index * sectionSize;
+  const nextStartFocus = (index + 1) * sectionSize;
+
+  const getSlant = (idx: number) => {
+    if (idx === 0) return 0;
+    const slants = [0, -35, 30, -25, 20];
+    return slants[idx % slants.length];
+  };
+
+  const slant = getSlant(index);
+  const zIndex = 10 + index;
+
+  // X-Range: Synchronized train movement
+  const xRange = [
+    startFocus - sectionSize,
+    startFocus,
+    nextStartFocus - sectionSize,
+    nextStartFocus
+  ];
+
+  const xValues = isFirst
+    ? ["0%", "0%", "0%", "-120%"]
+    : isLast
+      ? ["120%", "0%", "0%", "0%"]
+      : ["120%", "0%", "0%", "-120%"];
+
+  const x = useTransform(progress, xRange, xValues);
+
+  // Rotation: Straighten by 40% of the way to center
+  const rotateRange = [
+    startFocus - sectionSize,
+    startFocus - (sectionSize * 0.6), // 40% Entry reached
+    startFocus,
+    nextStartFocus
+  ];
+  const rotateValues = [slant, 0, 0, 0];
+  const rotate = useTransform(progress, rotateRange, rotateValues);
+
+  // Y Position: The "lift" only happens when exiting
+  const yRange = [
+    nextStartFocus - sectionSize,
+    nextStartFocus
+  ];
+  const yValues = isLast
+    ? ["0px", "0px"]
+    : ["0px", "-60px"];
+  const y = useTransform(progress, yRange, yValues);
+
+  return (
+    <motion.div
+      style={{
+        x,
+        y,
+        rotate,
+        opacity: 1,
+        backgroundColor: data.hexColor,
+        zIndex,
+        transformOrigin: "center center",
+      }}
+      className="absolute inset-0 w-full h-full rounded-[16px] overflow-hidden shadow-2xl"
+    >
+      <div className="relative w-full h-full p-8 md:p-12 flex flex-col text-white font-mono uppercase italic-none">
+        {/* Vertical Text - Left Side */}
+        <div className="absolute left-6 md:left-8 top-10 flex flex-col justify-between h-[calc(100%-80px)] pointer-events-none">
+          <span className="[writing-mode:vertical-lr] rotate-180 font-jqka text-lg tracking-[0.2em] font-black">
+            {data.day}
+          </span>
+          <span className="[writing-mode:vertical-lr] rotate-180 font-jqka text-lg tracking-[0.3em] font-black opacity-60">
+            {data.tag}
+          </span>
+        </div>
+
+        {/* Top Info Area - Fixed height or shrink prevention ensures alignment */}
+        <div className="ml-16 md:ml-20 mb-6 shrink-0">
+          <h2 className="text-3xl md:text-5xl font-black font-jqka tracking-tighter mb-1 leading-none">
+            {data.artist}
+          </h2>
+          <p className="text-[10px] md:text-xs max-w-xl opacity-80 font-jqka font-bold leading-tight tracking-tight">
+            {data.description}
+          </p>
+        </div>
+
+        {/* Central Inset Image Area - Flex-1 ensures it fills exactly the remaining space */}
+        <div className="relative flex-1 min-h-0 mb-2 ml-16 md:ml-20 mr-2 md:mr-4 rounded-[16px] overflow-hidden shadow-2xl border border-white/10 bg-black/20">
+          <img
+            src={data.image}
+            alt={data.artist}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      </div>
+    </motion.div>
+  );
+};

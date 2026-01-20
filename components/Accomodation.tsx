@@ -122,90 +122,16 @@ export function AccommodationComponent() {
       setSelectedRange(range);
     }
   };
+
   const handleBookNow = async () => {
     if (!selectedRange || !selectedNights) {
       alert("Please select your accommodation dates");
       return;
     }
 
-    try {
-      const dates = selectedRange.days; // [27, 28] etc
-      // Helper to convert day number to YYYY-MM-DD
-      const getFullDate = (day: number) => {
-        // Simple logic for Feb/March 2026 based on the day
-        if (day >= 26) return `2026-02-${day}`;
-        return `2026-03-0${day}`;
-      };
-
-      const checkIn = getFullDate(selectedRange.startDay);
-      const checkOut = getFullDate(selectedRange.endDay);
-
-      // 1. Create Order
-      const response = await fetch("/api/accommodation/create-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nights: selectedNights,
-          checkIn,
-          checkOut,
-          // user_id provided by session context if available, else backend handles it
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to initiate booking");
-      }
-
-      // 2. Open Razorpay
-      const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: data.amount,
-        currency: data.currency,
-        name: "Synapse Accommodation",
-        description: `${selectedNights} Nights Stay`,
-        order_id: data.orderId,
-        handler: async function (response: any) {
-          // 3. Verify Payment
-          const verifyRes = await fetch("/api/accommodation/verify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_signature: response.razorpay_signature,
-              booking_details: {
-                nights: selectedNights,
-                checkIn,
-                checkOut,
-              },
-              amount: data.amount,
-            }),
-          });
-
-          const verifyData = await verifyRes.json();
-
-          if (verifyData.success) {
-            alert("Booking Successful! See you at Synapse.");
-            setSelectedNights(null);
-            setSelectedRange(null);
-          } else {
-            alert("Payment verification failed: " + verifyData.error);
-          }
-        },
-        theme: {
-          color: "#0088FF",
-        },
-      };
-
-      const rzp1 = new (window as any).Razorpay(options);
-      rzp1.open();
-
-    } catch (error: any) {
-      console.error("Booking Error:", error);
-      alert(error.message || "Something went wrong");
-    }
+    // TODO: Implement booking without payment gateway
+    // For now, show a message that booking is not available online
+    alert("Online booking is currently not available. Please contact the organizers to book accommodation.");
   };
 
   return (
@@ -347,21 +273,20 @@ export function AccommodationComponent() {
             <li className="flex gap-2 md:gap-3">
               <span className="text-white/60 flex-shrink-0">5)</span>
               <span>
-                On 20th February, accommodation will not be provided before 4:00
+                On 26th February, accommodation will not be provided before 4:00
                 PM.
               </span>
             </li>
             <li className="flex gap-2 md:gap-3">
               <span className="text-white/60 flex-shrink-0">6)</span>
               <span>
-                On 24th February, check-out will be before 10:00 AM. All guests
+                On 1st March, check-out will be before 9:00 AM. All guests
                 must vacate the accommodation by this time.
               </span>
             </li>
           </ul>
         </div>
       </div>
-      <script src="https://checkout.razorpay.com/v1/checkout.js" async={true}></script>
     </div>
   );
 }

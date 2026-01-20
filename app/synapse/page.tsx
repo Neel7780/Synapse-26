@@ -18,15 +18,15 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-// Dynamic import with SSR disabled to prevent "window is not defined" error
-// from @react-three/fiber which accesses window at import time
-const FluidCanvas = dynamic(() => import("@/components/FluidCanvas"), {
+// Dynamic import for custom cursor (client-only)
+const CustomCursor = dynamic(() => import("@/components/CustomCursor"), {
   ssr: false,
 });
 
 export default function HomeSection() {
   const [entered, setEntered] = useState(false);
   const [showNavbar, setShowNavbar] = useState(false);
+
   useEffect(() => {
     if (entered) {
       requestAnimationFrame(() => {
@@ -41,11 +41,13 @@ export default function HomeSection() {
       <Navbar visible={showNavbar}>
         <NavigationPanel />
       </Navbar>
+
       <HeroSection
         onEnter={() => setEntered(true)}
         setShowNavbar={setShowNavbar}
         showNavbar={showNavbar}
       />
+
       <div
         className={`
             mt-[200vh]
@@ -57,8 +59,12 @@ export default function HomeSection() {
       >
         <AboutSection />
         <JokerSection />
-        <ArtistsSection />
-        <HallOfFame />
+        <div className="relative z-20 bg-black" style={{ isolation: "isolate" }}>
+          <ArtistsSection />
+        </div>
+        <div className="relative z-10 bg-black" style={{ isolation: "isolate" }}>
+          <HallOfFame />
+        </div>
         <Footer />
       </div>
     </main>

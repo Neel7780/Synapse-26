@@ -1,106 +1,223 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useCallback, memo } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
-gsap.registerPlugin(ScrollTrigger);
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
-/**
- * NOTE FOR BACKEND / INTEGRATION:
- * ---------------------------------------------------------
- * The data objects below (`userDetails`, `registeredEvents`,
- * `hasAccommodation`) are TEMPORARY placeholders used only
- * for UI development and layout testing.
- *
- * When integrating with the backend:
- * 1. Replace these constants with data fetched from the API
- *    (e.g. via server actions, API routes, or client-side fetch).
- * 2. Map API response fields directly to the props/fields
- *    used in this component (keep the same shape if possible).
- * 3. This component assumes:
- *    - `userDetails` represents the logged-in user profile
- *    - `registeredEvents` is an array of events the user has
- *      registered for
- *    - `hasAccommodation` is a boolean derived from user data
- *
- * IMPORTANT:
- * - Do NOT change layout or animation logic when wiring data.
- * - Component is already backend-ready; only data source
- *   replacement is required.
- * ---------------------------------------------------------
- */
-
-/* data */
-const userDetails = {
-  firstName: "Alex",
-  lastName: "Johnson",
-  phone: "+01 123-456-7890",
-  dateOfBirth: "March 15, 1998",
-  gender: "Male",
-  university: "DAIICT",
-  email: "202601111@dau.ac.in",
+type UserDetails = {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  dateOfBirth: string;
+  gender: string;
+  university: string;
+  email: string;
 };
 
-const registeredEvents = [
-  {
-    id: 1,
-    name: "Tech Summit 2024",
-    category: "Business",
-    status: "Registered",
-  },
-  {
-    id: 2,
-    name: "AI & Machine Learning Conference",
-    category: "Technology",
-    status: "Form Incomplete",
-  },
-  {
-    id: 3,
-    name: "User-experience Workshop",
-    category: "Design",
-    status: "Registered",
-  },
-  {
-    id: 4,
-    name: "Advanced Frontend Systems",
-    category: "Technology",
-    status: "Form Incomplete",
-  },
-];
+type RegisteredEvent = {
+  id: string | number;
+  name: string;
+  category: string;
+  status: string;
+};
 
-const hasAccommodation = true;
+// Memoized profile field component
+const ProfileField = memo(function ProfileField({ 
+  label, 
+  value, 
+  className = "" 
+}: { 
+  label: string; 
+  value: string; 
+  className?: string;
+}) {
+  return (
+    <div className={`border border-white p-3 md:p-4 min-h-[72px] flex flex-col justify-center ${className}`}>
+      <p className="text-xs text-muted-foreground font-roboto uppercase tracking-wider">
+        {label}
+      </p>
+      <p className="text-base font-semibold font-roboto truncate">
+        {value}
+      </p>
+    </div>
+  );
+});
 
-/* data */
-import { useNavigationState } from "@/lib/useNavigationState";
+// Memoized event card component
+const EventCard = memo(function EventCard({ event }: { event: RegisteredEvent }) {
+  return (
+    <div className="border border-white p-3 md:p-4 transition-colors hover:bg-white/5">
+      <div className="flex justify-between items-start gap-3">
+        <h3 className="font-semibold text-base md:text-lg leading-tight">
+          {event.name}
+        </h3>
+        <span
+          className={`px-2 py-0.5 md:px-3 md:py-1 rounded-full text-xs md:text-sm whitespace-nowrap font-medium ${
+            event.status === "Registered"
+              ? "bg-green-500/20 text-green-400"
+              : "bg-orange-500/20 text-orange-400"
+          }`}
+        >
+          {event.status}
+        </span>
+      </div>
+      <p className="mt-1 text-xs md:text-sm text-muted-foreground font-roboto">
+        {event.category}
+      </p>
+    </div>
+  );
+});
+
+// Loading skeleton
+const ProfileSkeleton = () => (
+  <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-4">
+    <Loader2 className="w-8 h-8 text-white animate-spin" />
+    <p className="text-white/70 font-poppins">Loading Profile...</p>
+  </div>
+);
 
 export default function UserProfile() {
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const { startTransition } = useNavigationState();
+  const { user, loading: authLoading } = useAuth();
+
+  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
+  const [registeredEvents, setRegisteredEvents] = useState<RegisteredEvent[]>([]);
+  const [hasAccommodation, setHasAccommodation] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async (userId: string, userEmail: string | undefined) => {
+    setDataLoading(true);
+    setError(null);
+    const supabase = createClient();
+
+    try {
+      // Fetch all data in parallel for better performance
+      const [userResult, regResult, accResult] = await Promise.all([
+        supabase.from("users").select("*").eq("user_id", userId).single(),
+        supabase
+          .from("event_registrations")
+          .select(`
+            *,
+            event_fee (
+              event (
+                event_name,
+                event_category (
+                  category_name
+                )
+              )
+            )
+          `)
+          .eq("registered_by_user_id", userId),
+        supabase.from("accommodation_bookings").select("booking_id").eq("user_id", userId),
+      ]);
+
+      // Process user data
+      if (userResult.data) {
+        const fullName = userResult.data.user_name || "";
+        const nameParts = fullName.split(" ");
+        const firstName = nameParts[0] || "";
+        const lastName = nameParts.slice(1).join(" ") || "";
+
+        setUserDetails({
+          firstName,
+          lastName,
+          phone: userResult.data.phone || "N/A",
+          dateOfBirth: userResult.data.dob || "N/A",
+          gender: userResult.data.gender || "N/A",
+          university: userResult.data.college || "N/A",
+          email: userResult.data.email || userEmail || "N/A",
+        });
+      }
+
+      // Process registration data
+      if (regResult.data) {
+        const mappedEvents = regResult.data.map((reg) => {
+          const eventFee = reg.event_fee as { event?: { event_name?: string; event_category?: { category_name?: string } } } | null;
+          const eventObj = eventFee?.event;
+          const categoryObj = eventObj?.event_category;
+
+          return {
+            id: reg.registration_id,
+            name: eventObj?.event_name || "Unknown Event",
+            category: categoryObj?.category_name || "General",
+            status: reg.payment_status === "done" ? "Registered" : "Payment Pending",
+          };
+        });
+        setRegisteredEvents(mappedEvents);
+      }
+
+      // Process accommodation data
+      setHasAccommodation(!!(accResult.data && accResult.data.length > 0));
+
+    } catch (err) {
+      console.error("Error fetching profile data:", err);
+      setError("Failed to load profile data. Please try again.");
+    } finally {
+      setDataLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (!ref.current) return;
-    const tween = gsap.fromTo(
-      ref.current.querySelectorAll(".animate"),
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, stagger: 0.05 }
-    );
+    if (authLoading) return;
+    if (!user) {
+      router.push("/auth");
+      return;
+    }
+
+    fetchData(user.id, user.email);
+  }, [user, authLoading, router, fetchData]);
+
+  useEffect(() => {
+    if (dataLoading || !ref.current) return;
+    
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        ".animate",
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, stagger: 0.05, duration: 0.4, ease: "power2.out" }
+      );
+    }, ref);
 
     return () => {
-      tween.kill?.();
+      ctx.revert();
     };
-  }, []);
-  const handleBack = () => {
-    startTransition();
+  }, [dataLoading]);
+
+  const handleBack = useCallback(() => {
     if (window.history.length > 1) {
       router.back();
     } else {
-      router.push("/"); // fallback route
+      router.push("/");
     }
-  };
+  }, [router]);
+
+  if (authLoading || dataLoading) {
+    return <ProfileSkeleton />;
+  }
+
+  if (error || !userDetails) {
+    return (
+      <div className="min-h-[100svh] bg-background px-4 py-6 md:px-8 md:py-12 flex flex-col items-center justify-center">
+        <div className="text-white mb-4">{error || "Failed to load profile."}</div>
+        <button 
+          onClick={handleBack} 
+          className="text-white underline hover:text-white/80 transition-colors"
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div ref={ref} className="min-h-[100dvh] bg-background px-4 py-6 md:px-8 md:py-12">
@@ -119,68 +236,24 @@ export default function UserProfile() {
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
         {/* LEFT COLUMN: Profile */}
         <div className="animate flex flex-col gap-6">
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">
-            Profile
-          </h2>
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">Profile</h2>
 
           <div className="space-y-3 md:space-y-4">
             {/* Name Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-              {[
-                ["First Name", userDetails.firstName],
-                ["Last Name", userDetails.lastName],
-              ].map(([label, value]) => (
-                <div
-                  key={label}
-                  className="border border-white p-3 md:p-4 min-h-[72px] flex flex-col justify-center"
-                >
-                  <p className="text-xs text-muted-foreground font-roboto uppercase tracking-wider">
-                    {label}
-                  </p>
-                  <p className="text-base font-semibold font-roboto truncate">
-                    {value}
-                  </p>
-                </div>
-              ))}
+              <ProfileField label="First Name" value={userDetails.firstName} />
+              <ProfileField label="Last Name" value={userDetails.lastName} />
             </div>
 
             {/* Contact Info Stack */}
-            {[
-              ["Phone", userDetails.phone],
-              ["College", userDetails.university],
-              ["Email Address", userDetails.email],
-            ].map(([label, value]) => (
-              <div
-                key={label}
-                className="animate border border-white p-3 md:p-4 min-h-[72px] flex flex-col justify-center"
-              >
-                <p className="text-xs text-muted-foreground font-roboto uppercase tracking-wider">
-                  {label}
-                </p>
-                <p className="text-base font-semibold break-words font-roboto">
-                  {value}
-                </p>
-              </div>
-            ))}
+            <ProfileField label="Phone" value={userDetails.phone} className="animate" />
+            <ProfileField label="College" value={userDetails.university} className="animate" />
+            <ProfileField label="Email Address" value={userDetails.email} className="animate" />
 
             {/* Demographics Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-              {[
-                ["Date of Birth", userDetails.dateOfBirth],
-                ["Gender", userDetails.gender],
-              ].map(([label, value]) => (
-                <div
-                  key={label}
-                  className="animate border border-white p-3 md:p-4 min-h-[72px] flex flex-col justify-center"
-                >
-                  <p className="text-xs text-muted-foreground font-roboto uppercase tracking-wider">
-                    {label}
-                  </p>
-                  <p className="text-base font-semibold font-roboto capitalize">
-                    {value}
-                  </p>
-                </div>
-              ))}
+              <ProfileField label="Date of Birth" value={userDetails.dateOfBirth} className="animate" />
+              <ProfileField label="Gender" value={userDetails.gender} className="animate" />
             </div>
           </div>
         </div>
@@ -196,27 +269,7 @@ export default function UserProfile() {
             <div className="animate space-y-3 md:space-y-4 max-h-[265px] overflow-y-auto pr-2 thin-scrollbar overscroll-contain">
               {registeredEvents.length > 0 ? (
                 registeredEvents.map((event) => (
-                  <div
-                    key={event.id}
-                    className="border border-white p-3 md:p-4 transition-colors hover:bg-white/5"
-                  >
-                    <div className="flex justify-between items-start gap-3">
-                      <h3 className="font-semibold text-base md:text-lg leading-tight">
-                        {event.name}
-                      </h3>
-                      <span
-                        className={`px-2 py-0.5 md:px-3 md:py-1 rounded-full text-xs md:text-sm whitespace-nowrap font-medium ${event.status === "Registered"
-                          ? "bg-green-500/20 text-green-400"
-                          : "bg-orange-500/20 text-orange-400"
-                          }`}
-                      >
-                        {event.status}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-xs md:text-sm text-muted-foreground font-roboto">
-                      {event.category}
-                    </p>
-                  </div>
+                  <EventCard key={event.id} event={event} />
                 ))
               ) : (
                 <div className="border border-white/20 border-dashed p-6 text-center text-muted-foreground">
@@ -238,10 +291,11 @@ export default function UserProfile() {
                   2 Days Accommodation
                 </p>
                 <span
-                  className={`px-3 py-1 rounded-full text-xs md:text-sm font-medium ${hasAccommodation
-                    ? "bg-green-500/20 text-green-400"
-                    : "bg-orange-500/20 text-orange-400"
-                    }`}
+                  className={`px-3 py-1 rounded-full text-xs md:text-sm font-medium ${
+                    hasAccommodation
+                      ? "bg-green-500/20 text-green-400"
+                      : "bg-orange-500/20 text-orange-400"
+                  }`}
                 >
                   {hasAccommodation ? "Registered" : "Unregistered"}
                 </span>

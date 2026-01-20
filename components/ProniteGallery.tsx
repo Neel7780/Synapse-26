@@ -12,17 +12,23 @@ const galleryImages = [
   "/images_home/part3-image.png",
   "/images_home/RedHand2.jpeg",
   "/images_home/redcard4.png",
+  "/images_home/AdityaGadhvi.jpeg",
+  "/images_home/image_part3_2.png",
+  "/images_home/Ace_Spades.png",
+  "/images_home/Ace_Heart.png",
+  "/images_home/Ace_Clubs.png",
+  "/images_home/Ace_Diamond.png",
 ];
 
 export default function ProniteGallery() {
   return (
-    <section className="relative w-full h-[120dvh] bg-black overflow-hidden flex items-center justify-center">
+    <section className="relative w-full h-[140svh] bg-black overflow-hidden flex items-center justify-center">
       {/* Tilted Grid Container */}
-      <div className="absolute inset-0 w-[150%] h-[130%] -left-[25%] -top-[25%] rotate-[-16deg] flex flex-wrap gap-x-4 gap-y-0 p-8 opacity-90">
+      <div className="absolute inset-0 w-[280%] h-[200%] -left-[90%] -top-[40%] rotate-[-26deg] flex flex-wrap gap-x-6 gap-y-0 p-8 opacity-90">
         {galleryImages.map((src, i) => (
           <div
             key={i}
-            className="relative w-[30%] h-[400px] border-[2px] border-black shadow-1xl overflow-hidden -mb-24"
+            className="relative w-[18%] h-[850px] border-[6px] border-black shadow-2xl overflow-hidden -mb-56"
           >
             <img
               src={src}
