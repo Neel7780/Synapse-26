@@ -269,11 +269,11 @@ export default function JokerSection() {
         scrollTrigger: {
           trigger: jokerSectionRef.current,
           start: "top top",
-          end: "+=300%",
-          scrub: 2.5,
+          end: "+=180%",
+          scrub: 1.5,
           pin: true,
           pinSpacing: false,
-          anticipatePin: 1.2,
+          anticipatePin: 1,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
             const progress = self.progress;
@@ -730,9 +730,7 @@ export default function JokerSection() {
         </div>
       </div>
 
-      <div className="h-svh" />
-      <div className="h-svh" />
-      <div className="h-svh" />
+      <div className="h-[80svh]" />
     </div>
   );
 }

@@ -22,25 +22,37 @@ const ArtistImage = memo(function ArtistImage({
   artist,
   isCenter,
   onClick,
+  onHover,
+  onLeave,
 }: {
   artist: Artist;
   isCenter: boolean;
   onClick: () => void;
+  onHover: () => void;
+  onLeave: () => void;
 }) {
+  const imageRef = useRef<HTMLImageElement>(null);
+
   return (
     <picture>
       {artist.image.avif && (
         <source srcSet={artist.image.avif} type="image/avif" />
       )}
       <img
+        ref={imageRef}
         src={artist.image.fallback}
         alt={artist.name}
         loading="lazy"
         onClick={onClick}
-        className="block object-cover z-10 transition-transform duration-300 md:hover:scale-110 cursor-pointer"
+        onMouseEnter={onHover}
+        onMouseLeave={onLeave}
+        className="block object-cover z-10 cursor-pointer rounded-lg"
         style={{
-          width: isCenter ? "clamp(200px, 50vw, 480px)" : "clamp(120px, 25vw, 230px)",
-          height: isCenter ? "clamp(120px, 35vw, 390px)" : "clamp(90px, 25vw, 230px)",
+          width: isCenter ? "clamp(220px, 45vw, 420px)" : "clamp(100px, 20vw, 180px)",
+          height: isCenter ? "clamp(280px, 55vw, 520px)" : "clamp(130px, 26vw, 230px)",
+          boxShadow: isCenter
+            ? "0 25px 80px rgba(235, 0, 0, 0.4), 0 10px 30px rgba(0,0,0,0.5)"
+            : "0 10px 30px rgba(0,0,0,0.3)",
         }}
         sizes="(max-width: 768px) 80vw, 520px"
       />
@@ -51,8 +63,10 @@ const ArtistImage = memo(function ArtistImage({
 export default function ArtistsSection() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
-  const [artists] = useState<Artist[]>([
+  const artists: Artist[] = [
     {
       name: "Sartek",
       date: "21 Feb 2025",
@@ -88,7 +102,7 @@ export default function ArtistsSection() {
       date: "10 Jan 2026",
       image: { avif: "/images_home/AdityaGadhvi.avif", fallback: "/images_home/AdityaGadhvi.jpeg" },
     },
-  ]);
+  ];
 
   const artistSectionRef = useRef<HTMLDivElement>(null);
   const artistSvgRef = useRef<SVGSVGElement>(null);
@@ -97,6 +111,12 @@ export default function ArtistsSection() {
   const imagesContainerRef = useRef<HTMLDivElement>(null);
   const carouselTimerRef = useRef<NodeJS.Timeout | null>(null);
   const infoBoxRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const lineRef = useRef<HTMLDivElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
+  const progressBarRef = useRef<HTMLDivElement>(null);
+  const dragStartX = useRef(0);
+  const dragDelta = useRef(0);
 
   const generateViewportPath = useCallback(() => {
     if (typeof window === "undefined") return "";
@@ -120,8 +140,8 @@ export default function ArtistsSection() {
     if (!imagesContainerRef.current || !isInitialized) return;
 
     const items = imagesContainerRef.current.querySelectorAll(".carousel-item");
-    const isMobile = window.innerWidth < 600;
-    const spacing = isMobile ? window.innerWidth * 0.75 : window.innerWidth * 0.45;
+    const isMobile = window.innerWidth < 768;
+    const spacing = isMobile ? window.innerWidth * 0.6 : window.innerWidth * 0.35;
 
     items.forEach((item, i) => {
       const element = item as HTMLElement;
@@ -132,36 +152,44 @@ export default function ArtistsSection() {
       if (diff < -total / 2) diff += total;
 
       const offset = diff * spacing;
-      const absOffset = Math.abs(offset);
+      const absDiff = Math.abs(diff);
 
       let opacity = 1;
       let scale = 1;
-      let zIndex = 5;
+      let zIndex = 10;
+      let rotateY = 0;
+      let blur = 0;
 
       if (diff === 0) {
+        // Center item
         element.classList.add("center");
         zIndex = 10;
         opacity = 1;
         scale = 1;
+        rotateY = 0;
+        blur = 0;
       } else {
         element.classList.remove("center");
 
-        if (isMobile) {
-          if (Math.abs(diff) === 1) {
-            opacity = 0.4;
-            scale = 0.7;
-          } else {
-            opacity = 0;
-            scale = 0.5;
-          }
+        // 3D rotation based on position
+        rotateY = diff > 0 ? -25 : 25;
+        
+        if (absDiff === 1) {
+          opacity = 0.7;
+          scale = 0.75;
+          zIndex = 8;
+          blur = 1;
+        } else if (absDiff === 2) {
+          opacity = 0.4;
+          scale = 0.55;
+          zIndex = 6;
+          blur = 2;
         } else {
-          if (absOffset > spacing) {
-            opacity = Math.max(0.3, 1 - (absOffset - spacing) / (spacing * 2));
-            scale = 0.8;
-          }
+          opacity = 0;
+          scale = 0.4;
+          zIndex = 4;
+          blur = 3;
         }
-
-        zIndex = 5 - Math.abs(diff);
       }
 
       gsap.to(element, {
@@ -169,53 +197,136 @@ export default function ArtistsSection() {
         scale: scale,
         opacity: opacity,
         zIndex: zIndex,
-        duration: 0.5,
-        ease: "power2.out",
+        rotateY: rotateY,
+        filter: `blur(${blur}px)`,
+        duration: 0.7,
+        ease: "power3.out",
       });
     });
 
-    // Animate info box on artist change
+    // Animate info box with stagger effect
     if (infoBoxRef.current) {
-      gsap.fromTo(
-        infoBoxRef.current,
-        { opacity: 0, y: 20 },
-        { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }
-      );
+      const tl = gsap.timeline();
+      
+      tl.to(infoBoxRef.current, {
+        opacity: 0,
+        y: 20,
+        scale: 0.95,
+        duration: 0.2,
+        ease: "power2.in",
+      })
+        .set(infoBoxRef.current, { opacity: 0 })
+        .to(infoBoxRef.current, {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.5,
+          ease: "back.out(1.4)",
+        });
     }
-  }, [currentIndex, isInitialized]);
 
-  const startCarouselTimer = useCallback(() => {
-    if (carouselTimerRef.current) {
-      clearInterval(carouselTimerRef.current);
+    // Update progress bar
+    if (progressBarRef.current) {
+      const progress = ((currentIndex + 1) / artists.length) * 100;
+      gsap.to(progressBarRef.current, {
+        width: `${progress}%`,
+        duration: 0.5,
+        ease: "power2.out",
+      });
     }
+  }, [currentIndex, isInitialized, artists.length]);
 
-    carouselTimerRef.current = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % artists.length);
-    }, 10000);
-  }, [artists.length]);
-
-  const resetCarouselTimer = useCallback(() => {
-    startCarouselTimer();
-  }, [startCarouselTimer]);
+  const goToArtist = useCallback(
+    (index: number) => {
+      const newIndex = ((index % artists.length) + artists.length) % artists.length;
+      setCurrentIndex(newIndex);
+    },
+    [artists.length]
+  );
 
   const nextArtist = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % artists.length);
-    resetCarouselTimer();
-  }, [artists.length, resetCarouselTimer]);
+    goToArtist(currentIndex + 1);
+  }, [currentIndex, goToArtist]);
 
   const prevArtist = useCallback(() => {
-    setCurrentIndex((prev) => (prev - 1 + artists.length) % artists.length);
-    resetCarouselTimer();
-  }, [artists.length, resetCarouselTimer]);
+    goToArtist(currentIndex - 1);
+  }, [currentIndex, goToArtist]);
 
-  // Initialize carousel on mount
+  // Drag/Swipe handlers
+  const handleDragStart = useCallback((clientX: number) => {
+    setIsDragging(true);
+    setIsPaused(true);
+    dragStartX.current = clientX;
+    dragDelta.current = 0;
+  }, []);
+
+  const handleDragMove = useCallback((clientX: number) => {
+    if (!isDragging) return;
+    dragDelta.current = clientX - dragStartX.current;
+  }, [isDragging]);
+
+  const handleDragEnd = useCallback(() => {
+    if (!isDragging) return;
+    setIsDragging(false);
+
+    const threshold = 50;
+    if (dragDelta.current > threshold) {
+      prevArtist();
+    } else if (dragDelta.current < -threshold) {
+      nextArtist();
+    }
+
+    dragDelta.current = 0;
+    
+    // Resume auto-play after a delay
+    setTimeout(() => setIsPaused(false), 3000);
+  }, [isDragging, nextArtist, prevArtist]);
+
+  // Mouse events
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      handleDragStart(e.clientX);
+    },
+    [handleDragStart]
+  );
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      handleDragMove(e.clientX);
+    },
+    [handleDragMove]
+  );
+
+  const handleMouseUp = useCallback(() => {
+    handleDragEnd();
+  }, [handleDragEnd]);
+
+  // Touch events
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      handleDragStart(e.touches[0].clientX);
+    },
+    [handleDragStart]
+  );
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      handleDragMove(e.touches[0].clientX);
+    },
+    [handleDragMove]
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    handleDragEnd();
+  }, [handleDragEnd]);
+
+  // Initialize carousel
   useEffect(() => {
-    if (!imagesContainerRef.current) return;
+    if (!imagesContainerRef.current || isInitialized) return;
 
-    // Set initial positions without animation
     const items = imagesContainerRef.current.querySelectorAll(".carousel-item");
-    const isMobile = window.innerWidth < 600;
-    const spacing = isMobile ? window.innerWidth * 0.75 : window.innerWidth * 0.45;
+    const isMobile = window.innerWidth < 768;
+    const spacing = isMobile ? window.innerWidth * 0.6 : window.innerWidth * 0.35;
 
     items.forEach((item, i) => {
       const element = item as HTMLElement;
@@ -226,55 +337,118 @@ export default function ArtistsSection() {
       if (diff < -total / 2) diff += total;
 
       const offset = diff * spacing;
-      const absOffset = Math.abs(offset);
-
-      let opacity = 1;
-      let scale = 1;
-      let zIndex = 5;
-
-      if (diff === 0) {
-        zIndex = 10;
-        opacity = 1;
-        scale = 1;
-      } else {
-        if (isMobile) {
-          if (Math.abs(diff) === 1) {
-            opacity = 0.4;
-            scale = 0.7;
-          } else {
-            opacity = 0;
-            scale = 0.5;
-          }
-        } else {
-          if (absOffset > spacing) {
-            opacity = Math.max(0.3, 1 - (absOffset - spacing) / (spacing * 2));
-            scale = 0.8;
-          }
-        }
-        zIndex = 5 - Math.abs(diff);
-      }
+      const absDiff = Math.abs(diff);
 
       gsap.set(element, {
         x: offset,
-        scale: scale,
-        opacity: opacity,
-        zIndex: zIndex,
+        scale: diff === 0 ? 1 : absDiff === 1 ? 0.75 : 0.55,
+        opacity: diff === 0 ? 1 : absDiff === 1 ? 0.7 : absDiff === 2 ? 0.4 : 0,
+        zIndex: 10 - absDiff * 2,
+        rotateY: diff === 0 ? 0 : diff > 0 ? -25 : 25,
       });
     });
 
-    setIsInitialized(true);
-  }, []);
+    // Use RAF to batch state update after render
+    requestAnimationFrame(() => {
+      setIsInitialized(true);
+    });
+  }, [currentIndex, isInitialized]);
 
+  // Auto-play timer
   useEffect(() => {
-    startCarouselTimer();
+    if (isPaused) {
+      if (carouselTimerRef.current) {
+        clearInterval(carouselTimerRef.current);
+        carouselTimerRef.current = null;
+      }
+      return;
+    }
+
+    carouselTimerRef.current = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % artists.length);
+    }, 5000);
 
     return () => {
       if (carouselTimerRef.current) {
         clearInterval(carouselTimerRef.current);
       }
     };
-  }, [startCarouselTimer]);
+  }, [isPaused, artists.length]);
 
+  // Entrance animations
+  useEffect(() => {
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReducedMotion) return;
+
+    // Title animation
+    if (titleRef.current) {
+      const text = titleRef.current.textContent || "";
+      titleRef.current.innerHTML = "";
+
+      text.split("").forEach((char) => {
+        const span = document.createElement("span");
+        span.className = "inline-block artist-letter";
+        span.textContent = char === " " ? "\u00A0" : char;
+        span.style.opacity = "0";
+        span.style.transform = "translateY(100%) rotateX(-90deg)";
+        titleRef.current?.appendChild(span);
+      });
+
+      gsap.to(".artist-letter", {
+        opacity: 1,
+        y: 0,
+        rotateX: 0,
+        duration: 0.8,
+        stagger: 0.05,
+        ease: "back.out(1.7)",
+        scrollTrigger: {
+          trigger: artistSectionRef.current,
+          start: "top 80%",
+          once: true,
+        },
+      });
+    }
+
+    // Line animation
+    if (lineRef.current) {
+      gsap.fromTo(
+        lineRef.current,
+        { scaleX: 0 },
+        {
+          scaleX: 1,
+          duration: 1.2,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: artistSectionRef.current,
+            start: "top 70%",
+            once: true,
+          },
+        }
+      );
+    }
+
+    // Progress indicator animation
+    if (progressRef.current) {
+      gsap.fromTo(
+        progressRef.current,
+        { opacity: 0, y: 20 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.6,
+          delay: 0.5,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: artistSectionRef.current,
+            start: "top 60%",
+            once: true,
+          },
+        }
+      );
+    }
+  }, []);
+
+  // SVG path animation
   useEffect(() => {
     if (artistSvgRef.current && artistPathRef.current && artistDotRef.current) {
       const artistSvg = artistSvgRef.current;
@@ -321,7 +495,7 @@ export default function ArtistsSection() {
         const newPath = generateViewportPath();
         artistPath.setAttribute("d", newPath);
         if (isInitialized) {
-        animateCarousel();
+          animateCarousel();
         }
         scrollTrigger.refresh();
       };
@@ -335,15 +509,34 @@ export default function ArtistsSection() {
     }
   }, [generateViewportPath, animateCarousel, isInitialized]);
 
+  // Animate carousel on index change
   useEffect(() => {
     if (isInitialized) {
-    animateCarousel();
+      animateCarousel();
     }
   }, [currentIndex, animateCarousel, isInitialized]);
 
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") {
+        nextArtist();
+        setIsPaused(true);
+        setTimeout(() => setIsPaused(false), 3000);
+      } else if (e.key === "ArrowLeft") {
+        prevArtist();
+        setIsPaused(true);
+        setTimeout(() => setIsPaused(false), 3000);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [nextArtist, prevArtist]);
+
   return (
     <div
-      className="artists-section relative bg-black overflow-x-clip"
+      className="artists-section relative bg-black overflow-hidden select-none"
       id="artistsSection"
       ref={artistSectionRef}
       style={{ height: "100svh" }}
@@ -368,21 +561,35 @@ export default function ArtistsSection() {
           />
         </svg>
 
-        {/* Title at top */}
-        <div className="flex-shrink-0 pt-1 pb-12">
+        {/* Title */}
+        <div className="shrink-0 pt-8 md:pt-12 pb-6 md:pb-10">
           <h1
-            id="artistsTitle"
+            ref={titleRef}
             className="font-joker text-[clamp(2.5rem,10vw,6rem)] px-8 leading-none text-white lowercase text-center"
+            style={{ perspective: "1000px" }}
           >
             ARTISTS
           </h1>
         </div>
 
-        {/* Carousel - Center area */}
-        <div className="carousel relative flex-1 min-h-0 flex items-center justify-center">
-          {/* White line through center */}
-          <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[2px] bg-white z-0" />
+        {/* Carousel with drag/swipe */}
+        <div
+          className="carousel relative flex-1 min-h-0 flex items-center justify-center cursor-grab active:cursor-grabbing"
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* Animated line through center */}
+          <div
+            ref={lineRef}
+            className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[2px] bg-linear-to-r from-transparent via-white to-transparent z-0 origin-center"
+          />
 
+          {/* Red glow dot */}
           <div
             id="artistPathDot"
             className="fixed w-14 h-14 md:w-22.5 md:h-22.5 bg-[#ff0000] rounded-full blur-[20px] pointer-events-none z-5 opacity-0 -translate-x-1/2 -translate-y-1/2"
@@ -394,83 +601,88 @@ export default function ArtistsSection() {
             className="images-container relative w-full h-full flex items-center justify-center"
             id="imagesContainer"
             ref={imagesContainerRef}
+            style={{ perspective: "1200px" }}
           >
             {artists.map((artist, i) => (
               <div
                 key={i}
                 className={`carousel-item absolute top-1/2 left-1/2 -translate-y-1/2 will-change-transform ${
                   i === currentIndex ? "center" : ""
-                  }`}
+                }`}
                 style={{
                   marginLeft: "-50%",
+                  transformStyle: "preserve-3d",
                 }}
               >
                 <ArtistImage
                   artist={artist}
                   isCenter={i === currentIndex}
                   onClick={() => {
-                    setCurrentIndex(i);
-                    resetCarouselTimer();
+                    if (!isDragging) {
+                      goToArtist(i);
+                      setIsPaused(true);
+                      setTimeout(() => setIsPaused(false), 3000);
+                    }
                   }}
+                  onHover={() => setIsPaused(true)}
+                  onLeave={() => setIsPaused(false)}
                 />
               </div>
             ))}
           </div>
 
-          {/* Navigation buttons */}
-          <button
-            className="nav-btn group absolute top-1/2 -translate-y-1/2 flex items-center justify-center bg-red-600 hover:bg-white transition-colors duration-300 z-20 cursor-pointer hover:scale-110"
-            onClick={nextArtist}
-            style={{
-              width: "clamp(32px, 6vw, 62px)",
-              height: "clamp(28px, 5vw, 54px)",
-              left: "calc(clamp(200px, 50vw, 480px)/2 + 50%)",
-            }}
-            aria-label="Next artist"
-          >
-            <div
-              className="bg-white group-hover:bg-red-600 transition-colors duration-300 rotate-90"
-              style={{
-                width: "clamp(14px, 2.5vw, 33px)",
-                height: "clamp(10px, 1.8vw, 22px)",
-                clipPath: "polygon(50% 0%, 0% 100%, 100% 100%)",
-              }}
-            />
-          </button>
-
-          <button
-            className="nav-btn group absolute top-1/2 -translate-y-1/2 flex items-center justify-center bg-red-600 hover:bg-white transition-colors duration-300 z-20 cursor-pointer hover:scale-110"
-            onClick={prevArtist}
-            style={{
-              width: "clamp(32px, 6vw, 62px)",
-              height: "clamp(28px, 5vw, 54px)",
-              right: "calc(clamp(200px, 50vw, 480px)/2 + 50%)",
-            }}
-            aria-label="Previous artist"
-          >
-            <div
-              className="bg-white group-hover:bg-red-600 transition-colors duration-300 -rotate-90"
-              style={{
-                width: "clamp(14px, 2.5vw, 33px)",
-                height: "clamp(10px, 1.8vw, 22px)",
-                clipPath: "polygon(50% 0%, 0% 100%, 100% 100%)",
-              }}
-            />
-          </button>
+          {/* Swipe hint */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/40 text-xs md:text-sm font-jqka tracking-wider pointer-events-none">
+            <span className="hidden md:inline">← Use arrow keys or drag →</span>
+            <span className="md:hidden">← Swipe →</span>
+          </div>
         </div>
 
-        {/* Artist Info at bottom */}
-        <div className="flex-shrink-0 pb-6 sm:pb-8 pt-4 flex justify-center px-4 mb-8">
+        {/* Artist Info & Progress */}
+        <div className="shrink-0 pb-8 md:pb-12 pt-4 flex flex-col items-center px-4">
+          {/* Info box */}
           <div
             ref={infoBoxRef}
-            className="border-t-2 border-b-2 border-white py-3 px-6 text-center text-white bg-black/50 backdrop-blur-sm w-full max-w-md"
+            className="relative mb-6 text-center"
           >
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-jqka uppercase">
+            <div className="absolute -left-8 top-1/2 -translate-y-1/2 w-6 h-[2px] bg-red-500" />
+            <div className="absolute -right-8 top-1/2 -translate-y-1/2 w-6 h-[2px] bg-red-500" />
+            
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-jqka uppercase text-white tracking-wider">
               {artists[currentIndex].name}
             </h2>
-            <p className="text-sm sm:text-base md:text-xl font-jqka">
+            <p className="text-sm sm:text-base md:text-lg font-jqka text-white/70 mt-1">
               {artists[currentIndex].date}
             </p>
+          </div>
+
+          {/* Progress indicator dots */}
+          <div ref={progressRef} className="flex items-center gap-2">
+            {artists.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  goToArtist(i);
+                  setIsPaused(true);
+                  setTimeout(() => setIsPaused(false), 3000);
+                }}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  i === currentIndex
+                    ? "bg-red-500 w-6"
+                    : "bg-white/30 hover:bg-white/50"
+                }`}
+                aria-label={`Go to ${artists[i].name}`}
+              />
+            ))}
+          </div>
+
+          {/* Progress bar */}
+          <div className="w-48 md:w-64 h-[2px] bg-white/10 rounded-full mt-4 overflow-hidden">
+            <div
+              ref={progressBarRef}
+              className="h-full bg-linear-to-r from-red-600 to-red-400 rounded-full"
+              style={{ width: `${((currentIndex + 1) / artists.length) * 100}%` }}
+            />
           </div>
         </div>
       </div>
