@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback, memo } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ChevronDown } from "lucide-react";
@@ -8,6 +8,73 @@ import { ChevronDown } from "lucide-react";
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
+
+// Memoized card component
+const PlayingCard = memo(function PlayingCard({
+  card,
+  cardRef,
+}: {
+  card: {
+    id: string;
+    name: string;
+    image: { avif: string; png: string };
+    day: string;
+    isRed?: boolean;
+  };
+  cardRef: (el: HTMLDivElement | null) => void;
+}) {
+  return (
+    <div
+      className="card-container absolute min-h[180px] min-w-[150px] will-change-transform"
+      style={{
+        width: "clamp(90px, 20vw, 240px)",
+        height: "clamp(120px, 25vw, 300px)",
+        transform: "translateY(120vh)",
+      }}
+      id={card.id}
+      ref={cardRef}
+    >
+      <div
+        className="card-inner w-full h-full transform-style-preserve-3d transition-transform duration-100 ease-in-out"
+        style={{ transformStyle: "preserve-3d" }}
+      >
+        {/* Card Front */}
+        <div
+          className="card-front absolute inset-0 backface-hidden lowercase font-joker"
+          style={{
+            backgroundImage: `image-set(url(${card.image.avif}) type("image/avif"),url(${card.image.png}) type("image/png"))`,
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
+            backgroundSize: "contain",
+            backfaceVisibility: "hidden",
+          }}
+        />
+
+        {/* Card Back */}
+        <div
+          className="card-back absolute inset-0 backface-hidden lowercase font-joker flex flex-col gap-2 md:gap-4 items-center justify-center p-4 md:p-8 text-center"
+          style={{
+            background: "url('/images_home/card_back.avif') no-repeat center center",
+            backgroundSize: "contain",
+            backfaceVisibility: "hidden",
+            transform: "rotateY(180deg)",
+          }}
+        >
+          <h2 className="text-black text-sm md:text-xl lg:text-3xl font-bold">{card.day}</h2>
+          <h2
+            className={
+              card.isRed
+                ? "text-[#cf0000] font-jqka max-w-[70%] md:max-w-full text-base md:text-xl lg:text-4xl font-bold"
+                : "text-black max-w-[70%] md:max-w-full text-base md:text-xl lg:text-4xl font-jqka font-bold"
+            }
+          >
+            {card.name}
+          </h2>
+        </div>
+      </div>
+    </div>
+  );
+});
 
 export default function JokerSection() {
   const jokerSectionRef = useRef<HTMLDivElement>(null);
@@ -21,6 +88,8 @@ export default function JokerSection() {
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const scrollHintRef = useRef<HTMLDivElement>(null);
   const exploreTitleRef = useRef<HTMLHeadingElement>(null);
+  const particlesRef = useRef<HTMLDivElement>(null);
+  const glowRef = useRef<HTMLDivElement>(null);
 
   const generateViewportPath = useCallback(() => {
     if (typeof window === "undefined") return "";
@@ -74,11 +143,19 @@ export default function JokerSection() {
         hoverDidFlip = true;
         preHoverRotation = currentRotation;
 
+        // Enhanced hover animation with glow
         gsap.to(inner, {
           rotateY: 180,
-          duration: 0.3,
-          ease: "power2.inOut",
+          scale: 1.05,
+          duration: 0.4,
+          ease: "back.out(1.5)",
           overwrite: "auto",
+        });
+
+        // Add glow effect
+        gsap.to(card, {
+          filter: "drop-shadow(0 0 20px rgba(235, 0, 0, 0.5))",
+          duration: 0.3,
         });
       });
 
@@ -89,9 +166,16 @@ export default function JokerSection() {
 
         gsap.to(inner, {
           rotateY: preHoverRotation,
+          scale: 1,
           duration: 0.5,
           ease: "power2.out",
           overwrite: "auto",
+        });
+
+        // Remove glow
+        gsap.to(card, {
+          filter: "drop-shadow(0 0 0px rgba(235, 0, 0, 0))",
+          duration: 0.3,
         });
 
         hoverDidFlip = false;
@@ -105,6 +189,7 @@ export default function JokerSection() {
 
         gsap.to(inner, {
           rotateY: preHoverRotation,
+          scale: 1,
           duration: 0.4,
           ease: "power2.out",
           overwrite: "auto",
@@ -124,6 +209,37 @@ export default function JokerSection() {
         state.lastScrollRotation = gsap.getProperty(inner, "rotateY") as number;
       });
     });
+  }, []);
+
+  // Floating particles animation
+  useEffect(() => {
+    if (!particlesRef.current) return;
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReducedMotion) return;
+
+    const particles = particlesRef.current.querySelectorAll(".particle");
+
+    particles.forEach((particle, i) => {
+      // Random floating animation for each particle
+      gsap.to(particle, {
+        y: gsap.utils.random(-50, 50),
+        x: gsap.utils.random(-30, 30),
+        rotation: gsap.utils.random(-180, 180),
+        opacity: gsap.utils.random(0.2, 0.6),
+        duration: gsap.utils.random(3, 6),
+        ease: "sine.inOut",
+        repeat: -1,
+        yoyo: true,
+        delay: i * 0.2,
+      });
+    });
+
+    return () => {
+      particles.forEach((particle) => {
+        gsap.killTweensOf(particle);
+      });
+    };
   }, []);
 
   useEffect(() => {
@@ -161,9 +277,7 @@ export default function JokerSection() {
           invalidateOnRefresh: true,
           onUpdate: (self) => {
             const progress = self.progress;
-            const point = jokerPath.getPointAtLength(
-              jokerPathLength * progress
-            );
+            const point = jokerPath.getPointAtLength(jokerPathLength * progress);
             const rect = jokerSvg.getBoundingClientRect();
 
             const x = rect.left + (point.x / 1000) * rect.width;
@@ -171,6 +285,13 @@ export default function JokerSection() {
 
             jokerDot.style.left = `${x}px`;
             jokerDot.style.top = `${y}px`;
+
+            // Pulsing glow based on scroll progress
+            if (glowRef.current) {
+              const pulseScale = 1 + Math.sin(progress * Math.PI * 4) * 0.3;
+              glowRef.current.style.transform = `translate(-50%, -50%) scale(${pulseScale})`;
+              glowRef.current.style.opacity = `${0.3 + progress * 0.4}`;
+            }
           },
           onEnter: () => {
             jokerDot.style.opacity = "1";
@@ -189,23 +310,29 @@ export default function JokerSection() {
           },
         },
       });
+
       jokerTl.set(scrollHintRef.current, { opacity: 1 });
       jokerTl.to({}, { duration: 2 });
       jokerTl.to(
         scrollHintRef.current,
         {
           opacity: 0,
+          y: 20,
           duration: 1,
           ease: "power2.out",
         },
         ">"
       );
 
+      // Enhanced door title animations with 3D effect
       jokerTl
         .to(
           leftTitle,
           {
-            y: -40,
+            y: -60,
+            x: -20,
+            rotateZ: -5,
+            scale: 1.1,
             duration: 2,
             ease: "power2.out",
           },
@@ -214,18 +341,23 @@ export default function JokerSection() {
         .to(
           rightTitle,
           {
-            y: 40,
+            y: 60,
+            x: 20,
+            rotateZ: 5,
+            scale: 1.1,
             duration: 2,
             ease: "power2.out",
           },
           "<"
         );
 
+      // Door opening with slight rotation for depth
       jokerTl
         .to(
           leftDoor,
           {
             x: "-100%",
+            rotateY: 15,
             duration: 4,
             ease: "power2.inOut",
           },
@@ -235,25 +367,33 @@ export default function JokerSection() {
           rightDoor,
           {
             x: "100%",
+            rotateY: -15,
             duration: 4,
             ease: "power2.inOut",
           },
           "<"
         );
 
+      // Enhanced explore title animation
       gsap.set(exploreTitleRef.current, {
         opacity: 0,
-        y: 80,
-        scale: 1.1,
+        y: 100,
+        scale: 0.8,
+        rotateX: -30,
         color: "#9ca3af",
+        filter: "blur(10px)",
       });
+
       jokerTl.to(
         exploreTitleRef.current,
         {
           opacity: 1,
           y: 40,
-          duration: 1.2,
-          ease: "power2.out",
+          scale: 0.95,
+          rotateX: 0,
+          filter: "blur(0px)",
+          duration: 1.5,
+          ease: "power3.out",
         },
         "<+0.3"
       );
@@ -264,16 +404,19 @@ export default function JokerSection() {
           y: -window.innerHeight * 0.03,
           scale: 1,
           color: "#ffffff",
+          textShadow: "0 0 30px rgba(235, 0, 0, 0.5)",
           duration: 2.5,
           ease: "power1.out",
         },
         ">+0.8"
       );
+
       jokerTl.to(
         exploreTitleRef.current,
         {
           top: "2%",
           y: -10,
+          textShadow: "0 0 0px rgba(235, 0, 0, 0)",
           duration: 1.8,
           ease: "power2.inOut",
         },
@@ -291,11 +434,9 @@ export default function JokerSection() {
           return (((i > 1 ? 3.7 : 1.2) - 2.2)) * (spread / 2.5);
         } else if (isTablet) {
           const spread = Math.min(vw * 0.4, 290);
-
           return (i - 1.5) * (spread / 2.5);
         } else if (isother) {
           const spread = Math.min(vw * 0.5, 370);
-
           return (i - 1.5) * (spread / 2.3);
         }
 
@@ -337,6 +478,7 @@ export default function JokerSection() {
         return [-15, 5, -5, 15][i];
       };
 
+      // Enhanced card burst animation with stagger and bounce
       jokerTl.to(
         ["#c1", "#c2", "#c3", "#c4"],
         {
@@ -346,7 +488,11 @@ export default function JokerSection() {
           y: (i: number) => getCardY(i),
           rotation: (i: number) => getCardR(i),
           duration: 2,
-          ease: "expo.out",
+          ease: "back.out(1.4)",
+          stagger: {
+            each: 0.1,
+            from: "center",
+          },
         },
         ">+0.5"
       );
@@ -354,16 +500,14 @@ export default function JokerSection() {
       const cardInners = gsap.utils.toArray(".card-inner");
       const shuffledCards = cardInners.sort(() => Math.random() - 0.5);
 
+      // Card flip with enhanced timing
       jokerTl
-        .to(
-          shuffledCards,
-          {
-            rotateY: 180,
-            duration: 1,
-            stagger: 1,
-            ease: "power1.inOut",
-          }
-        )
+        .to(shuffledCards, {
+          rotateY: 180,
+          duration: 1.2,
+          stagger: 0.8,
+          ease: "power2.inOut",
+        })
         .to(shuffledCards, {
           duration: 1,
           ease: "none",
@@ -374,17 +518,18 @@ export default function JokerSection() {
       const handleResize = () => {
         const newPath = generateViewportPath();
         jokerPath.setAttribute("d", newPath);
-
         jokerTl.scrollTrigger?.refresh();
       };
 
       window.addEventListener("resize", handleResize);
 
+      const sectionRef = jokerSectionRef.current;
+      
       return () => {
         window.removeEventListener("resize", handleResize);
         jokerTl.scrollTrigger?.kill();
         ScrollTrigger.getAll().forEach((trigger) => {
-          if (trigger.trigger === jokerSectionRef.current) {
+          if (trigger.trigger === sectionRef) {
             trigger.kill();
           }
         });
@@ -396,96 +541,93 @@ export default function JokerSection() {
     setupPaths();
   }, [setupPaths]);
 
+  // Enhanced scroll hint animation
   useEffect(() => {
     if (scrollHintRef.current) {
-      gsap.fromTo(
-        scrollHintRef.current,
-        { y: 0 },
-        {
-          y: 10,
-          duration: 1,
-          ease: "power1.inOut",
-          repeat: -1,
-          yoyo: true,
-        }
-      );
+      const chevrons = scrollHintRef.current.querySelectorAll("svg");
+
+      gsap.to(chevrons, {
+        y: 8,
+        duration: 0.8,
+        ease: "power1.inOut",
+        repeat: -1,
+        yoyo: true,
+        stagger: {
+          each: 0.1,
+          from: "start",
+        },
+      });
     }
-  });
+  }, []);
 
   const cards = [
     {
       id: "c1",
       name: "Ace of Heart",
-      image: {
-        avif: "/images_home/Ace_Heart.avif",
-        png: "/images_home/Ace_Heart.png",
-      },
+      image: { avif: "/images_home/Ace_Heart.avif", png: "/images_home/Ace_Heart.png" },
       day: "Day 1",
       isRed: true,
     },
     {
       id: "c2",
       name: "Ace of Clubs",
-      image: {
-        avif: "/images_home/Ace_Clubs.avif",
-        png: "/images_home/Ace_Clubs.png",
-      },
+      image: { avif: "/images_home/Ace_Clubs.avif", png: "/images_home/Ace_Clubs.png" },
       day: "Day 2",
     },
     {
       id: "c3",
       name: "Ace of Diamond",
-      image: {
-        avif: "/images_home/Ace_Diamond.avif",
-        png: "/images_home/Ace_Diamond.png",
-      },
+      image: { avif: "/images_home/Ace_Diamond.avif", png: "/images_home/Ace_Diamond.png" },
       day: "Day 3",
       isRed: true,
     },
     {
       id: "c4",
       name: "Ace of Spades",
-      image: {
-        avif: "/images_home/Ace_Spades.avif",
-        png: "/images_home/Ace_Spades.png",
-      },
+      image: { avif: "/images_home/Ace_Spades.avif", png: "/images_home/Ace_Spades.png" },
       day: "Day 4",
     },
   ];
 
   return (
-    <div className='relative'>
+    <div className="relative">
       <div
-        className="joker-section relative h-[100vh] overflow-hidden"
+        className="joker-section relative h-screen overflow-hidden"
         id="jokerSection"
         ref={jokerSectionRef}
       >
-        <div className="joker-content relative top-0 h-[100vh] overflow-hidden">
+        <div className="joker-content relative top-0 h-screen overflow-hidden">
           <div className="viewport-wrapper absolute inset-0 flex overflow-hidden z-10">
+            {/* Floating particles background */}
+            <div
+              ref={particlesRef}
+              className="absolute inset-0 pointer-events-none z-0 overflow-hidden"
+            >
+              {[...Array(12)].map((_, i) => (
+                <div
+                  key={i}
+                  className="particle absolute w-1 h-1 bg-red-500/30 rounded-full"
+                  style={{
+                    left: `${10 + (i % 6) * 15}%`,
+                    top: `${15 + Math.floor(i / 6) * 40}%`,
+                  }}
+                />
+              ))}
+            </div>
 
             {/* LEFT DOOR */}
             <div
-              className="door door-left absolute top-0 w-1/2 h-full bg-white z-[100] bg-cover md:bg-contain bg-no-repeat"
+              className="door door-left absolute top-0 w-1/2 h-full bg-white z-100 bg-cover md:bg-contain bg-no-repeat will-change-transform"
               id="leftDoor"
               ref={leftDoorRef}
               style={{
                 background: "white url('/images_home/left.png') no-repeat right center",
                 backgroundSize: "min(200%, 100svh)",
+                transformStyle: "preserve-3d",
               }}
             >
               <div
-                className="door-title left-title absolute 
-                            bottom-20 md:bottom-8 
-                            right-0
-                            font-joker
-                            text-[clamp(2rem,10vw,5rem)]
-                            leading-none
-                            text-black
-                            pointer-events-none
-                            lg:tracking-[0.1em]
-                            will-change-transform
-                            text-right
-                            pr-4 md:pr-12"
+                className="door-title left-title absolute bottom-20 md:bottom-8 right-0 font-joker text-[clamp(2rem,10vw,5rem)] leading-none text-black pointer-events-none lg:tracking-widest will-change-transform text-right pr-4 md:pr-12"
                 ref={leftTitleRef}
               >
                 joker&apos;s
@@ -494,27 +636,17 @@ export default function JokerSection() {
 
             {/* RIGHT DOOR */}
             <div
-              className="door door-right absolute top-0 right-0 w-1/2 h-full bg-white z-100 object-cover bg-cover md:bg-contain bg-no-repeat"
+              className="door door-right absolute top-0 right-0 w-1/2 h-full bg-white z-100 object-cover bg-cover md:bg-contain bg-no-repeat will-change-transform"
               id="rightDoor"
               ref={rightDoorRef}
               style={{
                 background: "white url('/images_home/right.png') no-repeat left center",
                 backgroundSize: "min(200%, 100svh)",
+                transformStyle: "preserve-3d",
               }}
             >
               <div
-                className="door-title right-title absolute 
-                            bottom-20 md:bottom-8
-                            left-0
-                            font-joker
-                            text-[clamp(2rem,10vw,5rem)]
-                            leading-none
-                            text-black
-                            lg:tracking-[0.1em]
-                            pointer-events-none
-                            will-change-transform
-                            text-left
-                            pl-4 md:pl-12"
+                className="door-title right-title absolute bottom-20 md:bottom-8 left-0 font-joker text-[clamp(2rem,10vw,5rem)] leading-none text-black lg:tracking-widest pointer-events-none will-change-transform text-left pl-4 md:pl-12"
                 ref={rightTitleRef}
               >
                 realm
@@ -523,18 +655,21 @@ export default function JokerSection() {
 
             {/* CENTER CONTENT */}
             <div className="main-content absolute inset-0 flex flex-col items-center justify-center bg-black z-5">
+              {/* Background glow */}
+              <div
+                ref={glowRef}
+                className="absolute top-1/2 left-1/2 w-[600px] h-[600px] rounded-full pointer-events-none opacity-30"
+                style={{
+                  background: "radial-gradient(circle, rgba(235, 0, 0, 0.3) 0%, transparent 70%)",
+                  transform: "translate(-50%, -50%)",
+                  filter: "blur(60px)",
+                }}
+              />
+
               <h1
                 ref={exploreTitleRef}
-                className="font-joker text-center
-                            text-[clamp(2.5rem,10vw,8rem)]
-                            w-11/12
-                            z-2
-                            absolute
-                            top-1/2
-                            -translate-y-1/2
-                            text-gray-500
-                            will-change-transform
-                            origin-center"
+                className="font-joker text-center text-[clamp(2.5rem,10vw,8rem)] w-11/12 z-2 absolute top-1/2 -translate-y-1/2 text-gray-500 will-change-transform origin-center"
+                style={{ perspective: "1000px" }}
               >
                 explore
                 <br className="block sm:hidden" />
@@ -542,7 +677,7 @@ export default function JokerSection() {
                 events
               </h1>
 
-              {<svg
+              <svg
                 id="jokerPath"
                 width="100%"
                 height="100%"
@@ -559,73 +694,24 @@ export default function JokerSection() {
                   fill="none"
                   ref={jokerPathRef}
                 />
-              </svg>}
+              </svg>
 
               <div
                 id="jokerPathDot"
                 className="fixed w-14 h-14 md:w-22.5 md:h-22.5 bg-[#ff0000] rounded-full blur-[15px] md:blur-[20px] pointer-events-none z-5 opacity-0 -translate-x-1/2 -translate-y-1/2"
                 ref={jokerDotRef}
-              ></div>
+              />
 
               {/* CARD BURST ZONE */}
               <div className="burst-zone relative w-full h-[60vh] md:h-[70vh] pointer-events-auto flex justify-center items-center z-10">
                 {cards.map((card, index) => (
-                  <div
+                  <PlayingCard
                     key={card.id}
-                    className="card-container absolute min-h[180px] min-w-[150px]"
-                    style={{
-                      // Modified clamps for better mobile aspect ratio
-                      width: "clamp(90px, 20vw, 240px)",
-                      height: "clamp(120px, 25vw, 300px)",
-                      transform: "translateY(120vh)"
-                    }}
-                    id={card.id}
-                    ref={(el) => {
+                    card={card}
+                    cardRef={(el) => {
                       cardRefs.current[index] = el;
                     }}
-                  >
-                    <div
-                      className="card-inner w-full h-full transform-style-preserve-3d transition-transform duration-100 ease-in-out"
-                      style={{ transformStyle: "preserve-3d" }}
-                    >
-                      {/* Card Front */}
-                      <div
-                        className="card-front absolute inset-0 backface-hidden lowercase font-joker"
-                        style={{
-                          backgroundImage: `image-set(url(${card.image.avif}) type("image/avif"),url(${card.image.png}) type("image/png"))`,
-                          backgroundRepeat: "no-repeat",
-                          backgroundPosition: "center",
-                          backgroundSize: "contain",
-                          backfaceVisibility: "hidden",
-                        }}
-                      ></div>
-
-                      {/* Card Back */}
-                      <div
-                        className="card-back absolute inset-0 backface-hidden lowercase font-joker flex flex-col gap-2 md:gap-4 items-center justify-center p-4 md:p-8 text-center"
-                        style={{
-                          background:
-                            "url('/images_home/card_back.avif') no-repeat center center",
-                          backgroundSize: "contain",
-                          backfaceVisibility: "hidden",
-                          transform: "rotateY(180deg)",
-                        }}
-                      >
-                        <h2 className="text-black text-sm md:text-xl lg:text-3xl font-bold">
-                          {card.day}
-                        </h2>
-                        <h2
-                          className={
-                            card.isRed
-                              ? "text-[#cf0000] font-jqka max-w-[70%] md:max-w-full text-base md:text-xl lg:text-4xl font-bold "
-                              : "text-black max-w-[70%] md:max-w-full text-base md:text-xl lg:text-4xl font-jqka font-bold"
-                          }
-                        >
-                          {card.name}
-                        </h2>
-                      </div>
-                    </div>
-                  </div>
+                  />
                 ))}
               </div>
             </div>
@@ -634,8 +720,7 @@ export default function JokerSection() {
           {/* SCROLL HINT */}
           <div
             ref={scrollHintRef}
-            className="scroll-hint opacity-0 fixed bottom-4 md:bottom-0 left-1/2 -translate-x-1/2 z-50
-       text-black select-none pointer-events-none"
+            className="scroll-hint opacity-0 fixed bottom-4 md:bottom-0 left-1/2 -translate-x-1/2 z-50 text-black select-none pointer-events-none"
           >
             <ChevronDown className="stroke-[3px] w-5 h-5 md:w-8 md:h-8 translate-y-full" />
             <ChevronDown className="stroke-[3px] w-5 h-5 md:w-8 md:h-8 translate-y-1/2" />
@@ -645,9 +730,9 @@ export default function JokerSection() {
         </div>
       </div>
 
-      <div className='h-[100svh]' />
-      <div className='h-[100svh]' />
-      <div className='h-[100svh]' />
+      <div className="h-svh" />
+      <div className="h-svh" />
+      <div className="h-svh" />
     </div>
   );
 }

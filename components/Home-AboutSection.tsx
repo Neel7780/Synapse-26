@@ -16,8 +16,9 @@ export default function AboutSection() {
   const singleCardRef = useRef<HTMLImageElement>(null);
   const hasSplitRef = useRef(false);
   const themeContentRef = useRef<HTMLDivElement>(null);
+  const decorativeRef = useRef<HTMLDivElement>(null);
 
-  /* ---------------- TEXT SPLIT (UNCHANGED) ---------------- */
+  /* ---------------- TEXT SPLIT ---------------- */
   const splitTextToWords = useCallback((element: HTMLElement) => {
     const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, {
       acceptNode(node) {
@@ -86,12 +87,18 @@ export default function AboutSection() {
     const words = text.trim().split(/\s+/);
 
     words.forEach((word, index) => {
-      const span = document.createElement("span");
-      span.className = "title-letter inline-block";
-      span.textContent = word;
-
-      el.appendChild(span);
-      el.appendChild(document.createTextNode(" "));
+      const wordSpan = document.createElement("span");
+      wordSpan.className = "title-word inline-block overflow-hidden";
+      
+      const innerSpan = document.createElement("span");
+      innerSpan.className = "title-letter inline-block";
+      innerSpan.textContent = word;
+      
+      wordSpan.appendChild(innerSpan);
+      el.appendChild(wordSpan);
+      if (index < words.length - 1) {
+        el.appendChild(document.createTextNode(" "));
+      }
     });
   };
 
@@ -102,22 +109,33 @@ export default function AboutSection() {
     const titleEl = document.querySelector(".doittitle") as HTMLElement;
     if (!section || !image || !titleEl) return;
 
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
     if (!hasSplitRef.current) {
       splitTextToWords(section);
       splitTitleToLetters(titleEl);
       hasSplitRef.current = true;
     }
 
-    gsap.set(".Theme_content .word", { opacity: 0, y: 20 });
-    gsap.set(".doittitle .title-letter", { opacity: 0, y: 20 });
-    gsap.set(image, { opacity: 0 });
+    if (prefersReducedMotion) {
+      gsap.set(".Theme_content .word", { opacity: 1, y: 0 });
+      gsap.set(".doittitle .title-letter", { opacity: 1, y: 0 });
+      gsap.set(image, { opacity: 1 });
+      return;
+    }
 
+    gsap.set(".Theme_content .word", { opacity: 0, y: 30, filter: "blur(4px)" });
+    gsap.set(".doittitle .title-letter", { opacity: 0, y: 100, rotateX: -45 });
+    gsap.set(image, { opacity: 0, scale: 0.8, rotation: -15 });
+
+    // Title animation - dramatic entrance
     gsap.to(".doittitle .title-letter", {
       opacity: 1,
       y: 0,
-      duration: 3,
-      ease: "power3.out",
-      stagger: { each: 0.15 },
+      rotateX: 0,
+      duration: 1.5,
+      ease: "power4.out",
+      stagger: { each: 0.2 },
       scrollTrigger: {
         trigger: ".part3_end",
         start: "top center",
@@ -128,11 +146,14 @@ export default function AboutSection() {
         onRefresh: positionImageFromGradientCenter,
       },
     });
+
+    // Content words animation - blur to clear with stagger
     gsap.to(".Theme_content .word", {
       opacity: 1,
       y: 0,
+      filter: "blur(0px)",
       ease: "power3.out",
-      stagger: { each: 0.06 },
+      stagger: { each: 0.04 },
       scrollTrigger: {
         trigger: ".part3_end",
         start: "top center-=11%",
@@ -144,14 +165,10 @@ export default function AboutSection() {
       },
     });
 
-    // Add image fade-in animation
-    gsap.to(image, {
-      opacity: 1,
-      duration: 2,
-      ease: "power3.out",
+    // Image animation - card flip entrance with float
+    const imageTl = gsap.timeline({
       scrollTrigger: {
         trigger: ".part3_end",
-        // Sync triggers with visual position
         start: "top center-=5%",
         end: "top center-=15%",
         scrub: 2,
@@ -159,6 +176,42 @@ export default function AboutSection() {
         invalidateOnRefresh: true,
       },
     });
+
+    imageTl.to(image, {
+      opacity: 1,
+      scale: 1,
+      rotation: 0,
+      duration: 2,
+      ease: "power3.out",
+    });
+
+    // Floating animation for image after entrance
+    gsap.to(image, {
+      y: "+=15",
+      rotation: "+=2",
+      duration: 3,
+      ease: "sine.inOut",
+      repeat: -1,
+      yoyo: true,
+      delay: 2,
+    });
+
+    // Decorative elements animation
+    if (decorativeRef.current) {
+      const particles = decorativeRef.current.querySelectorAll(".particle");
+      particles.forEach((particle, i) => {
+        gsap.to(particle, {
+          y: gsap.utils.random(-30, 30),
+          x: gsap.utils.random(-20, 20),
+          opacity: gsap.utils.random(0.3, 0.8),
+          duration: gsap.utils.random(2, 4),
+          ease: "sine.inOut",
+          repeat: -1,
+          yoyo: true,
+          delay: i * 0.2,
+        });
+      });
+    }
 
     Promise.all([
       document.fonts?.ready ?? Promise.resolve(),
@@ -179,29 +232,35 @@ export default function AboutSection() {
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", positionImageFromGradientCenter);
-      ScrollTrigger.getAll().forEach((t) => t.kill());
     };
   }, [splitTextToWords, positionImageFromGradientCenter]);
 
   return (
     <section
       ref={aboutSectionRef}
-      className="part3_end relative min-h-[100vh] w-full
-                    flex flex-col
-                    px-[clamp(1.5rem,4vw,3.75rem)]
-                    py-[clamp(1.2rem,5svh,5rem)]
-                    overflow-hidden justify-evenly"
+      className="part3_end relative min-h-[100vh] w-full flex flex-col px-[clamp(1.5rem,4vw,3.75rem)] py-[clamp(1.2rem,5svh,5rem)] overflow-hidden justify-evenly"
       style={{
-        background: `linear-gradient(
-                              195deg,
-                              #000000 0%,
-                              #000000 60%,
-                              #ffffff 60%,
-                              #ffffff 100%
-                            )`,
+        background: `linear-gradient(195deg, #000000 0%, #000000 60%, #ffffff 60%, #ffffff 100%)`,
       }}
     >
-      <div className="doittitle mb-6 text-white text-[clamp(3rem,15vw,5rem)] font-joker tracking-wide leading-relaxed">
+      {/* Decorative floating particles */}
+      <div ref={decorativeRef} className="absolute inset-0 pointer-events-none overflow-hidden">
+        {[...Array(8)].map((_, i) => (
+          <div
+            key={i}
+            className="particle absolute w-2 h-2 bg-red-500/20 rounded-full"
+            style={{
+              left: `${10 + i * 12}%`,
+              top: `${20 + (i % 3) * 25}%`,
+            }}
+          />
+        ))}
+      </div>
+
+      <div 
+        className="doittitle mb-6 text-white text-[clamp(3rem,15vw,5rem)] font-joker tracking-wide leading-relaxed"
+        style={{ perspective: "1000px" }}
+      >
         about synapse
       </div>
 
@@ -234,7 +293,8 @@ export default function AboutSection() {
         alt="Single Card"
         width={673}
         height={567}
-        className="hidden md:block absolute pointer-events-none object-contain -translate-x-1/2 md:max-w-[60%] min-w-70 max-h-125 rounded-[10px] will-change-[top,left] w-[clamp(300px,30vw,380px)]"
+        className="hidden md:block absolute pointer-events-none object-contain -translate-x-1/2 md:max-w-[60%] min-w-70 max-h-125 rounded-[10px] will-change-transform w-[clamp(300px,30vw,380px)]"
+        style={{ transformStyle: "preserve-3d" }}
       />
     </section>
   );
