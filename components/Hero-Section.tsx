@@ -347,11 +347,11 @@ export default function HeroSection({
       scrollTrigger: {
         trigger: heroRef.current,
         start: "top top",
-        end: "+=300%",
-        scrub: 2.5,
+        end: "+=200%",
+        scrub: 1.5,
         pin: true,
         pinSpacing: false,
-        anticipatePin: 1.2,
+        anticipatePin: 1,
         onUpdate: (self) => {
           if (self.progress > 0.35 && self.progress < 0.5) {
             setPart3Active(true);

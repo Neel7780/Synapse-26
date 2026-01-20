@@ -18,11 +18,7 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-// Dynamic imports with SSR disabled for client-only components
-const FluidCanvas = dynamic(() => import("@/components/FluidCanvas"), {
-  ssr: false,
-});
-
+// Dynamic import for custom cursor (client-only)
 const CustomCursor = dynamic(() => import("@/components/CustomCursor"), {
   ssr: false,
 });
@@ -43,23 +39,20 @@ export default function HomeSection() {
     <main className="flex flex-col min-h-svh overflow-x-hidden relative">
       {/* Custom GSAP cursor */}
       <CustomCursor />
-      
-      {/* Fluid canvas effect */}
-      {entered && <FluidCanvas />}
-      
+
       <Navbar visible={showNavbar}>
         <NavigationPanel />
       </Navbar>
-      
+
       <HeroSection
         onEnter={() => setEntered(true)}
         setShowNavbar={setShowNavbar}
         showNavbar={showNavbar}
       />
-      
+
       <div
         className={`
-          mt-[200svh]
+          mt-[150svh]
           w-full
           flex-col
           z-30

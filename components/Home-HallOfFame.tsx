@@ -9,6 +9,112 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
+// GSAP-powered Marquee component
+const GSAPMarquee = memo(function GSAPMarquee() {
+  const marqueeRef = useRef<HTMLDivElement>(null);
+  const marqueeInnerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!marqueeRef.current || !marqueeInnerRef.current) return;
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReducedMotion) return;
+
+    const inner = marqueeInnerRef.current;
+    const marquee = marqueeRef.current;
+
+    // Get the width of one set of content
+    const contentWidth = inner.scrollWidth / 2;
+
+    // Create the infinite scroll animation
+    const tl = gsap.timeline({ repeat: -1 });
+
+    tl.to(inner, {
+      x: -contentWidth,
+      duration: 30,
+      ease: "none",
+    });
+
+    // Speed up on scroll
+    let scrollVelocity = 0;
+    let lastScrollY = window.scrollY;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      scrollVelocity = Math.abs(currentScrollY - lastScrollY);
+      lastScrollY = currentScrollY;
+
+      // Increase speed based on scroll velocity
+      const speedMultiplier = Math.min(1 + scrollVelocity * 0.02, 4);
+      tl.timeScale(speedMultiplier);
+
+      // Gradually return to normal speed
+      gsap.to(tl, {
+        timeScale: 1,
+        duration: 1,
+        ease: "power2.out",
+        delay: 0.1,
+      });
+    };
+
+    // Hover pause effect
+    const handleMouseEnter = () => {
+      gsap.to(tl, { timeScale: 0.3, duration: 0.5, ease: "power2.out" });
+    };
+
+    const handleMouseLeave = () => {
+      gsap.to(tl, { timeScale: 1, duration: 0.5, ease: "power2.out" });
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    marquee.addEventListener("mouseenter", handleMouseEnter);
+    marquee.addEventListener("mouseleave", handleMouseLeave);
+
+    // Entrance animation
+    gsap.fromTo(
+      marquee,
+      { opacity: 0, y: 30 },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.8,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: marquee,
+          start: "top 95%",
+          once: true,
+        },
+      }
+    );
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      marquee.removeEventListener("mouseenter", handleMouseEnter);
+      marquee.removeEventListener("mouseleave", handleMouseLeave);
+      tl.kill();
+    };
+  }, []);
+
+  const marqueeText = "Synapse' 26 #joker's realm • ";
+  const repeatedText = marqueeText.repeat(8);
+
+  return (
+    <div
+      ref={marqueeRef}
+      className="relative w-full overflow-hidden py-6 mb-5 bg-black border-y border-white/10"
+    >
+      <div ref={marqueeInnerRef} className="flex w-max will-change-transform">
+        <span className="font-jqka uppercase text-3xl lg:text-5xl whitespace-nowrap text-white/90 px-2">
+          {repeatedText}
+        </span>
+        <span className="font-jqka uppercase text-3xl lg:text-5xl whitespace-nowrap text-white/90 px-2">
+          {repeatedText}
+        </span>
+      </div>
+    </div>
+  );
+});
+
 // Memoized grid image component
 const GridImage = memo(function GridImage({
   src,
@@ -34,7 +140,6 @@ export default function HallOfFame() {
   const hallContainerRef = useRef<HTMLDivElement>(null);
   const hallRef = useRef<Array<HTMLDivElement | null>>([]);
   const scrollIndicatorRef = useRef<HTMLDivElement>(null);
-  const marqueeRef = useRef<HTMLDivElement>(null);
   const gridItemsRef = useRef<{
     mobile: (HTMLDivElement | null)[];
     tablet: (HTMLDivElement | null)[];
@@ -376,31 +481,6 @@ export default function HallOfFame() {
     });
   };
 
-  // Marquee scroll-based speed animation
-  useEffect(() => {
-    if (!marqueeRef.current) return;
-
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReducedMotion) return;
-
-    const marquee = marqueeRef.current;
-
-    // Scroll velocity-based animation
-    ScrollTrigger.create({
-      trigger: marquee,
-      start: "top bottom",
-      end: "bottom top",
-      onUpdate: (self) => {
-        const velocity = Math.abs(self.getVelocity()) / 1000;
-        const speedMultiplier = Math.min(velocity * 0.5, 3);
-        const baseSpeed = 40; // seconds for one loop
-        const newDuration = baseSpeed / (1 + speedMultiplier);
-
-        marquee.style.setProperty("--marquee-duration", `${newDuration}s`);
-      },
-    });
-  }, []);
-
   useGSAP(
     () => {
       if (!hallContainerRef.current) return;
@@ -434,8 +514,8 @@ export default function HallOfFame() {
         scrollTrigger: {
           trigger: hallContainerRef.current,
           start: "top top",
-          end: "+=20%",
-          scrub: true,
+          end: "+=15%",
+          scrub: 1,
         },
       });
 
@@ -447,8 +527,8 @@ export default function HallOfFame() {
         scrollTrigger: {
           trigger: hallContainerRef.current,
           start: "top top",
-          end: "+=70%",
-          scrub: true,
+          end: "+=50%",
+          scrub: 1,
         },
       });
 
@@ -482,7 +562,7 @@ export default function HallOfFame() {
           trigger: hallContainerRef.current!,
           start: "top top",
           end: "bottom top",
-          scrub: true,
+          scrub: 1,
           pin: true,
           anticipatePin: 1,
           onRefreshInit: calculateStartScale,
@@ -721,26 +801,8 @@ export default function HallOfFame() {
         </div>
       </div>
 
-      {/* Enhanced Marquee */}
-      <div
-        ref={marqueeRef}
-        className="relative w-full overflow-hidden py-5 mb-5 bg-black"
-        style={{ ["--marquee-duration" as string]: "40s" }}
-      >
-        <div
-          className="flex w-max"
-          style={{
-            animation: `marquee var(--marquee-duration, 40s) linear infinite`,
-          }}
-        >
-          <span className="font-jqka uppercase text-3xl lg:text-5xl whitespace-nowrap text-white/90">
-            Synapse&apos; 26 #joker&apos;s realm • Synapse&apos; 26 #joker&apos;s realm • Synapse&apos; 26 #joker&apos;s realm • Synapse&apos; 26 #joker&apos;s realm • Synapse&apos; 26 #joker&apos;s realm • Synapse&apos; 26 #joker&apos;s realm •{" "}
-          </span>
-          <span className="font-jqka uppercase text-3xl lg:text-5xl whitespace-nowrap text-white/90">
-            Synapse&apos; 26 #joker&apos;s realm • Synapse&apos; 26 #joker&apos;s realm • Synapse&apos; 26 #joker&apos;s realm • Synapse&apos; 26 #joker&apos;s realm • Synapse&apos; 26 #joker&apos;s realm • Synapse&apos; 26 #joker&apos;s realm •{" "}
-          </span>
-        </div>
-      </div>
+      {/* GSAP-Powered Marquee */}
+      <GSAPMarquee />
     </div>
   );
 }

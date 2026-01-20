@@ -335,7 +335,7 @@ export default function EventsPage() {
                         sizes="100vw"
                         className="object-cover grayscale object-[50%_85%]"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/60 to-black" />
+                    <div className="absolute inset-0 bg-linear-to-b from-black/0 via-black/60 to-black" />
                 </section>
 
                 <section className="relative py-10">

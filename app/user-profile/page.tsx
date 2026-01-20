@@ -11,9 +11,6 @@ const normalizeScroll = () => {
     allowNestedScroll: true,
   });
 };
-
-import { useNavigationState } from "@/lib/useNavigationState";
-
 export default function UserProfilePage() {
   useEffect(() => {
     normalizeScroll();
