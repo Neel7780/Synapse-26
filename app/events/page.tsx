@@ -1,13 +1,19 @@
 "use client";
 
-import React, { useState, useCallback, memo, useMemo } from "react";
+import React, { useState, useCallback, memo, useMemo, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Footer from "@/components/ui/Footer";
 import NavigationPanel from "@/components/ui/NavigationPanel";
 import { Navbar } from "@/components/ui/Resizable-navbar";
 import { useNavigationState } from "@/lib/useNavigationState";
 import { useImagePreload } from "@/hooks/useImagePreload";
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 type EventItem = {
     slug: string;
@@ -23,32 +29,126 @@ const EVENTS: EventItem[] = [
     { slug: "gaming", title: "GAMING EVENT", cover: "/images_events/gaming.png" },
 ];
 
-// Memoized event card component
+// Enhanced event card with GSAP flip
 const EventCard = memo(function EventCard({
     event,
     isFlipped,
     onReveal,
     onClick,
+    index,
 }: {
     event: EventItem;
     isFlipped: boolean;
     onReveal: () => void;
     onClick: () => void;
+    index: number;
 }) {
+    const cardRef = useRef<HTMLDivElement>(null);
+    const innerRef = useRef<HTMLDivElement>(null);
+    const glowRef = useRef<HTMLDivElement>(null);
+
+    // GSAP-controlled flip animation
+    useEffect(() => {
+        if (!innerRef.current) return;
+
+        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        
+        gsap.to(innerRef.current, {
+            rotateY: isFlipped ? 180 : 0,
+            duration: prefersReducedMotion ? 0 : 0.8,
+            ease: "back.out(1.5)",
+        });
+
+        // Add sparkle effect on flip
+        if (isFlipped && cardRef.current && !prefersReducedMotion) {
+            const sparkles = cardRef.current.querySelectorAll(".sparkle");
+            gsap.fromTo(
+                sparkles,
+                { scale: 0, opacity: 1 },
+                {
+                    scale: 1.5,
+                    opacity: 0,
+                    duration: 0.6,
+                    stagger: 0.05,
+                    ease: "power2.out",
+                }
+            );
+        }
+    }, [isFlipped]);
+
+    // Hover glow effect
+    useEffect(() => {
+        if (!cardRef.current) return;
+
+        const card = cardRef.current;
+        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (prefersReducedMotion) return;
+
+        const handleMouseMove = (e: MouseEvent) => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (glowRef.current) {
+                gsap.to(glowRef.current, {
+                    x: x - 75,
+                    y: y - 75,
+                    opacity: 0.6,
+                    duration: 0.3,
+                });
+            }
+        };
+
+        const handleMouseLeave = () => {
+            if (glowRef.current) {
+                gsap.to(glowRef.current, {
+                    opacity: 0,
+                    duration: 0.3,
+                });
+            }
+        };
+
+        card.addEventListener("mousemove", handleMouseMove);
+        card.addEventListener("mouseleave", handleMouseLeave);
+
+        return () => {
+            card.removeEventListener("mousemove", handleMouseMove);
+            card.removeEventListener("mouseleave", handleMouseLeave);
+        };
+    }, []);
+
     return (
         <div
+            ref={cardRef}
             onMouseEnter={onReveal}
-            className="relative cursor-pointer transform-gpu will-change-transform"
+            className="event-card relative cursor-pointer"
             style={{ perspective: "1500px" }}
         >
+            {/* Glow effect */}
+            <div
+                ref={glowRef}
+                className="absolute w-[150px] h-[150px] rounded-full bg-red-500 blur-[60px] pointer-events-none opacity-0 z-10"
+            />
+
+            {/* Sparkle effects */}
+            {[...Array(6)].map((_, i) => (
+                <div
+                    key={i}
+                    className="sparkle absolute w-2 h-2 bg-yellow-400 rounded-full pointer-events-none z-20"
+                    style={{
+                        left: `${20 + Math.random() * 60}%`,
+                        top: `${20 + Math.random() * 60}%`,
+                    }}
+                />
+            ))}
+
             {/* CARD FRAME — responsive sizing */}
             <div className="relative w-[110px] xs:w-[130px] sm:w-[180px] md:w-[220px] lg:w-[260px] xl:w-[320px] 2xl:w-[400px] aspect-[457/640]">
                 <div
-                    className="relative w-full h-full transition-transform ease-in-out"
+                    ref={innerRef}
+                    className="relative w-full h-full"
                     style={{
                         transformStyle: "preserve-3d",
-                        transitionDuration: "900ms",
-                        transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
                     }}
                 >
                     {/* FRONT */}
@@ -111,9 +211,88 @@ export default function EventsPage() {
     const router = useRouter();
     const [revealedCards, setRevealedCards] = useState<Set<string>>(new Set());
     const { startTransition } = useNavigationState();
+    const containerRef = useRef<HTMLDivElement>(null);
+    const titleRef = useRef<HTMLHeadingElement>(null);
 
-    // Block transition until this image is loaded
     useImagePreload("/top.jpg");
+
+    // Entrance animations
+    useEffect(() => {
+        if (!containerRef.current) return;
+
+        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (prefersReducedMotion) return;
+
+        const ctx = gsap.context(() => {
+            // Title animation
+            if (titleRef.current) {
+                const text = titleRef.current.textContent || "";
+                titleRef.current.innerHTML = "";
+
+                text.split("").forEach((char) => {
+                    const span = document.createElement("span");
+                    span.className = "inline-block";
+                    span.textContent = char === " " ? "\u00A0" : char;
+                    titleRef.current?.appendChild(span);
+                });
+
+                gsap.fromTo(
+                    titleRef.current.querySelectorAll("span"),
+                    {
+                        opacity: 0,
+                        y: 50,
+                        rotateZ: gsap.utils.random(-15, 15),
+                    },
+                    {
+                        opacity: 1,
+                        y: 0,
+                        rotateZ: 0,
+                        duration: 0.5,
+                        ease: "back.out(1.7)",
+                        stagger: 0.04,
+                        scrollTrigger: {
+                            trigger: titleRef.current,
+                            start: "top 85%",
+                            once: true,
+                        },
+                    }
+                );
+            }
+
+            // Cards staggered entrance
+            const cards = containerRef.current?.querySelectorAll(".event-card");
+            if (cards?.length) {
+                gsap.fromTo(
+                    cards,
+                    {
+                        opacity: 0,
+                        y: 80,
+                        rotateZ: (i) => (i % 2 === 0 ? -10 : 10),
+                        scale: 0.8,
+                    },
+                    {
+                        opacity: 1,
+                        y: 0,
+                        rotateZ: 0,
+                        scale: 1,
+                        duration: 0.7,
+                        ease: "back.out(1.4)",
+                        stagger: {
+                            each: 0.1,
+                            from: "center",
+                        },
+                        scrollTrigger: {
+                            trigger: containerRef.current,
+                            start: "top 80%",
+                            once: true,
+                        },
+                    }
+                );
+            }
+        }, containerRef);
+
+        return () => ctx.revert();
+    }, []);
 
     const handleCardClick = useCallback((slug: string) => {
         startTransition();
@@ -141,7 +320,7 @@ export default function EventsPage() {
     const allRevealed = useMemo(() => revealedCards.size === EVENTS.length, [revealedCards.size]);
 
     return (
-        <>
+        <div ref={containerRef}>
             <Navbar visible={true}>
                 <NavigationPanel />
             </Navbar>
@@ -160,7 +339,10 @@ export default function EventsPage() {
                 </section>
 
                 <section className="relative py-10">
-                    <h1 className="text-center text-[3rem] sm:text-[4.5rem] lg:text-8xl tracking-[0.2em] sm:tracking-[0.25em] lg:tracking-[0.3em] lowercase font-joker">
+                    <h1 
+                        ref={titleRef}
+                        className="text-center text-[3rem] sm:text-[4.5rem] lg:text-8xl tracking-[0.2em] sm:tracking-[0.25em] lg:tracking-[0.3em] lowercase font-joker"
+                    >
                         events
                     </h1>
 
@@ -193,6 +375,7 @@ export default function EventsPage() {
                                             isFlipped={isFlipped}
                                             onReveal={() => revealCard(event.slug)}
                                             onClick={() => handleCardClick(event.slug)}
+                                            index={index}
                                         />
                                     </div>
 
@@ -206,6 +389,6 @@ export default function EventsPage() {
 
                 <Footer />
             </main>
-        </>
+        </div>
     );
 }

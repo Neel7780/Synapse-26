@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, memo } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Image from "next/image";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -18,65 +17,76 @@ type Artist = {
   };
 };
 
+// Memoized artist image component
+const ArtistImage = memo(function ArtistImage({
+  artist,
+  isCenter,
+  onClick,
+}: {
+  artist: Artist;
+  isCenter: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <picture>
+      {artist.image.avif && (
+        <source srcSet={artist.image.avif} type="image/avif" />
+      )}
+      <img
+        src={artist.image.fallback}
+        alt={artist.name}
+        loading="lazy"
+        onClick={onClick}
+        className="block object-cover z-10 transition-transform duration-300 md:hover:scale-110 cursor-pointer"
+        style={{
+          width: isCenter ? "clamp(200px, 50vw, 480px)" : "clamp(120px, 25vw, 230px)",
+          height: isCenter ? "clamp(120px, 35vw, 390px)" : "clamp(90px, 25vw, 230px)",
+        }}
+        sizes="(max-width: 768px) 80vw, 520px"
+      />
+    </picture>
+  );
+});
+
 export default function ArtistsSection() {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const [artists] = useState<Artist[]>([
     {
       name: "Sartek",
       date: "21 Feb 2025",
-      image: {
-        avif: "/images_home/DJSartek.avif",
-        fallback: "/images_home/DJSartek.jpg",
-      },
+      image: { avif: "/images_home/DJSartek.avif", fallback: "/images_home/DJSartek.jpg" },
     },
     {
       name: "Mohit Chauhan",
       date: "23 Feb 2025",
-      image: {
-        avif: "/images_home/MohitChauhan.avif",
-        fallback: "/images_home/MohitChauhan.jpg",
-      },
+      image: { avif: "/images_home/MohitChauhan.avif", fallback: "/images_home/MohitChauhan.jpg" },
     },
     {
       name: "Nikhil D' Souza",
       date: "21 Feb 2025",
-      image: {
-        avif: "/images_home/NikhilDSouza.avif",
-        fallback: "/images_home/NikhilDSouza.jpg",
-      },
+      image: { avif: "/images_home/NikhilDSouza.avif", fallback: "/images_home/NikhilDSouza.jpg" },
     },
     {
       name: "Shaan",
       date: "22 Feb 2025",
-      image: {
-        avif: "/images_home/Shaan.avif",
-        fallback: "/images_home/Shaan.jpg",
-      },
+      image: { avif: "/images_home/Shaan.avif", fallback: "/images_home/Shaan.jpg" },
     },
     {
       name: "Teri Miko",
       date: "22 Feb 2025",
-      image: {
-        avif: "/images_home/TeriMiko.avif",
-        fallback: "/images_home/TeriMiko.jpg",
-      },
+      image: { avif: "/images_home/TeriMiko.avif", fallback: "/images_home/TeriMiko.jpg" },
     },
     {
       name: "Ravi Gupta",
       date: "20 Feb 2025",
-      image: {
-        avif: "/images_home/RaviGupta.avif",
-        fallback: "/images_home/RaviGupta.jpg",
-      },
+      image: { avif: "/images_home/RaviGupta.avif", fallback: "/images_home/RaviGupta.jpg" },
     },
     {
       name: "Aditya Gadhvi",
       date: "10 Jan 2026",
-      image: {
-        avif: "/images_home/AdityaGadhvi.avif",
-        fallback: "/images_home/AdityaGadhvi.jpeg",
-      },
+      image: { avif: "/images_home/AdityaGadhvi.avif", fallback: "/images_home/AdityaGadhvi.jpeg" },
     },
   ]);
 
@@ -86,6 +96,7 @@ export default function ArtistsSection() {
   const artistDotRef = useRef<HTMLDivElement>(null);
   const imagesContainerRef = useRef<HTMLDivElement>(null);
   const carouselTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const infoBoxRef = useRef<HTMLDivElement>(null);
 
   const generateViewportPath = useCallback(() => {
     if (typeof window === "undefined") return "";
@@ -106,7 +117,7 @@ export default function ArtistsSection() {
   }, []);
 
   const animateCarousel = useCallback(() => {
-    if (!imagesContainerRef.current) return;
+    if (!imagesContainerRef.current || !isInitialized) return;
 
     const items = imagesContainerRef.current.querySelectorAll(".carousel-item");
     const isMobile = window.innerWidth < 600;
@@ -136,7 +147,6 @@ export default function ArtistsSection() {
         element.classList.remove("center");
 
         if (isMobile) {
-          // Mobile: show only adjacent items with reduced opacity
           if (Math.abs(diff) === 1) {
             opacity = 0.4;
             scale = 0.7;
@@ -145,7 +155,6 @@ export default function ArtistsSection() {
             scale = 0.5;
           }
         } else {
-          // Desktop Fade Logic
           if (absOffset > spacing) {
             opacity = Math.max(0.3, 1 - (absOffset - spacing) / (spacing * 2));
             scale = 0.8;
@@ -155,11 +164,25 @@ export default function ArtistsSection() {
         zIndex = 5 - Math.abs(diff);
       }
 
-      element.style.transform = `translateX(${offset}px) scale(${scale})`;
-      element.style.opacity = `${opacity}`;
-      element.style.zIndex = `${zIndex}`;
+      gsap.to(element, {
+        x: offset,
+        scale: scale,
+        opacity: opacity,
+        zIndex: zIndex,
+        duration: 0.5,
+        ease: "power2.out",
+      });
     });
-  }, [currentIndex]);
+
+    // Animate info box on artist change
+    if (infoBoxRef.current) {
+      gsap.fromTo(
+        infoBoxRef.current,
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }
+      );
+    }
+  }, [currentIndex, isInitialized]);
 
   const startCarouselTimer = useCallback(() => {
     if (carouselTimerRef.current) {
@@ -184,6 +207,63 @@ export default function ArtistsSection() {
     setCurrentIndex((prev) => (prev - 1 + artists.length) % artists.length);
     resetCarouselTimer();
   }, [artists.length, resetCarouselTimer]);
+
+  // Initialize carousel on mount
+  useEffect(() => {
+    if (!imagesContainerRef.current) return;
+
+    // Set initial positions without animation
+    const items = imagesContainerRef.current.querySelectorAll(".carousel-item");
+    const isMobile = window.innerWidth < 600;
+    const spacing = isMobile ? window.innerWidth * 0.75 : window.innerWidth * 0.45;
+
+    items.forEach((item, i) => {
+      const element = item as HTMLElement;
+      let diff = i - currentIndex;
+      const total = items.length;
+
+      if (diff > total / 2) diff -= total;
+      if (diff < -total / 2) diff += total;
+
+      const offset = diff * spacing;
+      const absOffset = Math.abs(offset);
+
+      let opacity = 1;
+      let scale = 1;
+      let zIndex = 5;
+
+      if (diff === 0) {
+        zIndex = 10;
+        opacity = 1;
+        scale = 1;
+      } else {
+        if (isMobile) {
+          if (Math.abs(diff) === 1) {
+            opacity = 0.4;
+            scale = 0.7;
+          } else {
+            opacity = 0;
+            scale = 0.5;
+          }
+        } else {
+          if (absOffset > spacing) {
+            opacity = Math.max(0.3, 1 - (absOffset - spacing) / (spacing * 2));
+            scale = 0.8;
+          }
+        }
+        zIndex = 5 - Math.abs(diff);
+      }
+
+      gsap.set(element, {
+        x: offset,
+        scale: scale,
+        opacity: opacity,
+        zIndex: zIndex,
+      });
+    });
+
+    setIsInitialized(true);
+  }, []);
 
   useEffect(() => {
     startCarouselTimer();
@@ -226,9 +306,7 @@ export default function ArtistsSection() {
         },
         onUpdate: (self) => {
           const progress = self.progress;
-          const point = artistPath.getPointAtLength(
-            progress * artistPathLength
-          );
+          const point = artistPath.getPointAtLength(progress * artistPathLength);
           const rect = artistSvg.getBoundingClientRect();
 
           const x = rect.left + (point.x / 1000) * rect.width;
@@ -242,7 +320,9 @@ export default function ArtistsSection() {
       const handleResize = () => {
         const newPath = generateViewportPath();
         artistPath.setAttribute("d", newPath);
+        if (isInitialized) {
         animateCarousel();
+        }
         scrollTrigger.refresh();
       };
 
@@ -253,22 +333,22 @@ export default function ArtistsSection() {
         scrollTrigger.kill();
       };
     }
-  }, [generateViewportPath, animateCarousel]);
+  }, [generateViewportPath, animateCarousel, isInitialized]);
 
   useEffect(() => {
+    if (isInitialized) {
     animateCarousel();
-  }, [currentIndex, animateCarousel]);
+    }
+  }, [currentIndex, animateCarousel, isInitialized]);
 
   return (
     <div
       className="artists-section relative bg-black overflow-x-clip"
       id="artistsSection"
       ref={artistSectionRef}
-      style={{
-        height: "100svh",
-      }}
+      style={{ height: "100svh" }}
     >
-      <div className="artists-content relative top-[-1.6px] right-[-1px] h-full flex flex-col">
+      <div className="artists-content relative h-full flex flex-col">
         <svg
           id="artistPath"
           width="100%"
@@ -300,16 +380,16 @@ export default function ArtistsSection() {
 
         {/* Carousel - Center area */}
         <div className="carousel relative flex-1 min-h-0 flex items-center justify-center">
-          {/* White line through center - Perfectly centered */}
-          <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[2px] bg-white z-0"></div>
+          {/* White line through center */}
+          <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[2px] bg-white z-0" />
 
           <div
             id="artistPathDot"
             className="fixed w-14 h-14 md:w-22.5 md:h-22.5 bg-[#ff0000] rounded-full blur-[20px] pointer-events-none z-5 opacity-0 -translate-x-1/2 -translate-y-1/2"
             ref={artistDotRef}
-          ></div>
+          />
 
-          {/* Images Container - Centered */}
+          {/* Images Container */}
           <div
             className="images-container relative w-full h-full flex items-center justify-center"
             id="imagesContainer"
@@ -318,53 +398,28 @@ export default function ArtistsSection() {
             {artists.map((artist, i) => (
               <div
                 key={i}
-                className={`carousel-item absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-600 ease-in-out ${i === currentIndex ? "center" : ""
+                className={`carousel-item absolute top-1/2 left-1/2 -translate-y-1/2 will-change-transform ${
+                  i === currentIndex ? "center" : ""
                   }`}
-                onClick={() => {
-                  setCurrentIndex(i);
-                  resetCarouselTimer();
-                }}
                 style={{
-                  transform: `translate(-50%, -50%) translateX(0px) scale(1)`,
+                  marginLeft: "-50%",
                 }}
               >
-                <picture>
-                  {artist.image.avif && (
-                    <source srcSet={artist.image.avif} type="image/avif" />
-                  )}
-
-                  <img
-                    src={artist.image.fallback}
-                    alt={artist.name}
-                    loading="lazy"
-                    className="block object-cover z-10 transition-transform duration-300 md:hover:scale-110 cursor-pointer"
-                    style={{
-                      width:
-                        i === currentIndex
-                          ? "clamp(200px, 50vw, 480px)"
-                          : "clamp(120px, 25vw, 230px)",
-                      height:
-                        i === currentIndex
-                          ? "clamp(120px, 35vw, 390px)"
-                          : "clamp(90px, 25vw, 230px)",
-                    }}
-                    sizes="(max-width: 768px) 80vw, 520px"
-                  />
-                </picture>
+                <ArtistImage
+                  artist={artist}
+                  isCenter={i === currentIndex}
+                  onClick={() => {
+                    setCurrentIndex(i);
+                    resetCarouselTimer();
+                  }}
+                />
               </div>
             ))}
           </div>
 
           {/* Navigation buttons */}
           <button
-            className="
-          group
-          absolute top-1/2 -translate-y-1/2
-          flex items-center justify-center
-          bg-red-600 hover:bg-white
-          transition-colors duration-400
-          z-20 cursor-pointer
-        "
+            className="nav-btn group absolute top-1/2 -translate-y-1/2 flex items-center justify-center bg-red-600 hover:bg-white transition-colors duration-300 z-20 cursor-pointer hover:scale-110"
             onClick={nextArtist}
             style={{
               width: "clamp(32px, 6vw, 62px)",
@@ -374,12 +429,7 @@ export default function ArtistsSection() {
             aria-label="Next artist"
           >
             <div
-              className="
-            bg-white
-            group-hover:bg-red-600
-            transition-colors duration-400
-            rotate-90
-          "
+              className="bg-white group-hover:bg-red-600 transition-colors duration-300 rotate-90"
               style={{
                 width: "clamp(14px, 2.5vw, 33px)",
                 height: "clamp(10px, 1.8vw, 22px)",
@@ -389,14 +439,7 @@ export default function ArtistsSection() {
           </button>
 
           <button
-            className="
-          group
-          absolute top-1/2 -translate-y-1/2
-          flex items-center justify-center
-          bg-red-600 hover:bg-white
-          transition-colors duration-400
-          z-20 cursor-pointer
-        "
+            className="nav-btn group absolute top-1/2 -translate-y-1/2 flex items-center justify-center bg-red-600 hover:bg-white transition-colors duration-300 z-20 cursor-pointer hover:scale-110"
             onClick={prevArtist}
             style={{
               width: "clamp(32px, 6vw, 62px)",
@@ -406,12 +449,7 @@ export default function ArtistsSection() {
             aria-label="Previous artist"
           >
             <div
-              className="
-            bg-white
-            group-hover:bg-red-600
-            transition-colors duration-400
-            -rotate-90
-          "
+              className="bg-white group-hover:bg-red-600 transition-colors duration-300 -rotate-90"
               style={{
                 width: "clamp(14px, 2.5vw, 33px)",
                 height: "clamp(10px, 1.8vw, 22px)",
@@ -423,7 +461,10 @@ export default function ArtistsSection() {
 
         {/* Artist Info at bottom */}
         <div className="flex-shrink-0 pb-6 sm:pb-8 pt-4 flex justify-center px-4 mb-8">
-          <div className="border-t-2 border-b-2 border-white py-3 px-6 text-center text-white bg-black/50 backdrop-blur-sm w-full max-w-md">
+          <div
+            ref={infoBoxRef}
+            className="border-t-2 border-b-2 border-white py-3 px-6 text-center text-white bg-black/50 backdrop-blur-sm w-full max-w-md"
+          >
             <h2 className="text-xl sm:text-2xl md:text-3xl font-jqka uppercase">
               {artists[currentIndex].name}
             </h2>

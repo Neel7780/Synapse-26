@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, memo } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-gsap.registerPlugin(ScrollTrigger);
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 /* =======================
    TYPES
@@ -30,43 +32,23 @@ const schedule: DaySchedule[] = [
     day: 1,
     events: [
       { name: "Battledrome", time: "9:00 AM - 10:30 AM", venue: "Main Hall A" },
-      {
-        name: "Workshop: Introduction to GSAP",
-        time: "11:00 AM - 12:30 PM",
-        venue: "Room 203",
-      },
+      { name: "Workshop: Introduction to GSAP", time: "11:00 AM - 12:30 PM", venue: "Room 203" },
       { name: "Lunch Break", time: "12:30 PM - 2:00 PM", venue: "Cafeteria" },
     ],
   },
   {
     day: 2,
     events: [
-      {
-        name: "Battledrome",
-        time: "7:00 AM - 8:00 AM",
-        venue: "Rooftop Garden",
-      },
-      {
-        name: "Technical Deep Dive",
-        time: "9:00 AM - 11:00 AM",
-        venue: "Lab 101",
-      },
-      {
-        name: "Innovation Showcase",
-        time: "11:30 AM - 1:00 PM",
-        venue: "Exhibition Hall",
-      },
+      { name: "Battledrome", time: "7:00 AM - 8:00 AM", venue: "Rooftop Garden" },
+      { name: "Technical Deep Dive", time: "9:00 AM - 11:00 AM", venue: "Lab 101" },
+      { name: "Innovation Showcase", time: "11:30 AM - 1:00 PM", venue: "Exhibition Hall" },
     ],
   },
   {
     day: 3,
     events: [
       { name: "Battledrome", time: "8:00 AM - 9:00 AM", venue: "Café Lounge" },
-      {
-        name: "Advanced Workshop",
-        time: "9:30 AM - 11:30 AM",
-        venue: "Studio 5",
-      },
+      { name: "Advanced Workshop", time: "9:30 AM - 11:30 AM", venue: "Studio 5" },
       { name: "Q&A Session", time: "12:00 PM - 1:00 PM", venue: "Auditorium" },
     ],
   },
@@ -74,55 +56,299 @@ const schedule: DaySchedule[] = [
     day: 4,
     events: [
       { name: "Battledrome", time: "8:00 AM - 9:00 AM", venue: "Café Lounge" },
-      {
-        name: "Advanced Workshop",
-        time: "9:30 AM - 11:30 AM",
-        venue: "Studio 5",
-      },
+      { name: "Advanced Workshop", time: "9:30 AM - 11:30 AM", venue: "Studio 5" },
       { name: "Q&A Session", time: "12:00 PM - 1:00 PM", venue: "Auditorium" },
     ],
   },
 ];
 
-
 /* =======================
-   COMPONENT
+   EVENT ROW COMPONENT
 ======================= */
 
-export default function TimelineContent() {
-  const sectionsRef = useRef<(HTMLDivElement | null)[]>([]);
+const EventRow = memo(function EventRow({ 
+  event, 
+  index 
+}: { 
+  event: Event; 
+  index: number;
+}) {
+  const rowRef = useRef<HTMLTableRowElement>(null);
 
   useEffect(() => {
-    ScrollTrigger.getAll().forEach((t) => t.kill());
+    if (!rowRef.current) return;
 
-    requestAnimationFrame(() => {
-      sectionsRef.current.forEach((section) => {
-        if (!section) return;
+    const row = rowRef.current;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReducedMotion) return;
 
+    // Hover highlight sweep effect
+    const handleMouseEnter = () => {
+      gsap.to(row, {
+        backgroundColor: "rgba(255, 255, 255, 0.15)",
+        x: 5,
+        duration: 0.3,
+        ease: "power2.out",
+      });
+    };
+
+    const handleMouseLeave = () => {
+      gsap.to(row, {
+        backgroundColor: "transparent",
+        x: 0,
+        duration: 0.3,
+        ease: "power2.out",
+      });
+    };
+
+    row.addEventListener("mouseenter", handleMouseEnter);
+    row.addEventListener("mouseleave", handleMouseLeave);
+
+    return () => {
+      row.removeEventListener("mouseenter", handleMouseEnter);
+      row.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, []);
+
+  return (
+    <tr
+      ref={rowRef}
+      className="event-row border-b border-white/10 transition-colors cursor-default"
+    >
+      <td className="py-3 px-2 sm:px-4 md:px-6 text-sm sm:text-base md:text-xl text-white text-center break-words whitespace-normal">
+        {event.name}
+      </td>
+      <td className="py-3 px-2 sm:px-4 md:px-6 text-sm sm:text-base md:text-xl text-white/80 text-center break-words whitespace-normal">
+        {event.time}
+      </td>
+      <td className="py-3 px-2 sm:px-4 md:px-6 text-sm sm:text-base md:text-xl text-white/80 text-center break-words whitespace-normal">
+        {event.venue}
+      </td>
+    </tr>
+  );
+});
+
+/* =======================
+   DAY SECTION COMPONENT
+======================= */
+
+const DaySection = memo(function DaySection({ 
+  daySchedule, 
+  index 
+}: { 
+  daySchedule: DaySchedule; 
+  index: number;
+}) {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const dayNumberRef = useRef<HTMLHeadingElement>(null);
+  const tableRef = useRef<HTMLTableElement>(null);
+  const lineRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!sectionRef.current) return;
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReducedMotion) return;
+
+    const ctx = gsap.context(() => {
+      // Day number dramatic entrance
+      if (dayNumberRef.current) {
         gsap.fromTo(
-          section,
-          { opacity: 0, y: 80 },
+          dayNumberRef.current,
+          {
+            opacity: 0,
+            scale: 0.3,
+            rotateX: -90,
+          },
           {
             opacity: 1,
-            y: 0,
-            ease: "power3.out",
+            scale: 1,
+            rotateX: 0,
+            duration: 1,
+            ease: "back.out(1.7)",
             scrollTrigger: {
-              trigger: section,
-              start: "top 85%",
-              scrub: 1,
+              trigger: sectionRef.current,
+              start: "top 80%",
+              once: true,
             },
           }
         );
-      });
+      }
 
-      ScrollTrigger.refresh();
-    });
+      // Connecting line draw animation
+      if (lineRef.current) {
+        gsap.fromTo(
+          lineRef.current,
+          {
+            scaleY: 0,
+            transformOrigin: "top center",
+          },
+          {
+            scaleY: 1,
+            duration: 0.8,
+            ease: "power2.out",
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: "top 75%",
+              once: true,
+            },
+          }
+        );
+      }
 
-    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
+      // Table fade in with slide
+      if (tableRef.current) {
+        const direction = index % 2 === 0 ? -50 : 50;
+        gsap.fromTo(
+          tableRef.current,
+          {
+            opacity: 0,
+            x: direction,
+          },
+          {
+            opacity: 1,
+            x: 0,
+            duration: 0.8,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: "top 75%",
+              once: true,
+            },
+          }
+        );
+
+        // Event rows stagger
+        const rows = tableRef.current.querySelectorAll(".event-row");
+        gsap.fromTo(
+          rows,
+          {
+            opacity: 0,
+            x: direction * 0.5,
+          },
+          {
+            opacity: 1,
+            x: 0,
+            duration: 0.5,
+            ease: "power2.out",
+            stagger: 0.1,
+            delay: 0.3,
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: "top 75%",
+              once: true,
+            },
+          }
+        );
+      }
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, [index]);
+
+  return (
+    <div
+      ref={sectionRef}
+      className="day-section max-w-7xl mx-auto px-3 sm:px-4 space-y-6 md:space-y-12 relative"
+    >
+      {/* Connecting line to next section */}
+      {index < schedule.length - 1 && (
+        <div
+          ref={lineRef}
+          className="absolute left-1/2 -translate-x-1/2 top-full w-[2px] h-20 md:h-40 bg-gradient-to-b from-red-600 to-transparent"
+        />
+      )}
+
+      {/* Day heading */}
+      <h2
+        ref={dayNumberRef}
+        className="text-4xl sm:text-5xl md:text-[100px] lg:text-[120px] text-center leading-none tracking-wide text-red-600 font-joker"
+        style={{ perspective: "1000px" }}
+      >
+        day {daySchedule.day}
+      </h2>
+
+      {/* Table */}
+      <table
+        ref={tableRef}
+        className="w-full table-fixed bg-black/30 backdrop-blur-sm rounded-lg font-roboto overflow-hidden"
+      >
+        <thead>
+          <tr className="border-b border-white/20">
+            <th className="py-3 px-2 sm:px-4 md:px-6 text-xs sm:text-sm uppercase tracking-wide text-white/70 text-center">
+              Event
+            </th>
+            <th className="py-3 px-2 sm:px-4 md:px-6 text-xs sm:text-sm uppercase tracking-wide text-white/70 text-center">
+              Time
+            </th>
+            <th className="py-3 px-2 sm:px-4 md:px-6 text-xs sm:text-sm uppercase tracking-wide text-white/70 text-center">
+              Venue
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {daySchedule.events.map((event, i) => (
+            <EventRow key={i} event={event} index={i} />
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+});
+
+/* =======================
+   MAIN COMPONENT
+======================= */
+
+export default function TimelineContent() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReducedMotion) return;
+
+    const ctx = gsap.context(() => {
+      // Title animation
+      if (titleRef.current) {
+        const text = titleRef.current.textContent || "";
+        titleRef.current.innerHTML = "";
+
+        text.split("").forEach((char) => {
+          const span = document.createElement("span");
+          span.className = "inline-block";
+          span.textContent = char === " " ? "\u00A0" : char;
+          titleRef.current?.appendChild(span);
+        });
+
+        gsap.fromTo(
+          titleRef.current.querySelectorAll("span"),
+          {
+            opacity: 0,
+            y: 50,
+            rotateZ: gsap.utils.random(-20, 20),
+          },
+          {
+            opacity: 1,
+            y: 0,
+            rotateZ: 0,
+            duration: 0.6,
+            ease: "back.out(1.7)",
+            stagger: 0.05,
+          }
+        );
+      }
+    }, containerRef);
+
+    return () => ctx.revert();
   }, []);
 
   return (
     <div
+      ref={containerRef}
       className="relative min-h-screen bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: "url('/images_timeline/bg.jpg')" }}
     >
@@ -133,7 +359,10 @@ export default function TimelineContent() {
       <div className="relative">
         {/* Header */}
         <div className="max-w-7xl mx-auto px-4 pt-14 md:pt-24 pb-16 md:pb-32 text-center">
-          <h1 className="text-3xl sm:text-4xl md:text-7xl lg:text-9xl tracking-wide text-white font-joker">
+          <h1
+            ref={titleRef}
+            className="text-3xl sm:text-4xl md:text-7xl lg:text-9xl tracking-wide text-white font-joker"
+          >
             timeline
           </h1>
         </div>
@@ -141,77 +370,7 @@ export default function TimelineContent() {
         {/* Timeline */}
         <div className="space-y-20 sm:space-y-24 md:space-y-40 pb-20 md:pb-32">
           {schedule.map((daySchedule, index) => (
-            <div
-              key={daySchedule.day}
-              ref={(el) => {
-                sectionsRef.current[index] = el;
-              }}
-              className="max-w-7xl mx-auto px-3 sm:px-4 space-y-6 md:space-y-12"
-            >
-              {/* Day heading */}
-              <h2 className="text-4xl sm:text-5xl md:text-[100px] lg:text-[120px] text-center leading-none tracking-wide text-red-600 font-joker">
-                day {daySchedule.day}
-              </h2>
-
-              {/* Table */}
-              <table className="w-full table-fixed bg-black/30 backdrop-blur-sm rounded-lg font-roboto">
-                <thead>
-                  <tr>
-                    <th className="py-3 px-2 sm:px-4 md:px-6 text-xs sm:text-sm uppercase tracking-wide text-white/70 text-center">
-                      Event
-                    </th>
-                    <th className="py-3 px-2 sm:px-4 md:px-6 text-xs sm:text-sm uppercase tracking-wide text-white/70 text-center">
-                      Time
-                    </th>
-                    <th className="py-3 px-2 sm:px-4 md:px-6 text-xs sm:text-sm uppercase tracking-wide text-white/70 text-center">
-                      Venue
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {daySchedule.events.map((event, i) => (
-                    <tr
-                      key={i}
-                      className="border-b border-white/10 hover:bg-white/10 transition-colors"
-                    >
-                      <td
-                        className="
-                          py-3 px-2 sm:px-4 md:px-6
-                          text-sm sm:text-base md:text-xl
-                          text-white text-center
-                          break-words whitespace-normal
-                        "
-                      >
-                        {event.name}
-                      </td>
-
-                      <td
-                        className="
-                          py-3 px-2 sm:px-4 md:px-6
-                          text-sm sm:text-base md:text-xl
-                          text-white/80 text-center
-                          break-words whitespace-normal
-                        "
-                      >
-                        {event.time}
-                      </td>
-
-                      <td
-                        className="
-                          py-3 px-2 sm:px-4 md:px-6
-                          text-sm sm:text-base md:text-xl
-                          text-white/80 text-center
-                          break-words whitespace-normal
-                        "
-                      >
-                        {event.venue}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DaySection key={daySchedule.day} daySchedule={daySchedule} index={index} />
           ))}
         </div>
       </div>
