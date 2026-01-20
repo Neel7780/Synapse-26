@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback, memo, useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Footer from "@/components/ui/Footer";
 import NavigationPanel from "@/components/ui/NavigationPanel";
 import { Navbar } from "@/components/ui/Resizable-navbar";
+import { useNavigationState } from "@/lib/useNavigationState";
+import { useImagePreload } from "@/hooks/useImagePreload";
 
 type EventItem = {
     slug: string;
@@ -15,23 +17,95 @@ type EventItem = {
 
 const EVENTS: EventItem[] = [
     { slug: "dance", title: "DANCE EVENT", cover: "/images_events/dance.png" },
-    {
-        slug: "fashion",
-        title: "Fashion Show",
-        cover: "/images_events/fashionshow.png",
-    },
+    { slug: "fashion", title: "Fashion Show", cover: "/images_events/fashionshow.png" },
     { slug: "music", title: "MUSIC EVENT", cover: "/images_events/music.png" },
-    {
-        slug: "theatre",
-        title: "THEATRE SHOW",
-        cover: "/images_events/theatre.png",
-    },
+    { slug: "theatre", title: "THEATRE SHOW", cover: "/images_events/theatre.png" },
     { slug: "gaming", title: "GAMING EVENT", cover: "/images_events/gaming.png" },
 ];
 
-import { useNavigationState } from "@/lib/useNavigationState";
+// Memoized event card component
+const EventCard = memo(function EventCard({
+    event,
+    isFlipped,
+    onReveal,
+    onClick,
+}: {
+    event: EventItem;
+    isFlipped: boolean;
+    onReveal: () => void;
+    onClick: () => void;
+}) {
+    return (
+        <div
+            onMouseEnter={onReveal}
+            className="relative cursor-pointer transform-gpu will-change-transform"
+            style={{ perspective: "1500px" }}
+        >
+            {/* CARD FRAME — responsive sizing */}
+            <div className="relative w-[110px] xs:w-[130px] sm:w-[180px] md:w-[220px] lg:w-[260px] xl:w-[320px] 2xl:w-[400px] aspect-[457/640]">
+                <div
+                    className="relative w-full h-full transition-transform ease-in-out"
+                    style={{
+                        transformStyle: "preserve-3d",
+                        transitionDuration: "900ms",
+                        transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+                    }}
+                >
+                    {/* FRONT */}
+                    <div
+                        className="absolute inset-0 rounded-lg overflow-hidden"
+                        style={{ backfaceVisibility: "hidden" }}
+                    >
+                        <Image
+                            src="/images_events/card.png"
+                            alt="Card back"
+                            fill
+                            sizes="(max-width: 640px) 110px, (max-width: 768px) 180px, (max-width: 1024px) 220px, (max-width: 1280px) 260px, 400px"
+                            className="object-contain"
+                            loading="lazy"
+                        />
+                    </div>
 
-import { useImagePreload } from "@/hooks/useImagePreload";
+                    {/* BACK */}
+                    <div
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (isFlipped) onClick();
+                        }}
+                        className="absolute inset-0 rounded-lg overflow-hidden cursor-pointer"
+                        style={{
+                            backfaceVisibility: "hidden",
+                            transform: "rotateY(180deg)",
+                        }}
+                    >
+                        <Image
+                            src={event.cover}
+                            alt={event.title}
+                            fill
+                            sizes="(max-width: 640px) 110px, (max-width: 768px) 180px, (max-width: 1024px) 220px, (max-width: 1280px) 260px, 400px"
+                            className="object-cover"
+                            loading="lazy"
+                        />
+                        {/* TITLE */}
+                        <div
+                            className="
+                                absolute bottom-2 xs:bottom-2 sm:bottom-3 md:bottom-4 lg:bottom-5 xl:bottom-7 2xl:bottom-9
+                                left-0 right-0
+                                px-1.5 xs:px-2 sm:px-3 md:px-4 lg:px-5 xl:px-7 2xl:px-8
+                                font-card
+                                text-[9px] xs:text-[10px] sm:text-[14px] md:text-[17px] lg:text-[20px] xl:text-[26px] 2xl:text-[32px]
+                                text-white text-center
+                                leading-tight
+                            "
+                        >
+                            {event.title}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+});
 
 export default function EventsPage() {
     const router = useRouter();
@@ -41,28 +115,30 @@ export default function EventsPage() {
     // Block transition until this image is loaded
     useImagePreload("/top.jpg");
 
-    const handleCardClick = (slug: string, isFlipped: boolean) => {
-        if (isFlipped) {
-            startTransition();
-            router.push(`/events/${slug}`);
-        }
-    };
+    const handleCardClick = useCallback((slug: string) => {
+        startTransition();
+        router.push(`/events/${slug}`);
+    }, [startTransition, router]);
 
-    const revealCard = (slug: string) => {
+    const revealCard = useCallback((slug: string) => {
         setRevealedCards((prev) => {
+            if (prev.has(slug)) return prev;
             const newSet = new Set(prev);
             newSet.add(slug);
             return newSet;
         });
-    };
+    }, []);
 
-    const toggleRevealAll = () => {
-        if (revealedCards.size === EVENTS.length) {
-            setRevealedCards(new Set());
-        } else {
-            setRevealedCards(new Set(EVENTS.map((e) => e.slug)));
-        }
-    };
+    const toggleRevealAll = useCallback(() => {
+        setRevealedCards((prev) => {
+            if (prev.size === EVENTS.length) {
+                return new Set();
+            }
+            return new Set(EVENTS.map((e) => e.slug));
+        });
+    }, []);
+
+    const allRevealed = useMemo(() => revealedCards.size === EVENTS.length, [revealedCards.size]);
 
     return (
         <>
@@ -92,6 +168,7 @@ export default function EventsPage() {
                         <button
                             onClick={toggleRevealAll}
                             className="self-end text-xs sm:text-base md:text-lg opacity-60 hover:opacity-100 transition-opacity"
+                            aria-label={allRevealed ? "Hide all cards" : "Reveal all cards"}
                         >
                             👁 Reveal / Unreveal all
                         </button>
@@ -100,7 +177,6 @@ export default function EventsPage() {
                             <span className="hidden md:flex">Hover to reveal •</span> Click to explore
                         </div>
                     </div>
-
                 </section>
 
                 {/* CARDS */}
@@ -112,73 +188,12 @@ export default function EventsPage() {
                             return (
                                 <React.Fragment key={event.slug}>
                                     <div className="flex justify-center items-center h-full">
-                                        <div
-                                            onMouseEnter={() => revealCard(event.slug)}
-                                            className="relative cursor-pointer transform-gpu"
-                                            style={{ perspective: "1500px" }}
-                                        >
-                                            {/* CARD FRAME — responsive sizing */}
-                                            <div className="relative w-[110px] xs:w-[130px] sm:w-[180px] md:w-[220px] lg:w-[260px] xl:w-[320px] 2xl:w-[400px] aspect-[457/640]">
-                                                <div
-                                                    className="relative w-full h-full transition-transform ease-in-out"
-                                                    style={{
-                                                        transformStyle: "preserve-3d",
-                                                        transitionDuration: "900ms",
-                                                        transform: isFlipped
-                                                            ? "rotateY(180deg)"
-                                                            : "rotateY(0deg)",
-                                                    }}
-                                                >
-                                                    {/* FRONT */}
-                                                    <div
-                                                        className="absolute inset-0 rounded-lg overflow-hidden"
-                                                        style={{
-                                                            backfaceVisibility: "hidden",
-                                                            backgroundImage: "url(/images_events/card.png)",
-                                                            backgroundRepeat: "no-repeat",
-                                                            backgroundPosition: "center",
-                                                            backgroundSize: "contain",
-                                                            backgroundOrigin: "content-box",
-                                                            backgroundClip: "content-box",
-                                                        }}
-                                                    />
-
-                                                    {/* BACK */}
-                                                    <div
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleCardClick(event.slug, isFlipped);
-                                                        }}
-                                                        className="absolute inset-0 rounded-lg overflow-hidden cursor-pointer"
-                                                        style={{
-                                                            backfaceVisibility: "hidden",
-                                                            transform: "rotateY(180deg)",
-                                                            backgroundImage: `url(${event.cover})`,
-                                                            backgroundRepeat: "no-repeat",
-                                                            backgroundPosition: "center",
-                                                            backgroundSize: "cover",
-                                                            backgroundOrigin: "content-box",
-                                                            backgroundClip: "content-box",
-                                                        }}
-                                                    >
-                                                        {/* TITLE */}
-                                                        <div
-                                                            className="
-    absolute bottom-2 xs:bottom-2 sm:bottom-3 md:bottom-4 lg:bottom-5 xl:bottom-7 2xl:bottom-9
-    left-0 right-0
-    px-1.5 xs:px-2 sm:px-3 md:px-4 lg:px-5 xl:px-7 2xl:px-8
-    font-card
-    text-[9px] xs:text-[10px] sm:text-[14px] md:text-[17px] lg:text-[20px] xl:text-[26px] 2xl:text-[32px]
-    text-white text-center
-    leading-tight
-  "
-                                                        >
-                                                            {event.title}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <EventCard
+                                            event={event}
+                                            isFlipped={isFlipped}
+                                            onReveal={() => revealCard(event.slug)}
+                                            onClick={() => handleCardClick(event.slug)}
+                                        />
                                     </div>
 
                                     {/* EMPTY COLUMN — cross layout pattern */}

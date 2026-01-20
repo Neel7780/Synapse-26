@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { uploadImage } from '@/lib/imageUtil';
+import { checkAdmin } from '@/lib/checkAdmin';
 
 // GET - Fetch all sponsors
 export async function GET() {
@@ -34,6 +35,13 @@ export async function POST(request: NextRequest) {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const supabase = await createClient() as any;
+    
+    // Check admin authentication
+    const isAdmin = await checkAdmin(supabase);
+    if (!isAdmin) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+    
     const formData = await request.formData();
 
     const name = formData.get('name') as string;

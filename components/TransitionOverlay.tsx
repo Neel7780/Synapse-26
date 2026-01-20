@@ -1,8 +1,9 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useNavigationState } from "@/lib/useNavigationState";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import Image from "next/image";
 
 type Phase = "idle" | "delay" | "enter" | "exit";
 
@@ -15,27 +16,38 @@ const images = [
 
 export default function TransitionOverlay() {
     const { isTransitioning, isFirstLoad } = useNavigationState();
-
-    // Start in 'idle' so it's hidden but mounted
     const [phase, setPhase] = useState<Phase>("idle");
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    /* ---------------- PHASE CONTROL ---------------- */
+    // Memoized phase transition handler to avoid unnecessary re-renders
+    const handlePhaseTransition = useCallback((newPhase: Phase, delay: number = 0) => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+        if (delay > 0) {
+            timeoutRef.current = setTimeout(() => setPhase(newPhase), delay);
+        } else {
+            setPhase(newPhase);
+        }
+    }, []);
+
     useEffect(() => {
         if (isTransitioning) {
             // Start sequence: idle -> delay -> enter
-            setPhase("delay");
-            const t = setTimeout(() => setPhase("enter"), 300);
-            return () => clearTimeout(t);
-        } else {
+            handlePhaseTransition("delay");
+            handlePhaseTransition("enter", 300);
+        } else if (phase !== "idle") {
             // End sequence: enter -> exit -> idle
-            // Only trigger exit if we were actually active (not already idle)
-            if (phase !== "idle") {
-                setPhase("exit");
-                const t = setTimeout(() => setPhase("idle"), 3200); // Wait for exit animation
-                return () => clearTimeout(t);
-            }
+            handlePhaseTransition("exit");
+            handlePhaseTransition("idle", 3200);
         }
-    }, [isTransitioning]);
+
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, [isTransitioning, handlePhaseTransition]); // Removed 'phase' from deps to prevent loop
 
     /* ---------------- POSITIONS ---------------- */
     const entryFromCorners = [
@@ -52,16 +64,6 @@ export default function TransitionOverlay() {
         { x: "50vw", y: "0vh", rotate: 0 },
     ];
 
-    // During 'idle' or 'delay', cards should be at their initial positions (ready to enter)
-    // During 'enter', they move to center
-    // During 'exit', they move to doors
-
-    // Visibility:
-    // If phase === 'idle', we hide the whole container visually but keep it in DOM.
-    // We use z-index to send it to back and display:none or opacity-0 to hide.
-    // To ensure images don't lose decode state, we prefer opacity-0 or z-[-1].
-    // Note: If we use display:none, some browsers might dump the texture. Opacity 0 is safer.
-
     const isHidden = phase === "idle" || (isFirstLoad && !isTransitioning);
 
     return (
@@ -76,18 +78,8 @@ export default function TransitionOverlay() {
                 </h1>
             </div>
 
-            {/* BLACK BASE - Visible during delay, enter, and exit (not idle) */}
-            <div className={`absolute inset-0 bg-black z-0 transition-opacity duration-0 ${phase === "exit" || phase === "idle" ? "opacity-0" : "opacity-100"}`} />
-            {/* Wait: The black base logic was: `phase !== "exit"`. 
-                If phase is 'delay', we need black base? Yes. 
-                If phase is 'enter', we need black base? Yes.
-                If phase is 'exit', we REMOVE black base so we can see the doors closing over the page? 
-                Actually, usually 'exit' phase implies the overlay is revealing the new page? 
-                Let's stick to previous logic: `phase !== "exit"` meant black base is ON.
-                So in 'delay' and 'enter', opacity 1. In 'exit', opacity 0.
-            */}
+            {/* BLACK BASE */}
             <div className={`absolute inset-0 bg-black z-0 ${phase === "exit" ? "hidden" : "block"}`} />
-
 
             {/* CARDS */}
             <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 z-20">
@@ -95,25 +87,28 @@ export default function TransitionOverlay() {
                     <motion.div
                         key={i}
                         className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden"
-                        // Force initial state when idle or delay so they are ready
                         initial={entryFromCorners[i]}
                         animate={
                             phase === "enter"
                                 ? { x: 0, y: 0, rotate: 0 }
                                 : phase === "exit"
                                     ? exitWithDoors[i]
-                                    : entryFromCorners[i] // Reset to corners when idle/delay
+                                    : entryFromCorners[i]
                         }
                         transition={{
-                            duration: phase === "enter" ? 1.6 : (phase === "exit" ? 3 : 0), // Instant reset if not entering/exiting
+                            duration: phase === "enter" ? 1.6 : (phase === "exit" ? 3 : 0),
                             delay: phase === "enter" ? i * 0.25 : 0,
                             ease: [0.22, 1, 0.36, 1],
                         }}
                     >
-                        <img
+                        <Image
                             src={src}
                             alt=""
+                            fill
+                            sizes="50vw"
                             className="object-fill transform origin-center w-[50dvh] h-[50vw] rotate-90 md:w-full md:h-full md:rotate-0"
+                            priority={i < 2}
+                            loading={i < 2 ? "eager" : "lazy"}
                         />
                     </motion.div>
                 ))}

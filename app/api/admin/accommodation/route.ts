@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { checkAdmin } from "@/lib/checkAdmin";
 
 // GET - Fetch all accommodation packages
 export async function GET() {
@@ -33,6 +34,13 @@ export async function POST(request: NextRequest) {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const supabase = (await createClient()) as any;
+    
+    // Check admin authentication
+    const isAdmin = await checkAdmin(supabase);
+    if (!isAdmin) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+    
     const body = await request.json();
 
     // Validate required fields - only package_name is required (id is auto-generated)

@@ -343,6 +343,7 @@ export type Database = {
           min_members: number;
           participation_type: Database["public"]["Enums"]["participation_type_enum"];
           price: number;
+          qr_code: string | null;
         };
         Insert: {
           fee_id?: number;
@@ -350,6 +351,7 @@ export type Database = {
           min_members?: number;
           participation_type: Database["public"]["Enums"]["participation_type_enum"];
           price: number;
+          qr_code?: string | null;
         };
         Update: {
           fee_id?: number;
@@ -357,6 +359,7 @@ export type Database = {
           min_members?: number;
           participation_type?: Database["public"]["Enums"]["participation_type_enum"];
           price?: number;
+          qr_code?: string | null;
         };
         Relationships: [];
       };

@@ -1,17 +1,11 @@
 "use client";
 import { cn } from "@/lib/utils";
 import { IconMenu3, IconX } from "@tabler/icons-react";
-import {
-  motion,
-  AnimatePresence,
-  useScroll,
-  useMotionValueEvent,
-} from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { useNavigationState } from "@/lib/useNavigationState";
-
-import React, { useRef, useState, forwardRef } from "react";
+import React, { useState, forwardRef, memo } from "react";
 
 interface NavbarProps {
   children: React.ReactNode;
@@ -108,7 +102,7 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
   );
 };
 
-export const NavItems = ({ items, className, onItemClick }: NavItemsProps) => {
+export const NavItems = memo(function NavItems({ items, className, onItemClick }: NavItemsProps) {
   const [hovered, setHovered] = useState<number | null>(null);
   const { startTransition } = useNavigationState();
 
@@ -123,7 +117,7 @@ export const NavItems = ({ items, className, onItemClick }: NavItemsProps) => {
       {items.map((item, idx) => (
         <Link
           onMouseEnter={() => setHovered(idx)}
-          onClick={(e) => {
+          onClick={() => {
             // Only for internal links
             if (item.link.startsWith("/")) {
               startTransition();
@@ -134,6 +128,7 @@ export const NavItems = ({ items, className, onItemClick }: NavItemsProps) => {
           key={`link-${idx}`}
           href={item.link}
           scroll={false}
+          prefetch={false}
         >
           {hovered === idx && (
             <motion.div
@@ -148,7 +143,7 @@ export const NavItems = ({ items, className, onItemClick }: NavItemsProps) => {
       ))}
     </motion.div>
   );
-};
+});
 
 export const MobileNav = ({ children, className, visible }: MobileNavProps) => {
   return (
