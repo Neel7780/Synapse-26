@@ -937,26 +937,27 @@ export default function EventsPage() {
         }}
         modal={true}
       >
-        <DialogContent className="sm:max-w-[700px] max-h-[90vh] bg-card border-border flex flex-col overflow-hidden">
-          <DialogHeader className="flex-shrink-0">
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] bg-card border-border !grid-rows-[auto_1fr_auto] overflow-hidden">
+          <DialogHeader>
             <DialogTitle>Edit Event</DialogTitle>
             <DialogDescription>
               Update event details and participation settings
             </DialogDescription>
           </DialogHeader>
           {editingEvent && (
-            <Tabs
-              defaultValue="details"
-              className="w-full flex-1 flex flex-col min-h-0"
-            >
-              <TabsList className="grid w-full grid-cols-2 bg-muted/50 flex-shrink-0">
-                <TabsTrigger value="details">Event Details</TabsTrigger>
-                <TabsTrigger value="fees">Participation & Fees</TabsTrigger>
-              </TabsList>
-              <TabsContent
-                value="details"
-                className="space-y-4 mt-4 overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-muted/50 [&::-webkit-scrollbar-thumb]:bg-red-500/50 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-red-500/70"
+            <div className="overflow-y-scroll pr-2 min-h-0" style={{ maxHeight: 'calc(90vh - 180px)', scrollbarWidth: 'thin', scrollbarColor: '#ef4444 #1a1a1a' }}>
+              <Tabs
+                defaultValue="details"
+                className="w-full"
               >
+                <TabsList className="grid w-full grid-cols-2 bg-muted/50 sticky top-0 z-10">
+                  <TabsTrigger value="details">Event Details</TabsTrigger>
+                  <TabsTrigger value="fees">Participation & Fees</TabsTrigger>
+                </TabsList>
+                <TabsContent
+                  value="details"
+                  className="space-y-4 mt-4"
+                >
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Event Name</label>
@@ -1123,7 +1124,7 @@ export default function EventsPage() {
               </TabsContent>
               <TabsContent
                 value="fees"
-                className="space-y-4 mt-4 overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-muted/50 [&::-webkit-scrollbar-thumb]:bg-red-500/50 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-red-500/70"
+                className="space-y-4 mt-4"
               >
                 {/* Solo */}
                 <div className="p-4 rounded-lg border border-border/50 bg-muted/30">
@@ -1410,8 +1411,9 @@ export default function EventsPage() {
                 </div>
               </TabsContent>
             </Tabs>
+            </div>
           )}
-          <DialogFooter className="flex-shrink-0">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setIsEditOpen(false)}
