@@ -29,9 +29,10 @@ const CustomCursor = memo(function CustomCursor() {
     const inner = cursorInnerRef.current;
     if (!outer || !inner) return;
 
-    // Hide default cursor globally
-    document.documentElement.style.cursor = "none";
-    document.body.style.cursor = "none";
+    // Don't hide default cursor - let users see the default cursor as fallback
+    // The custom cursor will overlay on top with mix-blend-difference
+    // document.documentElement.style.cursor = "none";
+    // document.body.style.cursor = "none";
 
     // Set initial state
     gsap.set([outer, inner], {
@@ -235,8 +236,7 @@ const CustomCursor = memo(function CustomCursor() {
 
     // Cleanup
     return () => {
-      document.documentElement.style.cursor = "";
-      document.body.style.cursor = "";
+      // No need to restore cursor styles since we're not hiding them
 
       document.removeEventListener("mousemove", onMouseMove);
       document.removeEventListener("mouseleave", onMouseLeave);

@@ -490,6 +490,7 @@ export default function HallOfFame() {
       let startScaleX = 1;
       let startScaleY = 1;
       let hero: HTMLDivElement | null = null;
+      let mainScrollTrigger: ScrollTrigger | null = null;
 
       const resolveHero = () => {
         const index = getActiveHeroIndex();
@@ -558,13 +559,14 @@ export default function HallOfFame() {
           return;
         }
 
-        ScrollTrigger.create({
+        mainScrollTrigger = ScrollTrigger.create({
           trigger: hallContainerRef.current!,
           start: "top top",
           end: "bottom top",
           scrub: 1,
           pin: true,
           anticipatePin: 1,
+          pinSpacing: true,
           onRefreshInit: calculateStartScale,
 
           onUpdate: (self) => {
@@ -611,21 +613,30 @@ export default function HallOfFame() {
           },
         });
 
+        // Set z-index on pinned element and spacer to ensure correct stacking
+        if (mainScrollTrigger.pin) {
+          (mainScrollTrigger.pin as HTMLElement).style.zIndex = "5";
+        }
+        if (mainScrollTrigger.spacer) {
+          (mainScrollTrigger.spacer as HTMLElement).style.zIndex = "5";
+        }
+
         ScrollTrigger.refresh();
       };
 
       waitForHero();
 
       return () => {
-        ScrollTrigger.getAll().forEach((t) => t.kill());
+        // Only kill the main ScrollTrigger, not all of them
+        mainScrollTrigger?.kill();
       };
     },
     { scope: hallContainerRef }
   );
 
   return (
-    <div className="relative overflow-hidden w-full bg-black">
-      <div ref={hallContainerRef} className="relative">
+    <div className="relative overflow-hidden w-full bg-black z-0">
+      <div ref={hallContainerRef} className="relative" style={{ zIndex: 0 }}>
         <div className="h-[100svh] w-full bg-black">
           {/* Mobile Grid (3x3) */}
           <div className="md:hidden absolute inset-0 flex items-center justify-center p-2">

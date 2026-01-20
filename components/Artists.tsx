@@ -48,8 +48,8 @@ const ArtistImage = memo(function ArtistImage({
         onMouseLeave={onLeave}
         className="block object-cover z-10 cursor-pointer rounded-lg"
         style={{
-          width: isCenter ? "clamp(220px, 45vw, 420px)" : "clamp(100px, 20vw, 180px)",
-          height: isCenter ? "clamp(280px, 55vw, 520px)" : "clamp(130px, 26vw, 230px)",
+          width: isCenter ? "clamp(200px, 35vw, 380px)" : "clamp(100px, 20vw, 180px)",
+          height: isCenter ? "clamp(260px, 45vw, 450px)" : "clamp(130px, 26vw, 230px)",
           boxShadow: isCenter
             ? "0 25px 80px rgba(235, 0, 0, 0.4), 0 10px 30px rgba(0,0,0,0.5)"
             : "0 10px 30px rgba(0,0,0,0.3)",
@@ -194,6 +194,8 @@ export default function ArtistsSection() {
 
       gsap.to(element, {
         x: offset,
+        xPercent: -50,
+        yPercent: -50,
         scale: scale,
         opacity: opacity,
         zIndex: zIndex,
@@ -539,7 +541,7 @@ export default function ArtistsSection() {
       className="artists-section relative bg-black overflow-hidden select-none"
       id="artistsSection"
       ref={artistSectionRef}
-      style={{ height: "100svh" }}
+      style={{ height: "100svh", zIndex: 20 }}
     >
       <div className="artists-content relative h-full flex flex-col">
         <svg
@@ -562,7 +564,7 @@ export default function ArtistsSection() {
         </svg>
 
         {/* Title */}
-        <div className="shrink-0 pt-8 md:pt-12 pb-6 md:pb-10">
+        <div className="shrink-0 pt-8 md:pt-12 pb-6 md:pb-10 relative z-20">
           <h1
             ref={titleRef}
             className="font-joker text-[clamp(2.5rem,10vw,6rem)] px-8 leading-none text-white lowercase text-center"
@@ -574,7 +576,7 @@ export default function ArtistsSection() {
 
         {/* Carousel with drag/swipe */}
         <div
-          className="carousel relative flex-1 min-h-0 flex items-center justify-center cursor-grab active:cursor-grabbing"
+          className="carousel relative flex-1 min-h-0 flex items-center justify-center cursor-grab active:cursor-grabbing mt-8"
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
@@ -586,7 +588,8 @@ export default function ArtistsSection() {
           {/* Animated line through center */}
           <div
             ref={lineRef}
-            className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[2px] bg-linear-to-r from-transparent via-white to-transparent z-0 origin-center"
+            className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[2px] bg-linear-to-r from-transparent via-white to-transparent origin-center pointer-events-none"
+            style={{ zIndex: 1 }}
           />
 
           {/* Red glow dot */}
@@ -596,12 +599,40 @@ export default function ArtistsSection() {
             ref={artistDotRef}
           />
 
+          {/* Navigation Arrows */}
+          <button
+            onClick={() => {
+              prevArtist();
+              setIsPaused(true);
+              setTimeout(() => setIsPaused(false), 3000);
+            }}
+            className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all duration-300 group"
+            aria-label="Previous artist"
+          >
+            <svg className="w-5 h-5 md:w-6 md:h-6 text-white group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button
+            onClick={() => {
+              nextArtist();
+              setIsPaused(true);
+              setTimeout(() => setIsPaused(false), 3000);
+            }}
+            className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all duration-300 group"
+            aria-label="Next artist"
+          >
+            <svg className="w-5 h-5 md:w-6 md:h-6 text-white group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
           {/* Images Container */}
           <div
             className="images-container relative w-full h-full flex items-center justify-center"
             id="imagesContainer"
             ref={imagesContainerRef}
-            style={{ perspective: "1200px" }}
+            style={{ perspective: "1200px", zIndex: 5 }}
           >
             {artists.map((artist, i) => (
               <div
@@ -610,7 +641,6 @@ export default function ArtistsSection() {
                   i === currentIndex ? "center" : ""
                 }`}
                 style={{
-                  marginLeft: "-50%",
                   transformStyle: "preserve-3d",
                 }}
               >
