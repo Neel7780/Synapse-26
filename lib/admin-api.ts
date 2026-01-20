@@ -70,36 +70,127 @@ export type Event = {
             price: number;
             min_members: number;
             max_members: number;
+            qr_code?: string;
         };
     }>;
 };
 
 export type CreateEventPayload = {
     event_name: string;
-    category_id: number;
+    category_id?: number;
+    category_name?: string;
     event_date: string;
+    event_time?: string;
     event_picture?: string;
     rulebook?: string;
     description?: string;
     is_registration_open?: boolean;
     is_dau_free?: boolean;
+    coordinator_email?: string;
+    image?: File;
+    qr_code_solo?: File;
+    qr_code_duet?: File;
+    qr_code_group?: File;
     fees?: EventFee[];
 };
+
+/**
+ * Helper function to build FormData for event requests
+ */
+function buildEventFormData(payload: Partial<CreateEventPayload> & { event_id?: number }): FormData {
+    const formData = new FormData();
+
+    // Add all fields to FormData
+    if (payload.event_id !== undefined) formData.append('event_id', payload.event_id.toString());
+    if (payload.event_name) formData.append('event_name', payload.event_name);
+    if (payload.category_id) formData.append('category_id', payload.category_id.toString());
+    if (payload.category_name) formData.append('category_name', payload.category_name);
+    if (payload.event_date) formData.append('event_date', payload.event_date);
+    if (payload.event_time) formData.append('event_time', payload.event_time);
+    if (payload.event_picture) formData.append('event_picture', payload.event_picture);
+    if (payload.rulebook) formData.append('rulebook', payload.rulebook);
+    if (payload.description) formData.append('description', payload.description);
+    if (payload.coordinator_email) formData.append('coordinator_email', payload.coordinator_email);
+
+    // Boolean fields
+    if (payload.is_registration_open !== undefined) {
+        formData.append('is_registration_open', payload.is_registration_open ? 'true' : 'false');
+    }
+    if (payload.is_dau_free !== undefined) {
+        formData.append('is_dau_free', payload.is_dau_free ? 'true' : 'false');
+    }
+
+    // Handle image file
+    if (payload.image) {
+        formData.append('image', payload.image);
+    }
+
+    // Handle QR code files
+    if (payload.qr_code_solo) {
+        formData.append('qr_code_solo', payload.qr_code_solo);
+    }
+    if (payload.qr_code_duet) {
+        formData.append('qr_code_duet', payload.qr_code_duet);
+    }
+    if (payload.qr_code_group) {
+        formData.append('qr_code_group', payload.qr_code_group);
+    }
+
+    // Handle fees array - convert to JSON string
+    if (payload.fees && payload.fees.length > 0) {
+        formData.append('fees', JSON.stringify(payload.fees));
+    }
+
+    return formData;
+}
+
+/**
+ * Fetch wrapper for FormData requests (no Content-Type header)
+ */
+async function apiFormDataFetch<T>(
+    endpoint: string,
+    options: RequestInit = {}
+): Promise<ApiResponse<T>> {
+    try {
+        const response = await fetch(endpoint, {
+            ...options,
+            // Don't set Content-Type for FormData - browser sets it with boundary
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            return {
+                error: data.error || `HTTP ${response.status}: ${response.statusText}`,
+            };
+        }
+
+        return { data };
+    } catch (error) {
+        return {
+            error: error instanceof Error ? error.message : "Network error occurred",
+        };
+    }
+}
 
 export const eventsApi = {
     getAll: () => apiFetch<{ events: Event[] }>("/api/admin/events"),
 
-    create: (payload: CreateEventPayload) =>
-        apiFetch<{ event: Event }>("/api/admin/events", {
+    create: (payload: CreateEventPayload) => {
+        const formData = buildEventFormData(payload);
+        return apiFormDataFetch<{ event: Event }>("/api/admin/events", {
             method: "POST",
-            body: JSON.stringify(payload),
-        }),
+            body: formData,
+        });
+    },
 
-    update: (eventId: number, payload: Partial<CreateEventPayload> & { event_id: number }) =>
-        apiFetch<{ event: Event }>("/api/admin/events", {
+    update: (eventId: number, payload: Partial<CreateEventPayload> & { event_id: number }) => {
+        const formData = buildEventFormData({ ...payload, event_id: eventId });
+        return apiFormDataFetch<{ event: Event }>("/api/admin/events", {
             method: "PUT",
-            body: JSON.stringify({ ...payload, event_id: eventId }),
-        }),
+            body: formData,
+        });
+    },
 
     delete: (eventId: number) =>
         apiFetch<{ success: boolean }>(`/api/admin/events?id=${eventId}`, {

@@ -86,7 +86,9 @@ export default function ArtistsPage() {
       if (data.error) throw new Error(data.error);
       await fetchArtists();
     } catch (err: unknown) {
-      alert("Failed to delete: " + (err instanceof Error ? err.message : 'Failed to delete artist'));
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown error occurred";
+      alert("Failed to delete: " + errorMessage);
     } finally {
       setDeleteDialogOpen(false);
       setDeletingId(null);
