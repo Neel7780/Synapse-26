@@ -614,11 +614,13 @@ export default function HallOfFame() {
         });
 
         // Set z-index on pinned element and spacer to ensure correct stacking
-        if (mainScrollTrigger.pin) {
-          (mainScrollTrigger.pin as HTMLElement).style.zIndex = "5";
+        const _mt = mainScrollTrigger as any;
+        if (_mt?.pin) {
+          (_mt.pin as HTMLElement).style.zIndex = "5";
         }
-        if (mainScrollTrigger.spacer) {
-          (mainScrollTrigger.spacer as HTMLElement).style.zIndex = "5";
+        const _spacer = _mt?.spacer as HTMLElement | undefined;
+        if (_spacer) {
+          _spacer.style.zIndex = "5";
         }
 
         ScrollTrigger.refresh();
