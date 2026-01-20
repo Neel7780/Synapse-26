@@ -15,7 +15,6 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
     SidebarProvider,
-    SidebarRail,
     SidebarTrigger,
 } from "@/app/components/ui/sidebar";
 import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
@@ -124,42 +123,44 @@ function AdminSidebarContent() {
             </SidebarHeader>
 
             {/* Navigation */}
-            <SidebarContent>
-                {navSections.map((section) => (
-                    <SidebarGroup key={section.title}>
-                        <SidebarGroupLabel className="text-sidebar-foreground/40 uppercase tracking-wider text-[10px] font-semibold">
-                            {section.title}
-                        </SidebarGroupLabel>
-                        <SidebarGroupContent>
-                            <SidebarMenu>
-                                {section.items.map((item) => {
-                                    const isActive = pathname === item.href;
-                                    const Icon = item.icon;
+            <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ scrollbarWidth: 'thin', scrollbarColor: '#666 #1a1a1a' }}>
+                <SidebarContent>
+                    {navSections.map((section) => (
+                        <SidebarGroup key={section.title}>
+                            <SidebarGroupLabel className="text-sidebar-foreground/40 uppercase tracking-wider text-[10px] font-semibold">
+                                {section.title}
+                            </SidebarGroupLabel>
+                            <SidebarGroupContent>
+                                <SidebarMenu>
+                                    {section.items.map((item) => {
+                                        const isActive = pathname === item.href;
+                                        const Icon = item.icon;
 
-                                    return (
-                                        <SidebarMenuItem key={item.href}>
-                                            <SidebarMenuButton
-                                                asChild
-                                                isActive={isActive}
-                                                tooltip={item.label}
-                                                className={isActive
-                                                    ? "bg-sidebar-accent text-sidebar-primary border-l-2 border-sidebar-primary"
-                                                    : "hover:bg-sidebar-accent/50"
-                                                }
-                                            >
-                                                <Link href={item.href}>
-                                                    <Icon className={isActive ? "text-sidebar-primary" : ""} />
-                                                    <span>{item.label}</span>
-                                                </Link>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                    );
-                                })}
-                            </SidebarMenu>
-                        </SidebarGroupContent>
-                    </SidebarGroup>
-                ))}
-            </SidebarContent>
+                                        return (
+                                            <SidebarMenuItem key={item.href}>
+                                                <SidebarMenuButton
+                                                    asChild
+                                                    isActive={isActive}
+                                                    tooltip={item.label}
+                                                    className={isActive
+                                                        ? "bg-sidebar-accent text-sidebar-primary border-l-2 border-sidebar-primary"
+                                                        : "hover:bg-sidebar-accent/50"
+                                                    }
+                                                >
+                                                    <Link href={item.href}>
+                                                        <Icon className={isActive ? "text-sidebar-primary" : ""} />
+                                                        <span>{item.label}</span>
+                                                    </Link>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                        );
+                                    })}
+                                </SidebarMenu>
+                            </SidebarGroupContent>
+                        </SidebarGroup>
+                    ))}
+                </SidebarContent>
+            </div>
 
             {/* Footer with User Menu */}
             <SidebarFooter>
@@ -216,8 +217,6 @@ function AdminSidebarContent() {
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarFooter>
-
-            <SidebarRail />
         </>
     );
 }
