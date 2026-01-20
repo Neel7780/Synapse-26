@@ -61,8 +61,12 @@ export default function HomeSection() {
       >
         <AboutSection />
         <JokerSection />
-        <ArtistsSection />
-        <HallOfFame />
+        <div className="relative z-20 bg-black" style={{ isolation: "isolate" }}>
+          <ArtistsSection />
+        </div>
+        <div className="relative z-10 bg-black" style={{ isolation: "isolate" }}>
+          <HallOfFame />
+        </div>
         <Footer />
       </div>
     </main>

@@ -590,9 +590,9 @@ export default function JokerSection() {
   ];
 
   return (
-    <div className="relative">
+    <div className="relative z-30">
       <div
-        className="joker-section relative h-screen overflow-hidden"
+        className="joker-section relative h-screen overflow-hidden bg-black"
         id="jokerSection"
         ref={jokerSectionRef}
       >
@@ -729,8 +729,9 @@ export default function JokerSection() {
           </div>
         </div>
       </div>
-
-      <div className="h-[80svh]" />
+      
+      {/* Spacer to account for pinned scroll animation (180% of viewport height) */}
+      <div className="h-[180svh]" aria-hidden="true" />
     </div>
   );
 }
