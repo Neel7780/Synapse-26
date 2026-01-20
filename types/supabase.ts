@@ -274,6 +274,7 @@ export type Database = {
       };
       event_registrations: {
         Row: {
+          coordinator_status: string | null;
           created_at: string | null;
           event_id: number | null;
           fee_id: number | null;
@@ -287,6 +288,7 @@ export type Database = {
           transaction_id: string | null;
         };
         Insert: {
+          coordinator_status?: string | null;
           created_at?: string | null;
           event_id?: number | null;
           fee_id?: number | null;
@@ -300,6 +302,7 @@ export type Database = {
           transaction_id?: string | null;
         };
         Update: {
+          coordinator_status?: string | null;
           created_at?: string | null;
           event_id?: number | null;
           fee_id?: number | null;
