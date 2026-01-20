@@ -175,6 +175,7 @@ export type Database = {
         Row: {
           category_id: number | null;
           coordinator_id: string | null;
+          coordinator_email: string | null;
           description: string | null;
           event_date: string;
           event_id: number;
@@ -187,6 +188,7 @@ export type Database = {
         Insert: {
           category_id?: number | null;
           coordinator_id?: string | null;
+          coordinator_email?: string | null;
           description?: string | null;
           event_date: string;
           event_id?: number;
@@ -199,6 +201,7 @@ export type Database = {
         Update: {
           category_id?: number | null;
           coordinator_id?: string | null;
+          coordinator_email?: string | null;
           description?: string | null;
           event_date?: string;
           event_id?: number;

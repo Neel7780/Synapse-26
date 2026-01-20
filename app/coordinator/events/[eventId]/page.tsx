@@ -63,6 +63,12 @@ interface Registration {
     phone: string | null;
     college: string | null;
   };
+  fee: {
+    participation_type: string;
+    min_members: number;
+    max_members: number;
+    price: number;
+  } | null;
 }
 
 export default function EventRegistrationsPage({
@@ -338,7 +344,7 @@ export default function EventRegistrationsPage({
                         </div>
                       </TableCell>
                       <TableCell className="text-gray-300">
-                        {registration.fee_id ? "Registered" : "N/A"}
+                        {registration.fee?.participation_type || "N/A"}
                       </TableCell>
                       <TableCell className="text-white font-medium">
                         ₹{registration.gross_amount}
@@ -461,9 +467,9 @@ export default function EventRegistrationsPage({
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Amount</p>
+                    <p className="text-xs text-gray-500">Fee Price</p>
                     <p className="text-sm font-medium">
-                      ₹{selectedRegistration.gross_amount}
+                      ₹{selectedRegistration.fee?.price || selectedRegistration.gross_amount}
                     </p>
                   </div>
                   <div>

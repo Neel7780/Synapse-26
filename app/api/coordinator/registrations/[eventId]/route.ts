@@ -3,7 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ eventId: string }> | { eventId: string } }
+  context: { params: Promise<{ eventId: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -28,10 +28,8 @@ export async function GET(
       return NextResponse.json({ error: "User email not found" }, { status: 400 });
     }
 
-    const { eventId: eventIdParam } =
-      typeof context.params.then === "function"
-        ? await (context.params as Promise<{ eventId: string }>)
-        : (context.params as { eventId: string });
+    const params = await context.params;
+    const { eventId: eventIdParam } = params;
 
     const eventId = parseInt(eventIdParam, 10);
 
@@ -54,7 +52,7 @@ export async function GET(
       return NextResponse.json({ error: "Access denied to this event" }, { status: 403 });
     }
 
-    // Fetch registrations for this event with user details
+    // Fetch registrations for this event with user and fee details
     const { data: registrations, error: regError } = await supabase
       .from("event_registrations")
       .select(`
@@ -75,6 +73,13 @@ export async function GET(
           email,
           phone,
           college
+        ),
+        fee:event_fee (
+          participation_type,
+          min_members,
+          max_members,
+          price
+        )
         )
       `)
       .eq("event_id", eventId)
