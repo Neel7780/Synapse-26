@@ -26,10 +26,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { registration_id, event_id } = body;
+    const { registration_id, event_id, status } = body;
 
-    if (!registration_id || !event_id) {
+    if (!registration_id || !event_id || !status) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    // Validate status value
+    if (status !== "verified" && status !== "pending") {
+      return NextResponse.json({ error: "Invalid status value" }, { status: 400 });
     }
 
     // Verify that the coordinator owns this event
@@ -43,10 +48,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Access denied to this event" }, { status: 403 });
     }
 
-    // Update the coordinator_status to verified
+    // Update the coordinator_status
     const { data, error } = await supabase
       .from("event_registrations")
-      .update({ coordinator_status: "verified" })
+      .update({ coordinator_status: status })
       .eq("registration_id", registration_id)
       .eq("event_id", event_id)
       .select();

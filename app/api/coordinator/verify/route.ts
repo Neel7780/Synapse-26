@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ isCoordinator: false }, { status: 401 });
     }
 
-    // Fetch email from users table (FK target), no role flag required
+    // Fetch email from users table
     const { data: userData, error: userError } = await supabase
       .from("users")
       .select("email")
@@ -23,6 +23,17 @@ export async function GET(request: NextRequest) {
 
     if (userError || !userData?.email) {
       return NextResponse.json({ isCoordinator: false }, { status: 401 });
+    }
+
+    // SECURITY: Verify that user's email matches coordinator_email on at least one event
+    const { data: coordinatorEvents, error: eventError } = await supabase
+      .from("event")
+      .select("event_id")
+      .eq("coordinator_email", userData.email)
+      .limit(1);
+
+    if (eventError || !coordinatorEvents || coordinatorEvents.length === 0) {
+      return NextResponse.json({ isCoordinator: false }, { status: 403 });
     }
 
     return NextResponse.json({

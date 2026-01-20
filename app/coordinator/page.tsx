@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { Calendar, Users, CheckCircle, Clock } from "lucide-react";
+import { Calendar } from "lucide-react";
 
 interface Event {
   event_id: number;
@@ -21,15 +20,10 @@ interface Event {
 }
 
 export default function CoordinatorDashboard() {
-  const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchEvents();
-  }, []);
-
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     try {
       const response = await fetch("/api/coordinator/events");
       const data = await response.json();
@@ -44,7 +38,11 @@ export default function CoordinatorDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
 
   if (loading) {
     return (

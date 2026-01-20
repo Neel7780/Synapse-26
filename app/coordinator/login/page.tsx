@@ -25,7 +25,7 @@ export default function CoordinatorLoginPage() {
       const supabase = createClient();
 
       // Sign in with email and password
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      const { error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });

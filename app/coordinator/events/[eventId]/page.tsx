@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -38,7 +38,7 @@ import {
   User,
   Mail,
   Phone,
-  Building2,
+  Building,
   DollarSign,
   Users,
   Calendar,
@@ -47,7 +47,7 @@ import {
 interface Registration {
   registration_id: number;
   event_id: number;
-  fee_id: number | null;
+  event_fee_id: number | null;
   registered_by_user_id: string;
   registration_date: string;
   payment_status: string;
@@ -87,22 +87,12 @@ export default function EventRegistrationsPage({
   const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
   const [verifying, setVerifying] = useState<number | null>(null);
 
-  useEffect(() => {
-    fetchRegistrations();
-  }, [eventIdParam]);
-
-  useEffect(() => {
-    filterRegistrations();
-  }, [registrations, searchTerm, statusFilter]);
-
-  const fetchRegistrations = async () => {
+  const fetchRegistrations = useCallback(async () => {
     try {
       const response = await fetch(`/api/coordinator/registrations/${eventIdParam}`);
       const data = await response.json();
-      console.log("API Response:", data);
 
       if (response.ok) {
-        console.log("Setting registrations:", data.registrations);
         setEventName(data.event.event_name);
         setRegistrations(data.registrations);
       } else {
@@ -113,9 +103,9 @@ export default function EventRegistrationsPage({
     } finally {
       setLoading(false);
     }
-  };
+  }, [eventIdParam]);
 
-  const filterRegistrations = () => {
+  const filterRegistrations = useCallback(() => {
     let filtered = [...registrations];
 
     // Search filter
@@ -138,9 +128,17 @@ export default function EventRegistrationsPage({
     }
 
     setFilteredRegistrations(filtered);
-  };
+  }, [registrations, searchTerm, statusFilter]);
 
-  const handleVerify = async (registration: Registration) => {
+  useEffect(() => {
+    fetchRegistrations();
+  }, [fetchRegistrations]);
+
+  useEffect(() => {
+    filterRegistrations();
+  }, [filterRegistrations]);
+
+  const handleVerify = async (registration: Registration, newStatus: "verified" | "pending") => {
     setVerifying(registration.registration_id);
     try {
       const response = await fetch("/api/coordinator/registrations/verify", {
@@ -151,6 +149,7 @@ export default function EventRegistrationsPage({
         body: JSON.stringify({
           registration_id: registration.registration_id,
           event_id: registration.event_id,
+          status: newStatus,
         }),
       });
 
@@ -159,17 +158,16 @@ export default function EventRegistrationsPage({
         setRegistrations((prev) =>
           prev.map((reg) =>
             reg.registration_id === registration.registration_id
-              ? { ...reg, coordinator_status: "verified" }
+              ? { ...reg, coordinator_status: newStatus }
               : reg
           )
         );
       } else {
         const data = await response.json();
-        alert(`Failed to verify: ${data.error}`);
+        console.error("Failed to update status:", data.error);
       }
     } catch (error) {
-      console.error("Error verifying registration:", error);
-      alert("Failed to verify registration");
+      console.error("Error updating registration status:", error);
     } finally {
       setVerifying(null);
     }
@@ -363,10 +361,29 @@ export default function EventRegistrationsPage({
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {!registration.coordinator_status || registration.coordinator_status === "pending" ? (
+                          {registration.coordinator_status === "verified" ? (
                             <Button
                               size="sm"
-                              onClick={() => handleVerify(registration)}
+                              onClick={() => handleVerify(registration, "pending")}
+                              disabled={verifying === registration.registration_id}
+                              className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                            >
+                              {verifying === registration.registration_id ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2" />
+                                  Updating...
+                                </>
+                              ) : (
+                                <>
+                                  <Clock className="h-4 w-4 mr-1" />
+                                  Unverify
+                                </>
+                              )}
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              onClick={() => handleVerify(registration, "verified")}
                               disabled={verifying === registration.registration_id}
                               className="bg-red-600 hover:bg-red-700 text-white"
                             >
@@ -382,7 +399,7 @@ export default function EventRegistrationsPage({
                                 </>
                               )}
                             </Button>
-                          ) : null}
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -443,7 +460,7 @@ export default function EventRegistrationsPage({
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Building2 className="h-4 w-4 text-gray-500 mt-0.5" />
+                    <Building className="h-4 w-4 text-gray-500 mt-0.5" />
                     <div>
                       <p className="text-xs text-gray-500">College</p>
                       <p className="text-sm font-medium">
@@ -467,9 +484,9 @@ export default function EventRegistrationsPage({
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Fee Price</p>
+                    <p className="text-xs text-gray-500">Amount Paid</p>
                     <p className="text-sm font-medium">
-                      ₹{selectedRegistration.fee?.price || selectedRegistration.gross_amount}
+                      ₹{selectedRegistration.gross_amount}
                     </p>
                   </div>
                   <div>
@@ -501,26 +518,35 @@ export default function EventRegistrationsPage({
                 </div>
               </div>
 
-              {/* Payment Screenshot */}
-              {selectedRegistration.payment_screenshot_url && (
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-400 mb-3">
-                    Payment Screenshot
-                  </h3>
-                  <img
-                    src={selectedRegistration.payment_screenshot_url}
-                    alt="Payment Screenshot"
-                    className="rounded-lg border border-zinc-700 max-w-full h-auto"
-                  />
-                </div>
-              )}
-
               {/* Action Button */}
-              {!selectedRegistration.coordinator_status || selectedRegistration.coordinator_status === "pending" ? (
+              {selectedRegistration.coordinator_status === "verified" ? (
                 <div className="pt-4 border-t border-zinc-800">
                   <Button
                     onClick={() => {
-                      handleVerify(selectedRegistration);
+                      handleVerify(selectedRegistration, "pending");
+                      setSelectedRegistration(null);
+                    }}
+                    disabled={verifying === selectedRegistration.registration_id}
+                    className="w-full bg-yellow-600 hover:bg-yellow-700 text-white"
+                  >
+                    {verifying === selectedRegistration.registration_id ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                        Updating...
+                      </>
+                    ) : (
+                      <>
+                        <Clock className="h-4 w-4 mr-2" />
+                        Mark as Pending
+                      </>
+                    )}
+                  </Button>
+                </div>
+              ) : (
+                <div className="pt-4 border-t border-zinc-800">
+                  <Button
+                    onClick={() => {
+                      handleVerify(selectedRegistration, "verified");
                       setSelectedRegistration(null);
                     }}
                     disabled={verifying === selectedRegistration.registration_id}
@@ -539,7 +565,7 @@ export default function EventRegistrationsPage({
                     )}
                   </Button>
                 </div>
-              ) : null}
+              )}
             </div>
           )}
         </DialogContent>

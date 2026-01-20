@@ -52,13 +52,13 @@ export async function GET(
       return NextResponse.json({ error: "Access denied to this event" }, { status: 403 });
     }
 
-    // Fetch registrations for this event with user and fee details
+    // Fetch registrations for this event with user details and fee info
     const { data: registrations, error: regError } = await supabase
       .from("event_registrations")
       .select(`
         registration_id,
         event_id,
-        fee_id,
+        event_fee_id,
         registered_by_user_id,
         registration_date,
         payment_status,
@@ -74,12 +74,11 @@ export async function GET(
           phone,
           college
         ),
-        fee:event_fee (
+        fee:event_fee_id (
           participation_type,
           min_members,
           max_members,
           price
-        )
         )
       `)
       .eq("event_id", eventId)
