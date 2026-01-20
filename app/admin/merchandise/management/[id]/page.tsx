@@ -40,8 +40,10 @@ export default function EditProductPage() {
           description: data.product.description || "",
           is_available: data.product.is_available ?? true,
         });
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error occurred";
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -74,8 +76,10 @@ export default function EditProductPage() {
       if (data.error) throw new Error(data.error);
       alert("Product updated successfully!");
       router.push("/admin/merchandise/management");
-    } catch (err: any) {
-      alert("Failed to update product: " + err.message);
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown error occurred";
+      alert("Failed to update product: " + errorMessage);
     } finally {
       setSaving(false);
     }

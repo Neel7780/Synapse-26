@@ -75,6 +75,7 @@ type ParticipationCategory = {
   minParticipants: number;
   maxParticipants: number;
   qrUrl: string;
+  qrCodeFile?: File;
 };
 
 type LocalEvent = {
@@ -305,43 +306,46 @@ export default function EventsPage() {
           const dateTime = event.event_date.split("T");
           const time = dateTime[1] ? dateTime[1].substring(0, 5) : "";
 
-        return {
-          id: event.event_id,
-          name: event.event_name,
-          categoryId: event.category_id,
-          categoryName: event.event_category?.category_name || "",
-          date: event.event_date.split("T")[0],
-          venue: event.description || "",
-          rulebookLink: event.rulebook || "",
-          description: event.description || "",
-          picture: event.event_picture || "",
-          registrationOpen: event.is_registration_open,
-          freeForDau: event.is_dau_free,
-          participationCategories: {
-            solo: {
-              enabled: !!solo,
-              fee: solo?.fee.price || 0,
-              minParticipants: solo?.fee.min_members || 1,
-              maxParticipants: solo?.fee.max_members || 1,
-              qrUrl: (solo as any)?.payment_qr_url || "",
+          return {
+            id: event.event_id,
+            name: event.event_name,
+            categoryId: event.category_id,
+            categoryName: event.event_category?.category_name || "",
+            date: event.event_date.split("T")[0],
+            time: time,
+            venue: event.description || "",
+            rulebookLink: event.rulebook || "",
+            description: event.description || "",
+            picture: event.event_picture || "",
+            coordinatorEmail: "",
+            registrationOpen: event.is_registration_open,
+            freeForDau: event.is_dau_free,
+            participationCategories: {
+              solo: {
+                enabled: !!solo,
+                fee: solo?.fee.price || 0,
+                minParticipants: solo?.fee.min_members || 1,
+                maxParticipants: solo?.fee.max_members || 1,
+                qrUrl: (solo as any)?.payment_qr_url || "",
+              },
+              duet: {
+                enabled: !!duet,
+                fee: duet?.fee.price || 0,
+                minParticipants: duet?.fee.min_members || 2,
+                maxParticipants: duet?.fee.max_members || 2,
+                qrUrl: (duet as any)?.payment_qr_url || "",
+              },
+              group: {
+                enabled: !!group,
+                fee: group?.fee.price || 0,
+                minParticipants: group?.fee.min_members || 3,
+                maxParticipants: group?.fee.max_members || 8,
+                qrUrl: (group as any)?.payment_qr_url || "",
+              },
             },
-            duet: {
-              enabled: !!duet,
-              fee: duet?.fee.price || 0,
-              minParticipants: duet?.fee.min_members || 2,
-              maxParticipants: duet?.fee.max_members || 2,
-              qrUrl: (duet as any)?.payment_qr_url || "",
-            },
-            group: {
-              enabled: !!group,
-              fee: group?.fee.price || 0,
-              minParticipants: group?.fee.min_members || 3,
-              maxParticipants: group?.fee.max_members || 8,
-              qrUrl: (group as any)?.payment_qr_url || "",
-            },
-          },
-        };
-      });
+          };
+        },
+      );
       setEvents(transformedEvents);
     }
   }, [eventsData]);
@@ -1153,29 +1157,43 @@ export default function EventsPage() {
                         <Input
                           type="number"
                           value={editingEvent.participationCategories.solo.fee}
-                          onChange={(e) => setEditingEvent({
-                            ...editingEvent,
-                            participationCategories: {
-                              ...editingEvent.participationCategories,
-                              solo: { ...editingEvent.participationCategories.solo, fee: parseInt(e.target.value) || 0 }
-                            }
-                          })}
+                          onChange={(e) =>
+                            setEditingEvent({
+                              ...editingEvent,
+                              participationCategories: {
+                                ...editingEvent.participationCategories,
+                                solo: {
+                                  ...editingEvent.participationCategories.solo,
+                                  fee: parseInt(e.target.value) || 0,
+                                },
+                              },
+                            })
+                          }
                           className="w-32 bg-muted/50 border-border/50"
                         />
-                        <span className="text-sm text-muted-foreground">per person</span>
+                        <span className="text-sm text-muted-foreground">
+                          per person
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <QrCode className="h-4 w-4 text-muted-foreground" />
                         <Input
                           type="text"
-                          value={editingEvent.participationCategories.solo.qrUrl}
-                          onChange={(e) => setEditingEvent({
-                            ...editingEvent,
-                            participationCategories: {
-                              ...editingEvent.participationCategories,
-                              solo: { ...editingEvent.participationCategories.solo, qrUrl: e.target.value }
-                            }
-                          })}
+                          value={
+                            editingEvent.participationCategories.solo.qrUrl
+                          }
+                          onChange={(e) =>
+                            setEditingEvent({
+                              ...editingEvent,
+                              participationCategories: {
+                                ...editingEvent.participationCategories,
+                                solo: {
+                                  ...editingEvent.participationCategories.solo,
+                                  qrUrl: e.target.value,
+                                },
+                              },
+                            })
+                          }
                           placeholder="Payment QR Code URL"
                           className="flex-1 bg-muted/50 border-border/50"
                         />
@@ -1215,29 +1233,43 @@ export default function EventsPage() {
                         <Input
                           type="number"
                           value={editingEvent.participationCategories.duet.fee}
-                          onChange={(e) => setEditingEvent({
-                            ...editingEvent,
-                            participationCategories: {
-                              ...editingEvent.participationCategories,
-                              duet: { ...editingEvent.participationCategories.duet, fee: parseInt(e.target.value) || 0 }
-                            }
-                          })}
+                          onChange={(e) =>
+                            setEditingEvent({
+                              ...editingEvent,
+                              participationCategories: {
+                                ...editingEvent.participationCategories,
+                                duet: {
+                                  ...editingEvent.participationCategories.duet,
+                                  fee: parseInt(e.target.value) || 0,
+                                },
+                              },
+                            })
+                          }
                           className="w-32 bg-muted/50 border-border/50"
                         />
-                        <span className="text-sm text-muted-foreground">per team</span>
+                        <span className="text-sm text-muted-foreground">
+                          per team
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <QrCode className="h-4 w-4 text-muted-foreground" />
                         <Input
                           type="text"
-                          value={editingEvent.participationCategories.duet.qrUrl}
-                          onChange={(e) => setEditingEvent({
-                            ...editingEvent,
-                            participationCategories: {
-                              ...editingEvent.participationCategories,
-                              duet: { ...editingEvent.participationCategories.duet, qrUrl: e.target.value }
-                            }
-                          })}
+                          value={
+                            editingEvent.participationCategories.duet.qrUrl
+                          }
+                          onChange={(e) =>
+                            setEditingEvent({
+                              ...editingEvent,
+                              participationCategories: {
+                                ...editingEvent.participationCategories,
+                                duet: {
+                                  ...editingEvent.participationCategories.duet,
+                                  qrUrl: e.target.value,
+                                },
+                              },
+                            })
+                          }
                           placeholder="Payment QR Code URL"
                           className="flex-1 bg-muted/50 border-border/50"
                         />
@@ -1354,14 +1386,21 @@ export default function EventsPage() {
                         <QrCode className="h-4 w-4 text-muted-foreground" />
                         <Input
                           type="text"
-                          value={editingEvent.participationCategories.group.qrUrl}
-                          onChange={(e) => setEditingEvent({
-                            ...editingEvent,
-                            participationCategories: {
-                              ...editingEvent.participationCategories,
-                              group: { ...editingEvent.participationCategories.group, qrUrl: e.target.value }
-                            }
-                          })}
+                          value={
+                            editingEvent.participationCategories.group.qrUrl
+                          }
+                          onChange={(e) =>
+                            setEditingEvent({
+                              ...editingEvent,
+                              participationCategories: {
+                                ...editingEvent.participationCategories,
+                                group: {
+                                  ...editingEvent.participationCategories.group,
+                                  qrUrl: e.target.value,
+                                },
+                              },
+                            })
+                          }
                           placeholder="Payment QR Code URL"
                           className="flex-1 bg-muted/50 border-border/50"
                         />

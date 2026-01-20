@@ -59,8 +59,10 @@ export default function ConcertsPage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setConcerts(data || []);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown error occurred";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -87,8 +89,10 @@ export default function ConcertsPage() {
       if (data.error) throw new Error(data.error);
       await fetchConcerts();
       setFormData({ concert_name: "", concert_date: "", venue: "", timing: "" });
-    } catch (err: any) {
-      alert("Failed to create: " + err.message);
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown error occurred";
+      alert("Failed to create: " + errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -113,8 +117,10 @@ export default function ConcertsPage() {
       await fetchConcerts();
       setIsEditOpen(false);
       setEditingConcert(null);
-    } catch (err: any) {
-      alert("Failed to update: " + err.message);
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown error occurred";
+      alert("Failed to update: " + errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -136,8 +142,10 @@ export default function ConcertsPage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       await fetchConcerts();
-    } catch (err: any) {
-      alert("Failed to delete: " + err.message);
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown error occurred";
+      alert("Failed to delete: " + errorMessage);
     } finally {
       setDeleteDialogOpen(false);
       setDeletingId(null);
