@@ -61,16 +61,16 @@ const ContactFooter: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start mb-8 md:mb-7 text-sm sm:text-base md:text-lg">
             <div className="leading-relaxed sm:leading-loose">
               <div>
-                <span className="font-semibold">Namra Sanandiya:</span>
-                <Link href="tel:+918799048240" className="ml-1 hover:text-indigo-300 transition-colors duration-200">
-                  +91 87990 48240
+                <span className="font-semibold">Heet Shah:</span>
+                <Link href="tel:+919512101868" className="ml-1 hover:text-indigo-300 transition-colors duration-200">
+                  +91 95121 01868
                 </Link><br />
                 <pre>(Public Relation Head)</pre>
               </div>
               <div>
-                <span className="font-semibold">Rujal Jiyani:</span>
-                <Link href="tel:+919499549977" className="ml-1 hover:text-indigo-300 transition-colors duration-200">
-                  +91 94995 49977
+                <span className="font-semibold">Ved Dhanani:</span>
+                <Link href="tel:+917435921242" className="ml-1 hover:text-indigo-300 transition-colors duration-200">
+                  +91 74359 21242
                 </Link><br />
                 <pre>(Events Head)</pre>
               </div>

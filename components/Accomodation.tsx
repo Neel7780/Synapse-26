@@ -347,14 +347,14 @@ export function AccommodationComponent() {
             <li className="flex gap-2 md:gap-3">
               <span className="text-white/60 flex-shrink-0">5)</span>
               <span>
-                On 20th February, accommodation will not be provided before 4:00
+                On 26th February, accommodation will not be provided before 4:00
                 PM.
               </span>
             </li>
             <li className="flex gap-2 md:gap-3">
               <span className="text-white/60 flex-shrink-0">6)</span>
               <span>
-                On 24th February, check-out will be before 10:00 AM. All guests
+                On 1st March, check-out will be before 9:00 AM. All guests
                 must vacate the accommodation by this time.
               </span>
             </li>

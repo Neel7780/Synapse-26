@@ -770,7 +770,8 @@ export default function HeroSection({
               backgroundPosition: "center",
             }} className=" absolute inset-0 flex flex-col items-center justify-center opacity-100 will-change-transform backface-hidden transform-[rotateY(180deg)]">
               <div className="screen-container relative w-screen h-[100svh] flex items-center justify-center perspective-[1000px] transform-3d" ref={screenContainerRef}>
-                <div ref={frontScreenRef} className="screen-front absolute inset-0 bg-black bg-[url('/images_home/part3-image.png')] bg-no-repeat bg-center bg-contain z-2 backface-hidden border-4 border-solid rounded " style={{ borderColor: "rgba(250,235,215,0)" }}></div>
+                <div ref={frontScreenRef} className="screen-front absolute inset-0 bg-[#080810] bg-[url('/images_home/part3-image.png')] bg-no-repeat bg-center bg-contain z-2 backface-hidden border-4 border-solid rounded " 
+    style={{ borderColor: "rgba(250,235,215,0)" }}></div>
                 <div className="center-joker-container absolute inset-0 flex items-center justify-center transform-[rotateY(180deg)] backface-hidden z-1">
                   <img src="/images_home/card_center.png" className="center-joker w-full h-auto rotate-[-64deg] object-contain" alt="Joker Card" />
                 </div>
