@@ -4,6 +4,7 @@ import type React from "react";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useNavigationState } from "@/lib/useNavigationState";
 
 interface LoginBoxProps {
   goRegister: () => void;
@@ -12,6 +13,7 @@ interface LoginBoxProps {
 
 export default function LoginBox({ goRegister, goForgot }: LoginBoxProps) {
   const router = useRouter();
+  const { startTransition } = useNavigationState();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +43,7 @@ export default function LoginBox({ goRegister, goForgot }: LoginBoxProps) {
       }
 
       // Redirect based on admin status
+      startTransition();
       if (data.isAdmin) {
         router.push("/admin");
       } else {

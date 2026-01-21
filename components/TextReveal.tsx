@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
 import { useRef } from "react";
 
 interface TextRevealProps {
@@ -39,7 +39,7 @@ export default function TextReveal({ text }: TextRevealProps) {
 
 interface WordProps {
     children: string;
-    progress: any;
+    progress: MotionValue<number>;
     range: [number, number];
 }
 
@@ -64,7 +64,7 @@ const Word = ({ children, progress, range }: WordProps) => {
 
 interface CharProps {
     children: string;
-    progress: any;
+    progress: MotionValue<number>;
     range: [number, number];
 }
 

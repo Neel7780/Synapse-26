@@ -12,7 +12,8 @@ export async function GET() {
     const { data: sponsors, error } = await supabase
       .from("sponsors")
       .select("*")
-      .order("sponsor_id", { ascending: true });
+      .order("rank", { ascending: true, nullsFirst: false })
+      .order("name", { ascending: true });
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -35,20 +36,29 @@ export async function POST(request: NextRequest) {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const supabase = await createClient() as any;
-    
+
     // Check admin authentication
     const isAdmin = await checkAdmin(supabase);
     if (!isAdmin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
-    
+
     const formData = await request.formData();
 
     const name = formData.get('name') as string;
     const tier = formData.get('tier') as string;
     const website_url = formData.get('website_url') as string | null;
-    const description = formData.get('description') as string | null;
+    const rankStr = formData.get('rank') as string | null;
     const imageFile = formData.get('image') as File | null;
+
+    // Parse rank if provided
+    let rank: number | null = null;
+    if (rankStr && rankStr.trim() !== '') {
+      const parsedRank = parseInt(rankStr, 10);
+      if (!isNaN(parsedRank) && parsedRank > 0) {
+        rank = parsedRank;
+      }
+    }
 
     // Validate required fields
     if (!name || !tier) {
@@ -85,7 +95,7 @@ export async function POST(request: NextRequest) {
         tier,
         website_url: website_url || null,
         logo_url,
-        description: description || null,
+        rank,
       })
       .select()
       .single();

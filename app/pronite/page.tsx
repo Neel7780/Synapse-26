@@ -34,7 +34,7 @@ export default function PronitePage() {
       // Spotlight effect that follows scroll
       if (spotlightRef.current) {
         gsap.set(spotlightRef.current, { opacity: 0 });
-        
+
         gsap.to(spotlightRef.current, {
           opacity: 0.3,
           duration: 1,
@@ -65,7 +65,7 @@ export default function PronitePage() {
         lines.forEach((line, lineIndex) => {
           const lineDiv = document.createElement("div");
           lineDiv.className = "overflow-hidden";
-          
+
           const words = line.trim().split(/\s+/);
           words.forEach((word) => {
             const span = document.createElement("span");
@@ -194,7 +194,7 @@ export default function PronitePage() {
       <ProniteGallery />
 
       {/* Registration Section - Enhanced with GSAP */}
-      <section 
+      <section
         ref={ctaSectionRef}
         className="relative bg-black py-40 px-4 text-center overflow-hidden"
       >
@@ -211,25 +211,25 @@ export default function PronitePage() {
               key={i}
               className="absolute w-1 h-1 bg-red-500/30 rounded-full animate-pulse"
               style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 2}s`,
-                animationDuration: `${2 + Math.random() * 2}s`,
+                left: `${(i * 7 + 13) % 100}%`,
+                top: `${(i * 3 + 7) % 100}%`,
+                animationDelay: `${(i % 5) * 0.4}s`,
+                animationDuration: `${2 + (i % 3)}s`,
               }}
             />
           ))}
         </div>
 
         <div className="relative z-10">
-          <h1 
+          <h1
             ref={ctaTitleRef}
             className="text-[clamp(3.5rem,15vw,10rem)] font-texgyreadventor leading-none mb-4"
             style={{ perspective: "1000px" }}
           >
             Join the <br /> Celebration
           </h1>
-          
-          <p 
+
+          <p
             ref={ctaSubtitleRef}
             className="font-jqka text-lg md:text-xl text-gray-400 mb-12 max-w-2xl mx-auto"
           >
@@ -237,7 +237,7 @@ export default function PronitePage() {
             you&apos;ll wish you were part of.
           </p>
 
-          <div ref={ctaButtonRef} className="inline-block">
+          {/* <div ref={ctaButtonRef} className="inline-block">
             {!isAuthenticated ? (
               <NavbarButton href="/auth" variant="register">
                 REGISTER
@@ -255,7 +255,7 @@ export default function PronitePage() {
                 LOGOUT
               </NavbarButton>
             )}
-          </div>
+          </div> */}
         </div>
       </section>
 

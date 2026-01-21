@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { uploadImage, editImage, deleteImage } from "@/lib/imageUtil";
 
 // GET - Fetch single accommodation package by ID
 export async function GET(
@@ -42,7 +43,6 @@ export async function PUT(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const supabase = (await createClient()) as any;
     const { id } = await params;
-    const body = await request.json();
 
     // First, check if package exists
     const { data: existingPackage, error: fetchError } = await supabase
@@ -58,9 +58,18 @@ export async function PUT(
       );
     }
 
+    const formData = await request.formData();
+    const package_name = formData.get("package_name") as string;
+    const price = formData.get("price") as string;
+    const start_date = formData.get("start_date") as string;
+    const end_date = formData.get("end_date") as string;
+    const description = formData.get("description") as string;
+    const is_available = formData.get("is_available") as string;
+    const qr_code_file = formData.get("qr_code") as File | null;
+
     // Validate package_name if provided
-    if (body.package_name !== undefined) {
-      if (!body.package_name || body.package_name.trim() === "") {
+    if (package_name !== undefined && package_name !== null) {
+      if (!package_name || package_name.trim() === "") {
         return NextResponse.json(
           { error: "Package name cannot be empty" },
           { status: 400 }
@@ -69,9 +78,9 @@ export async function PUT(
     }
 
     // Validate price if provided
-    if (body.price !== undefined && body.price !== null) {
-      const price = Number(body.price);
-      if (isNaN(price) || price < 0) {
+    if (price) {
+      const priceNum = Number(price);
+      if (isNaN(priceNum) || priceNum < 0) {
         return NextResponse.json(
           { error: "Price must be a positive number" },
           { status: 400 }
@@ -80,9 +89,9 @@ export async function PUT(
     }
 
     // Validate dates if both are provided
-    if (body.start_date && body.end_date) {
-      const startDate = new Date(body.start_date);
-      const endDate = new Date(body.end_date);
+    if (start_date && end_date) {
+      const startDate = new Date(start_date);
+      const endDate = new Date(end_date);
 
       if (isNaN(startDate.getTime())) {
         return NextResponse.json(
@@ -106,19 +115,64 @@ export async function PUT(
       }
     }
 
+    // Handle QR code upload/replacement
+    let qr_code_url = existingPackage.qr_code;
+    if (qr_code_file && qr_code_file.size > 0) {
+      try {
+        if (existingPackage.qr_code) {
+          // Extract the file path from the existing URL
+          const urlParts = existingPackage.qr_code.split("/");
+          const bucketIndex = urlParts.findIndex((part: string) => part === "qr-code");
+          if (bucketIndex !== -1) {
+            const oldFilePath = urlParts.slice(bucketIndex + 1).join("/");
+            const { publicUrl } = await editImage({
+              file: qr_code_file,
+              bucket: "qr-code",
+              oldFilePath,
+              folder: "accommodation",
+            });
+            qr_code_url = publicUrl;
+          } else {
+            // If we can't parse the old path, just upload new and try to delete old
+            const { publicUrl } = await uploadImage({
+              file: qr_code_file,
+              bucket: "qr-code",
+              folder: "accommodation",
+            });
+            qr_code_url = publicUrl;
+          }
+        } else {
+          // No existing QR code, just upload new one
+          const { publicUrl } = await uploadImage({
+            file: qr_code_file,
+            bucket: "qr-code",
+            folder: "accommodation",
+          });
+          qr_code_url = publicUrl;
+        }
+      } catch (error) {
+        return NextResponse.json(
+          { error: "Failed to upload QR code image" },
+          { status: 500 }
+        );
+      }
+    }
+
     // Build update object - only include fields that are provided
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {};
 
-    if (body.package_name !== undefined)
-      updateData.package_name = body.package_name;
-    if (body.price !== undefined) updateData.price = body.price;
-    if (body.start_date !== undefined) updateData.start_date = body.start_date;
-    if (body.end_date !== undefined) updateData.end_date = body.end_date;
-    if (body.description !== undefined)
-      updateData.description = body.description;
-    if (body.is_available !== undefined)
-      updateData.is_available = body.is_available;
+    if (package_name !== undefined && package_name !== null)
+      updateData.package_name = package_name;
+    if (price !== undefined && price !== null) updateData.price = Number(price);
+    if (start_date !== undefined && start_date !== null) updateData.start_date = start_date;
+    if (end_date !== undefined && end_date !== null) updateData.end_date = end_date;
+    if (description !== undefined && description !== null)
+      updateData.description = description;
+    if (is_available !== undefined && is_available !== null)
+      updateData.is_available = is_available === "true";
+    if (qr_code_url !== existingPackage.qr_code)
+      updateData.qr_code = qr_code_url;
 
     const { data: package_data, error } = await supabase
       .from("accommodation_type")
@@ -156,10 +210,10 @@ export async function DELETE(
     const supabase = (await createClient()) as any;
     const { id } = await params;
 
-    // First check if package exists
+    // First check if package exists and get QR code path
     const { data: existingPackage, error: fetchError } = await supabase
       .from("accommodation_type")
-      .select("id")
+      .select("*")
       .eq("id", id)
       .single();
 
@@ -168,6 +222,24 @@ export async function DELETE(
         { error: "Accommodation package not found" },
         { status: 404 }
       );
+    }
+
+    // Delete QR code image if it exists
+    if (existingPackage.qr_code) {
+      try {
+        const urlParts = existingPackage.qr_code.split("/");
+        const bucketIndex = urlParts.findIndex((part: string) => part === "qr-code");
+        if (bucketIndex !== -1) {
+          const filePath = urlParts.slice(bucketIndex + 1).join("/");
+          await deleteImage({
+            bucket: "qr-code",
+            filePath,
+          });
+        }
+      } catch (err) {
+        // Log error but continue with deletion
+        console.error("Failed to delete QR code image:", err);
+      }
     }
 
     const { error } = await supabase
@@ -183,7 +255,7 @@ export async function DELETE(
       { message: "Accommodation package deleted successfully" },
       { status: 200 }
     );
-  } catch (error) {
+  } catch (err) {
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

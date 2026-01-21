@@ -139,8 +139,8 @@ export default function AboutSection() {
       scrollTrigger: {
         trigger: ".part3_end",
         start: "top center",
-        end: "top center-=20%",
-        scrub: 1,
+        end: "top center-=10%",
+        scrub: 2,
         anticipatePin: 1,
         invalidateOnRefresh: true,
         onRefresh: positionImageFromGradientCenter,
@@ -169,9 +169,9 @@ export default function AboutSection() {
     const imageTl = gsap.timeline({
       scrollTrigger: {
         trigger: ".part3_end",
-        start: "top center-=5%",
-        end: "top center-=15%",
-        scrub: 1,
+        start: "top center-=15%",
+        end: "top center-=35%",
+        scrub: 2,
         anticipatePin: 1,
         invalidateOnRefresh: true,
       },

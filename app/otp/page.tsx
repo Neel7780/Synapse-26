@@ -11,9 +11,12 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 
+import { useNavigationState } from "@/lib/useNavigationState";
+
 export default function OTPPage() {
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const { startTransition } = useNavigationState();
 
   const handleChange = (index: number, value: string) => {
     if (value.length > 1) {
@@ -60,7 +63,7 @@ export default function OTPPage() {
   };
 
   return (
-    <div className="flex min-h-[100svh]">
+    <div className="flex min-h-[100dvh]">
       {/* Left Side - Joker Card Image */}
       <div className="relative hidden w-1/2 lg:block">
         <Image
@@ -75,7 +78,7 @@ export default function OTPPage() {
 
         <div className="absolute top-8 left-8 z-10">
           <div className="relative w-16 h-16">
-            <Link href="/">
+            <Link href="/" onClick={() => startTransition()}>
               <Image
                 src="/Synapse Logo.png"
                 alt="Synapse Logo"

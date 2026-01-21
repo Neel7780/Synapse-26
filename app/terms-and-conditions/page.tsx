@@ -62,7 +62,7 @@ export default function Terms() {
   // Manual transition end moved to global TransitionProvider
 
   return (
-    <div className="relative w-screen min-h-[100svh] overflow-x-hidden  text-white">
+    <div className="relative w-screen min-h-[100dvh] overflow-x-hidden  text-white">
       <Navbar visible={true}>
         <NavigationPanel />
       </Navbar>

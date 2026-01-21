@@ -49,7 +49,8 @@ export async function POST(request: Request) {
       success: true,
       message: "Registration successful! Please check your email.",
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "An unknown error occurred";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

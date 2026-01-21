@@ -5,6 +5,10 @@ export type EventFee = {
   price: number;
   min_members: number;
   max_members: number;
+  // Optional specific metadata for this fee type
+  date?: string;
+  time?: string;
+  venue?: string;
   // Optional fields for database integration
   fee_id?: number;
   qr_url?: string;
@@ -20,6 +24,10 @@ export type EventCard = {
   rules: string[];
   rulebook: string; // URL
   fees: EventFee[];
+  // Fallback metadata if not in fees
+  date?: string;
+  time?: string;
+  venue?: string;
 };
 
 export type EventPageConfig = {
@@ -47,9 +55,9 @@ export const EVENT_PAGES: Record<string, EventPageConfig> = {
         ],
         rulebook: "https://docs.google.com/document/d/1zo3Cqd1jtG_KNKgIZ6OCSu2CPAZNV2WWh7HQqFgTeDQ/edit?usp=drivesdk", // Placeholder or actual link
         fees: [
-          { type: "group", price: 300, min_members: 2, max_members: 4 },
-          { type: "duet", price: 200, min_members: 2, max_members: 2 }
-        ]
+          { type: "group", price: 300, min_members: 2, max_members: 4, date: "26th Feb, 2026", time: "10:00 AM", venue: "OAT" },
+          { type: "duet", price: 200, min_members: 2, max_members: 2, date: "26th Feb, 2026", time: "12:00 PM", venue: "OAT" }
+        ],
       },
       {
         image: "/images_events/dance/2.png",
@@ -65,8 +73,8 @@ export const EVENT_PAGES: Record<string, EventPageConfig> = {
         ],
         rulebook: "https://docs.google.com/document/d/1zo3Cqd1jtG_KNKgIZ6OCSu2CPAZNV2WWh7HQqFgTeDQ/edit?usp=drivesdk",
         fees: [
-          { type: "solo", price: 200, min_members: 1, max_members: 1 }
-        ]
+          { type: "solo", price: 200, min_members: 1, max_members: 1, date: "27th Feb, 2026", time: "11:00 AM", venue: "CEP" }
+        ],
       },
       {
         image: "/images_events/dance/3.png",
@@ -80,9 +88,9 @@ export const EVENT_PAGES: Record<string, EventPageConfig> = {
         ],
         rulebook: "https://docs.google.com/document/d/1zo3Cqd1jtG_KNKgIZ6OCSu2CPAZNV2WWh7HQqFgTeDQ/edit?usp=drivesdk",
         fees: [
-          { type: "solo", price: 250, min_members: 1, max_members: 1 },
-          { type: "duet", price: 400, min_members: 2, max_members: 2 }
-        ]
+          { type: "solo", price: 250, min_members: 1, max_members: 1, date: "28th Feb, 2026", time: "05:00 PM", venue: "OAT" },
+          { type: "duet", price: 400, min_members: 2, max_members: 2, date: "28th Feb, 2026", time: "07:00 PM", venue: "OAT" }
+        ],
       },
     ],
   },
@@ -104,9 +112,9 @@ export const EVENT_PAGES: Record<string, EventPageConfig> = {
         ],
         rulebook: "https://docs.google.com/document/d/1zo3Cqd1jtG_KNKgIZ6OCSu2CPAZNV2WWh7HQqFgTeDQ/edit?usp=drivesdk",
         fees: [
-          { type: "group", price: 500, min_members: 3, max_members: 6 },
-          { type: "solo", price: 150, min_members: 1, max_members: 1 }
-        ]
+          { type: "group", price: 500, min_members: 3, max_members: 6, date: "26th Feb, 2026", time: "06:00 PM", venue: "OAT" },
+          { type: "solo", price: 150, min_members: 1, max_members: 1, date: "26th Feb, 2026", time: "04:00 PM", venue: "OAT" }
+        ],
       },
       {
         image: "/images_events/music/2.png",
@@ -120,8 +128,8 @@ export const EVENT_PAGES: Record<string, EventPageConfig> = {
         ],
         rulebook: "https://docs.google.com/document/d/1zo3Cqd1jtG_KNKgIZ6OCSu2CPAZNV2WWh7HQqFgTeDQ/edit?usp=drivesdk",
         fees: [
-          { type: "solo", price: 300, min_members: 1, max_members: 1 }
-        ]
+          { type: "solo", price: 300, min_members: 1, max_members: 1, date: "27th Feb, 2026", time: "09:00 PM", venue: "Cafeteria" }
+        ],
       },
     ],
   },
@@ -145,8 +153,8 @@ export const EVENT_PAGES: Record<string, EventPageConfig> = {
         ],
         rulebook: "https://docs.google.com/document/d/1zo3Cqd1jtG_KNKgIZ6OCSu2CPAZNV2WWh7HQqFgTeDQ/edit?usp=drivesdk",
         fees: [
-          { type: "group", price: 300, min_members: 2, max_members: 4 }
-        ]
+          { type: "group", price: 300, min_members: 2, max_members: 4, date: "28th Feb, 2026", time: "08:00 PM", venue: "OAT" }
+        ],
       },
       {
         image: "/images_events/fashion/2.png",
@@ -162,8 +170,8 @@ export const EVENT_PAGES: Record<string, EventPageConfig> = {
         ],
         rulebook: "https://docs.google.com/document/d/1zo3Cqd1jtG_KNKgIZ6OCSu2CPAZNV2WWh7HQqFgTeDQ/edit?usp=drivesdk",
         fees: [
-          { type: "solo", price: 250, min_members: 1, max_members: 1 }
-        ]
+          { type: "solo", price: 250, min_members: 1, max_members: 1, date: "27th Feb, 2026", time: "02:00 PM", venue: "LT-1" }
+        ],
       },
     ],
   },
@@ -187,8 +195,8 @@ export const EVENT_PAGES: Record<string, EventPageConfig> = {
         ],
         rulebook: "https://docs.google.com/document/d/1zo3Cqd1jtG_KNKgIZ6OCSu2CPAZNV2WWh7HQqFgTeDQ/edit?usp=drivesdk",
         fees: [
-          { type: "group", price: 400, min_members: 4, max_members: 8 }
-        ]
+          { type: "group", price: 400, min_members: 4, max_members: 8, date: "26th Feb, 2026", time: "04:00 PM", venue: "OAT" }
+        ],
       },
       {
         image: "/images_events/theatre/2.png",
@@ -202,8 +210,8 @@ export const EVENT_PAGES: Record<string, EventPageConfig> = {
         ],
         rulebook: "https://docs.google.com/document/d/1zo3Cqd1jtG_KNKgIZ6OCSu2CPAZNV2WWh7HQqFgTeDQ/edit?usp=drivesdk",
         fees: [
-          { type: "group", price: 300, min_members: 1, max_members: 10 }
-        ]
+          { type: "group", price: 300, min_members: 1, max_members: 10, date: "27th Feb, 2026", time: "05:00 PM", venue: "Cafeteria" }
+        ],
       },
     ],
   },
@@ -224,10 +232,9 @@ export const EVENT_PAGES: Record<string, EventPageConfig> = {
         ],
         rulebook: "https://docs.google.com/document/d/1zo3Cqd1jtG_KNKgIZ6OCSu2CPAZNV2WWh7HQqFgTeDQ/edit?usp=drivesdk",
         fees: [
-          { type: "group", price: 500, min_members: 5, max_members: 5 }
-        ]
+          { type: "group", price: 500, min_members: 5, max_members: 5, date: "28th Feb, 2026", time: "10:00 AM", venue: "Lab-1" }
+        ],
       },
     ],
   },
 };
-

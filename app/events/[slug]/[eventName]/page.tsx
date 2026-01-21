@@ -1,28 +1,23 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { useNavigationState } from "@/lib/useNavigationState";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Navbar } from "@/components/ui/Resizable-navbar";
 import NavigationPanel from "@/components/ui/NavigationPanel";
 import Footer from "@/components/ui/Footer";
 import { Button } from "@/components/ui/Button";
 import { EVENT_PAGES, EventCard } from "../eventcontent";
+import { Calendar, Clock, MapPin, Users } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function EventPage() {
     const params = useParams();
     const router = useRouter();
+
     // derived synchronously
     const slug = params?.slug as string;
     const eventNameSlug = params?.eventName as string;
-
-    // Manual Transition Control moved to global provider
-    // const { endTransition } = useNavigationState();
-
-    // useEffect(() => {
-    //     endTransition();
-    // }, []);
 
     // Direct lookup
     let event: EventCard | null = null;
@@ -44,145 +39,207 @@ export default function EventPage() {
         }
     }
 
+    // State for selected fee type (default to first available)
+    const [selectedFeeIndex, setSelectedFeeIndex] = useState(0);
+
+    // Initial check (if event exists but logic needs to run once)
+    useEffect(() => {
+        if (event && event.fees && event.fees.length > 0) {
+            // Sort fees logic: Solo -> Duet -> Group
+            const order = ["solo", "duet", "group"];
+            event.fees.sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type));
+            setSelectedFeeIndex(0);
+        }
+    }, [event]);
+
+
     if (error || !event) {
         return (
             <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center font-joker">
-                <h1 className="text-4xl text-red-500 mb-4">Error</h1>
-                <p className="text-xl font-poppins">{error || "Event not found"}</p>
-                <Button onClick={() => router.back()} className="mt-6">
+                <h1 className="text-4xl text-red-600 mb-4">Error</h1>
+                <p className="text-xl font-roboto">{error || "Event not found"}</p>
+                <Button onClick={() => router.back()} className="mt-6 rounded-none font-jqka bg-red-600 hover:bg-red-700">
                     Go Back
                 </Button>
             </div>
         );
     }
 
+    const currentFee = event.fees && event.fees.length > 0 ? event.fees[selectedFeeIndex] : null;
+
+    // Fake metadata since it's missing from content
+    const eventDate = "26th Feb, 2026";
+    const eventTime = "10:00 PM";
+    const eventVenue = "OAT";
+
     return (
-        <main className="bg-black text-white min-h-screen overflow-x-hidden font-poppins">
+        <main className="bg-black text-white min-h-screen overflow-x-hidden font-roboto">
             <Navbar visible={true}>
                 <NavigationPanel />
             </Navbar>
 
-            {/* HEADER IMAGE / BACKGROUND */}
-            <div className="relative w-full h-[60dvh] flex items-center justify-center">
-                <Image
-                    src={event.image}
-                    alt={event.name}
-                    fill
-                    className="object-cover opacity-60"
-                    priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-
-                <div className="relative z-10 text-center px-4 mt-10">
-                    <h1 className="font-joker lowercase text-5xl md:text-7xl lg:text-9xl tracking-wider text-white mb-4 drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)] animate-fadeIn">
-                        {event.name}
-                    </h1>
+            {/* HERO SECTION */}
+            <div className="relative w-full pb-10 flex flex-col items-center group">
+                {/* Image Container */}
+                <div className="relative w-full h-[50vh] md:h-[60vh] lg:h-[70vh] overflow-hidden">
+                    <Image
+                        src={event.image}
+                        alt={event.name}
+                        fill
+                        className="object-cover object-top"
+                        priority
+                    />
+                    <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black to-transparent" />
                 </div>
+
+                {/* Event Title */}
+                <h1 className="font-joker text-5xl md:text-7xl lg:text-[150px] leading-none text-white mt-[-30px] md:mt-[-50px] lg:mt-[-80px] relative z-10 drop-shadow-2xl text-center lowercase tracking-widest pointer-events-none">
+                    {event.name}
+                </h1>
             </div>
 
-            <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-24 py-16 grid grid-cols-1 lg:grid-cols-3 gap-16">
+            <div className="max-w-[1400px] mx-auto px-6 md:px-12 lg:px-20 py-12 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start">
 
-                {/* LEFT COLUMN: DESCRIPTION & DETAILS */}
-                <div className="lg:col-span-2 space-y-12">
+                {/* LEFT COLUMN: DESCRIPTION & REGISTRATION */}
+                <div className="space-y-12">
+                    {/* About Section */}
                     <section>
-                        <h2 className="text-4xl font-poppins mb-6 text-[#b41c32] tracking-wide">
-                            About Event
+                        <h2 className="text-3xl md:text-4xl text-red-600 mb-6 font-semibold">
+                            About the event
                         </h2>
-                        <div className="text-lg text-gray-300 leading-relaxed whitespace-pre-wrap font-poppins">
+                        <div className="text-gray-300 leading-relaxed text-base md:text-lg whitespace-pre-wrap font-light opacity-90 font-roboto">
                             {event.description.map((line, i) => (
-                                <p key={i} className="mb-3">{line}</p>
+                                <p key={i} className="mb-4">{line}</p>
                             ))}
                         </div>
                     </section>
 
-                    {/* RULES SECTION */}
-                    <section>
-                        <h2 className="text-4xl font-poppins mb-6 text-[#b41c32] tracking-wide">
+                    {/* Metadata Icons - Dynamic based on selection */}
+                    <div
+                        key={selectedFeeIndex}
+                        className="grid gap-6 text-gray-200 text-base md:text-lg font-light font-roboto animate-in fade-in slide-in-from-left-4 duration-300"
+                    >
+                        <div className="flex items-center gap-4">
+                            <Calendar className="text-red-600 w-6 h-6" />
+                            <span>Date: {currentFee?.date || event.date || "TBD"}</span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <Clock className="text-red-600 w-6 h-6" />
+                            <span>Time: {currentFee?.time || event.time || "TBD"}</span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <MapPin className="text-red-600 w-6 h-6" />
+                            <span>Venue: {currentFee?.venue || event.venue || "TBD"}</span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <Users className="text-red-600 w-6 h-6" />
+                            <span>Team: {currentFee?.type === 'solo' ? 'Single' : currentFee?.type === 'duet' ? 'Duo' : 'Group (2+)'}</span>
+                        </div>
+                    </div>
+
+                    {/* Registration Section */}
+                    <section className="mt-10">
+                        {event.fees && event.fees.length > 0 ? (
+                            <div className="flex flex-col gap-8">
+                                <div className="flex flex-wrap items-center gap-4">
+                                    <span className="text-red-600 text-xl md:text-2xl font-normal">Select Team:</span>
+                                    {/* Toggle Group */}
+                                    <div className="flex bg-white rounded-full relative p-0 overflow-hidden">
+                                        {event.fees
+                                            .sort((a, b) => {
+                                                const order = ["solo", "duet", "group"];
+                                                return order.indexOf(a.type) - order.indexOf(b.type);
+                                            })
+                                            .map((fee, index) => {
+                                                const isActive = event.fees[selectedFeeIndex].type === fee.type;
+                                                return (
+                                                    <button
+                                                        key={index}
+                                                        onClick={() => setSelectedFeeIndex(index)}
+                                                        className={`relative px-6 py-2 text-base font-medium capitalize rounded-full transition-colors duration-300 z-10 ${isActive ? "text-white" : "text-black hover:bg-gray-100"
+                                                            }`}
+                                                    >
+                                                        {isActive && (
+                                                            <motion.div
+                                                                layoutId="active-pill"
+                                                                className="absolute inset-0 bg-red-600 rounded-full -z-10"
+                                                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                                            />
+                                                        )}
+                                                        <span className="relative z-20">
+                                                            {fee.type === 'solo' ? 'Single' : fee.type}
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-4">
+                                    <span className="text-white text-xl md:text-2xl font-roboto">Registration Fees-</span>
+                                    <div className="border border-blue-500 px-4 py-1 rounded-none text-blue-500 text-xl font-bold">
+                                        ₹{currentFee?.price}
+                                    </div>
+                                </div>
+
+                                <Button
+                                    className="w-fit px-12 py-6 text-xl font-jqka tracking-[0.2em] uppercase bg-transparent border border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-all duration-300 rounded-none mt-4 shadow-[0_0_15px_rgba(220,38,38,0.2)] cursor-pointer"
+                                    onClick={() => {
+                                        if (!currentFee) return;
+                                        const params = new URLSearchParams({
+                                            fee_id: String(currentFee.fee_id || 0),
+                                            type: currentFee.type,
+                                            price: String(currentFee.price),
+                                            min: String(currentFee.min_members || 1),
+                                            max: String(currentFee.max_members || 1),
+                                            qr_url: currentFee.qr_url || "",
+                                            event_id: String(currentFee.event_id || 0),
+                                        });
+                                        router.push(`/events/${slug}/${eventNameSlug}/register?${params.toString()}`);
+                                    }}
+                                >
+                                    REGISTER
+                                </Button>
+                            </div>
+                        ) : (
+                            <Button
+                                className="w-fit px-12 py-6 text-xl font-jqka tracking-[0.2em] uppercase bg-red-600 hover:bg-red-700 text-white transition-all duration-300 rounded-none mt-4 cursor-pointer"
+                                onClick={() => alert("Registration Coming Soon!")}
+                            >
+                                Register Now
+                            </Button>
+                        )}
+                    </section>
+                </div>
+
+                {/* RIGHT COLUMN: RULES CARD */}
+                <div className="w-full">
+                    <div className="border border-red-600 rounded-[30px] p-8 md:p-12 relative bg-black shadow-[0_0_20px_rgba(220,38,38,0.1)]">
+                        <h2 className="text-4xl md:text-5xl font-normal text-white text-center mb-8 font-poppins">
                             Rules
                         </h2>
-                        <ul className="list-disc pl-5 text-gray-300 space-y-3 mb-8 text-lg">
+
+                        <ul className="space-y-4 mb-10 text-gray-300 text-lg font-light leading-relaxed list-disc pl-5 font-roboto">
                             {event.rules.map((rule, i) => (
                                 <li key={i}>{rule}</li>
                             ))}
                         </ul>
 
                         {event.rulebook && (
-                            <a
-                                href={event.rulebook}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 px-8 py-3 bg-white/5 hover:bg-white/10 border border-white/20 rounded-sm transition-all text-white font-jqka cursor-pointer tracking-widest uppercase text-sm hover:border-[#b41c32] group"
-                            >
-                                <span>View Rulebook</span>
-                                <span className="group-hover:translate-x-1 transition-transform">→</span>
-                            </a>
+                            <div className="flex justify-center">
+                                <a
+                                    href={event.rulebook}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-block px-8 py-2 border border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-colors text-lg tracking-wide rounded-none font-jqka uppercase"
+                                >
+                                    View Rule Book
+                                </a>
+                            </div>
                         )}
-                    </section>
-                </div>
-
-                {/* RIGHT COLUMN: REGISTRATION CARD */}
-                <div className="lg:col-span-1">
-                    <div className="bg-[#111] border border-white/10 rounded-xl p-8 sticky top-24 shadow-2xl shadow-black/50">
-                        <h3 className="text-3xl font-poppins mb-8 text-center tracking-wide">
-                            Registration
-                        </h3>
-
-                        <div className="space-y-8 mb-6">
-                            {event.fees && event.fees.length > 0 ? (
-                                event.fees.map((fee, index) => (
-                                    <div key={index} className="flex flex-col border border-white/10 rounded-lg p-5 bg-white/5 hover:bg-white/[0.07] transition-colors">
-                                        <div className="flex justify-between items-baseline mb-2">
-                                            <span className="capitalize font-bold text-gray-200 text-lg font-poppins tracking-wide">
-                                                {fee.type}
-                                            </span>
-                                            <span className="text-2xl font-bold text-[#b41c32] font-poppins">₹{fee.price}</span>
-                                        </div>
-
-                                        {/* Min/Max Logic: Only show for Group (or non-solo/non-duet) */}
-                                        {fee.type !== 'solo' && fee.type !== 'duet' && (
-                                            <div className="text-sm text-gray-400 mb-4">
-                                                Team Size: <span className="text-gray-200">{fee.min_members}-{fee.max_members}</span> members
-                                            </div>
-                                        )}
-
-                                        <Button
-                                            className="w-full mt-2 py-3 text-lg font-jqka tracking-widest uppercase bg-[#b41c32] hover:bg-[#901628] transition-all cursor-pointer rounded-sm shadow-[0_0_15px_rgba(180,28,50,0.3)] hover:shadow-[0_0_25px_rgba(180,28,50,0.5)]"
-                                            onClick={() => {
-                                                const params = new URLSearchParams({
-                                                    fee_id: String(fee.fee_id || 0),
-                                                    type: fee.type,
-                                                    price: String(fee.price),
-                                                    min: String(fee.min_members || 1),
-                                                    max: String(fee.max_members || 1),
-                                                    qr_url: fee.qr_url || "",
-                                                    event_id: String(fee.event_id || 0),
-                                                });
-                                                router.push(`/events/${slug}/${eventNameSlug}/register?${params.toString()}`);
-                                            }}
-                                        >
-                                            Register
-                                        </Button>
-                                    </div>
-                                ))
-                            ) : (
-                                // Fallback if fees array missing
-                                <div className="text-center">
-                                    <div className="text-gray-400 font-jqka text-xl mb-4">{event.price}</div>
-                                    <Button
-                                        className="w-full py-4 text-xl font-jqka tracking-widest uppercase bg-[#b41c32] hover:bg-[#901628] transition-all cursor-pointer rounded-sm shadow-[0_0_20px_rgba(180,28,50,0.3)]"
-                                        onClick={() => alert("Registration Coming Soon!")}
-                                    >
-                                        Register Now
-                                    </Button>
-                                </div>
-                            )}
-                        </div>
-
-                        <p className="text-[10px] text-center text-gray-600 mt-6 uppercase tracking-wider font-mono">
-                            * Non-refundable registration fee
-                        </p>
                     </div>
                 </div>
+
             </div>
 
             <Footer />

@@ -1,9 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigationState } from "@/lib/useNavigationState";
-import { useEffect, useRef, useState, useCallback } from "react";
-import Image from "next/image";
+import { useEffect, useState } from "react";
 
 type Phase = "idle" | "delay" | "enter" | "exit";
 
@@ -16,45 +15,34 @@ const images = [
 
 export default function TransitionOverlay() {
     const { isTransitioning, isFirstLoad } = useNavigationState();
+
+    // Start in 'idle' so it's hidden but mounted
     const [phase, setPhase] = useState<Phase>("idle");
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Memoized phase transition handler to avoid unnecessary re-renders
-    const handlePhaseTransition = useCallback((newPhase: Phase, delay: number = 0) => {
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-        }
-        if (delay > 0) {
-            timeoutRef.current = setTimeout(() => setPhase(newPhase), delay);
-        } else {
-            setPhase(newPhase);
-        }
-    }, []);
-
+    /* ---------------- PHASE CONTROL ---------------- */
     useEffect(() => {
         if (isTransitioning) {
             // Start sequence: idle -> delay -> enter
-            handlePhaseTransition("delay");
-            handlePhaseTransition("enter", 300);
-        } else if (phase !== "idle") {
+            setPhase("delay");
+            const t = setTimeout(() => setPhase("enter"), 300);
+            return () => clearTimeout(t);
+        } else {
             // End sequence: enter -> exit -> idle
-            handlePhaseTransition("exit");
-            handlePhaseTransition("idle", 3200);
-        }
-
-        return () => {
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
+            // Only trigger exit if we were actually active (not already idle)
+            if (phase !== "idle") {
+                setPhase("exit");
+                const t = setTimeout(() => setPhase("idle"), 3200); // Wait for exit animation
+                return () => clearTimeout(t);
             }
-        };
-    }, [isTransitioning, handlePhaseTransition]); // Removed 'phase' from deps to prevent loop
+        }
+    }, [isTransitioning]);
 
     /* ---------------- POSITIONS ---------------- */
     const entryFromCorners = [
-        { x: "-100vw", y: "-100vh", rotate: -25 },
-        { x: "100vw", y: "-100vh", rotate: 25 },
-        { x: "-100vw", y: "100vh", rotate: 25 },
-        { x: "100vw", y: "100vh", rotate: -25 },
+        { x: "-100vw", y: "-100vh", rotate: -45 },
+        { x: "100vw", y: "-100vh", rotate: 45 },
+        { x: "-100vw", y: "100vh", rotate: 45 },
+        { x: "100vw", y: "100vh", rotate: -45 },
     ];
 
     const exitWithDoors = [
@@ -72,14 +60,31 @@ export default function TransitionOverlay() {
             aria-hidden={isHidden}
         >
             {/* LOADING TEXT - Only visible during enter phase */}
-            <div className={`absolute inset-0 flex items-center justify-center z-50 pointer-events-none mix-blend-difference transition-opacity duration-300 ${phase === "enter" ? "opacity-100" : "opacity-0"}`}>
-                <h1 className="text-[#E5E5E5] text-xl md:text-2xl font-joker lowercase tracking-widest animate-pulse">
+            <div
+                className={`
+        absolute z-50 pointer-events-none transition-opacity duration-300
+        inset-0 flex items-center justify-center
+        [text-shadow:5px_5px_2px_#000000]
+        ${phase === "enter" ? "opacity-100" : "opacity-0"}
+    `}
+            >
+                <h1
+                    className="
+            text-[#F2E8C4] font-black
+            text-4xl md:text-6xl lg:text-8xl 
+            font-joker tracking-[0.25em] 
+            animate-[pulse_3s_cubic-bezier(0.4,0,0.6,0.5)_infinite] duration-4000
+        "
+                >
                     loading...
                 </h1>
             </div>
 
-            {/* BLACK BASE */}
+
+            {/* BLACK BASE - Visible during delay, enter, and exit (not idle) */}
+            <div className={`absolute inset-0 bg-black z-0 transition-opacity duration-0 ${phase === "exit" || phase === "idle" ? "opacity-0" : "opacity-100"}`} />
             <div className={`absolute inset-0 bg-black z-0 ${phase === "exit" ? "hidden" : "block"}`} />
+
 
             {/* CARDS */}
             <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 z-20">
@@ -87,28 +92,25 @@ export default function TransitionOverlay() {
                     <motion.div
                         key={i}
                         className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden"
+                        // Force initial state when idle or delay so they are ready
                         initial={entryFromCorners[i]}
                         animate={
                             phase === "enter"
                                 ? { x: 0, y: 0, rotate: 0 }
                                 : phase === "exit"
                                     ? exitWithDoors[i]
-                                    : entryFromCorners[i]
+                                    : entryFromCorners[i] // Reset to corners when idle/delay
                         }
                         transition={{
-                            duration: phase === "enter" ? 1.6 : (phase === "exit" ? 3 : 0),
-                            delay: phase === "enter" ? i * 0.25 : 0,
+                            duration: phase === "enter" ? 1.6 : (phase === "exit" ? 3 : 0), // Instant reset if not entering/exiting
+                            delay: phase === "enter" ? i * 0.35 : 0,
                             ease: [0.22, 1, 0.36, 1],
                         }}
                     >
-                        <Image
+                        <img
                             src={src}
                             alt=""
-                            fill
-                            sizes="50vw"
                             className="object-fill transform origin-center w-[50dvh] h-[50vw] rotate-90 md:w-full md:h-full md:rotate-0"
-                            priority={i < 2}
-                            loading={i < 2 ? "eager" : "lazy"}
                         />
                     </motion.div>
                 ))}

@@ -66,7 +66,6 @@ import {
   Loader2,
   AlertCircle,
   Upload,
-  QrCode,
 } from "lucide-react";
 
 type ParticipationCategory = {
@@ -937,404 +936,408 @@ export default function EventsPage() {
         }}
         modal={true}
       >
-        <DialogContent className="sm:max-w-[700px] max-h-[90vh] bg-card border-border flex flex-col overflow-hidden">
-          <DialogHeader className="flex-shrink-0">
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] bg-card border-border !grid-rows-[auto_1fr_auto] overflow-hidden">
+          <DialogHeader>
             <DialogTitle>Edit Event</DialogTitle>
             <DialogDescription>
               Update event details and participation settings
             </DialogDescription>
           </DialogHeader>
           {editingEvent && (
-            <Tabs
-              defaultValue="details"
-              className="w-full flex-1 flex flex-col min-h-0"
+            <div
+              className="overflow-y-scroll pr-2 min-h-0"
+              style={{
+                maxHeight: "calc(90vh - 180px)",
+                scrollbarWidth: "thin",
+                scrollbarColor: "#ef4444 #1a1a1a",
+              }}
             >
-              <TabsList className="grid w-full grid-cols-2 bg-muted/50 flex-shrink-0">
-                <TabsTrigger value="details">Event Details</TabsTrigger>
-                <TabsTrigger value="fees">Participation & Fees</TabsTrigger>
-              </TabsList>
-              <TabsContent
-                value="details"
-                className="space-y-4 mt-4 overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-muted/50 [&::-webkit-scrollbar-thumb]:bg-red-500/50 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-red-500/70"
-              >
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Event Name</label>
-                    <Input
-                      value={editingEvent.name}
-                      onChange={(e) =>
-                        setEditingEvent({
-                          ...editingEvent,
-                          name: e.target.value,
-                        })
-                      }
-                      className="bg-muted/50 border-border/50"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Category</label>
-                    <Select
-                      value={editingEvent.categoryId.toString()}
-                      onValueChange={(v) =>
-                        setEditingEvent({
-                          ...editingEvent,
-                          categoryId: parseInt(v),
-                          categoryName:
-                            categories.find(
-                              (c) => c.category_id === parseInt(v),
-                            )?.category_name || "",
-                        })
-                      }
-                    >
-                      <SelectTrigger className="bg-muted/50 border-border/50">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        {categories.map((cat) => (
-                          <SelectItem
-                            key={cat.category_id}
-                            value={cat.category_id.toString()}
-                          >
-                            {cat.category_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2 col-span-2">
-                    <label className="text-sm font-medium">Date</label>
-                    <Input
-                      type="date"
-                      value={editingEvent.date}
-                      onChange={(e) =>
-                        setEditingEvent({
-                          ...editingEvent,
-                          date: e.target.value,
-                        })
-                      }
-                      className="bg-muted/50 border-border/50"
-                    />
-                  </div>
-                  <div className="space-y-2 col-span-2">
-                    <label className="text-sm font-medium">Time</label>
-                    <Input
-                      type="time"
-                      value={editingEvent.time}
-                      onChange={(e) =>
-                        setEditingEvent({
-                          ...editingEvent,
-                          time: e.target.value,
-                        })
-                      }
-                      className="bg-muted/50 border-border/50"
-                    />
-                  </div>
-                  <div className="space-y-2 col-span-2">
-                    <label className="text-sm font-medium">
-                      Coordinator Email
-                    </label>
-                    <Input
-                      type="email"
-                      value={editingEvent.coordinatorEmail}
-                      onChange={(e) =>
-                        setEditingEvent({
-                          ...editingEvent,
-                          coordinatorEmail: e.target.value,
-                        })
-                      }
-                      placeholder="coordinator@example.com"
-                      className="bg-muted/50 border-border/50"
-                    />
-                  </div>
-                  <div className="space-y-2 col-span-2">
-                    <label className="text-sm font-medium">Event Image</label>
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          try {
-                            // Store original image URL for preview
-                            const originalUrl = URL.createObjectURL(file);
-                            setEditOriginalImageUrl(originalUrl);
-
-                            // Crop image to 400x600
-                            const croppedFile =
-                              await cropImageToMobileViewport(file);
-                            setEditingEvent({
-                              ...editingEvent,
-                              imageFile: croppedFile,
-                            });
-                            // Create preview URL from cropped image
-                            const url = URL.createObjectURL(croppedFile);
-                            setEditImagePreviewUrl(url);
-                          } catch (error) {
-                            console.error("Error cropping image:", error);
-                            alert(
-                              "Failed to process image. Please try another image.",
-                            );
-                          }
-                        } else {
+              <Tabs defaultValue="details" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 bg-muted/50 sticky top-0 z-10">
+                  <TabsTrigger value="details">Event Details</TabsTrigger>
+                  <TabsTrigger value="fees">Participation & Fees</TabsTrigger>
+                </TabsList>
+                <TabsContent value="details" className="space-y-4 mt-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Event Name</label>
+                      <Input
+                        value={editingEvent.name}
+                        onChange={(e) =>
                           setEditingEvent({
                             ...editingEvent,
-                            imageFile: undefined,
-                          });
-                          setEditImagePreviewUrl(null);
-                          setEditOriginalImageUrl(null);
+                            name: e.target.value,
+                          })
                         }
-                      }}
-                      className="bg-muted/50 border-border/50"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Image will be cropped to 2:3 ratio (400x600) with maximum
-                      coverage
-                    </p>
-                    {editingEvent.picture && !editingEvent.imageFile && (
+                        className="bg-muted/50 border-border/50"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Category</label>
+                      <Select
+                        value={editingEvent.categoryId.toString()}
+                        onValueChange={(v) =>
+                          setEditingEvent({
+                            ...editingEvent,
+                            categoryId: parseInt(v),
+                            categoryName:
+                              categories.find(
+                                (c) => c.category_id === parseInt(v),
+                              )?.category_name || "",
+                          })
+                        }
+                      >
+                        <SelectTrigger className="bg-muted/50 border-border/50">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-card border-border">
+                          {categories.map((cat) => (
+                            <SelectItem
+                              key={cat.category_id}
+                              value={cat.category_id.toString()}
+                            >
+                              {cat.category_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2 col-span-2">
+                      <label className="text-sm font-medium">Date</label>
+                      <Input
+                        type="date"
+                        value={editingEvent.date}
+                        onChange={(e) =>
+                          setEditingEvent({
+                            ...editingEvent,
+                            date: e.target.value,
+                          })
+                        }
+                        className="bg-muted/50 border-border/50"
+                      />
+                    </div>
+                    <div className="space-y-2 col-span-2">
+                      <label className="text-sm font-medium">Time</label>
+                      <Input
+                        type="time"
+                        value={editingEvent.time}
+                        onChange={(e) =>
+                          setEditingEvent({
+                            ...editingEvent,
+                            time: e.target.value,
+                          })
+                        }
+                        className="bg-muted/50 border-border/50"
+                      />
+                    </div>
+                    <div className="space-y-2 col-span-2">
+                      <label className="text-sm font-medium">
+                        Coordinator Email
+                      </label>
+                      <Input
+                        type="email"
+                        value={editingEvent.coordinatorEmail}
+                        onChange={(e) =>
+                          setEditingEvent({
+                            ...editingEvent,
+                            coordinatorEmail: e.target.value,
+                          })
+                        }
+                        placeholder="coordinator@example.com"
+                        className="bg-muted/50 border-border/50"
+                      />
+                    </div>
+                    <div className="space-y-2 col-span-2">
+                      <label className="text-sm font-medium">Event Image</label>
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            try {
+                              // Store original image URL for preview
+                              const originalUrl = URL.createObjectURL(file);
+                              setEditOriginalImageUrl(originalUrl);
+
+                              // Crop image to 400x600
+                              const croppedFile =
+                                await cropImageToMobileViewport(file);
+                              setEditingEvent({
+                                ...editingEvent,
+                                imageFile: croppedFile,
+                              });
+                              // Create preview URL from cropped image
+                              const url = URL.createObjectURL(croppedFile);
+                              setEditImagePreviewUrl(url);
+                            } catch (error) {
+                              console.error("Error cropping image:", error);
+                              alert(
+                                "Failed to process image. Please try another image.",
+                              );
+                            }
+                          } else {
+                            setEditingEvent({
+                              ...editingEvent,
+                              imageFile: undefined,
+                            });
+                            setEditImagePreviewUrl(null);
+                            setEditOriginalImageUrl(null);
+                          }
+                        }}
+                        className="bg-muted/50 border-border/50"
+                      />
                       <p className="text-xs text-muted-foreground">
-                        Current image: {editingEvent.picture.split("/").pop()}
+                        Image will be cropped to 2:3 ratio (400x600) with
+                        maximum coverage
                       </p>
+                      {editingEvent.picture && !editingEvent.imageFile && (
+                        <p className="text-xs text-muted-foreground">
+                          Current image: {editingEvent.picture.split("/").pop()}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {/* Image Preview - shown for both new uploads and existing images */}
+                  {(editOriginalImageUrl ||
+                    (editingEvent.picture && !editingEvent.imageFile)) && (
+                    <div className="w-full">
+                      <ImagePreview
+                        originalUrl={
+                          editOriginalImageUrl || editingEvent.picture
+                        }
+                      />
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border/50">
+                    <div>
+                      <p className="font-medium">Free for DAU Students</p>
+                      <p className="text-sm text-muted-foreground">
+                        When enabled, DAU students can register for free
+                      </p>
+                    </div>
+                    <Switch
+                      checked={editingEvent.freeForDau}
+                      onCheckedChange={(v) =>
+                        setEditingEvent({ ...editingEvent, freeForDau: v })
+                      }
+                    />
+                  </div>
+                </TabsContent>
+                <TabsContent value="fees" className="space-y-4 mt-4">
+                  {/* Solo */}
+                  <div className="p-4 rounded-lg border border-border/50 bg-muted/30">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-5 w-5 text-red-400" />
+                        <span className="font-medium">Solo Participation</span>
+                      </div>
+                      <Switch
+                        checked={
+                          editingEvent.participationCategories.solo.enabled
+                        }
+                        onCheckedChange={(v) =>
+                          setEditingEvent({
+                            ...editingEvent,
+                            participationCategories: {
+                              ...editingEvent.participationCategories,
+                              solo: {
+                                ...editingEvent.participationCategories.solo,
+                                enabled: v,
+                              },
+                            },
+                          })
+                        }
+                      />
+                    </div>
+                    {editingEvent.participationCategories.solo.enabled && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-4 w-4 text-muted-foreground" />
+                          <Input
+                            type="number"
+                            value={
+                              editingEvent.participationCategories.solo.fee
+                            }
+                            onChange={(e) =>
+                              setEditingEvent({
+                                ...editingEvent,
+                                participationCategories: {
+                                  ...editingEvent.participationCategories,
+                                  solo: {
+                                    ...editingEvent.participationCategories
+                                      .solo,
+                                    fee: parseInt(e.target.value) || 0,
+                                  },
+                                },
+                              })
+                            }
+                            className="w-32 bg-muted/50 border-border/50"
+                          />
+                          <span className="text-sm text-muted-foreground">
+                            per person
+                          </span>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Upload className="h-4 w-4 text-muted-foreground" />
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0] || null;
+                                setEditingEvent({
+                                  ...editingEvent,
+                                  participationCategories: {
+                                    ...editingEvent.participationCategories,
+                                    solo: {
+                                      ...editingEvent.participationCategories
+                                        .solo,
+                                      qrCodeFile: file || undefined,
+                                    },
+                                  },
+                                });
+                              }}
+                              className="flex-1 bg-muted/50 border-border/50"
+                            />
+                          </div>
+                          {editingEvent.participationCategories.solo
+                            .qrCodeFile && (
+                            <p className="text-xs text-muted-foreground">
+                              Selected:{" "}
+                              {
+                                editingEvent.participationCategories.solo
+                                  .qrCodeFile.name
+                              }
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     )}
                   </div>
-                </div>
-                {/* Image Preview - shown for both new uploads and existing images */}
-                {(editOriginalImageUrl ||
-                  (editingEvent.picture && !editingEvent.imageFile)) && (
-                  <div className="w-full">
-                    <ImagePreview
-                      originalUrl={editOriginalImageUrl || editingEvent.picture}
-                    />
-                  </div>
-                )}
-                <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border/50">
-                  <div>
-                    <p className="font-medium">Free for DAU Students</p>
-                    <p className="text-sm text-muted-foreground">
-                      When enabled, DAU students can register for free
-                    </p>
-                  </div>
-                  <Switch
-                    checked={editingEvent.freeForDau}
-                    onCheckedChange={(v) =>
-                      setEditingEvent({ ...editingEvent, freeForDau: v })
-                    }
-                  />
-                </div>
-              </TabsContent>
-              <TabsContent
-                value="fees"
-                className="space-y-4 mt-4 overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-muted/50 [&::-webkit-scrollbar-thumb]:bg-red-500/50 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-red-500/70"
-              >
-                {/* Solo */}
-                <div className="p-4 rounded-lg border border-border/50 bg-muted/30">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-5 w-5 text-red-400" />
-                      <span className="font-medium">Solo Participation</span>
-                    </div>
-                    <Switch
-                      checked={
-                        editingEvent.participationCategories.solo.enabled
-                      }
-                      onCheckedChange={(v) =>
-                        setEditingEvent({
-                          ...editingEvent,
-                          participationCategories: {
-                            ...editingEvent.participationCategories,
-                            solo: {
-                              ...editingEvent.participationCategories.solo,
-                              enabled: v,
+                  {/* Duet */}
+                  <div className="p-4 rounded-lg border border-border/50 bg-muted/30">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-5 w-5 text-rose-400" />
+                        <span className="font-medium">Duet Participation</span>
+                      </div>
+                      <Switch
+                        checked={
+                          editingEvent.participationCategories.duet.enabled
+                        }
+                        onCheckedChange={(v) =>
+                          setEditingEvent({
+                            ...editingEvent,
+                            participationCategories: {
+                              ...editingEvent.participationCategories,
+                              duet: {
+                                ...editingEvent.participationCategories.duet,
+                                enabled: v,
+                              },
                             },
-                          },
-                        })
-                      }
-                    />
-                  </div>
-                  {editingEvent.participationCategories.solo.enabled && (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        <Input
-                          type="number"
-                          value={editingEvent.participationCategories.solo.fee}
-                          onChange={(e) =>
-                            setEditingEvent({
-                              ...editingEvent,
-                              participationCategories: {
-                                ...editingEvent.participationCategories,
-                                solo: {
-                                  ...editingEvent.participationCategories.solo,
-                                  fee: parseInt(e.target.value) || 0,
-                                },
-                              },
-                            })
-                          }
-                          className="w-32 bg-muted/50 border-border/50"
-                        />
-                        <span className="text-sm text-muted-foreground">
-                          per person
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <QrCode className="h-4 w-4 text-muted-foreground" />
-                        <Input
-                          type="text"
-                          value={
-                            editingEvent.participationCategories.solo.qrUrl
-                          }
-                          onChange={(e) =>
-                            setEditingEvent({
-                              ...editingEvent,
-                              participationCategories: {
-                                ...editingEvent.participationCategories,
-                                solo: {
-                                  ...editingEvent.participationCategories.solo,
-                                  qrUrl: e.target.value,
-                                },
-                              },
-                            })
-                          }
-                          placeholder="Payment QR Code URL"
-                          className="flex-1 bg-muted/50 border-border/50"
-                        />
-                      </div>
+                          })
+                        }
+                      />
                     </div>
-                  )}
-                </div>
-                {/* Duet */}
-                <div className="p-4 rounded-lg border border-border/50 bg-muted/30">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-5 w-5 text-rose-400" />
-                      <span className="font-medium">Duet Participation</span>
-                    </div>
-                    <Switch
-                      checked={
-                        editingEvent.participationCategories.duet.enabled
-                      }
-                      onCheckedChange={(v) =>
-                        setEditingEvent({
-                          ...editingEvent,
-                          participationCategories: {
-                            ...editingEvent.participationCategories,
-                            duet: {
-                              ...editingEvent.participationCategories.duet,
-                              enabled: v,
-                            },
-                          },
-                        })
-                      }
-                    />
-                  </div>
-                  {editingEvent.participationCategories.duet.enabled && (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        <Input
-                          type="number"
-                          value={editingEvent.participationCategories.duet.fee}
-                          onChange={(e) =>
-                            setEditingEvent({
-                              ...editingEvent,
-                              participationCategories: {
-                                ...editingEvent.participationCategories,
-                                duet: {
-                                  ...editingEvent.participationCategories.duet,
-                                  fee: parseInt(e.target.value) || 0,
-                                },
-                              },
-                            })
-                          }
-                          className="w-32 bg-muted/50 border-border/50"
-                        />
-                        <span className="text-sm text-muted-foreground">
-                          per team
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <QrCode className="h-4 w-4 text-muted-foreground" />
-                        <Input
-                          type="text"
-                          value={
-                            editingEvent.participationCategories.duet.qrUrl
-                          }
-                          onChange={(e) =>
-                            setEditingEvent({
-                              ...editingEvent,
-                              participationCategories: {
-                                ...editingEvent.participationCategories,
-                                duet: {
-                                  ...editingEvent.participationCategories.duet,
-                                  qrUrl: e.target.value,
-                                },
-                              },
-                            })
-                          }
-                          placeholder="Payment QR Code URL"
-                          className="flex-1 bg-muted/50 border-border/50"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-                {/* Group */}
-                <div className="p-4 rounded-lg border border-border/50 bg-muted/30">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-5 w-5 text-red-400" />
-                      <span className="font-medium">Group Participation</span>
-                    </div>
-                    <Switch
-                      checked={
-                        editingEvent.participationCategories.group.enabled
-                      }
-                      onCheckedChange={(v) =>
-                        setEditingEvent({
-                          ...editingEvent,
-                          participationCategories: {
-                            ...editingEvent.participationCategories,
-                            group: {
-                              ...editingEvent.participationCategories.group,
-                              enabled: v,
-                            },
-                          },
-                        })
-                      }
-                    />
-                  </div>
-                  {editingEvent.participationCategories.group.enabled && (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        <Input
-                          type="number"
-                          value={editingEvent.participationCategories.group.fee}
-                          onChange={(e) =>
-                            setEditingEvent({
-                              ...editingEvent,
-                              participationCategories: {
-                                ...editingEvent.participationCategories,
-                                group: {
-                                  ...editingEvent.participationCategories.group,
-                                  fee: parseInt(e.target.value) || 0,
-                                },
-                              },
-                            })
-                          }
-                          className="w-32 bg-muted/50 border-border/50"
-                        />
-                        <span className="text-sm text-muted-foreground">
-                          per team
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4">
+                    {editingEvent.participationCategories.duet.enabled && (
+                      <div className="space-y-3">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm">Min:</span>
+                          <DollarSign className="h-4 w-4 text-muted-foreground" />
                           <Input
                             type="number"
                             value={
-                              editingEvent.participationCategories.group
-                                .minParticipants
+                              editingEvent.participationCategories.duet.fee
+                            }
+                            onChange={(e) =>
+                              setEditingEvent({
+                                ...editingEvent,
+                                participationCategories: {
+                                  ...editingEvent.participationCategories,
+                                  duet: {
+                                    ...editingEvent.participationCategories
+                                      .duet,
+                                    fee: parseInt(e.target.value) || 0,
+                                  },
+                                },
+                              })
+                            }
+                            className="w-32 bg-muted/50 border-border/50"
+                          />
+                          <span className="text-sm text-muted-foreground">
+                            per team
+                          </span>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Upload className="h-4 w-4 text-muted-foreground" />
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0] || null;
+                                setEditingEvent({
+                                  ...editingEvent,
+                                  participationCategories: {
+                                    ...editingEvent.participationCategories,
+                                    duet: {
+                                      ...editingEvent.participationCategories
+                                        .duet,
+                                      qrCodeFile: file || undefined,
+                                    },
+                                  },
+                                });
+                              }}
+                              className="flex-1 bg-muted/50 border-border/50"
+                            />
+                          </div>
+                          {editingEvent.participationCategories.duet
+                            .qrCodeFile && (
+                            <p className="text-xs text-muted-foreground">
+                              Selected:{" "}
+                              {
+                                editingEvent.participationCategories.duet
+                                  .qrCodeFile.name
+                              }
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {/* Group */}
+                  <div className="p-4 rounded-lg border border-border/50 bg-muted/30">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-5 w-5 text-red-400" />
+                        <span className="font-medium">Group Participation</span>
+                      </div>
+                      <Switch
+                        checked={
+                          editingEvent.participationCategories.group.enabled
+                        }
+                        onCheckedChange={(v) =>
+                          setEditingEvent({
+                            ...editingEvent,
+                            participationCategories: {
+                              ...editingEvent.participationCategories,
+                              group: {
+                                ...editingEvent.participationCategories.group,
+                                enabled: v,
+                              },
+                            },
+                          })
+                        }
+                      />
+                    </div>
+                    {editingEvent.participationCategories.group.enabled && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-4 w-4 text-muted-foreground" />
+                          <Input
+                            type="number"
+                            value={
+                              editingEvent.participationCategories.group.fee
                             }
                             onChange={(e) =>
                               setEditingEvent({
@@ -1344,74 +1347,114 @@ export default function EventsPage() {
                                   group: {
                                     ...editingEvent.participationCategories
                                       .group,
-                                    minParticipants:
-                                      parseInt(e.target.value) || 3,
+                                    fee: parseInt(e.target.value) || 0,
                                   },
                                 },
                               })
                             }
-                            className="w-20 bg-muted/50 border-border/50"
+                            className="w-32 bg-muted/50 border-border/50"
                           />
+                          <span className="text-sm text-muted-foreground">
+                            per team
+                          </span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm">Max:</span>
-                          <Input
-                            type="number"
-                            value={
-                              editingEvent.participationCategories.group
-                                .maxParticipants
-                            }
-                            onChange={(e) =>
-                              setEditingEvent({
-                                ...editingEvent,
-                                participationCategories: {
-                                  ...editingEvent.participationCategories,
-                                  group: {
-                                    ...editingEvent.participationCategories
-                                      .group,
-                                    maxParticipants:
-                                      parseInt(e.target.value) || 8,
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm">Min:</span>
+                            <Input
+                              type="number"
+                              value={
+                                editingEvent.participationCategories.group
+                                  .minParticipants
+                              }
+                              onChange={(e) =>
+                                setEditingEvent({
+                                  ...editingEvent,
+                                  participationCategories: {
+                                    ...editingEvent.participationCategories,
+                                    group: {
+                                      ...editingEvent.participationCategories
+                                        .group,
+                                      minParticipants:
+                                        parseInt(e.target.value) || 3,
+                                    },
                                   },
-                                },
-                              })
-                            }
-                            className="w-20 bg-muted/50 border-border/50"
-                          />
+                                })
+                              }
+                              className="w-20 bg-muted/50 border-border/50"
+                            />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm">Max:</span>
+                            <Input
+                              type="number"
+                              value={
+                                editingEvent.participationCategories.group
+                                  .maxParticipants
+                              }
+                              onChange={(e) =>
+                                setEditingEvent({
+                                  ...editingEvent,
+                                  participationCategories: {
+                                    ...editingEvent.participationCategories,
+                                    group: {
+                                      ...editingEvent.participationCategories
+                                        .group,
+                                      maxParticipants:
+                                        parseInt(e.target.value) || 8,
+                                    },
+                                  },
+                                })
+                              }
+                              className="w-20 bg-muted/50 border-border/50"
+                            />
+                          </div>
+                          <span className="text-sm text-muted-foreground">
+                            members
+                          </span>
                         </div>
-                        <span className="text-sm text-muted-foreground">
-                          members
-                        </span>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Upload className="h-4 w-4 text-muted-foreground" />
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0] || null;
+                                setEditingEvent({
+                                  ...editingEvent,
+                                  participationCategories: {
+                                    ...editingEvent.participationCategories,
+                                    group: {
+                                      ...editingEvent.participationCategories
+                                        .group,
+                                      qrCodeFile: file || undefined,
+                                    },
+                                  },
+                                });
+                              }}
+                              className="flex-1 bg-muted/50 border-border/50"
+                            />
+                          </div>
+                          {editingEvent.participationCategories.group
+                            .qrCodeFile && (
+                            <p className="text-xs text-muted-foreground">
+                              Selected:{" "}
+                              {
+                                editingEvent.participationCategories.group
+                                  .qrCodeFile.name
+                              }
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <QrCode className="h-4 w-4 text-muted-foreground" />
-                        <Input
-                          type="text"
-                          value={
-                            editingEvent.participationCategories.group.qrUrl
-                          }
-                          onChange={(e) =>
-                            setEditingEvent({
-                              ...editingEvent,
-                              participationCategories: {
-                                ...editingEvent.participationCategories,
-                                group: {
-                                  ...editingEvent.participationCategories.group,
-                                  qrUrl: e.target.value,
-                                },
-                              },
-                            })
-                          }
-                          placeholder="Payment QR Code URL"
-                          className="flex-1 bg-muted/50 border-border/50"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-            </Tabs>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
           )}
-          <DialogFooter className="flex-shrink-0">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setIsEditOpen(false)}

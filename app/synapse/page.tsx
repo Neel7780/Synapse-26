@@ -13,6 +13,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import NavigationPanel from "@/components/ui/NavigationPanel";
 import { Navbar } from "@/components/ui/Resizable-navbar";
+import FluidCanvas from "@/components/FluidCanvas";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -36,10 +37,8 @@ export default function HomeSection() {
   }, [entered]);
 
   return (
-    <main className="flex flex-col min-h-svh overflow-x-hidden relative">
-      {/* Custom GSAP cursor */}
-      <CustomCursor />
-
+    <main className="flex flex-col min-h-dvh overflow-x-hidden relative">
+      {entered ? <FluidCanvas /> : ""}
       <Navbar visible={showNavbar}>
         <NavigationPanel />
       </Navbar>
@@ -52,17 +51,21 @@ export default function HomeSection() {
 
       <div
         className={`
-          mt-[150svh]
-          w-full
-          flex-col
-          z-30
-          ${entered ? "flex" : "hidden"}
-        `}
+            mt-[200vh]
+            w-full
+            flex-col
+            z-30
+            ${entered ? "flex" : "hidden"}
+          `}
       >
         <AboutSection />
         <JokerSection />
-        <ArtistsSection />
-        <HallOfFame />
+        <div className="relative z-20 bg-black" style={{ isolation: "isolate" }}>
+          <ArtistsSection />
+        </div>
+        <div className="relative z-10 bg-black" style={{ isolation: "isolate" }}>
+          <HallOfFame />
+        </div>
         <Footer />
       </div>
     </main>
