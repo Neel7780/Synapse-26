@@ -54,43 +54,235 @@ const poppins = Poppins({
   display: "swap",
 });
 
+// ==========================================================================
+// Site Configuration
+// ==========================================================================
+const siteConfig = {
+  name: "SYNAPSE'26",
+  tagline: "DA Ka Tyohaar",
+  description: "SYNAPSE'26 - The Ultimate Techno-Cultural Festival of DAIICT. Experience 3 days of electrifying performances, competitions, workshops, and pronites featuring top artists. February 26-28, 2026 at Gandhinagar, Gujarat.",
+  url: process.env.NEXT_PUBLIC_SITE_URL || "https://synapse-daiict.co.in",
+  ogImage: "/og-image.png",
+  twitterHandle: "@synaboriii",
+  locale: "en_IN",
+  college: "Dhirubhai Ambani Institute of Information and Communication Technology",
+  dates: "February 26-28, 2026",
+  location: "DAIICT, Gandhinagar, Gujarat, India",
+};
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#000000",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#000000" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
+  colorScheme: "dark",
 };
 
 export const metadata: Metadata = {
-  title: "SYNAPSE' 26 | DA Ka Tyohaar",
-  description:
-    "SYNAPSE'26 - The Ultimate Tech-Cultural Festival. Register now for the most anticipated event of the year.",
+  // ==========================================================================
+  // Basic Metadata
+  // ==========================================================================
+  title: {
+    default: `${siteConfig.name} | ${siteConfig.tagline}`,
+    template: `%s | ${siteConfig.name}`,
+  },
+  description: siteConfig.description,
   keywords: [
     "synapse",
-    "cultural-tech fest",
+    "synapse 2026",
+    "synapse 26",
+    "DAIICT fest",
+    "DAIICT cultural fest",
+    "techno-cultural fest",
     "college fest",
-    "2026",
-    "technology",
-    "events",
-    "gujarat",
-    "DAkaTyohaar",
-    "daiict-fest",
-    "dhirubhai ambani college fest",
-    "dhirubhai ambani institute of information and communication technology fest",
+    "tech fest india",
+    "cultural fest india",
+    "gujarat college fest",
+    "gandhinagar events",
+    "DA Ka Tyohaar",
+    "dhirubhai ambani fest",
+    "daiict synapse",
+    "synapse daiict",
+    "college events 2026",
+    "pronite",
+    "live concerts",
+    "hackathon",
+    "coding competition",
+    "dance competition",
+    "music competition",
+    "gaming tournament",
+    "fashion show college",
   ],
+  authors: [
+    { name: "SYNAPSE Team", url: siteConfig.url },
+    { name: "DAIICT", url: "https://daiict.ac.in" },
+  ],
+  creator: "SYNAPSE'26 Team",
+  publisher: "DAIICT",
+  
+  // ==========================================================================
+  // Icons & Manifest
+  // ==========================================================================
   icons: {
-    icon: "/Synapse Logo.png",
-    apple: "/Synapse Logo.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/Synapse Logo.png", type: "image/png" },
+    ],
+    apple: [
+      { url: "/Synapse Logo.png", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: "/Synapse Logo.png",
   },
+  manifest: "/manifest.json",
+  
+  // ==========================================================================
+  // Open Graph (Facebook, LinkedIn, etc.)
+  // ==========================================================================
   openGraph: {
-    title: "SYNAPSE' 26",
-    description: "The Ultimate Techno-Cultural Festival",
     type: "website",
+    locale: siteConfig.locale,
+    url: siteConfig.url,
+    siteName: siteConfig.name,
+    title: `${siteConfig.name} | ${siteConfig.tagline}`,
+    description: siteConfig.description,
+    images: [
+      {
+        url: `${siteConfig.url}/og-image.png`,
+        width: 1200,
+        height: 630,
+        alt: `${siteConfig.name} - The Ultimate Techno-Cultural Festival`,
+        type: "image/png",
+      },
+      {
+        url: `${siteConfig.url}/Synapse Logo.png`,
+        width: 512,
+        height: 512,
+        alt: `${siteConfig.name} Logo`,
+        type: "image/png",
+      },
+    ],
   },
+  
+  // ==========================================================================
+  // Twitter Card
+  // ==========================================================================
+  twitter: {
+    card: "summary_large_image",
+    title: `${siteConfig.name} | ${siteConfig.tagline}`,
+    description: siteConfig.description,
+    site: siteConfig.twitterHandle,
+    creator: siteConfig.twitterHandle,
+    images: [`${siteConfig.url}/og-image.png`],
+  },
+  
+  // ==========================================================================
+  // Robots & Indexing
+  // ==========================================================================
   robots: {
     index: true,
     follow: true,
+    nocache: false,
+    googleBot: {
+      index: true,
+      follow: true,
+      noimageindex: false,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
+  
+  // ==========================================================================
+  // Verification (add your verification codes)
+  // ==========================================================================
+  verification: {
+    // google: "your-google-verification-code",
+    // yandex: "your-yandex-verification-code",
+  },
+  
+  // ==========================================================================
+  // App Links
+  // ==========================================================================
+  alternates: {
+    canonical: siteConfig.url,
+  },
+  
+  // ==========================================================================
+  // Additional Metadata
+  // ==========================================================================
+  category: "events",
+  classification: "College Festival",
+  
+  // App-specific metadata
+  applicationName: siteConfig.name,
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: siteConfig.name,
+  },
+  formatDetection: {
+    telephone: true,
+    date: true,
+    address: true,
+    email: true,
+  },
+  
+  // Other metadata
+  other: {
+    "mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "black-translucent",
+    "msapplication-TileColor": "#000000",
+    "msapplication-config": "/browserconfig.xml",
+  },
+};
+
+// ==========================================================================
+// JSON-LD Structured Data
+// ==========================================================================
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Event",
+  name: `${siteConfig.name} - ${siteConfig.tagline}`,
+  description: siteConfig.description,
+  startDate: "2026-02-26",
+  endDate: "2026-02-28",
+  eventStatus: "https://schema.org/EventScheduled",
+  eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+  location: {
+    "@type": "Place",
+    name: siteConfig.college,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "Near Indroda Circle, Gandhinagar",
+      addressLocality: "Gandhinagar",
+      addressRegion: "Gujarat",
+      postalCode: "382007",
+      addressCountry: "IN",
+    },
+  },
+  image: [`${siteConfig.url}/og-image.png`, `${siteConfig.url}/Synapse Logo.png`],
+  organizer: {
+    "@type": "Organization",
+    name: siteConfig.college,
+    url: "https://daiict.ac.in",
+  },
+  performer: {
+    "@type": "PerformingGroup",
+    name: "Various Artists",
+  },
+  offers: {
+    "@type": "Offer",
+    availability: "https://schema.org/InStock",
+    price: "0",
+    priceCurrency: "INR",
+    url: `${siteConfig.url}/events`,
+    validFrom: "2025-12-01",
+  },
+  keywords: "college fest, techno-cultural, DAIICT, Gujarat, pronite, hackathon",
 };
 
 export default function RootLayout({
@@ -106,6 +298,12 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* DNS prefetch for Supabase */}
         <link rel="dns-prefetch" href="https://supabase.co" />
+        
+        {/* JSON-LD Structured Data for SEO */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${bebasNeue.variable} ${inter.variable} ${roboto.variable} ${poppins.variable} antialiased bg-black`}
