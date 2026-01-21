@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
+import { Suspense } from "react";
 import { AdminPageHeader } from "@/components/admin/ui/AdminSidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
@@ -24,6 +25,7 @@ import {
   Eye,
   Plus,
   ArrowUpRight,
+  ArrowDownRight,
   CheckCircle,
   Clock,
   Loader2,
@@ -116,28 +118,31 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-8 pb-8">
-      {/* Page Header */}
-      <AdminPageHeader
-        title="Dashboard"
-        subtitle="Overview"
-        actions={
-          <div className="flex gap-3">
-            <Link href="/admin/events/new">
-              <Button variant="outline" className="border-border/60 hover:bg-secondary/80">
-                <Plus className="mr-2 h-4 w-4" />
-                New Event
-              </Button>
-            </Link>
-            <Link href="/admin/analytics">
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                <TrendingUp className="mr-2 h-4 w-4" />
-                Analytics
-              </Button>
-            </Link>
-          </div>
-        }
-      />
+    <div className="space-y-3 p-4">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div key={i} className="flex items-center gap-4">
+          <div className="h-8 w-8 rounded-full bg-secondary animate-pulse" />
+          <div className="h-4 flex-1 rounded bg-secondary animate-pulse" />
+          <div className="h-4 w-16 rounded bg-secondary animate-pulse" />
+          <div className="h-4 w-12 rounded bg-secondary animate-pulse" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Helper to get time-based greeting
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+// Server Component: Dashboard Content
+async function DashboardContent() {
+  const data: DashboardData = await getDashboardData();
+  const { stats, revenue, recentRegistrations, quickStats } = data;
 
       {/* Loading State */}
       {isLoading && (
