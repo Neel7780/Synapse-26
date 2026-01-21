@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AdminPageHeader } from "@/components/admin/ui/AdminSidebar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import {
@@ -22,31 +28,62 @@ export default function NewSponsorPage() {
   const [formData, setFormData] = useState({
     name: "",
     tier: "",
+    customTier: "",
     website_url: "",
-    logo_url: "",
-    description: "",
+    rank: "",
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.tier) {
+
+    const finalTier =
+      formData.tier === "Other" ? formData.customTier : formData.tier;
+
+    if (!formData.name || !finalTier) {
       alert("Name and Tier are required");
       return;
     }
 
     setLoading(true);
     try {
+      const submitData = new FormData();
+      submitData.append("name", formData.name);
+      submitData.append("tier", finalTier);
+      if (formData.website_url) {
+        submitData.append("website_url", formData.website_url);
+      }
+      if (formData.rank) {
+        submitData.append("rank", formData.rank);
+      }
+      if (imageFile) {
+        submitData.append("image", imageFile);
+      }
+
       const res = await fetch("/api/admin/sponsors", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: submitData,
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       alert("Sponsor created successfully!");
       router.push("/admin/sponsors");
-    } catch (err: any) {
-      alert("Failed to create sponsor: " + err.message);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      alert("Failed to create sponsor: " + errorMessage);
     } finally {
       setLoading(false);
     }
@@ -86,7 +123,9 @@ export default function NewSponsorPage() {
                 <label className="text-sm font-medium">Sponsor Name *</label>
                 <Input
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   placeholder="e.g., Tech Corp"
                   required
                   className="bg-muted/50 border-border/50"
@@ -94,57 +133,114 @@ export default function NewSponsorPage() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Tier *</label>
-                <Select value={formData.tier} onValueChange={(v) => setFormData({ ...formData, tier: v })}>
+                <Select
+                  value={formData.tier}
+                  onValueChange={(v) => setFormData({ ...formData, tier: v })}
+                >
                   <SelectTrigger className="bg-muted/50 border-border/50">
                     <SelectValue placeholder="Select tier" />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border">
+                    <SelectItem value="Title">🏆 Title</SelectItem>
+                    <SelectItem value="Co-Title">🤝 Co-Title</SelectItem>
                     <SelectItem value="Platinum">💎 Platinum</SelectItem>
-                    <SelectItem value="Gold">🥇 Gold</SelectItem>
-                    <SelectItem value="Silver">🥈 Silver</SelectItem>
-                    <SelectItem value="Bronze">🥉 Bronze</SelectItem>
+                    <SelectItem value="Associate">🔗 Associate</SelectItem>
+                    <SelectItem value="Other">✏️ Other (Specify)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
+            {formData.tier === "Other" && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  Custom Tier Name *
+                </label>
+                <Input
+                  value={formData.customTier}
+                  onChange={(e) =>
+                    setFormData({ ...formData, customTier: e.target.value })
+                  }
+                  placeholder="Enter custom tier name"
+                  required
+                  className="bg-muted/50 border-border/50"
+                />
+              </div>
+            )}
+
             <div className="space-y-2">
               <label className="text-sm font-medium">Website URL</label>
               <Input
                 value={formData.website_url}
-                onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, website_url: e.target.value })
+                }
                 placeholder="https://example.com"
                 className="bg-muted/50 border-border/50"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Logo URL</label>
+              <label className="text-sm font-medium">Rank (Optional)</label>
               <Input
-                value={formData.logo_url}
-                onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
-                placeholder="https://example.com/logo.png"
+                type="number"
+                min="1"
+                value={formData.rank}
+                onChange={(e) =>
+                  setFormData({ ...formData, rank: e.target.value })
+                }
+                placeholder="Enter rank number"
                 className="bg-muted/50 border-border/50"
               />
+              <p className="text-xs text-muted-foreground">
+                Lower numbers appear first. Leave empty to set later.
+              </p>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Description</label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full rounded-md border border-border/50 bg-muted/50 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                rows={3}
-                placeholder="Brief description of the sponsor"
-              />
+              <label className="text-sm font-medium">Logo Upload</label>
+              <div className="flex items-center gap-4">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="bg-muted/50 border-border/50"
+                />
+                {imagePreview && (
+                  <div className="relative h-20 w-20 rounded-lg border border-border/50 overflow-hidden">
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex gap-3 pt-4">
-              <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90">
-                {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating...</> : "Create Sponsor"}
+              <Button
+                type="submit"
+                disabled={loading}
+                className="bg-primary hover:bg-primary/90"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  "Create Sponsor"
+                )}
               </Button>
               <Link href="/admin/sponsors">
-                <Button type="button" variant="outline" className="border-border/50">Cancel</Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-border/50"
+                >
+                  Cancel
+                </Button>
               </Link>
             </div>
           </form>

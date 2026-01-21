@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { concert_name, concert_date, venue, timing } = body;
+    const { concert_name, concert_date, venue } = body;
 
     // Validation
     if (!concert_name || !concert_date) {
@@ -41,7 +41,6 @@ export async function POST(request: Request) {
         concert_name,
         concert_date,
         venue,
-        timing,
       })
       .select()
       .single();
@@ -63,7 +62,7 @@ export async function PUT(request: Request) {
 
   try {
     const body = await request.json();
-    const { id, concert_name, concert_date, venue, timing } = body;
+    const { id, concert_name, concert_date, venue } = body;
 
     if (!id)
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
@@ -74,7 +73,6 @@ export async function PUT(request: Request) {
         concert_name,
         concert_date,
         venue,
-        timing,
       })
       .eq("id", id)
       .select()
