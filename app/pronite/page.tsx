@@ -237,7 +237,7 @@ export default function PronitePage() {
             you&apos;ll wish you were part of.
           </p>
 
-          <div ref={ctaButtonRef} className="inline-block">
+          {/* <div ref={ctaButtonRef} className="inline-block">
             {!isAuthenticated ? (
               <NavbarButton href="/auth" variant="register">
                 REGISTER
@@ -255,7 +255,7 @@ export default function PronitePage() {
                 LOGOUT
               </NavbarButton>
             )}
-          </div>
+          </div> */}
         </div>
       </section>
 
