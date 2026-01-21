@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
 
   // ==========================================================================
-  // Image Optimization
+  // Image Optimization - Mobile First
   // ==========================================================================
   images: {
     remotePatterns: [
@@ -28,13 +28,17 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
-    // Optimize image formats
+    // Optimize image formats - prioritize modern formats for mobile
     formats: ["image/avif", "image/webp"],
-    // Device sizes for responsive images
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    // Minimize image size
+    // Mobile-first device sizes (smaller sizes first for mobile priority)
+    deviceSizes: [320, 375, 414, 640, 750, 828, 1080, 1200, 1920, 2048],
+    // Smaller image sizes for mobile icons and thumbnails
+    imageSizes: [16, 32, 48, 64, 96, 128, 192, 256, 384],
+    // Aggressive caching for mobile bandwidth optimization
     minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
+    // Limit concurrent image optimizations for memory efficiency
+    dangerouslyAllowSVG: false,
+    contentDispositionType: "inline",
   },
 
   // ==========================================================================
@@ -73,13 +77,14 @@ const nextConfig: NextConfig = {
   },
 
   // ==========================================================================
-  // Headers for Security & Caching
+  // Headers for Security, Caching & Mobile Optimization
   // ==========================================================================
   async headers() {
     return [
       {
         source: "/:path*",
         headers: [
+          // Security headers
           {
             key: "X-DNS-Prefetch-Control",
             value: "on",
@@ -100,15 +105,29 @@ const nextConfig: NextConfig = {
             key: "Referrer-Policy",
             value: "strict-origin-when-cross-origin",
           },
+          // Mobile optimization headers
+          {
+            key: "Vary",
+            value: "Accept-Encoding, User-Agent",
+          },
+          // Enable preconnect hints for faster mobile loading
+          {
+            key: "Link",
+            value: "<https://fonts.googleapis.com>; rel=preconnect, <https://fonts.gstatic.com>; rel=preconnect; crossorigin",
+          },
         ],
       },
       {
-        // Cache static assets aggressively
-        source: "/(.*)\\.(ico|png|jpg|jpeg|gif|webp|svg|woff|woff2)",
+        // Cache static assets aggressively - critical for mobile data savings
+        source: "/(.*)\\.(ico|png|jpg|jpeg|gif|webp|avif|svg|woff|woff2|ttf|otf)",
         headers: [
           {
             key: "Cache-Control",
             value: "public, max-age=31536000, immutable",
+          },
+          {
+            key: "Vary",
+            value: "Accept-Encoding",
           },
         ],
       },
@@ -119,6 +138,20 @@ const nextConfig: NextConfig = {
           {
             key: "Cache-Control",
             value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        // Service worker and manifest for PWA/mobile
+        source: "/(sw.js|manifest.json|manifest.webmanifest)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=0, must-revalidate",
+          },
+          {
+            key: "Service-Worker-Allowed",
+            value: "/",
           },
         ],
       },

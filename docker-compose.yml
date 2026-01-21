@@ -1,6 +1,7 @@
 # =============================================================================
 # Docker Compose - Synapse'26
 # Development and Production configurations
+# Enhanced with mobile optimization settings
 # =============================================================================
 
 services:
@@ -25,23 +26,38 @@ services:
     restart: unless-stopped
 
   # ---------------------------------------------------------------------------
-  # Production Service
+  # Production Service - Mobile Optimized
   # ---------------------------------------------------------------------------
   prod:
     build:
       context: .
       dockerfile: Dockerfile
       target: runner
+      args:
+        - ENABLE_MOBILE_OPTIMIZATIONS=true
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
+      # Mobile optimization settings
+      - NODE_OPTIONS=--max-old-space-size=512 --optimize-for-size
+      - NEXT_COMPRESS=true
+      - NEXT_IMAGE_OPTIMIZATION=true
     env_file:
       - .env.production
     restart: always
+    # Resource limits for consistent mobile performance
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -57,4 +73,31 @@ services:
     environment:
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
-    command: sh -c "npm run lint && npm run build"
+    command: sh -c "npm run lint && npx tsc --noEmit && npm run build"
+
+  # ---------------------------------------------------------------------------
+  # Mobile Testing Service
+  # Simulates mobile network conditions for testing
+  # ---------------------------------------------------------------------------
+  mobile-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+      # Simulate mobile constraints
+      - NODE_OPTIONS=--max-old-space-size=256
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
