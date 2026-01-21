@@ -58,8 +58,8 @@ export default function MerchandiseManagementPage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setProducts(data.products || []);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -81,8 +81,8 @@ export default function MerchandiseManagementPage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       await fetchProducts();
-    } catch (err: any) {
-      alert("Failed to delete: " + err.message);
+    } catch (err: unknown) {
+      alert("Failed to delete: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setDeleteDialogOpen(false);
       setDeletingId(null);

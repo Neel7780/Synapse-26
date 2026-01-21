@@ -244,7 +244,7 @@ export default function About() {
             <div className="font-jqka text-left w-full">
               <div className="space-y-6 text-[#e5e5e5] text-lg md:text-xl lg:text-2xl leading-relaxed lg:leading-[39px] tracking-wide">
                 <p ref={setParagraphRef(0)}>
-                  Step into the twisted wonderland of Synapse'26, Gujarat's most
+                  Step into the twisted wonderland of Synapse&apos;26, Gujarat&apos;s most
                   electrifying and unforgettable annual cultural festival!
                   Curated by the bold and brilliant Synapse Committee, this
                   four-day spectacle is where chaos meets creativity and rules
@@ -252,31 +252,31 @@ export default function About() {
                 </p>
 
                 <p ref={setParagraphRef(1)}>
-                  From 26th February to 1st March, Synapse'26 unveils The Joker's Realm — a world where
+                  From 26th February to 1st March, Synapse&apos;26 unveils The Joker&apos;s Realm — a world where
                   laughter hides secrets, madness fuels art, and unpredictability is
                   the only constant. Expect three explosive concert nights with
-                  artists who'll shake your reality, a riotous stand-up comedy night,
+                  artists who&apos;ll shake your reality, a riotous stand-up comedy night,
                   and 25+ high-energy events designed to test your talent, nerve, and
                   wit.
                 </p>
 
                 <p ref={setParagraphRef(2)}>
-                  This isn't just a fest — it's a game of minds and moments.
+                  This isn&apos;t just a fest — it&apos;s a game of minds and moments.
                   From jaw-dropping performances and immersive experiences to
                   thrilling competitions and surprise twists at every turn, The
-                  Joker's Realm invites you to embrace the beautiful chaos.
+                  Joker&apos;s Realm invites you to embrace the beautiful chaos.
                 </p>
 
                 <p ref={setParagraphRef(3)}>
-                  Whether you're a performer craving the spotlight, a strategist
+                  Whether you&apos;re a performer craving the spotlight, a strategist
                   chasing victory, or a free spirit seeking unforgettable vibes
-                  — Synapse'26 is your wild card.
+                  — Synapse&apos;26 is your wild card.
                 </p>
 
                 <p ref={setParagraphRef(4)} className="text-white mt-8 font-medium">
                   So shuffle the deck, take your chance, and step into the realm
                   where nothing is predictable and everything is legendary.
-                  Dare to play. Dare to stay. Welcome to Synapse'26. 🔥
+                  Dare to play. Dare to stay. Welcome to Synapse&apos;26. 🔥
                 </p>
               </div>
             </div>

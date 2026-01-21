@@ -37,7 +37,7 @@ const TERMS_CONTENT = [
   {
     title: "Payment Policy",
     points: [
-      "All payments for Synapse'26 events will be processed through the Razorpay payment gateway.",
+      "All payments for Synapse&apos;26 events will be processed through the Razorpay payment gateway.",
       "Payments can be made using UPI, Debit Card, Credit Card, or Internet Banking.",
     ],
   },
@@ -174,10 +174,10 @@ export default function Terms() {
         ))}
 
         <p className="footer-text mb-10 mt-10 sm:mb-14 lg:mb-16 sm:mt-14 lg:mt-16 max-w-[1000px] text-sm sm:text-base lg:text-[25px] leading-relaxed text-[#e6e6e6] opacity-0">
-          By attending Synapse'26, you agree to abide by these terms and
+          By attending Synapse&apos;26, you agree to abide by these terms and
           conditions. Failure to comply may result in removal from the festival
           premises without any refund. We appreciate your cooperation in making
-          Synapse'26 a memorable and magical experience for everyone!
+          Synapse&apos;26 a memorable and magical experience for everyone!
         </p>
       </div>
       <Footer />

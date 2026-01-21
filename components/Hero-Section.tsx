@@ -801,7 +801,7 @@ export default function HeroSection({
               </div>
 
               <div className="title-wrapper flex justify-center pt-[80px] sm:pt-[60px] md:pt-[120px] h-[calc(100dvh-120px)] md:h-[calc(100dvh-200px)]">
-                <h1 className="title text-4xl min-[450px]:text-6xl sm:text-7xl md:text-[clamp(40px,12vw,140px)] font-joker leading-none text-center px-4" ref={titleRef}>synapse' 26</h1>
+                <h1 className="title text-4xl min-[450px]:text-6xl sm:text-7xl md:text-[clamp(40px,12vw,140px)] font-joker leading-none text-center px-4" ref={titleRef}>synapse&apos; 26</h1>
               </div>
               <div
                 ref={scrollHintHomeRef}

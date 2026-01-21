@@ -668,10 +668,10 @@ export default function HallOfFame() {
       <div className="relative w-full overflow-hidden py-5 mb-5 bg-black">
         <div className="flex w-max animate-marquee">
           <span className="font-jqka uppercase text-3xl lg:text-5xl whitespace-nowrap">
-            Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26 #joker's realm •
+            Synapse&apos; 26 #joker&apos;s realm • Synapse&apos; 26 #joker&apos;s realm • Synapse&apos; 26 #joker&apos;s realm • Synapse&apos; 26 #joker&apos;s realm • Synapse&apos; 26 #joker&apos;s realm • Synapse&apos; 26 #joker&apos;s realm •
           </span>
           <span className="font-jqka uppercase text-3xl lg:text-5xl whitespace-nowrap">
-            Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26 #joker's realm •
+            Synapse&apos; 26 #joker&apos;s realm • Synapse&apos; 26 #joker&apos;s realm • Synapse&apos; 26 #joker&apos;s realm • Synapse&apos; 26 #joker&apos;s realm • Synapse&apos; 26 #joker&apos;s realm • Synapse&apos; 26 #joker&apos;s realm •
           </span>
         </div>
       </div>

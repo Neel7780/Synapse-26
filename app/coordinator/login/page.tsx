@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/Button";
 import { Label } from "@/components/ui/label";
 import { Calendar, Mail, Lock, AlertCircle } from "lucide-react";
+import Link from "next/link";
 
 export default function CoordinatorLoginPage() {
   const router = useRouter();
@@ -49,8 +50,8 @@ export default function CoordinatorLoginPage() {
 
       // Redirect to coordinator dashboard
       router.push("/coordinator");
-    } catch (err: any) {
-      setError(err.message || "An error occurred during login");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "An error occurred during login");
       setLoading(false);
     }
   };
@@ -132,12 +133,12 @@ export default function CoordinatorLoginPage() {
             </Button>
 
             <div className="text-center">
-              <a
+              <Link
                 href="/"
                 className="text-sm text-gray-400 hover:text-red-500 transition-colors"
               >
                 ← Back to Home
-              </a>
+              </Link>
             </div>
           </form>
         </CardContent>
