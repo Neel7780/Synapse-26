@@ -81,7 +81,12 @@ export default function EventPage() {
             {/* HERO SECTION */}
             <div className="relative w-full pb-10 flex flex-col items-center group">
                 {/* Image Container */}
-                <div className="relative w-full h-[50vh] md:h-[60vh] lg:h-[70vh] overflow-hidden">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    className="relative w-full h-[50vh] md:h-[60vh] lg:h-[70vh] overflow-hidden"
+                >
                     <Image
                         src={event.image}
                         alt={event.name}
@@ -90,18 +95,29 @@ export default function EventPage() {
                         priority
                     />
                     <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black to-transparent" />
-                </div>
+                </motion.div>
 
                 {/* Event Title */}
-                <h1 className="font-joker text-5xl md:text-7xl lg:text-[150px] leading-none text-white mt-[-30px] md:mt-[-50px] lg:mt-[-80px] relative z-10 drop-shadow-2xl text-center lowercase tracking-widest pointer-events-none">
+                <motion.h1
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 0.3, ease: "backOut" }}
+                    className="font-joker text-5xl md:text-7xl lg:text-[150px] leading-none text-white mt-[-30px] md:mt-[-50px] lg:mt-[-80px] relative z-10 drop-shadow-2xl text-center lowercase tracking-widest pointer-events-none"
+                >
                     {event.name}
-                </h1>
+                </motion.h1>
             </div>
 
             <div className="max-w-[1400px] mx-auto px-6 md:px-12 lg:px-20 py-12 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start">
 
                 {/* LEFT COLUMN: DESCRIPTION & REGISTRATION */}
-                <div className="space-y-12">
+                <motion.div
+                    initial={{ opacity: 0, x: -30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
+                    className="space-y-12"
+                >
                     {/* About Section */}
                     <section>
                         <h2 className="text-3xl md:text-4xl text-red-600 mb-6 font-semibold">
@@ -198,10 +214,16 @@ export default function EventPage() {
                             </Button>
                         )}
                     </section>
-                </div>
+                </motion.div>
 
                 {/* RIGHT COLUMN: RULES CARD */}
-                <div className="w-full">
+                <motion.div
+                    initial={{ opacity: 0, x: 30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                    className="w-full"
+                >
                     <div className="border border-red-600 rounded-[30px] p-8 md:p-12 relative bg-black shadow-[0_0_20px_rgba(220,38,38,0.1)]">
                         <h2 className="text-4xl md:text-5xl font-normal text-white text-center mb-8 font-poppins">
                             Rules
@@ -226,7 +248,7 @@ export default function EventPage() {
                             </div>
                         )}
                     </div>
-                </div>
+                </motion.div>
 
             </div>
 

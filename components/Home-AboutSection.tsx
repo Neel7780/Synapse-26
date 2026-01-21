@@ -89,11 +89,11 @@ export default function AboutSection() {
     words.forEach((word, index) => {
       const wordSpan = document.createElement("span");
       wordSpan.className = "title-word inline-block overflow-hidden";
-      
+
       const innerSpan = document.createElement("span");
       innerSpan.className = "title-letter inline-block";
       innerSpan.textContent = word;
-      
+
       wordSpan.appendChild(innerSpan);
       el.appendChild(wordSpan);
       if (index < words.length - 1) {
@@ -244,20 +244,9 @@ export default function AboutSection() {
       }}
     >
       {/* Decorative floating particles */}
-      <div ref={decorativeRef} className="absolute inset-0 pointer-events-none overflow-hidden">
-        {[...Array(8)].map((_, i) => (
-          <div
-            key={i}
-            className="particle absolute w-2 h-2 bg-red-500/20 rounded-full"
-            style={{
-              left: `${10 + i * 12}%`,
-              top: `${20 + (i % 3) * 25}%`,
-            }}
-          />
-        ))}
-      </div>
 
-      <div 
+
+      <div
         className="doittitle mb-6 text-white text-[clamp(3rem,15vw,5rem)] font-joker tracking-wide leading-relaxed"
         style={{ perspective: "1000px" }}
       >

@@ -38,7 +38,11 @@ export default function HomeSection() {
 
   return (
     <main className="flex flex-col min-h-dvh overflow-x-hidden relative">
-      {entered ? <FluidCanvas /> : ""}
+      {entered ? (
+        <div className="hidden md:block">
+          <FluidCanvas />
+        </div>
+      ) : ""}
       <Navbar visible={showNavbar}>
         <NavigationPanel />
       </Navbar>

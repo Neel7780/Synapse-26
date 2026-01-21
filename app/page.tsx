@@ -4,7 +4,7 @@ import gsap from "gsap";
 import HomeSection from "@/app/synapse/page";
 import { useEffect } from "react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useNavigationState } from "@/lib/useNavigationState";
+
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
