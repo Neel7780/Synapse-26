@@ -369,7 +369,7 @@ export default function ArtistsSection() {
             style={{
               width: "clamp(32px, 6vw, 62px)",
               height: "clamp(28px, 5vw, 54px)",
-              left: "max-[550px]:50px min-[550px]:calc(clamp(200px, 50vw, 480px)/2 + 50%)",
+              left: "calc(clamp(240px, 55vw, 520px)/2 + 50%)",
             }}
             aria-label="Next artist"
           >
@@ -401,7 +401,7 @@ export default function ArtistsSection() {
             style={{
               width: "clamp(32px, 6vw, 62px)",
               height: "clamp(28px, 5vw, 54px)",
-              right: "calc(clamp(200px, 50vw, 480px)/2 + 50%)",
+              right: "calc(clamp(240px, 55vw, 520px)/2 + 50%)",
             }}
             aria-label="Previous artist"
           >
