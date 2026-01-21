@@ -175,6 +175,7 @@ export type Database = {
         Row: {
           category_id: number | null;
           coordinator_id: string | null;
+          coordinator_email: string | null;
           description: string | null;
           event_date: string;
           event_id: number;
@@ -187,6 +188,7 @@ export type Database = {
         Insert: {
           category_id?: number | null;
           coordinator_id?: string | null;
+          coordinator_email?: string | null;
           description?: string | null;
           event_date: string;
           event_id?: number;
@@ -199,6 +201,7 @@ export type Database = {
         Update: {
           category_id?: number | null;
           coordinator_id?: string | null;
+          coordinator_email?: string | null;
           description?: string | null;
           event_date?: string;
           event_id?: number;
@@ -274,6 +277,7 @@ export type Database = {
       };
       event_registrations: {
         Row: {
+          coordinator_status: "pending" | "verified" | null;
           created_at: string | null;
           event_id: number | null;
           fee_id: number | null;
@@ -287,6 +291,7 @@ export type Database = {
           transaction_id: string | null;
         };
         Insert: {
+          coordinator_status?: "pending" | "verified" | null;
           created_at?: string | null;
           event_id?: number | null;
           fee_id?: number | null;
@@ -300,6 +305,7 @@ export type Database = {
           transaction_id?: string | null;
         };
         Update: {
+          coordinator_status?: "pending" | "verified" | null;
           created_at?: string | null;
           event_id?: number | null;
           fee_id?: number | null;
