@@ -4,7 +4,6 @@ import gsap from "gsap";
 import HomeSection from "@/app/synapse/page";
 import { useEffect } from "react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useNavigationState } from "@/lib/useNavigationState";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -18,7 +17,7 @@ export default function Home() {
   }, []);
   return (
     <>
-      <main className="relative min-h-[100svh] bg-black overflow-x-hidden">
+      <main className="relative min-h-svh bg-black overflow-x-hidden">
         {/* Main Content - Hidden during loading, visible after */}
         <div
           className={`relative w-full f-full transition-opacity duration-500`}

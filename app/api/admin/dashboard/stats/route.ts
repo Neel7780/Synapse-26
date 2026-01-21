@@ -1,13 +1,28 @@
 import { checkAdmin } from "@/lib/checkAdmin";
 import { createClient } from "@/utils/supabase/server";
+import { getSupabaseAdmin } from "@/lib/supabaseServer";
 import { NextRequest, NextResponse } from "next/server";
 
+// Revalidate every 30 seconds for this API
+export const revalidate = 30;
+
+/**
+ * GET /api/admin/dashboard/stats
+ * 
+ * Fetches dashboard statistics including:
+ * - Total counts (events, registrations, users, sponsors)
+ * - Today's revenue with comparison to yesterday
+ * - Recent registrations
+ * - Quick stats with change percentages
+ * 
+ * Requires admin authentication via cookie-based session.
+ */
 export async function GET(req: NextRequest) {
   try {
-    const supabase = (await createClient()) as any;
-
-    // Check admin authentication using cookie-based session
-    const isAdmin = await checkAdmin(supabase);
+    // Verify admin authentication using cookie-based session
+    const userSupabase = await createClient();
+    const isAdmin = await checkAdmin(userSupabase as any);
+    
     if (!isAdmin) {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -15,254 +30,181 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Check for query errors early
-    const { data: testData, error: testError } = await supabase
-      .from("event_registrations")
-      .select("registration_id")
-      .limit(1);
+    // Use admin client for data fetching (bypasses RLS for performance)
+    const supabase = getSupabaseAdmin();
 
-    if (testError) {
-      console.error("Database connection error:", testError);
-      return NextResponse.json(
-        { error: `Database error: ${testError.message}` },
-        { status: 500 }
-      );
-    }
-
-    // Get today's date range
+    // Get date ranges
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayStart = today.toISOString();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     const todayEnd = tomorrow.toISOString();
-
-    // Get yesterday's date range for comparison
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStart = yesterday.toISOString();
-    const yesterdayEnd = today.toISOString();
 
-    // Fetch all stats in parallel
+    // Fetch all stats in parallel for optimal performance
     const [
       eventsResult,
       registrationsResult,
       usersResult,
       sponsorsResult,
+      activeEventsResult,
       todayRegistrationsResult,
       yesterdayRegistrationsResult,
-      allRegistrationsResult,
+      recentRegistrationsResult,
     ] = await Promise.all([
-      // Total events count
-      supabase
-        .from("event")
-        .select("event_id", { count: "exact", head: true }),
-
-      // Total registrations count
-      supabase
-        .from("event_registrations")
-        .select("registration_id", { count: "exact", head: true }),
-
-      // Total users count
-      supabase
-        .from("users")
-        .select("user_id", { count: "exact", head: true }),
-
-      // Total sponsors count
-      supabase
-        .from("sponsors")
-        .select("sponsor_id", { count: "exact", head: true }),
-
-      // Today's registrations with payment details
+      // Total counts (using head: true for efficiency)
+      supabase.from("event").select("event_id", { count: "exact", head: true }),
+      supabase.from("event_registrations").select("registration_id", { count: "exact", head: true }),
+      supabase.from("users").select("user_id", { count: "exact", head: true }),
+      supabase.from("sponsors").select("sponsor_id", { count: "exact", head: true }),
+      supabase.from("event").select("event_id", { count: "exact", head: true }).eq("is_registration_open", true),
+      
+      // Today's registrations (only fetch needed fields)
       supabase
         .from("event_registrations")
-        .select(
-          `
-          registration_id,
-          transaction_id,
-          payment_status,
-          gross_amount,
-          created_at,
-          registered_by_user_id,
-          users(user_name, email, college),
-          event_fee(
-            event(event_name),
-            fee(participation_type)
-          ),
-          payment_method(method_name, gateway_charge)
-        `
-        )
+        .select("registration_id, payment_status, gross_amount, payment_method(gateway_charge)")
         .not("created_at", "is", null)
         .gte("created_at", todayStart)
-        .lt("created_at", todayEnd)
-        .order("created_at", { ascending: false }),
-
+        .lt("created_at", todayEnd),
+      
       // Yesterday's registrations for comparison
       supabase
         .from("event_registrations")
-        .select("registration_id, payment_status, gross_amount, created_at, payment_method(gateway_charge)")
+        .select("registration_id, payment_status, gross_amount, payment_method(gateway_charge)")
         .not("created_at", "is", null)
         .gte("created_at", yesterdayStart)
-        .lt("created_at", yesterdayEnd),
-
-      // All registrations for recent list (last 5 paid)
+        .lt("created_at", todayStart),
+      
+      // Recent paid registrations (limit 5)
       supabase
         .from("event_registrations")
-        .select(
-          `
+        .select(`
           registration_id,
-          transaction_id,
           payment_status,
           gross_amount,
           created_at,
-          registered_by_user_id,
-          users(user_name, email, college),
-          event_fee(
-            event(event_name),
-            fee(participation_type)
-          ),
-          payment_method(method_name, gateway_charge)
-        `
-        )
+          users(user_name),
+          event_fee(event(event_name))
+        `)
         .eq("payment_status", "done")
         .not("created_at", "is", null)
         .order("created_at", { ascending: false })
         .limit(5),
     ]);
 
-    // Check for errors in any of the queries
-    const errors = [
+    // Log any errors but don't fail the request
+    const queryErrors = [
       eventsResult.error,
       registrationsResult.error,
       usersResult.error,
       sponsorsResult.error,
+      activeEventsResult.error,
       todayRegistrationsResult.error,
       yesterdayRegistrationsResult.error,
-      allRegistrationsResult.error,
+      recentRegistrationsResult.error,
     ].filter(Boolean);
 
-    if (errors.length > 0) {
-      console.error("Database query errors:", errors);
-      // Continue with empty data rather than failing completely
-      // Some queries might fail but others might succeed
+    if (queryErrors.length > 0) {
+      console.warn("Some dashboard queries had errors:", queryErrors);
     }
 
-    // Calculate totals
+    // Calculate base stats
     const totalEvents = eventsResult.count ?? 0;
     const totalRegistrations = registrationsResult.count ?? 0;
     const totalUsers = usersResult.count ?? 0;
     const totalSponsors = sponsorsResult.count ?? 0;
+    const activeEvents = activeEventsResult.count ?? 0;
 
     // Calculate today's revenue
-    let todayGrossRevenue = 0;
-    let todayGatewayCharges = 0;
-    let todayRegistrations = 0;
-    const todayRegistrationsData = todayRegistrationsResult.data ?? [];
+    let todayGross = 0;
+    let todayGateway = 0;
+    let todayPaidCount = 0;
     
-    todayRegistrationsData.forEach((reg: any) => {
+    (todayRegistrationsResult.data ?? []).forEach((reg: any) => {
       if (reg.payment_status === "done") {
-        todayRegistrations += 1;
-        todayGrossRevenue += reg.gross_amount ?? 0;
-        todayGatewayCharges += reg.payment_method?.gateway_charge ?? 0;
+        todayPaidCount++;
+        todayGross += reg.gross_amount ?? 0;
+        todayGateway += reg.payment_method?.gateway_charge ?? 0;
       }
     });
 
-    const todayNetRevenue = todayGrossRevenue - todayGatewayCharges;
+    const todayNet = todayGross - todayGateway;
 
     // Calculate yesterday's revenue for comparison
-    let yesterdayGrossRevenue = 0;
-    let yesterdayGatewayCharges = 0;
-    const yesterdayRegistrationsData = yesterdayRegistrationsResult.data ?? [];
+    let yesterdayGross = 0;
+    let yesterdayGateway = 0;
+    let yesterdayPaidCount = 0;
     
-    yesterdayRegistrationsData.forEach((reg: any) => {
+    (yesterdayRegistrationsResult.data ?? []).forEach((reg: any) => {
       if (reg.payment_status === "done") {
-        yesterdayGrossRevenue += reg.gross_amount ?? 0;
-        yesterdayGatewayCharges += reg.payment_method?.gateway_charge ?? 0;
+        yesterdayPaidCount++;
+        yesterdayGross += reg.gross_amount ?? 0;
+        yesterdayGateway += reg.payment_method?.gateway_charge ?? 0;
       }
     });
 
-    const yesterdayNetRevenue = yesterdayGrossRevenue - yesterdayGatewayCharges;
+    const yesterdayNet = yesterdayGross - yesterdayGateway;
 
-    // Calculate revenue change percentage
-    const revenueChange = yesterdayNetRevenue > 0
-      ? ((todayNetRevenue - yesterdayNetRevenue) / yesterdayNetRevenue) * 100
-      : todayNetRevenue > 0 ? 100 : 0;
+    // Calculate change percentages
+    const revenueChange = yesterdayNet > 0
+      ? ((todayNet - yesterdayNet) / yesterdayNet) * 100
+      : todayNet > 0 ? 100 : 0;
 
-    // Calculate registration change (count)
-    const yesterdayRegistrations = yesterdayRegistrationsData.filter(
-      (reg: any) => reg.payment_status === "done"
-    ).length;
-    const registrationChange = yesterdayRegistrations > 0
-      ? ((todayRegistrations - yesterdayRegistrations) / yesterdayRegistrations) * 100
-      : todayRegistrations > 0 ? 100 : 0;
+    const registrationChange = yesterdayPaidCount > 0
+      ? ((todayPaidCount - yesterdayPaidCount) / yesterdayPaidCount) * 100
+      : todayPaidCount > 0 ? 100 : 0;
 
     // Format recent registrations
-    const recentRegistrations = (allRegistrationsResult.data ?? []).map((reg: any) => {
-      const date = reg.created_at ? new Date(reg.created_at).toISOString().split("T")[0] : "";
-      return {
-        id: reg.registration_id,
-        userName: reg.users?.user_name || "Unknown",
-        event: reg.event_fee?.event?.event_name || "Unknown Event",
-        date,
-        status: reg.payment_status,
-        amount: reg.gross_amount ?? 0,
-      };
-    });
+    const recentRegistrations = (recentRegistrationsResult.data ?? []).map((reg: any) => ({
+      id: reg.registration_id,
+      userName: reg.users?.user_name || "Unknown",
+      event: reg.event_fee?.event?.event_name || "Unknown Event",
+      date: reg.created_at ? new Date(reg.created_at).toISOString().split("T")[0] : "",
+      status: reg.payment_status,
+      amount: reg.gross_amount ?? 0,
+    }));
 
-    // Get count of active events (registration open)
-    const { count: activeEventsCount } = await supabase
-      .from("event")
-      .select("event_id", { count: "exact", head: true })
-      .eq("is_registration_open", true);
-
-    // Get count of new events added today
-    // Note: event table might not have created_at, so we'll skip this for now
-    // or use registration_date from event_registrations as a proxy
-    const newEventsToday = 0;
-
-    // Response data
-    const stats = {
-      totalEvents,
-      totalRegistrations,
-      totalUsers,
-      totalSponsors,
-      activeEvents: activeEventsCount ?? 0,
-      newEventsToday: newEventsToday ?? 0,
+    // Build response
+    const response = {
+      stats: {
+        totalEvents,
+        totalRegistrations,
+        totalUsers,
+        totalSponsors,
+        activeEvents,
+      },
+      revenue: {
+        today: {
+          gross: todayGross,
+          gatewayCharges: todayGateway,
+          net: todayNet,
+          change: Math.round(revenueChange * 10) / 10,
+        },
+      },
+      recentRegistrations,
+      quickStats: [
+        {
+          label: "Registrations",
+          value: todayPaidCount.toString(),
+          change: `${registrationChange >= 0 ? "+" : ""}${Math.round(registrationChange)}%`,
+          positive: registrationChange >= 0,
+        },
+        {
+          label: "Revenue",
+          value: todayNet >= 1000 ? `₹${Math.round(todayNet / 1000)}K` : `₹${todayNet}`,
+          change: `${revenueChange >= 0 ? "+" : ""}${Math.round(revenueChange)}%`,
+          positive: revenueChange >= 0,
+        },
+      ],
     };
 
-    const revenue = {
-      today: {
-        gross: todayGrossRevenue,
-        gatewayCharges: todayGatewayCharges,
-        net: todayNetRevenue,
-        change: Math.round(revenueChange * 10) / 10, // Round to 1 decimal
+    return NextResponse.json(response, {
+      headers: {
+        "Cache-Control": "private, max-age=30, stale-while-revalidate=60",
       },
-    };
-
-    const recentRegistrationsList = recentRegistrations;
-
-    const quickStats = [
-      {
-        label: "Registrations",
-        value: todayRegistrations.toString(),
-        change: `${registrationChange >= 0 ? "+" : ""}${Math.round(registrationChange)}%`,
-        positive: registrationChange >= 0,
-      },
-      {
-        label: "Revenue",
-        value: `₹${Math.round(todayNetRevenue / 1000)}K`,
-        change: `${revenueChange >= 0 ? "+" : ""}${Math.round(revenueChange)}%`,
-        positive: revenueChange >= 0,
-      },
-      // Note: Page views would need analytics integration
-      // For now, we can leave it as a placeholder or fetch from analytics API
-    ];
-
-    return NextResponse.json({
-      stats,
-      revenue,
-      recentRegistrations: recentRegistrationsList,
-      quickStats,
     });
   } catch (error: unknown) {
     console.error("Dashboard stats API error:", error);
