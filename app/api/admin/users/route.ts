@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
-    const supabase = (await createClient()) as any;
+    const supabase = await createClient();
     const { searchParams } = new URL(req.url);
 
     const page = Number(searchParams.get("page") ?? 1);
@@ -57,9 +57,10 @@ export async function GET(req: NextRequest) {
     }
 
     const users =
-      data?.map((user: any) => {
+      data?.map((user) => {
         let eventCount = 0;
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         user.team_members?.forEach((tm: any) => {
           if (tm.team?.event_registrations) {
             eventCount += 1;

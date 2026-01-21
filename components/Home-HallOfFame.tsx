@@ -514,9 +514,9 @@ export default function HallOfFame() {
         pointerEvents: "none",
         scrollTrigger: {
           trigger: hallContainerRef.current,
-          start: "top top",
-          end: "+=15%",
-          scrub: 1,
+          start: "top top+=5%",
+          end: "+=20%",
+          scrub: true,
         },
       });
 
@@ -527,9 +527,9 @@ export default function HallOfFame() {
         y: -30,
         scrollTrigger: {
           trigger: hallContainerRef.current,
-          start: "top top",
-          end: "+=50%",
-          scrub: 1,
+          start: "top top+=5%",
+          end: "+=70%",
+          scrub: true,
         },
       });
 
@@ -561,7 +561,7 @@ export default function HallOfFame() {
 
         mainScrollTrigger = ScrollTrigger.create({
           trigger: hallContainerRef.current!,
-          start: "top top",
+          start: "top top-=5%",
           end: "bottom top",
           scrub: 1,
           pin: true,
@@ -614,11 +614,11 @@ export default function HallOfFame() {
         });
 
         // Set z-index on pinned element and spacer to ensure correct stacking
-        const _mt = mainScrollTrigger as any;
+        const _mt = mainScrollTrigger;
         if (_mt?.pin) {
           (_mt.pin as HTMLElement).style.zIndex = "5";
         }
-        const _spacer = _mt?.spacer as HTMLElement | undefined;
+        const _spacer = (_mt as any)?.spacer as HTMLElement | undefined;
         if (_spacer) {
           _spacer.style.zIndex = "5";
         }
@@ -682,7 +682,7 @@ export default function HallOfFame() {
                 <img
                   src="/images_home/HallOfFame.png"
                   alt="Hall of Fame"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover z-80"
                 />
                 <span className="hof-title absolute bottom-5 text-xl text-center w-full z-5 font-white font-joker will-change-transform">
                   hall of fame

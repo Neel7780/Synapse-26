@@ -12,7 +12,7 @@ import { useNavigationState } from "@/lib/useNavigationState";
 import { useImagePreload } from "@/hooks/useImagePreload";
 
 if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
+    gsap.registerPlugin(ScrollTrigger);
 }
 
 type EventItem = {
@@ -52,7 +52,7 @@ const EventCard = memo(function EventCard({
         if (!innerRef.current) return;
 
         const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        
+
         gsap.to(innerRef.current, {
             rotateY: isFlipped ? 180 : 0,
             duration: prefersReducedMotion ? 0 : 0.8,
@@ -136,8 +136,8 @@ const EventCard = memo(function EventCard({
                     key={i}
                     className="sparkle absolute w-2 h-2 bg-yellow-400 rounded-full pointer-events-none z-20"
                     style={{
-                        left: `${20 + Math.random() * 60}%`,
-                        top: `${20 + Math.random() * 60}%`,
+                        left: `${20 + ((i * 17) % 60)}%`,
+                        top: `${20 + ((i * 23) % 60)}%`,
                     }}
                 />
             ))}
@@ -339,7 +339,7 @@ export default function EventsPage() {
                 </section>
 
                 <section className="relative py-10">
-                    <h1 
+                    <h1
                         ref={titleRef}
                         className="text-center text-[3rem] sm:text-[4.5rem] lg:text-8xl tracking-[0.2em] sm:tracking-[0.25em] lg:tracking-[0.3em] lowercase font-joker"
                     >
@@ -370,13 +370,73 @@ export default function EventsPage() {
                             return (
                                 <React.Fragment key={event.slug}>
                                     <div className="flex justify-center items-center h-full">
-                                        <EventCard
-                                            event={event}
-                                            isFlipped={isFlipped}
-                                            onReveal={() => revealCard(event.slug)}
-                                            onClick={() => handleCardClick(event.slug)}
-                                            index={index}
-                                        />
+                                        <div
+                                            onMouseEnter={() => revealCard(event.slug)}
+                                            className="relative cursor-pointer transform-gpu"
+                                            style={{ perspective: "1500px" }}
+                                        >
+                                            {/* CARD FRAME — responsive sizing */}
+                                            <div className="relative w-[110px] xs:w-[130px] sm:w-[180px] md:w-[220px] lg:w-[260px] xl:w-[320px] 2xl:w-[400px] aspect-[401/600]">
+                                                <div
+                                                    className="relative w-full h-full transition-transform ease-in-out"
+                                                    style={{
+                                                        transformStyle: "preserve-3d",
+                                                        transitionDuration: "900ms",
+                                                        transform: isFlipped
+                                                            ? "rotateY(180deg)"
+                                                            : "rotateY(0deg)",
+                                                    }}
+                                                >
+                                                    {/* FRONT */}
+                                                    <div
+                                                        className="absolute inset-0 rounded-lg overflow-hidden"
+                                                        style={{
+                                                            backfaceVisibility: "hidden",
+                                                            backgroundImage: "url(/images_events/card.jpeg)",
+                                                            backgroundRepeat: "no-repeat",
+                                                            backgroundPosition: "center",
+                                                            backgroundSize: "contain",
+                                                            backgroundOrigin: "content-box",
+                                                            backgroundClip: "content-box",
+                                                        }}
+                                                    />
+
+                                                    {/* BACK */}
+                                                    <div
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleCardClick(event.slug);
+                                                        }}
+                                                        className="absolute inset-0 rounded-lg overflow-hidden cursor-pointer"
+                                                        style={{
+                                                            backfaceVisibility: "hidden",
+                                                            transform: "rotateY(180deg)",
+                                                            backgroundImage: `url(${event.cover})`,
+                                                            backgroundRepeat: "no-repeat",
+                                                            backgroundPosition: "center",
+                                                            backgroundSize: "cover",
+                                                            backgroundOrigin: "content-box",
+                                                            backgroundClip: "content-box",
+                                                        }}
+                                                    >
+                                                        {/* TITLE */}
+                                                        <div
+                                                            className="
+    absolute bottom-2 xs:bottom-2 sm:bottom-3 md:bottom-4 lg:bottom-5 xl:bottom-7 2xl:bottom-9
+    left-0 right-0
+    px-1.5 xs:px-2 sm:px-3 md:px-4 lg:px-5 xl:px-7 2xl:px-8
+    font-card
+    text-[9px] xs:text-[10px] sm:text-[14px] md:text-[17px] lg:text-[20px] xl:text-[26px] 2xl:text-[32px]
+    text-white text-center
+    leading-tight
+  "
+                                                        >
+                                                            {event.title}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     {/* EMPTY COLUMN — cross layout pattern */}

@@ -4,6 +4,7 @@ import { useRef, useEffect, memo } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Link from "next/link";
+import { useNavigationState } from "@/lib/useNavigationState";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -41,6 +42,7 @@ export const EventCard = memo(function EventCard({
   };
 
   const gradientClass = categoryColors[category] || "from-red-600/80 to-red-900/80";
+  const { startTransition } = useNavigationState();
 
   useEffect(() => {
     if (!cardRef.current) return;
@@ -168,7 +170,15 @@ export const EventCard = memo(function EventCard({
       className="event-card group will-change-transform"
       style={{ perspective: "1000px" }}
     >
-      <Link href={link} className="block">
+      <Link
+        href={link}
+        className="block"
+        onClick={() => {
+          if (link.startsWith("/")) {
+            startTransition();
+          }
+        }}
+      >
         <div className="relative rounded-2xl overflow-hidden bg-white/5 backdrop-blur-sm border border-white/10 transition-colors duration-300 group-hover:border-red-500/30">
           {/* Image Container */}
           <div className="relative aspect-[4/3] overflow-hidden">

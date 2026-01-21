@@ -33,8 +33,8 @@ export default function NavigationPanel() {
       { name: "accomodation", link: "/accomodation" },
       { name: "merchandise", link: "/merchandise" },
       { name: "sponsors", link: "/sponsors" },
-      { name: "terms and conditions", link: "/terms-and-conditions" },
       { name: "contact us", link: "#contact", isContact: true },
+      { name: "terms and conditions", link: "/terms-and-conditions" },
     ];
 
     // Add "My Profile" or "Register" based on auth state

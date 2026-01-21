@@ -79,10 +79,11 @@ export async function POST(request: NextRequest) {
             registration_id: registration.registration_id,
             message: "Registration submitted successfully! Your payment is pending verification."
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Error in register:", error);
+        const message = error instanceof Error ? error.message : "Internal server error";
         return NextResponse.json(
-            { error: error.message || "Internal server error" },
+            { error: message },
             { status: 500 }
         );
     }

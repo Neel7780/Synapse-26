@@ -7,6 +7,8 @@ import { Navbar } from "@/components/ui/Resizable-navbar";
 import NavigationPanel from "@/components/ui/NavigationPanel";
 import Footer from "@/components/ui/Footer";
 
+import { useNavigationState } from "@/lib/useNavigationState";
+
 const PRODUCTS = [
   {
     slug: "synapse-tee-1",
@@ -33,6 +35,7 @@ export default function ProductPage() {
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const { startTransition } = useNavigationState();
 
   const product = PRODUCTS.find((p) => p.slug === slug);
   if (!product) return null;
@@ -50,6 +53,7 @@ export default function ProductPage() {
         <Link
           href="/"
           className="text-white/60 hover:text-red-500 transition-colors font-Inter"
+          onClick={() => startTransition()}
         >
           Home
         </Link>
@@ -57,6 +61,7 @@ export default function ProductPage() {
         <Link
           href="/merchandise"
           className="text-white/60 hover:text-red-500 transition-colors font-Inter"
+          onClick={() => startTransition()}
         >
           Merchandise
         </Link>

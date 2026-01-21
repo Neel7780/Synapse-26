@@ -194,7 +194,7 @@ const ContactFooter: React.FC = memo(function ContactFooter() {
 
       <div className="absolute inset-0 bg-black/20 z-10" aria-hidden="true" />
 
-      <div className="relative z-20 w-full min-h-[calc(100svh-40px)] flex flex-col">
+      <div className="relative z-20 w-full min-h-[cal(100dvh - 40px)] flex flex-col">
         <div className="w-full">
           <Image
             src="/subtract.svg"

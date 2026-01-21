@@ -12,13 +12,12 @@ if (typeof window !== "undefined") {
 
 export default function Home() {
   useEffect(() => {
-    ScrollTrigger.normalizeScroll({
-      allowNestedScroll: true,
-    });
+    // ScrollTrigger.normalizeScroll removed to prevent conflict with Lenis (SmoothScroller)
+    // resulting in "up and down" jitter.
   }, []);
   return (
     <>
-      <main className="relative min-h-[100svh] bg-black overflow-x-hidden">
+      <main className="relative min-h-[100dvh] bg-black overflow-x-hidden">
         {/* Main Content - Hidden during loading, visible after */}
         <div
           className={`relative w-full f-full transition-opacity duration-500`}
