@@ -235,6 +235,7 @@ html.lenis body {
   0% {
     transform: translateX(-100%);
   }
+
   100% {
     transform: translateX(100%);
   }
@@ -275,6 +276,7 @@ html.lenis body {
 
 /* Hide cursor on interactive elements when custom cursor is active */
 @media (hover: hover) and (pointer: fine) {
+
   body.custom-cursor-active,
   body.custom-cursor-active * {
     cursor: none !important;
@@ -298,10 +300,13 @@ html.lenis body {
 
 /* Pulse animation for cursor ring on special elements */
 @keyframes cursor-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translate(-50%, -50%) scale(1);
     opacity: 1;
   }
+
   50% {
     transform: translate(-50%, -50%) scale(1.2);
     opacity: 0.7;
@@ -318,6 +323,7 @@ html.lenis body {
     opacity: 0.6;
     transform: translate(-50%, -50%) scale(1);
   }
+
   100% {
     opacity: 0;
     transform: translate(-50%, -50%) scale(0.5);
@@ -326,6 +332,7 @@ html.lenis body {
 
 /* Reduce motion for accessibility */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -334,7 +341,7 @@ html.lenis body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  
+
   /* Disable custom cursor for reduced motion */
   body.custom-cursor-active,
   body.custom-cursor-active * {

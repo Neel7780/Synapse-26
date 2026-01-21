@@ -122,10 +122,12 @@ const EventCardItem = memo(function EventCardItem({
       <div className="p-5 flex flex-col gap-3 flex-1 relative z-20">
         <h2 className="font-adventor text-[40px] leading-tight">{card.name}</h2>
 
-        <p className="text-sm text-[#c0c0c0] leading-relaxed">
+        <p className="text-sm text-[#c0c0c0] leading-relaxed event-card-desc">
           {card.description.map((line, i) => (
-            <span key={i} className="block">
-              {line}
+            <span key={i} className="block overflow-hidden">
+              <span className="block desc-line translate-y-full opacity-0">
+                {line}
+              </span>
             </span>
           ))}
         </p>
@@ -207,7 +209,7 @@ export default function EventCards({ cards }: { cards: EventCard[] }) {
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top 80%",
-          once: true,
+          toggleActions: "play reverse play reverse",
         },
       });
 
@@ -227,6 +229,24 @@ export default function EventCards({ cards }: { cards: EventCard[] }) {
           }
         );
       });
+
+      // Description text reveal inside cards
+      const descLines = containerRef.current?.querySelectorAll(".desc-line");
+      if (descLines?.length) {
+        gsap.to(descLines, {
+          y: 0,
+          opacity: 1,
+          duration: 0.8,
+          stagger: 0.05,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: containerRef.current,
+            start: "top 70%",
+            toggleActions: "play reverse play reverse",
+          }
+        });
+      }
+
     }, containerRef);
 
     return () => ctx.revert();

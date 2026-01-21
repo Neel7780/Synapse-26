@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import Lenis from "lenis";
 import { Navbar } from "@/components/ui/Resizable-navbar";
 import Footer from "@/components/ui/Footer";
 import { EVENT_PAGES } from "./eventcontent";
@@ -18,7 +19,7 @@ if (typeof window !== "undefined") {
 export default function EventDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const page = EVENT_PAGES[slug];
-  
+
   const containerRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const triangle1Ref = useRef<HTMLDivElement>(null);
@@ -26,12 +27,35 @@ export default function EventDetailPage() {
   const triangle3Ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Initialize Lenis for smooth scrolling
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      smoothWheel: true,
+      touchMultiplier: 2,
+    });
+
+    function raf(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+
+    requestAnimationFrame(raf);
+
     if (!containerRef.current) return;
 
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion) return;
 
+    // Refresh ScrollTrigger when Lenis updates
+    // (Optional: usually not strictly needed unless using specific ScrollScroll plugins,
+    // but good practice if you notice sync issues)
+    // lenis.on('scroll', ScrollTrigger.update);
+
     const ctx = gsap.context(() => {
+      // ... existing GSAP code ...
       // Triangle entrance animations - flying in from different directions
       const triangles = [triangle1Ref.current, triangle2Ref.current, triangle3Ref.current];
       const fromPositions = [
@@ -42,7 +66,7 @@ export default function EventDetailPage() {
 
       triangles.forEach((tri, i) => {
         if (!tri) return;
-        
+
         gsap.fromTo(
           tri,
           {
