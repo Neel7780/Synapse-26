@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - main
+    types: [opened, synchronize, reopened]
 
 # Cancel in-progress runs for the same branch
 concurrency:
@@ -20,11 +21,96 @@ env:
 
 jobs:
   # ===========================================================================
-  # Continuous Integration - Lint & Build
+  # PR Validation - Required checks before merge
   # ===========================================================================
-  ci:
-    name: Lint & Build
+  pr-validation:
+    name: PR Validation
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better diff analysis
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check for package-lock.json changes
+        run: |
+          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q "package-lock.json"; then
+            echo "⚠️ package-lock.json has changed. Verifying integrity..."
+            npm ci --ignore-scripts
+          fi
+
+      - name: TypeScript Type Check
+        run: npx tsc --noEmit --pretty
+        continue-on-error: false
+
+      - name: ESLint Check
+        run: npm run lint -- --max-warnings=0
+        continue-on-error: false
+
+      - name: Security Audit
+        run: npm audit --audit-level=high
+        continue-on-error: true  # Don't fail on audit, but report issues
+
+      - name: Check for console.log statements
+        run: |
+          echo "Checking for debug statements in source code..."
+          if grep -rn "console\.log\|console\.debug" --include="*.ts" --include="*.tsx" app/ components/ lib/ hooks/ utils/ 2>/dev/null | grep -v "// eslint-disable" | grep -v ".test." | head -20; then
+            echo "⚠️ Warning: Found console.log/debug statements. Consider removing before merge."
+          fi
+        continue-on-error: true
+
+      - name: Verify build succeeds
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+
+  # ===========================================================================
+  # Code Quality Checks
+  # ===========================================================================
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript Type Check
+        run: npx tsc --noEmit --pretty
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Check for duplicate dependencies
+        run: npx depcheck --ignores="@types/*,eslint-*,typescript,tailwindcss,postcss,autoprefixer" || true
+
+  # ===========================================================================
+  # Build Verification
+  # ===========================================================================
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    needs: code-quality
     
     steps:
       - name: Checkout code
@@ -50,9 +136,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run linter
-        run: npm run lint
-
       - name: Build application
         run: npm run build
         env:
@@ -71,13 +154,94 @@ jobs:
             package-lock.json
           retention-days: 1
 
+      # Generate build size report for PRs
+      - name: Generate Build Size Report
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "## 📦 Build Size Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Directory | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| .next/static | $(du -sh .next/static 2>/dev/null | cut -f1 || echo 'N/A') |" >> $GITHUB_STEP_SUMMARY
+          echo "| .next/server | $(du -sh .next/server 2>/dev/null | cut -f1 || echo 'N/A') |" >> $GITHUB_STEP_SUMMARY
+          echo "| Total .next | $(du -sh .next 2>/dev/null | cut -f1 || echo 'N/A') |" >> $GITHUB_STEP_SUMMARY
+
+  # ===========================================================================
+  # Bundle Analysis (PR only)
+  # ===========================================================================
+  bundle-analysis:
+    name: Bundle Analysis
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: code-quality
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Analyze bundle
+        run: |
+          ANALYZE=true npm run build 2>&1 || true
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+
+      - name: Report bundle info
+        run: |
+          echo "## 📊 Bundle Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f ".next/analyze/client.html" ]; then
+            echo "Bundle analysis generated successfully." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Bundle analysis report not available (add @next/bundle-analyzer for detailed reports)." >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ===========================================================================
+  # Mobile Compatibility Check
+  # ===========================================================================
+  mobile-check:
+    name: Mobile Compatibility
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: build
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check viewport meta tags
+        run: |
+          echo "## 📱 Mobile Compatibility Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check for responsive design patterns
+          if grep -rn "useMediaQuery\|useMobile\|@media" --include="*.ts" --include="*.tsx" --include="*.css" app/ components/ 2>/dev/null | head -5; then
+            echo "✅ Responsive design patterns detected" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Limited responsive design patterns found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Check image optimization
+        run: |
+          # Check for Next.js Image component usage
+          IMAGE_COUNT=$(grep -rn "from ['\"]next/image['\"]" --include="*.tsx" --include="*.ts" app/ components/ 2>/dev/null | wc -l || echo "0")
+          echo "📷 Next.js Image components: $IMAGE_COUNT files" >> $GITHUB_STEP_SUMMARY
+
   # ===========================================================================
   # Docker Build (Optional - for container deployments)
   # ===========================================================================
   docker:
     name: Build Docker Image
     runs-on: ubuntu-latest
-    needs: ci
+    needs: build
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     
     permissions:
@@ -87,6 +251,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -116,6 +283,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
@@ -126,7 +294,7 @@ jobs:
   # ===========================================================================
   deploy:
     name: Deploy to Vercel
-    needs: ci
+    needs: build
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     
@@ -169,8 +337,55 @@ jobs:
           url=$(vercel deploy --prebuilt --prod --archive=tgz --token=${{ secrets.VERCEL_TOKEN }})
           echo "url=$url" >> $GITHUB_OUTPUT
 
-      - name: Comment deployment URL on PR
-        if: github.event_name == 'pull_request'
+  # ===========================================================================
+  # PR Preview Deployment
+  # ===========================================================================
+  preview-deploy:
+    name: Preview Deployment
+    needs: [pr-validation, build]
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel Environment
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        continue-on-error: true
+
+      - name: Build Project
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+        continue-on-error: true
+
+      - name: Deploy Preview
+        id: preview
+        run: |
+          url=$(vercel deploy --prebuilt --archive=tgz --token=${{ secrets.VERCEL_TOKEN }} 2>/dev/null || echo "")
+          echo "url=$url" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Comment Preview URL on PR
+        if: steps.preview.outputs.url != ''
         uses: actions/github-script@v7
         with:
           script: |
@@ -178,11 +393,11 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '🚀 Deployed to: ${{ steps.deploy.outputs.url }}'
+              body: '🚀 **Preview Deployment Ready!**\n\n📱 Preview URL: ${{ steps.preview.outputs.url }}\n\n_This preview will be updated with each push to this PR._'
             })
 
   # ===========================================================================
-  # Lighthouse Performance Audit (Optional)
+  # Lighthouse Performance Audit
   # ===========================================================================
   lighthouse:
     name: Lighthouse Audit
@@ -194,11 +409,100 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run Lighthouse
+      - name: Run Lighthouse (Desktop)
         uses: treosh/lighthouse-ci-action@v12
         with:
           urls: |
             https://synapse26.vercel.app
           uploadArtifacts: true
           temporaryPublicStorage: true
+          configJson: |
+            {
+              "ci": {
+                "collect": {
+                  "settings": {
+                    "preset": "desktop"
+                  }
+                }
+              }
+            }
+        continue-on-error: true
+
+      - name: Run Lighthouse (Mobile)
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: |
+            https://synapse26.vercel.app
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+          configJson: |
+            {
+              "ci": {
+                "collect": {
+                  "settings": {
+                    "preset": "mobile",
+                    "throttling": {
+                      "rttMs": 150,
+                      "throughputKbps": 1638.4,
+                      "cpuSlowdownMultiplier": 4
+                    },
+                    "screenEmulation": {
+                      "mobile": true,
+                      "width": 375,
+                      "height": 667,
+                      "deviceScaleFactor": 2
+                    }
+                  }
+                },
+                "assert": {
+                  "assertions": {
+                    "categories:performance": ["warn", {"minScore": 0.7}],
+                    "categories:accessibility": ["warn", {"minScore": 0.9}],
+                    "categories:best-practices": ["warn", {"minScore": 0.8}],
+                    "categories:seo": ["warn", {"minScore": 0.9}]
+                  }
+                }
+              }
+            }
+        continue-on-error: true
+
+  # ===========================================================================
+  # PR Lighthouse Check
+  # ===========================================================================
+  pr-lighthouse:
+    name: PR Lighthouse Check
+    needs: preview-deploy
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Wait for preview deployment
+        run: sleep 30
+
+      - name: Run Mobile Lighthouse on Preview
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: |
+            ${{ needs.preview-deploy.outputs.url || 'https://synapse26.vercel.app' }}
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+          configJson: |
+            {
+              "ci": {
+                "collect": {
+                  "settings": {
+                    "preset": "mobile"
+                  }
+                },
+                "assert": {
+                  "assertions": {
+                    "categories:performance": ["warn", {"minScore": 0.6}],
+                    "categories:accessibility": ["warn", {"minScore": 0.8}]
+                  }
+                }
+              }
+            }
         continue-on-error: true
