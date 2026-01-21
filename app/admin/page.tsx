@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
+import { Suspense } from "react";
 import { AdminPageHeader } from "@/components/admin/ui/AdminSidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
@@ -20,9 +21,11 @@ import {
   Users,
   Building2,
   ArrowRight,
+  TrendingUp,
   Eye,
   Plus,
   ArrowUpRight,
+  ArrowDownRight,
   CheckCircle,
   Clock,
   Loader2,
@@ -118,7 +121,7 @@ export default function AdminDashboard() {
     <div className="space-y-6 p-6">
       {/* Loading State */}
       {isLoading && (
-        <div className="flex items-center justify-center py-8">
+        <div className="flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <span className="ml-2 text-muted-foreground">Loading dashboard data...</span>
         </div>
@@ -141,7 +144,6 @@ export default function AdminDashboard() {
                       Your festival is performing well. You have <span className="text-foreground font-medium">{stats.totalRegistrations} registrations</span> across <span className="text-foreground font-medium">{stats.totalEvents} events</span>.
                     </p>
                   </div>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="/Synapse Logo.png"
                     alt="Synapse"

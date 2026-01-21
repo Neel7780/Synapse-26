@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import LoginBox from "@/components/LoginBox";
 import RegisterBox from "@/components/RegisterBox";
 import OtpBox from "@/components/OtpBox";
@@ -14,7 +14,7 @@ import { useNavigationState } from "@/lib/useNavigationState";
 
 type View = "login" | "register" | "otp" | "forgot";
 
-export default function AuthFlipPage() {
+function AuthContent() {
   const searchParams = useSearchParams();
   const validViews: View[] = ["login", "register", "otp", "forgot"];
   const paramView = searchParams.get("view") as View;
@@ -125,5 +125,13 @@ export default function AuthFlipPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AuthFlipPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[100dvh] bg-black" />}>
+      <AuthContent />
+    </Suspense>
   );
 }
