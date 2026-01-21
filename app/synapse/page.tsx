@@ -27,6 +27,16 @@ const CustomCursor = dynamic(() => import("@/components/CustomCursor"), {
 export default function HomeSection() {
   const [entered, setEntered] = useState(false);
   const [showNavbar, setShowNavbar] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (entered) {
@@ -38,7 +48,7 @@ export default function HomeSection() {
 
   return (
     <main className="flex flex-col min-h-dvh overflow-x-hidden relative">
-      {entered ? (
+      {entered && !isMobile ? (
         <div className="hidden md:block">
           <FluidCanvas />
         </div>

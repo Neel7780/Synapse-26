@@ -21,7 +21,7 @@ export type EventCard = {
   description: string[];
   // Deprecated string price, keeping for now or replacing usage
   price: string;
-  rules: string[];
+  rules?: string[];
   rulebook: string; // URL
   fees: EventFee[];
   // Fallback metadata if not in fees
@@ -47,12 +47,7 @@ export const EVENT_PAGES: Record<string, EventPageConfig> = {
           "An expressive dance event blending rhythm, emotion, and storytelling.",
         ],
         price: "Entry fee: ₹300 per team",
-        rules: [
-          "Minimum participants: 2",
-          "Maximum participants: 4",
-          "Any dance style allowed",
-          "Time limit will be strictly enforced",
-        ],
+        // Rules removed
         rulebook: "https://docs.google.com/document/d/1zo3Cqd1jtG_KNKgIZ6OCSu2CPAZNV2WWh7HQqFgTeDQ/edit?usp=drivesdk", // Placeholder or actual link
         fees: [
           { type: "group", price: 300, min_members: 2, max_members: 4, date: "26th Feb, 2026", time: "10:00 AM", venue: "OAT" },
@@ -66,11 +61,7 @@ export const EVENT_PAGES: Record<string, EventPageConfig> = {
           "A lyrical face-off testing flow, punchlines, and stage presence.",
         ],
         price: "Entry fee: ₹200 per participant",
-        rules: [
-          "Solo participation only",
-          "No explicit or offensive language",
-          "Time limit: 2 minutes per round",
-        ],
+
         rulebook: "https://docs.google.com/document/d/1zo3Cqd1jtG_KNKgIZ6OCSu2CPAZNV2WWh7HQqFgTeDQ/edit?usp=drivesdk",
         fees: [
           { type: "solo", price: 200, min_members: 1, max_members: 1, date: "27th Feb, 2026", time: "11:00 AM", venue: "CEP" }
@@ -81,11 +72,7 @@ export const EVENT_PAGES: Record<string, EventPageConfig> = {
         name: "Showdown",
         description: ["High-energy DJ and freestyle dance showdown."],
         price: "Entry fee: ₹250 per participant",
-        rules: [
-          "Open style freestyle",
-          "DJ music only",
-          "Judges' decision final",
-        ],
+
         rulebook: "https://docs.google.com/document/d/1zo3Cqd1jtG_KNKgIZ6OCSu2CPAZNV2WWh7HQqFgTeDQ/edit?usp=drivesdk",
         fees: [
           { type: "solo", price: 250, min_members: 1, max_members: 1, date: "28th Feb, 2026", time: "05:00 PM", venue: "OAT" },
@@ -104,12 +91,7 @@ export const EVENT_PAGES: Record<string, EventPageConfig> = {
         name: "Battle of Bands",
         description: ["Bands compete with original compositions and covers."],
         price: "Entry fee: ₹500 per band",
-        rules: [
-          "Minimum members: 3",
-          "Maximum members: 6",
-          "At least one original composition preferred",
-          "Time limit: 12 minutes including setup",
-        ],
+
         rulebook: "https://docs.google.com/document/d/1zo3Cqd1jtG_KNKgIZ6OCSu2CPAZNV2WWh7HQqFgTeDQ/edit?usp=drivesdk",
         fees: [
           { type: "group", price: 500, min_members: 3, max_members: 6, date: "26th Feb, 2026", time: "06:00 PM", venue: "OAT" },
@@ -121,11 +103,7 @@ export const EVENT_PAGES: Record<string, EventPageConfig> = {
         name: "Rave Knight",
         description: ["Electronic music, DJing, and live crowd control."],
         price: "Entry fee: ₹300 per participant",
-        rules: [
-          "Solo DJ event",
-          "Pre-mixed tracks not allowed",
-          "Equipment must be approved beforehand",
-        ],
+
         rulebook: "https://docs.google.com/document/d/1zo3Cqd1jtG_KNKgIZ6OCSu2CPAZNV2WWh7HQqFgTeDQ/edit?usp=drivesdk",
         fees: [
           { type: "solo", price: 300, min_members: 1, max_members: 1, date: "27th Feb, 2026", time: "09:00 PM", venue: "Cafeteria" }
@@ -145,12 +123,7 @@ export const EVENT_PAGES: Record<string, EventPageConfig> = {
           "Lights, camera, fashion! Designers showcase their creativity on the runway.",
         ],
         price: "Entry fee: ₹300 per team",
-        rules: [
-          "Minimum participants: 2",
-          "Maximum participants: 4",
-          "Theme: High-fashion runway showcase",
-          "At least one original design is mandatory",
-        ],
+
         rulebook: "https://docs.google.com/document/d/1zo3Cqd1jtG_KNKgIZ6OCSu2CPAZNV2WWh7HQqFgTeDQ/edit?usp=drivesdk",
         fees: [
           { type: "group", price: 300, min_members: 2, max_members: 4, date: "28th Feb, 2026", time: "08:00 PM", venue: "OAT" }
@@ -163,11 +136,7 @@ export const EVENT_PAGES: Record<string, EventPageConfig> = {
           "Cosplay event featuring characters from anime, Bollywood, and Hollywood.",
         ],
         price: "Entry fee: ₹250 per participant",
-        rules: [
-          "Solo or group participation allowed",
-          "Characters must be recognizable",
-          "Props must be safe and non-hazardous",
-        ],
+
         rulebook: "https://docs.google.com/document/d/1zo3Cqd1jtG_KNKgIZ6OCSu2CPAZNV2WWh7HQqFgTeDQ/edit?usp=drivesdk",
         fees: [
           { type: "solo", price: 250, min_members: 1, max_members: 1, date: "27th Feb, 2026", time: "02:00 PM", venue: "LT-1" }
@@ -187,12 +156,7 @@ export const EVENT_PAGES: Record<string, EventPageConfig> = {
           "A full-length theatrical performance judged on storytelling and acting.",
         ],
         price: "Entry fee: ₹400 per team",
-        rules: [
-          "Minimum participants: 4",
-          "Maximum participants: 8",
-          "Time limit: 20 minutes",
-          "Live acting only (no pre-recorded audio)",
-        ],
+
         rulebook: "https://docs.google.com/document/d/1zo3Cqd1jtG_KNKgIZ6OCSu2CPAZNV2WWh7HQqFgTeDQ/edit?usp=drivesdk",
         fees: [
           { type: "group", price: 400, min_members: 4, max_members: 8, date: "26th Feb, 2026", time: "04:00 PM", venue: "OAT" }
@@ -203,11 +167,7 @@ export const EVENT_PAGES: Record<string, EventPageConfig> = {
         name: "Nukkad Natak",
         description: ["Street play with strong social messaging."],
         price: "Entry fee: ₹300 per team",
-        rules: [
-          "Open-air performance",
-          "No microphones allowed",
-          "Theme must convey a social message",
-        ],
+
         rulebook: "https://docs.google.com/document/d/1zo3Cqd1jtG_KNKgIZ6OCSu2CPAZNV2WWh7HQqFgTeDQ/edit?usp=drivesdk",
         fees: [
           { type: "group", price: 300, min_members: 1, max_members: 10, date: "27th Feb, 2026", time: "05:00 PM", venue: "Cafeteria" }
@@ -225,11 +185,7 @@ export const EVENT_PAGES: Record<string, EventPageConfig> = {
         name: "Battledrome",
         description: ["Competitive tactical FPS tournament."],
         price: "Entry fee: ₹500 per team",
-        rules: [
-          "5 players per team",
-          "Standard tournament rules apply",
-          "No cheating or exploits",
-        ],
+
         rulebook: "https://docs.google.com/document/d/1zo3Cqd1jtG_KNKgIZ6OCSu2CPAZNV2WWh7HQqFgTeDQ/edit?usp=drivesdk",
         fees: [
           { type: "group", price: 500, min_members: 5, max_members: 5, date: "28th Feb, 2026", time: "10:00 AM", venue: "Lab-1" }
