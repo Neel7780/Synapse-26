@@ -24,7 +24,6 @@ type Registration = {
     registration_date: string;
   };
   payment: {
-    method: string;
     status: string;
   };
   financials: {
@@ -170,10 +169,6 @@ export default function RegistrationDetailPage() {
             </div>
           </CardHeader>
           <CardContent className="pt-6 space-y-4">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Method</span>
-              <span className="font-medium">{registration.payment.method}</span>
-            </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Status</span>
               <Badge className={registration.payment.status === "done" ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" : "bg-amber-500/20 text-amber-300 border-amber-500/30"}>
