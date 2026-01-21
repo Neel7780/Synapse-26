@@ -64,8 +64,17 @@ export async function GET(req: NextRequest) {
         const eventNames = new Set<string>();
 
         user.team_members?.forEach((tm: any) => {
-          const eventName = tm.team?.event_registrations?.event_fee?.event?.event_name;
-          if (eventName) eventNames.add(eventName);
+          const registrations = tm.team?.event_registrations;
+
+          if (Array.isArray(registrations)) {
+            registrations.forEach((er: any) => {
+              const eventName = er?.event_fee?.event?.event_name;
+              if (eventName) eventNames.add(eventName);
+            });
+          } else {
+            const eventName = registrations?.event_fee?.event?.event_name;
+            if (eventName) eventNames.add(eventName);
+          }
         });
 
         const eventsList = Array.from(eventNames);
