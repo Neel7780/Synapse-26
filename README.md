@@ -136,7 +136,7 @@ npm start
 
 ### Maintainers & Contact
 
-- Project maintainers and event leads typically manage this repo. For questions about deployment or admin access, contact the Synapse web team (contact details not stored in repo).
+- Project maintainers and event leads typically manage this repo. For questions about deployment or admin access, contact the Synapse Commitee (contact details not stored in repo).
 
 ### License
 
@@ -148,11 +148,6 @@ npm start
 - `app/page.tsx` — public home page entry
 - `app/admin/layout.tsx` — admin-specific layout and middleware
 - `utils/supabase/` — Supabase client and server helpers
-
-### More Information
-
-If you need a walkthrough of any specific area (auth flow, payments, admin tables, or component patterns), open an issue or request a guided code tour.
-
 ---
 
 This README was updated to reflect the repository layout and provide actionable setup and development guidance.
