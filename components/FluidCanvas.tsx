@@ -31,8 +31,8 @@ const FluidCanvas: FC<FluidCanvasProps> = ({ className }) => {
                     fluidColor="#D2042D" // joker pink-red
                     intensity={8}
                     force={2}
-                    distortion={1.8}
-                    radius={0.2}
+                    distortion={1}
+                    radius={0.08}
                 //   velocityDissipation={0.985}
                 //   densityDissipation={0.92}
                 />
