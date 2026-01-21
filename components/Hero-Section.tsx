@@ -44,7 +44,7 @@ export default function HeroSection({
   const [showEnter, setShowEnter] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [part3Active, setPart3Active] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
 
   const hasRunMaskRef = useRef(false);
   const enterTriggeredRef = useRef(false);
@@ -353,11 +353,7 @@ export default function HeroSection({
         pinSpacing: false,
         anticipatePin: 1.2,
         onUpdate: (self) => {
-          if (self.progress > 0.35 && self.progress < 0.5) {
-            setPart3Active(true);
-          } else {
-            setPart3Active(false);
-          }
+          // Logic for part3Active removed as we use pointer-events-auto on button directly
         },
       },
     });
@@ -377,6 +373,8 @@ export default function HeroSection({
         },
         0.05
       )
+      // ... existing code ...
+
 
       .to(
         "#redCard",
@@ -531,7 +529,7 @@ export default function HeroSection({
         {
           rotationZ: 185,
           duration: 1.5,
-          scale: isMobile ? 0.5 : 0.25,
+          scale: isMobile ? 0.65 : 0.25,
           ease: "none",
         },
         "together"
@@ -552,7 +550,7 @@ export default function HeroSection({
         {
           rotationZ: 420,
           duration: 2,
-          scale: isMobile ? 0.4 : 0.15,
+          scale: isMobile ? 0.55 : 0.15,
           ease: "none",
         },
         "together2"
@@ -658,10 +656,9 @@ export default function HeroSection({
         });
       },
       onComplete: () => {
-        // Set mask size after animation completes
         gsap.set(maskLayerRef.current, {
-          webkitMaskSize: "cover",
-          maskSize: "cover",
+          webkitMaskImage: "none",
+          maskImage: "none",
         });
 
         if (svgContainerRef.current) {
@@ -790,11 +787,17 @@ export default function HeroSection({
               </div>
             </div>
 
-            <div id="part3" ref={part3Ref} className={`absolute inset-0 w-full h-full transform-[rotateY(180deg)] backface-hidden ${part3Active ? "pointer-events-auto" : "pointer-events-none"}`}>
-              <div className="register-btn absolute bottom-2/5  max-[450px]:left-1/2 min-[450px]:bottom-[40px] min-[450px]:right-[40px] md:bottom-[60px] md:right-[60px]">
-                <NavbarButton href="/auth" variant="register">
-                  Register
-                </NavbarButton>
+            <div id="part3" ref={part3Ref} className="absolute inset-0 w-full h-full transform-[rotateY(180deg)] backface-hidden pointer-events-none">
+              <div className="register-btn absolute bottom-2/5 max-[450px]:left-1/2 max-[450px]:-translate-x-1/2 min-[450px]:bottom-[40px] min-[450px]:right-[40px] md:bottom-[60px] md:right-[60px] z-50 scale-125 md:scale-100 origin-bottom-right pointer-events-auto">
+                {isAuthenticated ? (
+                  <NavbarButton onClick={logout} variant="register">
+                    Logout
+                  </NavbarButton>
+                ) : (
+                  <NavbarButton href="/auth" variant="register">
+                    Register
+                  </NavbarButton>
+                )}
               </div>
 
               <div className="title-wrapper flex justify-center pt-[80px] sm:pt-[60px] md:pt-[120px] h-[calc(100dvh-120px)] md:h-[calc(100dvh-200px)]">

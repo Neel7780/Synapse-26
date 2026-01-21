@@ -5,6 +5,7 @@ import HomeSection from "@/app/synapse/page";
 import { useEffect } from "react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
+
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }

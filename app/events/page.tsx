@@ -229,7 +229,7 @@ export default function EventsPage() {
                 const text = titleRef.current.textContent || "";
                 titleRef.current.innerHTML = "";
 
-                text.split("").forEach((char) => {
+                text.split("").forEach((char, i) => {
                     const span = document.createElement("span");
                     span.className = "inline-block";
                     span.textContent = char === " " ? "\u00A0" : char;
@@ -240,52 +240,19 @@ export default function EventsPage() {
                     titleRef.current.querySelectorAll("span"),
                     {
                         opacity: 0,
-                        y: 50,
-                        rotateZ: gsap.utils.random(-15, 15),
-                    },
-                    {
-                        opacity: 1,
-                        y: 0,
-                        rotateZ: 0,
-                        duration: 0.5,
-                        ease: "back.out(1.7)",
-                        stagger: 0.04,
-                        scrollTrigger: {
-                            trigger: titleRef.current,
-                            start: "top 85%",
-                            once: true,
-                        },
-                    }
-                );
-            }
-
-            // Cards staggered entrance
-            const cards = containerRef.current?.querySelectorAll(".event-card");
-            if (cards?.length) {
-                gsap.fromTo(
-                    cards,
-                    {
-                        opacity: 0,
                         y: 80,
-                        rotateZ: (i) => (i % 2 === 0 ? -10 : 10),
-                        scale: 0.8,
+                        rotateY: -90,
+                        scale: 0,
                     },
                     {
                         opacity: 1,
                         y: 0,
-                        rotateZ: 0,
+                        rotateY: 0,
                         scale: 1,
-                        duration: 0.7,
-                        ease: "back.out(1.4)",
-                        stagger: {
-                            each: 0.1,
-                            from: "center",
-                        },
-                        scrollTrigger: {
-                            trigger: containerRef.current,
-                            start: "top 80%",
-                            once: true,
-                        },
+                        duration: 0.6,
+                        ease: "back.out(2)",
+                        stagger: 0.05,
+                        delay: 0.8,
                     }
                 );
             }
@@ -341,12 +308,12 @@ export default function EventsPage() {
                 <section className="relative py-10">
                     <h1
                         ref={titleRef}
-                        className="text-center text-[3rem] sm:text-[4.5rem] lg:text-8xl tracking-[0.2em] sm:tracking-[0.25em] lg:tracking-[0.3em] lowercase font-joker"
+                        className="text-center text-[3rem] sm:text-[4.5rem] lg:text-8xl tracking-[0.2em] sm:tracking-[0.25em] lg:tracking-[0.3em] lowercase font-joker relative z-10"
                     >
                         events
                     </h1>
 
-                    <div className="absolute flex flex-col items-end right-4 sm:right-9 lg:right-15 top-[90%] mt-4 mb-8 sm:mt-6 text-right leading-snug select-none font-jqka">
+                    <div className="absolute flex flex-col items-end right-4 sm:right-9 lg:right-15 top-[90%] mt-4 mb-8 sm:mt-6 text-right leading-snug select-none font-jqka z-10">
                         <button
                             onClick={toggleRevealAll}
                             className="self-end text-xs sm:text-base md:text-lg opacity-60 hover:opacity-100 transition-opacity"
