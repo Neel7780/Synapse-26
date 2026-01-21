@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/ui/AdminSidebar";
@@ -13,19 +13,115 @@ import {
 } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
-import { ArrowLeft, Package, Loader2 } from "lucide-react";
+import { ArrowLeft, Package, Loader2, Upload, X } from "lucide-react";
+
+const TARGET_WIDTH = 750;
+const TARGET_HEIGHT = 875;
 
 export default function NewProductPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [croppedBlob, setCroppedBlob] = useState<Blob | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [formData, setFormData] = useState({
     product_name: "",
     price: "",
     available_sizes: "",
-    product_image: "",
     description: "",
     is_available: true,
   });
+
+  const cropImageToRatio = async (file: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      img.onload = () => {
+        const imgWidth = img.width;
+        const imgHeight = img.height;
+        const targetRatio = TARGET_WIDTH / TARGET_HEIGHT;
+        const imgRatio = imgWidth / imgHeight;
+
+        let cropWidth, cropHeight, cropX, cropY;
+
+        if (imgRatio > targetRatio) {
+          // Image is wider than target ratio
+          cropHeight = imgHeight;
+          cropWidth = imgHeight * targetRatio;
+          cropX = (imgWidth - cropWidth) / 2;
+          cropY = 0;
+        } else {
+          // Image is taller than target ratio
+          cropWidth = imgWidth;
+          cropHeight = imgWidth / targetRatio;
+          cropX = 0;
+          cropY = (imgHeight - cropHeight) / 2;
+        }
+
+        // Set canvas to target dimensions
+        canvas.width = TARGET_WIDTH;
+        canvas.height = TARGET_HEIGHT;
+
+        // Draw cropped and scaled image
+        ctx?.drawImage(
+          img,
+          cropX,
+          cropY,
+          cropWidth,
+          cropHeight,
+          0,
+          0,
+          TARGET_WIDTH,
+          TARGET_HEIGHT,
+        );
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error("Failed to create blob"));
+            }
+          },
+          "image/jpeg",
+          0.95,
+        );
+      };
+
+      img.onerror = () => reject(new Error("Failed to load image"));
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImageFile(file);
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreview(previewUrl);
+
+    try {
+      const cropped = await cropImageToRatio(file);
+      setCroppedBlob(cropped);
+    } catch (error) {
+      console.error("Error cropping image:", error);
+      alert("Failed to process image");
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setCroppedBlob(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,20 +132,35 @@ export default function NewProductPage() {
 
     setLoading(true);
     try {
+      const formDataToSend = new FormData();
+      formDataToSend.append("product_name", formData.product_name);
+      formDataToSend.append("price", formData.price);
+      formDataToSend.append("description", formData.description || "");
+      formDataToSend.append("is_available", formData.is_available.toString());
+
+      if (formData.available_sizes) {
+        const sizesArray = formData.available_sizes
+          .split(",")
+          .map((s) => s.trim());
+        formDataToSend.append("available_sizes", JSON.stringify(sizesArray));
+      }
+
+      if (croppedBlob) {
+        const croppedFile = new File(
+          [croppedBlob],
+          imageFile?.name || "product.jpg",
+          {
+            type: "image/jpeg",
+          },
+        );
+        formDataToSend.append("image", croppedFile);
+      }
+
       const res = await fetch("/api/admin/merchandise/management", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          product_name: formData.product_name,
-          price: Number(formData.price),
-          available_sizes: formData.available_sizes
-            ? formData.available_sizes.split(",").map((s) => s.trim())
-            : null,
-          product_image: formData.product_image || null,
-          description: formData.description || null,
-          is_available: formData.is_available,
-        }),
+        body: formDataToSend,
       });
+
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       alert("Product created successfully!");
@@ -134,16 +245,72 @@ export default function NewProductPage() {
               />
             </div>
 
+            {/* Image Upload Section */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Product Image URL</label>
-              <Input
-                value={formData.product_image}
-                onChange={(e) =>
-                  setFormData({ ...formData, product_image: e.target.value })
-                }
-                placeholder="https://example.com/image.jpg"
-                className="bg-muted/50 border-border/50"
-              />
+              <label className="text-sm font-medium">Product Image</label>
+              <div className="space-y-3">
+                {!imagePreview ? (
+                  <div className="border-2 border-dashed border-border/50 rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                      id="image-upload"
+                    />
+                    <label htmlFor="image-upload" className="cursor-pointer">
+                      <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground mb-1">
+                        Click to upload product image
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Image will be cropped to 750×875 (6:7 ratio)
+                      </p>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="relative inline-block">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="max-w-full h-auto max-h-96 rounded-lg"
+                        style={{
+                          boxShadow: "0 0 0 3px rgba(var(--primary), 0.3)",
+                        }}
+                      />
+                      <div
+                        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border-4 border-primary pointer-events-none"
+                        style={{
+                          width: "300px",
+                          height: "350px",
+                          boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.5)",
+                        }}
+                      >
+                        <div className="absolute -top-6 left-0 right-0 text-center">
+                          <span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs font-medium">
+                            750×875 Crop Area
+                          </span>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={removeImage}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Highlighted area shows the portion that will be saved
+                      (750×875 pixels)
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="space-y-2">

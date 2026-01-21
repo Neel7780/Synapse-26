@@ -8,17 +8,14 @@ export default function MerchandisePage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.push("/admin/merchandise/management");
+    // Redirect to merchandise management page
+    router.replace("/admin/merchandise/management");
   }, [router]);
 
   return (
-    <div className="flex min-h-[50vh] items-center justify-center">
-      <div className="text-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-        <p className="text-sm text-muted-foreground">
-          Redirecting to merchandise management...
-        </p>
-      </div>
+    <div className="flex items-center justify-center h-96">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <span className="ml-2 text-muted-foreground">Redirecting...</span>
     </div>
   );
 }
