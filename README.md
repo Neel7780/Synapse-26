@@ -84,13 +84,6 @@ This repository follows a conventional Next.js layout with App Router routing an
 
 ### Environment Variables
 
-The app integrates with Supabase and third-party services. Do not commit secrets. Example variables (names may vary in your deployment):
-
-- `NEXT_PUBLIC_SUPABASE_URL` — your Supabase project URL (public)
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase anon public key (public)
-- `SUPABASE_SERVICE_ROLE_KEY` — Supabase service role key (server-only, secret)
-- `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` — payment integration credentials (if used)
-
 Place environment variables in a `.env.local` file for local development. Example `.env.local` (never commit this file):
 
 ```text
