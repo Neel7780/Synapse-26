@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { Suspense } from "react";
 import { AdminPageHeader } from "@/components/admin/ui/AdminSidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
@@ -21,11 +20,9 @@ import {
   Users,
   Building2,
   ArrowRight,
-  TrendingUp,
   Eye,
   Plus,
   ArrowUpRight,
-  ArrowDownRight,
   CheckCircle,
   Clock,
   Loader2,
@@ -118,32 +115,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-3 p-4">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <div key={i} className="flex items-center gap-4">
-          <div className="h-8 w-8 rounded-full bg-secondary animate-pulse" />
-          <div className="h-4 flex-1 rounded bg-secondary animate-pulse" />
-          <div className="h-4 w-16 rounded bg-secondary animate-pulse" />
-          <div className="h-4 w-12 rounded bg-secondary animate-pulse" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// Helper to get time-based greeting
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
-}
-
-// Server Component: Dashboard Content
-async function DashboardContent() {
-  const data: DashboardData = await getDashboardData();
-  const { stats, revenue, recentRegistrations, quickStats } = data;
-
+    <div className="space-y-6 p-6">
       {/* Loading State */}
       {isLoading && (
         <div className="flex items-center justify-center py-8">
@@ -169,6 +141,7 @@ async function DashboardContent() {
                       Your festival is performing well. You have <span className="text-foreground font-medium">{stats.totalRegistrations} registrations</span> across <span className="text-foreground font-medium">{stats.totalEvents} events</span>.
                     </p>
                   </div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="/Synapse Logo.png"
                     alt="Synapse"
