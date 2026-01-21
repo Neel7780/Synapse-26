@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 
 const galleryImages = [
   "/images_home/MohitChauhan.jpg",
@@ -21,21 +22,54 @@ const galleryImages = [
 ];
 
 export default function ProniteGallery() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start end", "end start"],
+  });
+
+  // Create slow, alternating scroll offsets for different columns
+  const y1 = useTransform(scrollYProgress, [0, 1], [0, -400]);
+  const y2 = useTransform(scrollYProgress, [0, 1], [0, 400]);
+  const y3 = useTransform(scrollYProgress, [0, 1], [0, -600]);
+  const y4 = useTransform(scrollYProgress, [0, 1], [0, 600]);
+  const y5 = useTransform(scrollYProgress, [0, 1], [0, -300]);
+  const y6 = useTransform(scrollYProgress, [0, 1], [0, 300]);
+
+  // Distribute images into columns
+  const columns = [
+    { images: [galleryImages[0], galleryImages[5], galleryImages[10], galleryImages[1]], y: y1 },
+    { images: [galleryImages[2], galleryImages[7], galleryImages[12], galleryImages[3]], y: y2 },
+    { images: [galleryImages[4], galleryImages[9], galleryImages[14], galleryImages[5]], y: y3 },
+    { images: [galleryImages[6], galleryImages[11], galleryImages[0], galleryImages[7]], y: y4 },
+    { images: [galleryImages[8], galleryImages[13], galleryImages[1], galleryImages[9]], y: y5 },
+    { images: [galleryImages[10], galleryImages[14], galleryImages[2], galleryImages[6]], y: y6 },
+    { images: [galleryImages[3], galleryImages[0], galleryImages[5], galleryImages[11]], y: y1 },
+  ];
+
   return (
-    <section className="relative w-full h-[140svh] bg-black overflow-hidden flex items-center justify-center">
+    <section ref={containerRef} className="relative w-full h-[140svh] bg-black overflow-hidden flex items-center justify-center">
       {/* Tilted Grid Container */}
-      <div className="absolute inset-0 w-[280%] h-[200%] -left-[90%] -top-[40%] rotate-[-26deg] flex flex-wrap gap-x-6 gap-y-0 p-8 opacity-90">
-        {galleryImages.map((src, i) => (
-          <div
+      <div className="absolute inset-0 w-[280%] h-[300%] -left-[90%] -top-[80%] rotate-[-26deg] flex gap-x-8 p-8 opacity-90">
+        {columns.map((col, i) => (
+          <motion.div
             key={i}
-            className="relative w-[18%] h-[850px] border-[6px] border-black shadow-2xl overflow-hidden -mb-56"
+            style={{ y: col.y }}
+            className="flex flex-col gap-y-0 w-[18%]"
           >
-            <img
-              src={src}
-              className="w-full h-full object-cover grayscale-[0.8] hover:grayscale-0 transition-all duration-500"
-              alt="Festival Moment"
-            />
-          </div>
+            {col.images.map((src, idx) => (
+              <div
+                key={idx}
+                className="relative w-full h-[850px] border-[6px] border-black shadow-2xl overflow-hidden -mb-56"
+              >
+                <img
+                  src={src}
+                  className="w-full h-full object-cover grayscale-[0.8] hover:grayscale-0 transition-all duration-500"
+                  alt="Festival Moment"
+                />
+              </div>
+            ))}
+          </motion.div>
         ))}
       </div>
 
