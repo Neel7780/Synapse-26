@@ -214,6 +214,7 @@ export default function NewProductPage() {
                   placeholder="e.g., Synapse T-Shirt"
                   required
                   className="bg-muted/50 border-border/50"
+                  disabled={loading}
                 />
               </div>
               <div className="space-y-2">
@@ -227,6 +228,7 @@ export default function NewProductPage() {
                   placeholder="499"
                   required
                   className="bg-muted/50 border-border/50"
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -242,6 +244,7 @@ export default function NewProductPage() {
                 }
                 placeholder="S, M, L, XL, XXL"
                 className="bg-muted/50 border-border/50"
+                disabled={loading}
               />
             </div>
 
@@ -323,6 +326,7 @@ export default function NewProductPage() {
                 className="w-full rounded-md border border-border/50 bg-muted/50 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
                 rows={3}
                 placeholder="Product description"
+                disabled={loading}
               />
             </div>
 
@@ -335,6 +339,7 @@ export default function NewProductPage() {
                   setFormData({ ...formData, is_available: e.target.checked })
                 }
                 className="rounded border-border"
+                disabled={loading}
               />
               <label htmlFor="is_available" className="text-sm font-medium">
                 Available for purchase

@@ -47,7 +47,7 @@ export async function PUT(
     const is_available = formData.get('is_available') as string | null;
     const imageFile = formData.get('image') as File | null;
 
-    // Check existence and get current product
+    // Check existence
     const { data: existing, error: fetchError } = await supabase
       .from('merchandise_management')
       .select('*')
@@ -124,6 +124,7 @@ export async function PUT(
       { status: 200 }
     );
   } catch (error) {
+    console.error("Update Error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
