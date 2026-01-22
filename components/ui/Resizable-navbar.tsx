@@ -218,7 +218,10 @@ export const MobileAnimatedMenuItem = ({
         </span>
       </div>
 
-      <span className="ml-[clamp(10px,2vw,20px)] text-[clamp(20px,4.5vw,36px)] transition-all duration-300 ease-out group-hover:translate-x-1.5">
+      <span
+        className="ml-[clamp(10px,2vw,20px)] text-[clamp(20px,4.5vw,36px)] transition-all duration-300 ease-out group-hover:translate-x-1.5"
+        style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' }}
+      >
         ↗
       </span>
     </Link>
