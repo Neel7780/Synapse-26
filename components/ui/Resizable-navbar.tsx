@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useNavigationState } from "@/lib/useNavigationState";
 import { usePathname } from "next/navigation";
 
-import React, { useRef, useState, forwardRef, memo } from "react";
+import React, { useState, forwardRef, memo } from "react";
 
 interface NavbarProps {
   children: React.ReactNode;
@@ -67,7 +67,7 @@ export const Navbar = ({
         y: visible ? 0 : -80,
         pointerEvents: "none",
       }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
+      transition={{ duration: 0.7, ease: "easeOut" }}
     >
       {children}
     </motion.div>
@@ -248,7 +248,7 @@ export const MobileNavMenu = forwardRef<
     onClose: () => void;
   }
 >(function MobileNavMenu(
-  { children, className, isOpen, onClose },
+  { children, className, isOpen },
   ref
 ) {
   return (
@@ -259,7 +259,7 @@ export const MobileNavMenu = forwardRef<
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
           className={cn(
             "fixed inset-x-0 top-2 mx-auto w-[calc(100%-16px)] rounded-xl bg-black/95 border border-white/10 shadow-[0_4px_30px_rgba(235,0,0,0.15)] pointer-events-auto",
             className

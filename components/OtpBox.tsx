@@ -7,7 +7,7 @@ import {
   type KeyboardEvent,
   type ClipboardEvent,
 } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface OtpBoxProps {
   email: string;
@@ -21,6 +21,7 @@ export default function OtpBox({
   goLogin,
 }: OtpBoxProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
@@ -104,7 +105,8 @@ export default function OtpBox({
           router.push("/auth/update-password");
         } else {
           // For signup verification, redirect to user profile (user stays logged in)
-          router.push("/user-profile");
+          const next = searchParams.get("next");
+          router.push(next || "/user-profile");
         }
       }, 1500);
     } catch (err: unknown) {

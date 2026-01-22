@@ -1,15 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ChevronDown } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useNavigationState } from "@/lib/useNavigationState";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
 export default function JokerSection() {
+  const router = useRouter();
+  const { startTransition } = useNavigationState();
   const jokerSectionRef = useRef<HTMLDivElement>(null);
   const jokerSvgRef = useRef<SVGSVGElement>(null);
   const jokerPathRef = useRef<SVGPathElement>(null);
@@ -416,8 +420,9 @@ export default function JokerSection() {
         window.removeEventListener("resize", handleResize);
         jokerTl.scrollTrigger?.kill();
         cleanupHover?.();
+        const sectionRef = jokerSectionRef.current;
         ScrollTrigger.getAll().forEach((trigger) => {
-          if (trigger.trigger === jokerSectionRef.current) {
+          if (trigger.trigger === sectionRef) {
             trigger.kill();
           }
         });
@@ -605,16 +610,21 @@ export default function JokerSection() {
                 {cards.map((card, index) => (
                   <div
                     key={card.id}
-                    className="card-container absolute min-h[180px] min-w-[150px] "
+                    className="card-container absolute min-h[180px] min-w-[150px] cursor-pointer"
                     style={{
                       // Modified clamps for better mobile aspect ratio
-                      width: "clamp(90px, 20vw, 240px)",
-                      height: "clamp(120px, 25vw, 300px)",
+                      width: "clamp(150px, 40vw, 240px)",
+                      height: "clamp(200px, 50vw, 300px)",
                       transform: "translateY(120vh)"
                     }}
                     id={card.id}
                     ref={(el) => {
                       cardRefs.current[index] = el;
+                    }}
+                    onClick={() => {
+                      startTransition();
+                      const dayNum = index + 1;
+                      router.push(`/timeline#day-${dayNum}`);
                     }}
                   >
                     <div

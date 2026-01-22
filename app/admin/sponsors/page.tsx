@@ -22,8 +22,6 @@ import {
   DialogTitle,
 } from "@/app/components/ui/dialog";
 import {
-  DndContext,
-  closestCenter,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -32,12 +30,8 @@ import {
 } from "@dnd-kit/core";
 import {
   arrayMove,
-  SortableContext,
   sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import {
   Plus,
   Edit,
@@ -182,7 +176,7 @@ export default function SponsorsPage() {
     }
   };
 
-  const sensors = useSensors(
+  const _sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
@@ -223,7 +217,7 @@ export default function SponsorsPage() {
     fetchSponsors();
   }, []);
 
-  const handleDragEnd = async (event: DragEndEvent) => {
+  const _handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {

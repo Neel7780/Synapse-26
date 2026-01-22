@@ -55,8 +55,6 @@ import {
   Edit,
   Trash2,
   Calendar,
-  MapPin,
-  Clock,
   Users,
   ExternalLink,
   Tag,
@@ -181,10 +179,8 @@ const cropImageToMobileViewport = async (file: File): Promise<File> => {
 // Image Preview Component - Shows original with crop overlay
 const ImagePreview = ({
   originalUrl,
-  croppedUrl,
 }: {
   originalUrl: string;
-  croppedUrl?: string;
 }) => (
   <div className="relative w-full max-w-2xl mx-auto mt-4">
     <div className="relative w-full aspect-video bg-muted/30 rounded-lg overflow-hidden border border-border/50">
@@ -325,21 +321,21 @@ export default function EventsPage() {
                 fee: solo?.fee.price || 0,
                 minParticipants: solo?.fee.min_members || 1,
                 maxParticipants: solo?.fee.max_members || 1,
-                qrUrl: (solo as any)?.payment_qr_url || "",
+                qrUrl: (solo as unknown as { payment_qr_url?: string })?.payment_qr_url || "",
               },
               duet: {
                 enabled: !!duet,
                 fee: duet?.fee.price || 0,
                 minParticipants: duet?.fee.min_members || 2,
                 maxParticipants: duet?.fee.max_members || 2,
-                qrUrl: (duet as any)?.payment_qr_url || "",
+                qrUrl: (duet as unknown as { payment_qr_url?: string })?.payment_qr_url || "",
               },
               group: {
                 enabled: !!group,
                 fee: group?.fee.price || 0,
                 minParticipants: group?.fee.min_members || 3,
                 maxParticipants: group?.fee.max_members || 8,
-                qrUrl: (group as any)?.payment_qr_url || "",
+                qrUrl: (group as unknown as { payment_qr_url?: string })?.payment_qr_url || "",
               },
             },
           };

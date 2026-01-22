@@ -94,6 +94,7 @@ export default function Terms() {
           scrollTrigger: {
             trigger: section,
             start: "top 85%",
+            toggleActions: "play none none reverse",
           }
         });
 
@@ -124,6 +125,7 @@ export default function Terms() {
           scrollTrigger: {
             trigger: ".footer-text",
             start: "top 90%",
+            toggleActions: "play none none reverse",
           }
         }
       );

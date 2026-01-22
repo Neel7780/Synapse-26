@@ -83,7 +83,7 @@ export default function HeroSection({
     pending: new Set<string>(),
     resolved: new Set<string>(),
   });
-  /* eslint-disable @typescript-eslint/no-explicit-any */
+   
   // Disabling explicit-any for GSAP refs temporarily due to complex types
   const masterTLRef = useRef<gsap.core.Timeline | null>(null);
   const progressTriggerRef = useRef<ScrollTrigger | null>(null);
@@ -786,32 +786,22 @@ export default function HeroSection({
                 </div>
               </div>
             </div>
-
             <div id="part3" ref={part3Ref} className="absolute inset-0 w-full h-full transform-[rotateY(180deg)] backface-hidden pointer-events-none">
               <div className="register-btn absolute bottom-2/5 max-[450px]:left-1/2 max-[450px]:-translate-x-1/2 min-[450px]:bottom-[40px] min-[450px]:right-[40px] md:bottom-[60px] md:right-[60px] z-50 scale-125 md:scale-100 origin-bottom-right pointer-events-auto">
-                {isAuthenticated ? (
-                  <NavbarButton onClick={logout} variant="register">
-                    Logout
-                  </NavbarButton>
-                ) : (
-                  <NavbarButton href="/auth" variant="register">
+                {!isAuthenticated && (
+                  <NavbarButton href="/auth?next=/" variant="register">
                     Register
                   </NavbarButton>
                 )}
               </div>
 
-              <div className="title-wrapper flex justify-center pt-[80px] sm:pt-[60px] md:pt-[120px] h-[calc(100dvh-120px)] md:h-[calc(100dvh-200px)]">
+              <div className="title-wrapper flex justify-center pt-[80px] sm:pt-[60px] md:pt-[120px] h-[calc(100dvh-120px)] md:h-[calc(100dvh-200px)] pointer-events-none">
                 <h1 className="title text-4xl min-[450px]:text-6xl sm:text-7xl md:text-[clamp(40px,12vw,140px)] font-joker leading-none text-center px-4" ref={titleRef}>synapse&apos; 26</h1>
               </div>
-              <div
-                ref={scrollHintHomeRef}
-                className="scroll-hint-home fixed bottom-0 left-1/2 -translate-x-1/2 z-50
-               text-white select-none pointer-events-none"
-              >
-                <ChevronDown className="stroke-[3px] h-4 w-5 sm:w-8 sm:h-8 translate-y-full" />
-                <ChevronDown className="stroke-[3px] h-4 w-5 sm:w-8 sm:h-8 translate-y-1/2" />
-                <ChevronDown className="stroke-[3px] h-4 w-5 sm:w-8 sm:h-8" />
-                <ChevronDown className="stroke-[3px] h-4 w-5 sm:w-8 sm:h-8 -translate-y-1/2" />
+
+              <div className="scroll-hint-home absolute bottom-[8%] left-1/2 -translate-x-1/2 text-white text-center z-40 pointer-events-none opacity-0 will-change-transform mix-blend-difference" ref={scrollHintHomeRef}>
+                <p className="font-jqka text-[14px] md:text-xl tracking-[0.2em] uppercase mb-2 whitespace-nowrap">Scroll to explore</p>
+                <ChevronDown className="w-6 h-6 md:w-8 md:h-8 mx-auto animate-bounce" />
               </div>
 
               <CountdownTimer targetDate={new Date("2026-02-26 00:00:00")} />
@@ -819,9 +809,9 @@ export default function HeroSection({
           </div>
           <div
             ref={scrollHintRef}
-            className=" absolute left-1/2 -translate-x-1/2  bottom-5 md:bottom-[30px] z-[100] flex flex-col items-center justify-center gap-1 w-[50px] h-[100px]  md:w-[70px] md:h-[120px] font-jqka text-amber-50 text-[10px] md:text-xs  leading-tight tracking-wide uppercase border border-amber-50  rounded-full backdrop-blur-[2px]"
+            className=" absolute left-1/2 -translate-x-1/2  bottom-5 md:bottom-[30px] z-[100] flex flex-col items-center justify-center gap-1 w-[70px] h-[130px] md:w-[70px] md:h-[120px] font-jqka text-amber-50 text-xs md:text-xs leading-tight tracking-wide uppercase border border-amber-50 rounded-full backdrop-blur-[2px]"
           >
-            <span className="text-center">
+            <span className="text-center text-[17px] md:text-[14px]">
               Scroll <br /> To <br /> Explore
             </span>
 
@@ -857,6 +847,6 @@ export default function HeroSection({
                    bg-red-600 rounded-full"
         />
       </div>
-    </div>
+    </div >
   );
 }

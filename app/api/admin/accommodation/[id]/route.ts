@@ -236,9 +236,9 @@ export async function DELETE(
             filePath,
           });
         }
-      } catch (err) {
+      } catch (error) {
         // Log error but continue with deletion
-        console.error("Failed to delete QR code image:", err);
+        console.error("Failed to delete QR code image:", error);
       }
     }
 
@@ -255,7 +255,7 @@ export async function DELETE(
       { message: "Accommodation package deleted successfully" },
       { status: 200 }
     );
-  } catch (err) {
+  } catch (error) {
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

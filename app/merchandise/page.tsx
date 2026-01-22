@@ -178,7 +178,7 @@ const ProductSection = ({ product }: { product: Product }) => {
               </span>
               <div className="absolute inset-0 bg-red-600 transform translate-y-full transition-transform duration-300 group-hover:translate-y-0" />
             </button>
-            <p className="text-white/20 text-center mt-3 text-[10px] tracking-[0.3em] uppercase">Limited quantity Drop '26</p>
+            <p className="text-white/20 text-center mt-3 text-[10px] tracking-[0.3em] uppercase">Limited quantity Drop &apos;26</p>
           </div>
         </div>
       </div>

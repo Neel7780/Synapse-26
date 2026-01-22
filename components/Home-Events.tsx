@@ -22,11 +22,10 @@ interface EventCardProps {
 export const EventCard = memo(function EventCard({
   title,
   description,
-  image,
   category,
   link,
   index,
-}: EventCardProps) {
+}: Omit<EventCardProps, 'image'>) {
   const cardRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const badgeRef = useRef<HTMLDivElement>(null);

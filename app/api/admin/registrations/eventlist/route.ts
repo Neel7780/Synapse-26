@@ -1,10 +1,11 @@
 import { createClient } from "@/utils/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { SupabaseClient } from "@supabase/supabase-js";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
-    const supabase = (await createClient()) as any;
-    const { data, error } = await supabase.from("event").select("event_name");
+    const supabase = (await createClient()) as SupabaseClient;
+    const { data } = await supabase.from("event").select("event_name");
 
     if (error) {
       console.error(error);
