@@ -226,7 +226,7 @@ export default function PronitePage() {
             className="text-[clamp(3.5rem,15vw,10rem)] font-texgyreadventor leading-none mb-4"
             style={{ perspective: "1000px" }}
           >
-            Join the <br /> Celebration
+            Join the<br /> Celebration
           </h1>
 
           <p
@@ -237,7 +237,7 @@ export default function PronitePage() {
             you&apos;ll wish you were part of.
           </p>
 
-          <div ref={ctaButtonRef} className="inline-block">
+          {/* <div ref={ctaButtonRef} className="inline-block">
             {!isAuthenticated ? (
               <NavbarButton href="/auth" variant="register">
                 REGISTER
@@ -255,7 +255,7 @@ export default function PronitePage() {
                 LOGOUT
               </NavbarButton>
             )}
-          </div>
+          </div> */}
         </div>
       </section>
 

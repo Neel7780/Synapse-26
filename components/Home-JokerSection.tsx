@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ChevronDown } from "lucide-react";
@@ -317,7 +317,7 @@ export default function JokerSection() {
         const isother = vw < 1000;
 
         if (isMobile) {
-          const offset = Math.min(vw * 0.12, 240);
+          const offset = Math.min(vw * 0.15, 240);
           return i % 2 === 0 ? -offset : offset;
         }
         else if (isTablet) {
@@ -341,8 +341,8 @@ export default function JokerSection() {
         const isother = window.innerWidth < 1000;
 
         if (isMobile) {
-          const step = vh * 0.18;
-          return i * step - vh * 0.15;
+          const step = vh * 0.15;
+          return i * step - vh * 0.18;
         } else if (isTablet) {
           const TabletStagger = [0.07, -0.1, 0.07, -0.07];
           return TabletStagger[i] * vh;
@@ -416,8 +416,9 @@ export default function JokerSection() {
         window.removeEventListener("resize", handleResize);
         jokerTl.scrollTrigger?.kill();
         cleanupHover?.();
+        const sectionRef = jokerSectionRef.current;
         ScrollTrigger.getAll().forEach((trigger) => {
-          if (trigger.trigger === jokerSectionRef.current) {
+          if (trigger.trigger === sectionRef) {
             trigger.kill();
           }
         });
@@ -605,7 +606,7 @@ export default function JokerSection() {
                 {cards.map((card, index) => (
                   <div
                     key={card.id}
-                    className="card-container absolute min-h[180px] min-w-[150px]"
+                    className="card-container absolute min-h[180px] min-w-[150px] "
                     style={{
                       // Modified clamps for better mobile aspect ratio
                       width: "clamp(90px, 20vw, 240px)",
@@ -618,11 +619,11 @@ export default function JokerSection() {
                     }}
                   >
                     <div
-                      className="card-scroll-wrapper w-full h-full transform-style-preserve-3d"
+                      className="card-scroll-wrapper w-full h-full transform-style-preserve-3d "
                       style={{ transformStyle: "preserve-3d" }}
                     >
                       <div
-                        className="card-inner w-full h-full transform-style-preserve-3d transition-transform duration-100 ease-in-out"
+                        className="card-inner w-full h-full transform-style-preserve-3d transition-transform duration-100 ease-in-out "
                         style={{ transformStyle: "preserve-3d" }}
                       >
                         {/* Card Front */}
@@ -683,9 +684,7 @@ export default function JokerSection() {
         </div>
       </div>
 
-      <div className='h-[100vh]' />
-      <div className='h-[100vh]' />
-      <div className='h-[100vh]' />
+      <div className='h-[300vh]' />
     </div>
   );
 }

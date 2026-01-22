@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
 import {
-  Navbar,
   MobileNav,
   MobileNavHeader,
   MobileNavMenu,
@@ -27,13 +26,13 @@ export default function NavigationPanel() {
       { name: "home", link: "/" },
       { name: "about us", link: "/about" },
       { name: "events", link: "/events" },
-      { name: "teams", link: "/teams" },
       { name: "pronite", link: "/pronite" },
       { name: "timeline", link: "/timeline" },
       { name: "accomodation", link: "/accomodation" },
       { name: "merchandise", link: "/merchandise" },
       { name: "sponsors", link: "/sponsors" },
       { name: "contact us", link: "#contact", isContact: true },
+      { name: "teams", link: "/teams" },
       { name: "terms and conditions", link: "/terms-and-conditions" },
     ];
 

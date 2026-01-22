@@ -3,9 +3,16 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/ui/AdminSidebar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
+import { Input } from "@/app/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -15,8 +22,6 @@ import {
   DialogTitle,
 } from "@/app/components/ui/dialog";
 import {
-  DndContext,
-  closestCenter,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -25,12 +30,8 @@ import {
 } from "@dnd-kit/core";
 import {
   arrayMove,
-  SortableContext,
   sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import {
   Plus,
   Edit,
@@ -54,13 +55,48 @@ type Sponsor = {
   logo_url: string;
   description?: string;
   display_order?: number;
+  rank?: number | null;
 };
 
-const tierConfig: Record<string, { bg: string; text: string; border: string; Icon: React.ComponentType<{ className?: string }> }> = {
-  Platinum: { bg: "bg-slate-400/10", text: "text-slate-300", border: "border-slate-400/30", Icon: Crown },
-  Gold: { bg: "bg-amber-500/10", text: "text-amber-400", border: "border-amber-500/30", Icon: Trophy },
-  Silver: { bg: "bg-slate-300/10", text: "text-slate-400", border: "border-slate-300/30", Icon: Medal },
-  Bronze: { bg: "bg-orange-500/10", text: "text-orange-400", border: "border-orange-500/30", Icon: Award },
+const tierConfig: Record<
+  string,
+  {
+    bg: string;
+    text: string;
+    border: string;
+    Icon: React.ComponentType<{ className?: string }>;
+  }
+> = {
+  Title: {
+    bg: "bg-purple-500/10",
+    text: "text-purple-400",
+    border: "border-purple-500/30",
+    Icon: Crown,
+  },
+  "Co-Title": {
+    bg: "bg-blue-500/10",
+    text: "text-blue-400",
+    border: "border-blue-500/30",
+    Icon: Trophy,
+  },
+  Platinum: {
+    bg: "bg-slate-400/10",
+    text: "text-slate-300",
+    border: "border-slate-400/30",
+    Icon: Medal,
+  },
+  Associate: {
+    bg: "bg-green-500/10",
+    text: "text-green-400",
+    border: "border-green-500/30",
+    Icon: Award,
+  },
+  Other: {
+    bg: "bg-orange-500/10",
+    text: "text-orange-400",
+    border: "border-orange-500/30",
+    Icon: Building2,
+  },
 };
 
 export default function SponsorsPage() {
@@ -71,6 +107,8 @@ export default function SponsorsPage() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [rankingMode, setRankingMode] = useState(false);
+  const [rankValues, setRankValues] = useState<Record<number, string>>({});
 
   const fetchSponsors = async () => {
     setLoading(true);
@@ -79,8 +117,9 @@ export default function SponsorsPage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setSponsors(data.sponsors || []);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -90,11 +129,58 @@ export default function SponsorsPage() {
     fetchSponsors();
   }, []);
 
-  const sensors = useSensors(
+  const handleEnterRankingMode = () => {
+    // Initialize rank values from current sponsors
+    const initialRanks: Record<number, string> = {};
+    sponsors.forEach((sponsor) => {
+      initialRanks[sponsor.sponsor_id] = sponsor.rank
+        ? String(sponsor.rank)
+        : "";
+    });
+    setRankValues(initialRanks);
+    setRankingMode(true);
+  };
+
+  const handleCancelRanking = () => {
+    setRankingMode(false);
+    setRankValues({});
+  };
+
+  const handleSaveRanks = async () => {
+    setSaving(true);
+    try {
+      // Prepare ranks array for bulk update
+      const ranks = Object.entries(rankValues).map(([sponsor_id, rank]) => ({
+        sponsor_id: parseInt(sponsor_id, 10),
+        rank: rank.trim() === "" ? null : parseInt(rank, 10),
+      }));
+
+      const res = await fetch("/api/admin/sponsors/bulk-rank", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ranks }),
+      });
+
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      alert("Ranks updated successfully!");
+      setRankingMode(false);
+      setRankValues({});
+      await fetchSponsors(); // Refresh the list
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      alert("Failed to update ranks: " + errorMessage);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const _sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   // Fetch sponsors
@@ -107,14 +193,17 @@ export default function SponsorsPage() {
         const data = await response.json();
 
         // Ensure each sponsor has a display_order
-        const sponsorsWithOrder = data.sponsors.map((sponsor: Sponsor, index: number) => ({
-          ...sponsor,
-          display_order: sponsor.display_order ?? index + 1,
-        }));
+        const sponsorsWithOrder = data.sponsors.map(
+          (sponsor: Sponsor, index: number) => ({
+            ...sponsor,
+            display_order: sponsor.display_order ?? index + 1,
+          }),
+        );
 
         // Sort by display_order
-        sponsorsWithOrder.sort((a: Sponsor, b: Sponsor) =>
-          (a.display_order ?? 0) - (b.display_order ?? 0)
+        sponsorsWithOrder.sort(
+          (a: Sponsor, b: Sponsor) =>
+            (a.display_order ?? 0) - (b.display_order ?? 0),
         );
 
         setSponsors(sponsorsWithOrder);
@@ -128,7 +217,7 @@ export default function SponsorsPage() {
     fetchSponsors();
   }, []);
 
-  const handleDragEnd = async (event: DragEndEvent) => {
+  const _handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
@@ -176,7 +265,9 @@ export default function SponsorsPage() {
     if (deletingId === null) return;
     setDeleting(true);
     try {
-      const res = await fetch(`/api/admin/sponsors/${deletingId}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/sponsors/${deletingId}`, {
+        method: "DELETE",
+      });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       await fetchSponsors();
@@ -190,17 +281,27 @@ export default function SponsorsPage() {
   };
 
   const getTierStyle = (tier: string | null) => {
-    return tierConfig[tier || ""] || { bg: "bg-muted", text: "text-muted-foreground", border: "border-border", Icon: Building2 };
+    return (
+      tierConfig[tier || ""] || {
+        bg: "bg-muted",
+        text: "text-muted-foreground",
+        border: "border-border",
+        Icon: Building2,
+      }
+    );
   };
 
-  const groupedSponsors = sponsors.reduce((acc, sponsor) => {
-    const tier = sponsor.tier || "Other";
-    if (!acc[tier]) acc[tier] = [];
-    acc[tier].push(sponsor);
-    return acc;
-  }, {} as Record<string, Sponsor[]>);
+  const groupedSponsors = sponsors.reduce(
+    (acc, sponsor) => {
+      const tier = sponsor.tier || "Other";
+      if (!acc[tier]) acc[tier] = [];
+      acc[tier].push(sponsor);
+      return acc;
+    },
+    {} as Record<string, Sponsor[]>,
+  );
 
-  const tierOrder = ["Platinum", "Gold", "Silver", "Bronze"];
+  const tierOrder = ["Title", "Co-Title", "Platinum", "Associate", "Other"];
 
   if (loading) {
     return (
@@ -215,7 +316,9 @@ export default function SponsorsPage() {
       <div className="flex flex-col items-center justify-center h-96 gap-4">
         <AlertCircle className="h-12 w-12 text-red-500" />
         <p className="text-lg text-muted-foreground">Error: {error}</p>
-        <Button onClick={fetchSponsors} variant="outline">Retry</Button>
+        <Button onClick={fetchSponsors} variant="outline">
+          Retry
+        </Button>
       </div>
     );
   }
@@ -225,37 +328,75 @@ export default function SponsorsPage() {
       <AdminPageHeader
         title="Sponsors"
         subtitle="Partnerships"
-        badge={<Badge className="bg-primary/10 text-primary border-0">{sponsors.length} partners</Badge>}
+        badge={
+          <Badge className="bg-primary/10 text-primary border-0">
+            {sponsors.length} partners
+          </Badge>
+        }
         actions={
           <div className="flex items-center gap-3">
             {saving && (
               <Badge variant="secondary" className="flex items-center gap-2">
                 <Loader2 className="h-3 w-3 animate-spin" />
-                Saving order...
+                {rankingMode ? "Saving ranks..." : "Saving order..."}
               </Badge>
             )}
-            <Link href="/admin/sponsors/new">
-              <Button className="bg-primary hover:bg-primary/90">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Sponsor
-              </Button>
-            </Link>
+            {rankingMode ? (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={handleCancelRanking}
+                  disabled={saving}
+                  className="border-border/50"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSaveRanks}
+                  disabled={saving}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  <Award className="mr-2 h-4 w-4" />
+                  Save Ranks
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={handleEnterRankingMode}
+                  className="border-border/50"
+                >
+                  <Award className="mr-2 h-4 w-4" />
+                  Manage Ranks
+                </Button>
+                <Link href="/admin/sponsors/new">
+                  <Button className="bg-primary hover:bg-primary/90">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Sponsor
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         }
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {tierOrder.map((tier) => {
           const style = getTierStyle(tier);
-          const IconComponent = style.Icon;
           const count = groupedSponsors[tier]?.length || 0;
           return (
             <Card key={tier} className="border-border/40">
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-2">
                   <style.Icon className="h-8 w-8" />
-                  <Badge className={`${style.bg} ${style.text} ${style.border}`}>{tier}</Badge>
+                  <Badge
+                    className={`${style.bg} ${style.text} ${style.border}`}
+                  >
+                    {tier}
+                  </Badge>
                 </div>
                 <p className="text-2xl font-bold">{count}</p>
                 <p className="text-sm text-muted-foreground">{tier} Sponsors</p>
@@ -275,7 +416,9 @@ export default function SponsorsPage() {
             <div className="flex-1">
               <CardTitle>All Sponsors</CardTitle>
               <CardDescription>
-                Drag and drop to reorder sponsors. The order will be saved automatically.
+                {rankingMode
+                  ? "Assign rank numbers to sponsors. Lower numbers appear first."
+                  : "Drag and drop to reorder sponsors. The order will be saved automatically."}
               </CardDescription>
             </div>
           </div>
@@ -286,6 +429,50 @@ export default function SponsorsPage() {
               <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No sponsors added yet.</p>
               <p className="text-sm">Add your first sponsor to get started!</p>
+            </div>
+          ) : rankingMode ? (
+            <div className="space-y-3">
+              {sponsors.map((sponsor) => {
+                const style = getTierStyle(sponsor.tier);
+                return (
+                  <div
+                    key={sponsor.sponsor_id}
+                    className="flex items-center gap-4 p-4 rounded-lg border border-border/40 bg-card"
+                  >
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center">
+                        <style.Icon className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium">{sponsor.name}</h4>
+                        <Badge
+                          className={`${style.bg} ${style.text} ${style.border} text-xs`}
+                        >
+                          {sponsor.tier}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm text-muted-foreground whitespace-nowrap">
+                        Rank:
+                      </label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={rankValues[sponsor.sponsor_id] || ""}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setRankValues({
+                            ...rankValues,
+                            [sponsor.sponsor_id]: e.target.value,
+                          })
+                        }
+                        placeholder="No rank"
+                        className="w-24 bg-muted/50 border-border/50"
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -303,10 +490,17 @@ export default function SponsorsPage() {
                         </div>
                         <div>
                           <h3 className="font-semibold">{sponsor.name}</h3>
-                          <Badge className={`${style.bg} ${style.text} ${style.border} text-xs`}>
+                          <Badge
+                            className={`${style.bg} ${style.text} ${style.border} text-xs`}
+                          >
                             <Award className="mr-1 h-3 w-3" />
                             {sponsor.tier}
                           </Badge>
+                          {sponsor.rank && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Rank: {sponsor.rank}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -319,14 +513,21 @@ export default function SponsorsPage() {
                         className="flex items-center gap-2 text-sm text-primary hover:underline mb-4"
                       >
                         <Globe className="h-3 w-3" />
-                        {sponsor.website_url.replace(/^https?:\/\//, '')}
+                        {sponsor.website_url.replace(/^https?:\/\//, "")}
                         <ExternalLink className="h-3 w-3" />
                       </a>
                     )}
 
                     <div className="flex gap-2 pt-3 border-t border-border/40">
-                      <Link href={`/admin/sponsors/${sponsor.sponsor_id}`} className="flex-1">
-                        <Button variant="outline" size="sm" className="w-full border-border/50">
+                      <Link
+                        href={`/admin/sponsors/${sponsor.sponsor_id}`}
+                        className="flex-1"
+                      >
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full border-border/50"
+                        >
                           <Edit className="mr-1 h-3 w-3" />
                           Edit
                         </Button>
@@ -354,15 +555,31 @@ export default function SponsorsPage() {
           <DialogHeader>
             <DialogTitle>Delete Sponsor</DialogTitle>
             <DialogDescription>
-              Are you sure you want to remove this sponsor? This action cannot be undone.
+              Are you sure you want to remove this sponsor? This action cannot
+              be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} className="border-border/50">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              className="border-border/50"
+            >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deleting}>
-              {deleting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Deleting...</> : "Delete"}
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

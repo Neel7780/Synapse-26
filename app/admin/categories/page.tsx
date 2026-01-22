@@ -31,6 +31,7 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
+import { cropImage } from "@/lib/clientImageUtils";
 
 type Category = {
   category_id: number;
@@ -46,7 +47,7 @@ export default function CategoriesPage() {
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: "", description: "" });
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -75,11 +76,11 @@ export default function CategoriesPage() {
     const file = e.target.files?.[0];
     if (!file) {
       setPreviewImage(null);
-      setSelectedFile(null);
+      setImageFile(null);
       return;
     }
-    setSelectedFile(file);
     setPreviewImage(URL.createObjectURL(file));
+    setImageFile(file);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -91,29 +92,30 @@ export default function CategoriesPage() {
 
     setSubmitting(true);
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append("category_name", formData.name);
-      formDataToSend.append("description", formData.description || "");
+      // Unified submission using FormData
+      const uploadFormData = new FormData();
+      uploadFormData.append("category_name", formData.name);
+      if (formData.description)
+        uploadFormData.append("description", formData.description);
+      if (editingId) uploadFormData.append("category_id", editingId.toString());
 
-      if (selectedFile) {
-        formDataToSend.append("image", selectedFile);
-      }
-
-      if (editingId) {
-        formDataToSend.append("category_id", editingId.toString());
+      if (imageFile) {
+        const croppedFile = await cropImage(imageFile, 400, 600); // 2:3 ratio
+        uploadFormData.append("image", croppedFile);
       }
 
       const res = await fetch("/api/admin/categories", {
         method: editingId ? "PUT" : "POST",
-        body: formDataToSend,
+        body: uploadFormData,
       });
+
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
       await fetchCategories();
       setFormData({ name: "", description: "" });
       setPreviewImage(null);
-      setSelectedFile(null);
+      setImageFile(null);
       setEditingId(null);
     } catch (err: unknown) {
       alert(
@@ -131,6 +133,7 @@ export default function CategoriesPage() {
       description: category.description || "",
     });
     setPreviewImage(category.category_image || null);
+    setImageFile(null);
     setEditingId(category.category_id);
   };
 
@@ -163,7 +166,7 @@ export default function CategoriesPage() {
     setEditingId(null);
     setFormData({ name: "", description: "" });
     setPreviewImage(null);
-    setSelectedFile(null);
+    setImageFile(null);
   };
 
   const totalEvents = categories.reduce(
@@ -341,25 +344,54 @@ export default function CategoriesPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <ImageIcon className="h-4 w-4 text-primary" />
-                  Card Preview
+                  Card Preview (Mobile 2:3)
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="relative aspect-video max-w-[300px] mx-auto overflow-hidden rounded-xl bg-secondary">
+                <div className="relative max-w-[300px] mx-auto overflow-hidden rounded-xl bg-secondary/50 flex items-center justify-center">
                   {previewImage ? (
-                    <img
-                      src={previewImage}
-                      alt="Preview"
-                      className="h-full w-full object-cover"
-                    />
+                    <div className="relative flex items-center justify-center w-full">
+                      <img
+                        src={previewImage}
+                        alt="Preview"
+                        onLoad={(e) => {
+                          const img = e.currentTarget;
+                          // Check if image is wider or taller than 2:3 (0.666)
+                          const ratio = img.naturalWidth / img.naturalHeight;
+                          const targetRatio = 2 / 3;
+                          // We apply a class to the mask based on this
+                          const mask =
+                            img.parentElement?.querySelector(".crop-mask");
+                          if (mask) {
+                            if (ratio > targetRatio) {
+                              // Wider: Height is limiting factor
+                              mask.classList.add("h-full");
+                              mask.classList.remove("w-full");
+                            } else {
+                              // Taller: Width is limiting factor
+                              mask.classList.add("w-full");
+                              mask.classList.remove("h-full");
+                            }
+                          }
+                        }}
+                        className="max-h-[500px] w-auto object-contain"
+                      />
+                      {/* Crop Mask: Shadow covers the rest */}
+                      <div className="crop-mask absolute aspect-[2/3] shadow-[0_0_0_9999px_rgba(0,0,0,0.7)] border-2 border-primary pointer-events-none" />
+
+                      <div className="absolute bottom-0 inset-x-0 p-3 z-10 text-center">
+                        <span className="font-semibold text-white drop-shadow-md">
+                          {formData.name || "Category Name"}
+                        </span>
+                      </div>
+                    </div>
                   ) : (
-                    <div className="h-full w-full bg-gradient-to-br from-primary/20 to-primary/5" />
+                    <div className="aspect-[2/3] w-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                      <span className="text-muted-foreground text-sm">
+                        No Image
+                      </span>
+                    </div>
                   )}
-                  <div className="absolute bottom-0 inset-x-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
-                    <span className="font-semibold text-white">
-                      {formData.name || "Category Name"}
-                    </span>
-                  </div>
                 </div>
               </CardContent>
             </Card>

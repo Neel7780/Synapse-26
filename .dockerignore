@@ -1,0 +1,85 @@
+# =============================================================================
+# Docker Ignore File - Synapse'26
+# Excludes unnecessary files from Docker build context
+# =============================================================================
+
+# Dependencies (will be installed fresh in container)
+node_modules
+.pnp
+.pnp.js
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+
+# Next.js build output (will be built in container)
+.next
+out
+build
+
+# Testing
+coverage
+.nyc_output
+__tests__
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# IDE and editor files
+.idea
+.vscode
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Environment files (injected at runtime via Docker secrets or env vars)
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+
+# Keep .env.example for reference
+!.env.example
+
+# Docker files (prevent recursive copy)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Documentation
+docs/
+*.md
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.circleci
+.travis.yml
+
+# Vercel
+.vercel
+vercel.json
+
+# Misc
+*.log
+.husky
+.eslintcache
+tsconfig.tsbuildinfo
+.turbo
+
+# Storybook
+.storybook
+storybook-static

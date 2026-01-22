@@ -11,7 +11,7 @@ export async function GET() {
     .order("concert_date", { ascending: true });
 
   if (error)
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
 
   return NextResponse.json(data);
 }
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { concert_name, concert_date, venue, timing } = body;
+    const { concert_name, concert_date, venue } = body;
 
     // Validation
     if (!concert_name || !concert_date) {
@@ -41,7 +41,6 @@ export async function POST(request: Request) {
         concert_name,
         concert_date,
         venue,
-        timing,
       })
       .select()
       .single();
@@ -49,8 +48,8 @@ export async function POST(request: Request) {
     if (error) throw error;
 
     return NextResponse.json({ success: true, data });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
   }
 }
 
@@ -63,7 +62,7 @@ export async function PUT(request: Request) {
 
   try {
     const body = await request.json();
-    const { id, concert_name, concert_date, venue, timing } = body;
+    const { id, concert_name, concert_date, venue } = body;
 
     if (!id)
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
@@ -74,7 +73,6 @@ export async function PUT(request: Request) {
         concert_name,
         concert_date,
         venue,
-        timing,
       })
       .eq("id", id)
       .select()
@@ -83,8 +81,8 @@ export async function PUT(request: Request) {
     if (error) throw error;
 
     return NextResponse.json({ success: true, data });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
   }
 }
 
@@ -107,7 +105,7 @@ export async function DELETE(request: Request) {
     if (error) throw error;
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
   }
 }

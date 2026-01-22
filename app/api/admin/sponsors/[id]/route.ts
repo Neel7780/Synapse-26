@@ -45,7 +45,7 @@ export async function PUT(
     const name = formData.get('name') as string | null;
     const tier = formData.get('tier') as string | null;
     const website_url = formData.get('website_url') as string | null;
-    const description = formData.get('description') as string | null;
+    const rankStr = formData.get('rank') as string | null;
     const imageFile = formData.get('image') as File | null;
 
     // First, check if sponsor exists
@@ -73,7 +73,18 @@ export async function PUT(
     if (name !== null) updateData.name = name;
     if (tier !== null) updateData.tier = tier;
     if (website_url !== null) updateData.website_url = website_url;
-    if (description !== null) updateData.description = description;
+
+    // Handle rank update
+    if (rankStr !== null) {
+      if (rankStr.trim() === '') {
+        updateData.rank = null;
+      } else {
+        const parsedRank = parseInt(rankStr, 10);
+        if (!isNaN(parsedRank) && parsedRank > 0) {
+          updateData.rank = parsedRank;
+        }
+      }
+    }
 
     // Handle image update if provided
     if (imageFile && imageFile.size > 0) {
@@ -95,8 +106,8 @@ export async function PUT(
             });
             newLogoUrl = uploadResult.publicUrl;
           }
-        } catch (err) {
-          console.error('Failed to replace image:', err);
+        } catch (error) {
+          console.error('Failed to replace image:', error);
           // If parsing fails, just upload new image
           const uploadResult = await uploadImage({
             file: imageFile,
@@ -126,7 +137,7 @@ export async function PUT(
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
     }
 
     return NextResponse.json(
@@ -169,7 +180,7 @@ export async function DELETE(
       .eq("sponsor_id", id);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
     }
 
     // Delete the logo from storage if it exists

@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { AdminPageHeader } from "@/components/admin/ui/AdminSidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
@@ -20,7 +19,6 @@ import {
   Users,
   Building2,
   ArrowRight,
-  TrendingUp,
   Eye,
   Plus,
   ArrowUpRight,
@@ -116,29 +114,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-8 pb-8">
-      {/* Page Header */}
-      <AdminPageHeader
-        title="Dashboard"
-        subtitle="Overview"
-        actions={
-          <div className="flex gap-3">
-            <Link href="/admin/events/new">
-              <Button variant="outline" className="border-border/60 hover:bg-secondary/80">
-                <Plus className="mr-2 h-4 w-4" />
-                New Event
-              </Button>
-            </Link>
-            <Link href="/admin/analytics">
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                <TrendingUp className="mr-2 h-4 w-4" />
-                Analytics
-              </Button>
-            </Link>
-          </div>
-        }
-      />
-
+    <div className="space-y-6 p-6">
       {/* Loading State */}
       {isLoading && (
         <div className="flex items-center justify-center py-8">
@@ -164,6 +140,7 @@ export default function AdminDashboard() {
                       Your festival is performing well. You have <span className="text-foreground font-medium">{stats.totalRegistrations} registrations</span> across <span className="text-foreground font-medium">{stats.totalEvents} events</span>.
                     </p>
                   </div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="/Synapse Logo.png"
                     alt="Synapse"

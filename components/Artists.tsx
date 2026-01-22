@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Image from "next/image";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -337,16 +336,16 @@ export default function ArtistsSection() {
                     src={artist.image.fallback}
                     alt={artist.name}
                     loading="lazy"
-                    className="block object-cover z-10 transition-transform duration-300 md:hover:scale-110 cursor-pointer"
+                    className="block object-cover z-10 transition-transform duration-300 md:hover:scale-110 cursor-pointer max-[550px]:scale-120"
                     style={{
                       width:
                         i === currentIndex
-                          ? "clamp(200px, 50vw, 480px)"
-                          : "clamp(120px, 25vw, 230px)",
+                          ? "clamp(240px, 55vw, 520px)"
+                          : "clamp(140px, 28vw, 260px)",
                       height:
                         i === currentIndex
-                          ? "clamp(120px, 35vw, 390px)"
-                          : "clamp(90px, 25vw, 230px)",
+                          ? "clamp(150px, 40vw, 420px)"
+                          : "clamp(110px, 28vw, 260px)",
                     }}
                     sizes="(max-width: 768px) 80vw, 520px"
                   />
@@ -369,7 +368,7 @@ export default function ArtistsSection() {
             style={{
               width: "clamp(32px, 6vw, 62px)",
               height: "clamp(28px, 5vw, 54px)",
-              left: "calc(clamp(200px, 50vw, 480px)/2 + 50%)",
+              left: "calc(clamp(240px, 55vw, 520px)/2 + 50%)",
             }}
             aria-label="Next artist"
           >
@@ -401,7 +400,7 @@ export default function ArtistsSection() {
             style={{
               width: "clamp(32px, 6vw, 62px)",
               height: "clamp(28px, 5vw, 54px)",
-              right: "calc(clamp(200px, 50vw, 480px)/2 + 50%)",
+              right: "calc(clamp(240px, 55vw, 520px)/2 + 50%)",
             }}
             aria-label="Previous artist"
           >

@@ -98,7 +98,7 @@ export async function GET(req: NextRequest) {
         const uniqueData = Array.from(uniqueMap.values());
 
 
-        let totalRegistrations = uniqueData?.length ?? 0;
+        const totalRegistrations = uniqueData?.length ?? 0;
         let paid = 0;
         let grossRevenue = 0;
         let gatewayCharges = 0;
@@ -152,8 +152,8 @@ export async function GET(req: NextRequest) {
             },
             data: rows,
         });
-    } catch (err) {
-        console.error(err);
+    } catch (error) {
+        console.error(error);
         return NextResponse.json(
             { error: "Internal Server Error" },
             { status: 500 }

@@ -4,9 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/app/components/ui/input";
-import { useAuth } from "@/hooks/useAuth";
-import { Loader2, CheckCircle, AlertCircle, QrCode } from "lucide-react";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 
 // Default fallback pricing if API fails
 const DEFAULT_PRICING: Record<number, number> = {
@@ -14,20 +12,31 @@ const DEFAULT_PRICING: Record<number, number> = {
   3: 2500,
   4: 2800,
 };
+// ... (rest of imports/constants)
 
-// Default fallback QR URL
-const DEFAULT_QR_URL = "/payment-qr.png";
+// Animation variants
+const _containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
 
-interface AccommodationPackage {
-  id: number;
-  package_name: string;
-  price: number | null;
-  start_date: string | null;
-  end_date: string | null;
-  description: string | null;
-  is_available: boolean | null;
-  qr_code: string | null;
-}
+const _itemVariants: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      ease: "easeOut",
+    },
+  },
+};
+
 
 const generateFestivalDates = (exclude26Feb = false) => {
   const dates = [];
@@ -290,8 +299,16 @@ export function AccommodationComponent() {
   return (
     <div className="min-h-[100dvh] bg-black text-white font-jqka">
       {/* Header */}
-      <div className="pb-6 md:pb-8 text-center px-4">
-        <h1 className="pt-5 text-3xl md:text-6xl lg:text-8xl font-joker mb-2">accommodation</h1>
+      <div className="pb-6 md:pb-8 text-center px-4 overflow-hidden">
+        <motion.h1
+          initial={{ opacity: 0, y: -50, rotateX: 45 }}
+          whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+          transition={{ duration: 1.2, ease: [0.34, 1.56, 0.64, 1] }}
+          viewport={{ once: false }}
+          className="pt-5 text-3xl md:text-6xl lg:text-8xl font-joker mb-2"
+        >
+          accommodation
+        </motion.h1>
       </div>
 
       {/* Progress Steps */}
@@ -322,39 +339,52 @@ export function AccommodationComponent() {
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 md:px-6 py-6 md:py-8">
+        {/* Night Selection */}
+        <div className="mb-8 md:mb-12">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            viewport={{ once: false }}
+          >
+            <h2 className="text-xl md:text-2xl lg:text-3xl uppercase mb-4 md:mb-6">
+              Choose your accommodation
+            </h2>
+            <p className="text-sm md:text-base mb-4 text-white/70">
+              Festival dates: {festivalRange}
+            </p>
+          </motion.div>
 
-        {/* Step 1: Date Selection */}
-        {step === "dates" && (
-          <>
-            {/* Night Selection */}
-            <div className="mb-8 md:mb-12">
-              <h2 className="text-xl md:text-2xl lg:text-3xl uppercase mb-4 md:mb-6">
-                Choose your accommodation
-              </h2>
-              <p className="text-sm md:text-base mb-4 text-white/70">
-                Festival dates: {festivalRange}
-              </p>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
-                {availableNights.map((nights) => (
-                  <button
-                    key={nights}
-                    onClick={() => handleNightSelection(nights)}
-                    className={`p-4 md:p-6 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${selectedNights === nights
-                      ? "border-2 border-white bg-white text-black"
-                      : "border-2 border-white/30 hover:border-white"
-                      }`}
-                  >
-                    <div className="text-xl md:text-2xl font-bold">
-                      {nights} NIGHTS
-                    </div>
-                    <div className="text-lg md:text-xl">
-                      ₹ {pricing[nights]}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
+          <motion.div
+            className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false }}
+          >
+            {[2, 3, 4].map((nights) => (
+              <motion.button
+                key={nights}
+                variants={itemVariants}
+                onClick={() => handleNightSelection(nights)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`p-4 md:p-6 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${selectedNights === nights
+                  ? "border-2 border-white bg-white text-black"
+                  : "border-2 border-white/30 hover:border-white"
+                  }`}
+              >
+                <div className="text-xl md:text-2xl font-bold">
+                  {nights} NIGHTS
+                </div>
+                <div className="text-lg md:text-xl">
+                  ₹ {Pricing[nights as keyof typeof Pricing]}
+                </div>
+              </motion.button>
+            ))}
+          </motion.div>
+        </div>
+        <div></div>
 
             {selectedNights && availableRanges.length > 0 && (
               <div className="mb-8 md:mb-12">
@@ -362,6 +392,34 @@ export function AccommodationComponent() {
                   Select Dates
                 </h3>
 
+              <div className="space-y-3 mb-6 md:mb-8">
+                {availableRanges.map((range, index) => (
+                  <motion.label
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="flex items-center gap-3 md:gap-4 p-3 md:p-4 cursor-pointer hover:bg-white/5 transition-all"
+                  >
+                    <div className="w-5 md:w-6 h-6 bg-white flex items-center justify-center flex-shrink-0">
+                      {selectedRange?.startIndex === range.startIndex && (
+                        <div className="w-5 h-6 md:w-6  text-blue-700 font-black text-lg md:text-xl text-center justify-center item-center font-jqka scale-125 select-none">
+                          ✔
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleRangeSelection(range)}
+                      className="flex-1 text-left text-spacing uppercase text-lg md:text-xl hover:text-white/80 cursor-pointer transition-colors"
+                    >
+                      {range.label}
+                    </button>
+                  </motion.label>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
                 <div className="space-y-3 mb-6 md:mb-8">
                   {availableRanges.map((range, index) => (
                     <label
@@ -416,188 +474,39 @@ export function AccommodationComponent() {
               </Button>
             </div>
 
-            {/* Guidelines Section */}
-            <div className="bg-white/5 p-6 font-poppins md:p-8 rounded">
-              <h3 className="text-2xl text-center underline md:text-3xl mb-4 md:mb-6 ">
-                Guidelines
-              </h3>
-              <ul className="space-y-3 md:space-y-4 text-xs md:text-sm leading-relaxed">
-                <li className="flex gap-2 md:gap-3">
-                  <span className="text-white/60 flex-shrink-0">1)</span>
-                  <span>
-                    Accommodation passes are strictly non-refundable under any
-                    circumstances.
-                  </span>
-                </li>
-                <li className="flex gap-2 md:gap-3">
-                  <span className="text-white/60 flex-shrink-0">2)</span>
-                  <span>
-                    Accommodation will be allocated based on availability. The place
-                    assigned to you must be accepted as it is. No changes or
-                    requests for alternative arrangements will be entertained.
-                  </span>
-                </li>
-                <li className="flex gap-2 md:gap-3">
-                  <span className="text-white/60 flex-shrink-0">3)</span>
-                  <span>
-                    Keep your belongings secure. Organizers will not be responsible
-                    for any loss or damage.
-                  </span>
-                </li>
-                <li className="flex gap-2 md:gap-3">
-                  <span className="text-white/60 flex-shrink-0">4)</span>
-                  <span>
-                    Respect the property and maintain cleanliness—any damage caused
-                    will result in full accountability, including covering the cost
-                    of repairs or replacement.
-                  </span>
-                </li>
-                <li className="flex gap-2 md:gap-3">
-                  <span className="text-white/60 flex-shrink-0">5)</span>
-                  <span>
-                    On 26th February, accommodation will not be provided before 4:00
-                    PM.
-                  </span>
-                </li>
-                <li className="flex gap-2 md:gap-3">
-                  <span className="text-white/60 flex-shrink-0">6)</span>
-                  <span>
-                    On 1st March, check-out will be before 9:00 AM. All guests
-                    must vacate the accommodation by this time.
-                  </span>
-                </li>
-              </ul>
-            </div>
-          </>
-        )}
-
-        {/* Step 2: Payment */}
-        {step === "payment" && (
-          <div className="bg-[#111] border border-white/10 rounded-xl p-8">
-            <h2 className="text-2xl font-bold mb-6">Payment</h2>
-
-            {/* Booking Summary */}
-            <div className="bg-white/5 border border-white/10 rounded-lg p-4 mb-6">
-              <p className="text-gray-300 mb-2">
-                <span className="text-white/60">Nights:</span> <span className="text-white font-medium">{selectedNights}</span>
-              </p>
-              <p className="text-gray-300 mb-2">
-                <span className="text-white/60">Dates:</span> <span className="text-white font-medium">{selectedRange?.label}</span>
-              </p>
-              <p className="text-gray-300">
-                <span className="text-white/60">Amount:</span> <span className="text-[#0088FF] font-bold">₹{totalPrice}</span>
-              </p>
-            </div>
-
-            {/* QR Code Display */}
-            <div className="mb-8">
-              <p className="text-gray-400 mb-4">
-                Scan the QR code below and make the payment of <span className="text-[#0088FF] font-bold">₹{totalPrice}</span>
-              </p>
-
-              <div className="bg-white rounded-xl p-4 w-64 h-64 mx-auto flex items-center justify-center">
-                {qrUrl ? (
-                  <Image
-                    src={qrUrl}
-                    alt="Payment QR Code"
-                    width={240}
-                    height={240}
-                    className="object-contain"
-                  />
-                ) : (
-                  <div className="text-center text-gray-400">
-                    <QrCode className="h-16 w-16 mx-auto mb-2 text-gray-300" />
-                    <p className="text-sm">QR Code not available</p>
-                    <p className="text-xs">Contact organizer for payment details</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Payment Screenshot Input */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">
-                Payment Screenshot URL / Transaction ID
-              </label>
-              <Input
-                type="text"
-                value={paymentScreenshot}
-                onChange={(e) => setPaymentScreenshot(e.target.value)}
-                placeholder="Paste your payment screenshot URL or transaction ID"
-                className="w-full bg-white/5 border-white/10 text-white placeholder:text-gray-500"
-              />
-              <p className="text-xs text-gray-500 mt-2">
-                Upload your payment screenshot to a service like Imgur and paste the URL, or enter your transaction ID
-              </p>
-            </div>
-
-            {submitError && (
-              <div className="flex items-center gap-2 text-red-400 mb-6 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                <AlertCircle className="h-5 w-5 flex-shrink-0" />
-                <p>{submitError}</p>
-              </div>
-            )}
-
-            <div className="flex gap-4">
-              <Button
-                variant="outline"
-                onClick={() => setStep("dates")}
-                className="flex-1 py-4 border-white/10 hover:bg-white/5"
-              >
-                Back
-              </Button>
-              <Button
-                onClick={handleSubmitBooking}
-                disabled={submitting}
-                className="flex-1 py-4 text-lg bg-white text-black hover:bg-white/90"
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  "Submit Booking"
-                )}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 3: Success */}
-        {step === "success" && (
-          <div className="bg-[#111] border border-white/10 rounded-xl p-8 text-center">
-            <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-6" />
-            <h2 className="text-2xl font-bold mb-4">Booking Submitted!</h2>
-            <p className="text-gray-400 mb-2">
-              Your accommodation booking has been received and is pending payment verification.
-            </p>
-            {bookingId && (
-              <p className="text-sm text-gray-500 mb-6">
-                Booking ID: #{bookingId}
-              </p>
-            )}
-            <p className="text-sm text-gray-400 mb-8">
-              You will be notified once your payment is verified.
-            </p>
-
-            <div className="flex gap-4 justify-center">
-              <Button
-                variant="outline"
-                onClick={() => router.push("/events")}
-                className="border-white/10 hover:bg-white/5"
-              >
-                Browse Events
-              </Button>
-              <Button
-                onClick={() => router.push("/user-profile")}
-                className="bg-white text-black hover:bg-white/90"
-              >
-                Go to Profile
-              </Button>
-            </div>
-          </div>
-        )}
+        {/* Guidelines Section */}
+        <motion.div
+          className="bg-white/5 p-6 font-poppins md:p-8 rounded"
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          viewport={{ once: false }}
+        >
+          <h3 className="text-2xl text-center underline md:text-3xl mb-4 md:mb-6 ">
+            Guidelines
+          </h3>
+          <motion.ul
+            className="space-y-3 md:space-y-4 text-xs md:text-sm leading-relaxed"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false }}
+          >
+            {[
+              "Accommodation passes are strictly non-refundable under any circumstances.",
+              "Accommodation will be allocated based on availability. The place assigned to you must be accepted as it is. No changes or requests for alternative arrangements will be entertained.",
+              "Keep your belongings secure. Organizers will not be responsible for any loss or damage.",
+              "Respect the property and maintain cleanliness—any damage caused will result in full accountability, including covering the cost of repairs or replacement.",
+              "On 26th February, accommodation will not be provided before 4:00 PM.",
+              "On 1st March, check-out will be before 9:00 AM. All guests must vacate the accommodation by this time."
+            ].map((text, i) => (
+              <motion.li key={i} variants={itemVariants} className="flex gap-2 md:gap-3">
+                <span className="text-white/60 flex-shrink-0">{i + 1})</span>
+                <span>{text}</span>
+              </motion.li>
+            ))}
+          </motion.ul>
+        </motion.div>
       </div>
     </div>
   );
