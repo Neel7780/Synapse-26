@@ -58,14 +58,24 @@ export async function GET(req: NextRequest) {
 
     const users =
       data?.map((user) => {
-        let eventCount = 0;
+        const eventNames = new Set<string>();
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         user.team_members?.forEach((tm: any) => {
-          if (tm.team?.event_registrations) {
-            eventCount += 1;
+          const registrations = tm.team?.event_registrations;
+
+          if (Array.isArray(registrations)) {
+            registrations.forEach((er: any) => {
+              const eventName = er?.event_fee?.event?.event_name;
+              if (eventName) eventNames.add(eventName);
+            });
+          } else {
+            const eventName = registrations?.event_fee?.event?.event_name;
+            if (eventName) eventNames.add(eventName);
           }
         });
+
+        const eventCount = eventNames.size;
 
         return {
           user_id: user.user_id,
@@ -75,6 +85,7 @@ export async function GET(req: NextRequest) {
           college: user.college,
           registration_date: user.registration_date,
           event_count: eventCount,
+          events: Array.from(eventNames),
         };
       }) ?? [];
 

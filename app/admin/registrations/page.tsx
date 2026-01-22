@@ -48,22 +48,33 @@ import {
 } from "lucide-react";
 
 export default function RegistrationsPage() {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [eventFilter, setEventFilter] = useState("all");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
-  const [paymentMethodFilter, setPaymentMethodFilter] = useState("all");
   const [selectedRegistration, setSelectedRegistration] = useState<any>(null);
   const [page, setPage] = useState(1);
   const limit = 10;
+
+  // Real-time debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchInput !== debouncedSearch) {
+        setDebouncedSearch(searchInput);
+        setPage(1);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchInput, debouncedSearch]);
 
   const { data: eventListData } = useRegistrationEventList();
   const { data, loading, error, refetch } = useRegistrations({
     page,
     limit,
-    searchParams: searchTerm || undefined,
+    searchParams: debouncedSearch || undefined,
     filter: eventFilter !== "all" ? eventFilter : undefined,
     paymentStatus: paymentStatusFilter !== "all" ? paymentStatusFilter : undefined,
-    paymentMethod: paymentMethodFilter !== "all" ? paymentMethodFilter : undefined,
   });
 
   const registrations = data?.data || [];
@@ -77,8 +88,9 @@ export default function RegistrationsPage() {
   const total = data?.total || 0;
   const totalPages = Math.ceil(total / limit);
 
+  const showTableOverlay = loading && registrations.length === 0;
+
   const allEvents = eventListData?.events || [];
-  const paymentMethods = ["UPI", "Credit Card", "Debit Card", "Net Banking"];
 
   // Download CSV
   const downloadCSV = () => {
@@ -101,7 +113,6 @@ export default function RegistrationsPage() {
     a.click();
   };
 
-  // Stats cards data
   const statsCards = [
     { title: "Total Registrations", value: summary.total_registrations, icon: Users, gradient: "from-red-600 to-rose-700" },
     { title: "Paid", value: summary.paid, icon: CheckCircle2, gradient: "from-emerald-600 to-emerald-700" },
@@ -110,14 +121,6 @@ export default function RegistrationsPage() {
     { title: "Gateway Charges", value: `₹${summary.gateway_charges.toFixed(2)}`, icon: CreditCard, gradient: "from-rose-600 to-red-700" },
     { title: "Net Revenue", value: `₹${summary.net_revenue.toFixed(2)}`, icon: TrendingUp, gradient: "from-red-600 to-rose-700" },
   ];
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-red-500" />
-      </div>
-    );
-  }
 
   if (error) {
     return (
@@ -174,18 +177,17 @@ export default function RegistrationsPage() {
       {/* Filters */}
       <Card className="border-border/50">
         <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name, email, or transaction ID..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setPage(1);
-                }}
-                className="pl-10 bg-muted/50 border-border/50"
-              />
+            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 flex gap-2">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name, email, or transaction ID..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="pl-10 bg-muted/50 border-border/50"
+                />
+              </div>
             </div>
             <Select value={eventFilter} onValueChange={(v) => { setEventFilter(v); setPage(1); }}>
               <SelectTrigger className="w-full md:w-48 bg-muted/50 border-border/50">
@@ -198,25 +200,15 @@ export default function RegistrationsPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={paymentMethodFilter} onValueChange={(v) => { setPaymentMethodFilter(v); setPage(1); }}>
-              <SelectTrigger className="w-full md:w-40 bg-muted/50 border-border/50">
-                <SelectValue placeholder="Payment method" />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-border">
-                <SelectItem value="all">All Methods</SelectItem>
-                {paymentMethods.map((method) => (
-                  <SelectItem key={method} value={method}>{method}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
             <Select value={paymentStatusFilter} onValueChange={(v) => { setPaymentStatusFilter(v); setPage(1); }}>
               <SelectTrigger className="w-full md:w-40 bg-muted/50 border-border/50">
                 <SelectValue placeholder="Payment status" />
               </SelectTrigger>
               <SelectContent className="bg-card border-border">
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="done">Paid</SelectItem>
+                <SelectItem value="all">All</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="done">Paid</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -234,9 +226,17 @@ export default function RegistrationsPage() {
               <CardTitle>All Registrations</CardTitle>
               <CardDescription>Click on a row to view details</CardDescription>
             </div>
+            {loading && (
+              <Loader2 className="ml-auto h-5 w-5 animate-spin text-red-500" />
+            )}
           </div>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 relative">
+          {showTableOverlay && (
+            <div className="absolute inset-0 bg-background/50 backdrop-blur-sm z-10 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-red-500" />
+            </div>
+          )}
           <Table>
             <TableHeader>
               <TableRow className="border-border/50 hover:bg-muted/50">
@@ -346,7 +346,7 @@ export default function RegistrationsPage() {
 
       {/* Registration Details Dialog */}
       <Dialog open={!!selectedRegistration} onOpenChange={() => setSelectedRegistration(null)}>
-        <DialogContent className="sm:max-w-[500px] bg-card border-border">
+        <DialogContent className="sm:max-w-[800px] bg-card border-border">
           <DialogHeader>
             <DialogTitle>Registration Details</DialogTitle>
             <DialogDescription>
@@ -354,48 +354,84 @@ export default function RegistrationsPage() {
             </DialogDescription>
           </DialogHeader>
           {selectedRegistration && (
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">Name</label>
-                  <p className="font-medium">{selectedRegistration.user_name}</p>
+            <div className="grid gap-6 py-4 md:grid-cols-2">
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-muted-foreground">Name</label>
+                    <p className="font-medium">{selectedRegistration.user_name}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-muted-foreground">College</label>
+                    <p className="font-medium">{selectedRegistration.college}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-muted-foreground">Event</label>
+                    <Badge className="bg-red-500/20 text-red-300 border-red-500/30">{selectedRegistration.event_name}</Badge>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-muted-foreground">Category</label>
+                    <p className="font-medium">{selectedRegistration.category}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-muted-foreground">Participation</label>
+                    <p className="font-medium">{selectedRegistration.participation_type} ({selectedRegistration.group_size})</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-muted-foreground">Payment Status</label>
+                    <Badge
+                      className={
+                        selectedRegistration.payment_status === "done"
+                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                          : "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                      }
+                    >
+                      {selectedRegistration.payment_status === "done" ? "Paid" : "Pending"}
+                    </Badge>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">College</label>
-                  <p className="font-medium">{selectedRegistration.college}</p>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">Event</label>
-                  <Badge className="bg-red-500/20 text-red-300 border-red-500/30">{selectedRegistration.event_name}</Badge>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">Category</label>
-                  <p className="font-medium">{selectedRegistration.category}</p>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">Participation</label>
-                  <p className="font-medium">{selectedRegistration.participation_type} ({selectedRegistration.group_size})</p>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">Payment Method</label>
-                  <p className="font-medium">{selectedRegistration.payment_method}</p>
+                <div className="border-t border-border/50 pt-4 mt-2 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Amount</span>
+                    <span className="font-medium">₹{selectedRegistration.gross_amount}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Gateway Charge</span>
+                    <span className="text-red-400">-₹{selectedRegistration.gateway_charge.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t border-border/50">
+                    <span className="font-semibold">Net Amount</span>
+                    <span className="font-bold text-emerald-400">
+                      ₹{selectedRegistration.net_amount.toFixed(2)}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div className="border-t border-border/50 pt-4 mt-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Amount</span>
-                  <span className="font-medium">₹{selectedRegistration.gross_amount}</span>
-                </div>
-                <div className="flex justify-between items-center mt-2">
-                  <span className="text-muted-foreground">Gateway Charge</span>
-                  <span className="text-red-400">-₹{selectedRegistration.gateway_charge.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between items-center mt-2 pt-2 border-t border-border/50">
-                  <span className="font-semibold">Net Amount</span>
-                  <span className="font-bold text-emerald-400">
-                    ₹{selectedRegistration.net_amount.toFixed(2)}
-                  </span>
-                </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Payment Screenshot</label>
+                {selectedRegistration.payment_screenshot_url ? (
+                  <div className="space-y-2">
+                    <div className="rounded-lg border border-border/50 overflow-hidden bg-muted/30">
+                      <img
+                        src={selectedRegistration.payment_screenshot_url}
+                        alt="Payment screenshot"
+                        className="w-full h-full object-contain max-h-48 bg-background"
+                        loading="lazy"
+                      />
+                    </div>
+                    <a
+                      href={selectedRegistration.payment_screenshot_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-red-400 hover:text-red-300 text-sm font-medium"
+                    >
+                      Open screenshot in new tab
+                    </a>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Not provided</p>
+                )}
               </div>
             </div>
           )}
