@@ -52,7 +52,7 @@ export default function Svg() {
         const timeline = createTimeline({
             defaults: {
                 duration: 1800,
-                easing: 'easeOutExpo',
+                ease: 'outExpo',
             },
         });
 

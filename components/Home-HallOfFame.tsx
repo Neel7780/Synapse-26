@@ -9,6 +9,40 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
+// Hero card component - moved outside to avoid creating during render
+const HeroCard = ({ 
+  refIndex, 
+  gridStyle, 
+  titleSize,
+  refSetter
+}: { 
+  refIndex: number; 
+  gridStyle: React.CSSProperties;
+  titleSize: string;
+  refSetter: (el: HTMLDivElement | null) => void;
+}) => (
+  <div
+    ref={refSetter}
+    className="overflow-hidden relative will-change-transform shadow-2xl z-10 rounded-xl"
+    style={{
+      ...gridStyle,
+      transformOrigin: "center center",
+    }}
+  >
+    <img
+      src="/images_home/HallOfFame.png"
+      alt="Hall of Fame"
+      className="w-full h-full object-cover"
+    />
+    <div className="hof-title absolute inset-0 flex items-end justify-center pb-6 md:pb-8">
+      <span className={`${titleSize} text-center font-white font-joker text-white drop-shadow-lg tracking-wider`}>
+        hall of fame
+      </span>
+    </div>
+    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
+  </div>
+);
+
 export default function HallOfFame() {
   const hallContainerRef = useRef<HTMLDivElement>(null);
   const hallRef = useRef<Array<HTMLDivElement | null>>([]);
@@ -575,38 +609,12 @@ export default function HallOfFame() {
     </div>
   );
 
-  // Hero card component
-  const HeroCard = ({ 
-    refIndex, 
-    gridStyle, 
-    titleSize 
-  }: { 
-    refIndex: number; 
-    gridStyle: React.CSSProperties;
-    titleSize: string;
-  }) => (
-    <div
-      ref={(el) => {
-        hallRef.current[refIndex] = el;
-      }}
-      className="overflow-hidden relative will-change-transform shadow-2xl z-10 rounded-xl"
-      style={{
-        ...gridStyle,
-        transformOrigin: "center center",
-      }}
-    >
-      <img
-        src="/images_home/HallOfFame.png"
-        alt="Hall of Fame"
-        className="w-full h-full object-cover"
-      />
-      <div className="hof-title absolute inset-0 flex items-end justify-center pb-6 md:pb-8">
-        <span className={`${titleSize} text-center font-white font-joker text-white drop-shadow-lg tracking-wider`}>
-          hall of fame
-        </span>
-      </div>
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
-    </div>
+  // Ref setter for hero cards
+  const setHeroRef = useCallback(
+    (index: number) => (el: HTMLDivElement | null) => {
+      hallRef.current[index] = el;
+    },
+    []
   );
 
   return (
@@ -647,6 +655,7 @@ export default function HallOfFame() {
                   gridRow: "2 / 3",
                 }}
                 titleSize="text-lg"
+                refSetter={setHeroRef(0)}
               />
             </div>
           </div>
@@ -684,6 +693,7 @@ export default function HallOfFame() {
                   gridRow: "2 / 4",
                 }}
                 titleSize="text-4xl"
+                refSetter={setHeroRef(1)}
               />
             </div>
           </div>
@@ -717,6 +727,7 @@ export default function HallOfFame() {
                   gridRow: "2 / 4",
                 }}
                 titleSize="text-5xl"
+                refSetter={setHeroRef(2)}
               />
             </div>
           </div>
