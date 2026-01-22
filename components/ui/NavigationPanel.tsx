@@ -29,18 +29,22 @@ export default function NavigationPanel() {
       { name: "pronite", link: "/pronite" },
       { name: "timeline", link: "/timeline" },
       { name: "accomodation", link: "/accomodation" },
+      { name: "teams", link: "/teams" },
       { name: "merchandise", link: "/merchandise" },
       { name: "sponsors", link: "/sponsors" },
-      { name: "contact us", link: "#contact", isContact: true },
-      { name: "teams", link: "/teams" },
       { name: "terms and conditions", link: "/terms-and-conditions" },
+      { name: "contact us", link: "#contact", isContact: true },
     ];
 
     // Add "My Profile" or "Register" based on auth state
     if (isAuthenticated) {
       baseItems.unshift({ name: "my profile", link: "/user-profile" });
     } else {
-      baseItems.unshift({ name: "register", link: "/auth" });
+      const nextPath = pathname.startsWith("/auth") ? "/" : pathname;
+      baseItems.unshift({
+        name: "register",
+        link: `/auth?next=${encodeURIComponent(nextPath)}`,
+      });
     }
 
     return baseItems.filter((item) => item.link !== pathname);

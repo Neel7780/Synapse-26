@@ -182,7 +182,7 @@ export default function EventDetailPage() {
       <section className="relative -mt-[50px] mb-20 text-center">
         <h1
           ref={titleRef}
-          className="font-joker lowercase tracking-[0.12em] text-3xl sm:text-5xl lg:text-7xl"
+          className="font-joker lowercase tracking-[0.12em] text-3xl sm:text-5xl lg:text-8xl"
           style={{ perspective: "1000px" }}
         >
           {page.title}

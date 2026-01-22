@@ -3,7 +3,7 @@
 import type React from "react";
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useNavigationState } from "@/lib/useNavigationState";
 
 interface LoginBoxProps {
@@ -13,6 +13,7 @@ interface LoginBoxProps {
 
 export default function LoginBox({ goRegister, goForgot }: LoginBoxProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { startTransition } = useNavigationState();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,7 +48,8 @@ export default function LoginBox({ goRegister, goForgot }: LoginBoxProps) {
       if (data.isAdmin) {
         router.push("/admin");
       } else {
-        router.push("/");
+        const next = searchParams.get("next");
+        router.push(next || "/");
       }
       router.refresh();
     } catch (err: unknown) {

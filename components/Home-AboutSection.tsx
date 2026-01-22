@@ -156,7 +156,7 @@ export default function AboutSection() {
       stagger: { each: 0.03 },
       scrollTrigger: {
         trigger: ".part3_end",
-        start: "top center-=10%",
+        start: "top center",
         end: "bottom bottom",
         scrub: 1,
         anticipatePin: 1,
