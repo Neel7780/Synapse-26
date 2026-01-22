@@ -22,7 +22,7 @@ export default function TransitionProvider({
         if (isTransitioning) {
             startPathRef.current = pathname;
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isTransitioning]); // Don't include pathname here, we want the path AT START
 
     useEffect(() => {

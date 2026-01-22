@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo, useEffect, useRef } from "react";
+import React, { memo, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -22,75 +22,6 @@ interface DaySchedule {
   day: number;
   events: Event[];
 }
-
-/* =======================
-   DATA
-======================= */
-
-const schedule: DaySchedule[] = [
-  {
-    day: 1,
-    events: [
-      { name: "Battledrome", time: "9:00 AM - 10:30 AM", venue: "Main Hall A" },
-      { name: "Workshop: Introduction to GSAP", time: "11:00 AM - 12:30 PM", venue: "Room 203" },
-      {
-        name: "Workshop: Introduction to GSAP",
-        time: "11:00 AM - 12:30 PM",
-        venue: "Room 203",
-      },
-      { name: "Lunch Break", time: "12:30 PM - 2:00 PM", venue: "Cafeteria" },
-    ],
-  },
-  {
-    day: 2,
-    events: [
-      { name: "Battledrome", time: "7:00 AM - 8:00 AM", venue: "Rooftop Garden" },
-      { name: "Technical Deep Dive", time: "9:00 AM - 11:00 AM", venue: "Lab 101" },
-      { name: "Innovation Showcase", time: "11:30 AM - 1:00 PM", venue: "Exhibition Hall" },
-      {
-        name: "Battledrome",
-        time: "7:00 AM - 8:00 AM",
-        venue: "Rooftop Garden",
-      },
-      {
-        name: "Technical Deep Dive",
-        time: "9:00 AM - 11:00 AM",
-        venue: "Lab 101",
-      },
-      {
-        name: "Innovation Showcase",
-        time: "11:30 AM - 1:00 PM",
-        venue: "Exhibition Hall",
-      },
-    ],
-  },
-  {
-    day: 3,
-    events: [
-      { name: "Battledrome", time: "8:00 AM - 9:00 AM", venue: "Café Lounge" },
-      { name: "Advanced Workshop", time: "9:30 AM - 11:30 AM", venue: "Studio 5" },
-      {
-        name: "Advanced Workshop",
-        time: "9:30 AM - 11:30 AM",
-        venue: "Studio 5",
-      },
-      { name: "Q&A Session", time: "12:00 PM - 1:00 PM", venue: "Auditorium" },
-    ],
-  },
-  {
-    day: 4,
-    events: [
-      { name: "Battledrome", time: "8:00 AM - 9:00 AM", venue: "Café Lounge" },
-      { name: "Advanced Workshop", time: "9:30 AM - 11:30 AM", venue: "Studio 5" },
-      {
-        name: "Advanced Workshop",
-        time: "9:30 AM - 11:30 AM",
-        venue: "Studio 5",
-      },
-      { name: "Q&A Session", time: "12:00 PM - 1:00 PM", venue: "Auditorium" },
-    ],
-  },
-];
 
 /* =======================
    EVENT ROW COMPONENT
@@ -164,10 +95,12 @@ const EventRow = memo(function EventRow({
 
 const DaySection = memo(function DaySection({
   daySchedule,
-  index
+  index,
+  totalDays
 }: {
   daySchedule: DaySchedule;
   index: number;
+  totalDays: number;
 }) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const dayNumberRef = useRef<HTMLHeadingElement>(null);
@@ -199,7 +132,8 @@ const DaySection = memo(function DaySection({
             scrollTrigger: {
               trigger: sectionRef.current,
               start: "top 80%",
-              toggleActions: "play reverse play reverse",
+              end: "+=5000",
+              toggleActions: "play none none reverse",
             },
           }
         );
@@ -220,7 +154,8 @@ const DaySection = memo(function DaySection({
             scrollTrigger: {
               trigger: sectionRef.current,
               start: "top 75%",
-              toggleActions: "play reverse play reverse",
+              end: "+=5000",
+              toggleActions: "play none none reverse",
             },
           }
         );
@@ -243,7 +178,8 @@ const DaySection = memo(function DaySection({
             scrollTrigger: {
               trigger: sectionRef.current,
               start: "top 75%",
-              toggleActions: "play reverse play reverse",
+              end: "+=5000",
+              toggleActions: "play none none reverse",
             },
           }
         );
@@ -266,7 +202,8 @@ const DaySection = memo(function DaySection({
             scrollTrigger: {
               trigger: sectionRef.current,
               start: "top 75%",
-              toggleActions: "play reverse play reverse",
+              end: "+=5000",
+              toggleActions: "play none none reverse",
             },
           }
         );
@@ -283,7 +220,7 @@ const DaySection = memo(function DaySection({
       className="day-section max-w-7xl mx-auto px-3 sm:px-4 space-y-6 md:space-y-12 relative"
     >
       {/* Connecting line to next section */}
-      {index < schedule.length - 1 && (
+      {index < totalDays - 1 && (
         <div
           ref={lineRef}
           className="absolute left-1/2 -translate-x-1/2 top-full w-[2px] h-20 md:h-40 bg-gradient-to-b from-red-600 to-transparent sm:h-32"
@@ -335,12 +272,39 @@ const DaySection = memo(function DaySection({
 export default function TimelineContent() {
   const containerRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const [schedule, setSchedule] = useState<DaySchedule[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    async function fetchSchedule() {
+      try {
+        const res = await fetch("/api/timeline");
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Failed to fetch schedule");
+        }
+        const data = await res.json();
+        setSchedule(data);
+      } catch (error: any) {
+        console.error("Error loading timeline:", error);
+        setError(error.message || "Something went wrong");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchSchedule();
+  }, []);
+
+  useEffect(() => {
+    if (loading || schedule.length === 0 || !containerRef.current) return;
 
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion) return;
+
+    // Refresh ScrollTrigger to account for new content height
+    ScrollTrigger.refresh();
 
     const ctx = gsap.context(() => {
       // Title animation
@@ -375,7 +339,7 @@ export default function TimelineContent() {
     }, containerRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [loading, schedule]);
 
   return (
     <div
@@ -400,13 +364,22 @@ export default function TimelineContent() {
 
         {/* Timeline */}
         <div className="space-y-20 sm:space-y-24 md:space-y-40 pb-20 md:pb-32">
-          {schedule.map((daySchedule, index) => (
-            <DaySection
-              key={daySchedule.day}
-              daySchedule={daySchedule}
-              index={index}
-            />
-          ))}
+          {loading ? (
+            null
+          ) : error ? (
+            <div className="text-red-500 text-center text-xl font-mono bg-black/50 p-4 rounded">
+              Error: {error}. Check console for details.
+            </div>
+          ) : (
+            schedule.map((daySchedule, index) => (
+              <DaySection
+                key={daySchedule.day}
+                daySchedule={daySchedule}
+                index={index}
+                totalDays={schedule.length}
+              />
+            ))
+          )}
         </div>
       </div>
     </div>
