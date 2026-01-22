@@ -15,8 +15,8 @@ WORKDIR /app
 # Copy package files
 COPY package.json package-lock.json* ./
 
-# Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+# Install dependencies (production only)
+RUN npm ci --omit=dev && npm cache clean --force
 
 # -----------------------------------------------------------------------------
 # Stage 2: Builder
@@ -39,6 +39,12 @@ ENV NODE_ENV=production
 # Mobile optimization build arguments
 ARG ENABLE_MOBILE_OPTIMIZATIONS=true
 ENV ENABLE_MOBILE_OPTIMIZATIONS=${ENABLE_MOBILE_OPTIMIZATIONS}
+
+# Placeholder env vars for build (actual values injected at runtime)
+ARG NEXT_PUBLIC_SUPABASE_URL=""
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY=""
+ENV NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
 
 # Build the application with optimizations
 RUN npm run build
