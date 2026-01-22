@@ -83,7 +83,7 @@ export default function HeroSection({
     pending: new Set<string>(),
     resolved: new Set<string>(),
   });
-  /* eslint-disable @typescript-eslint/no-explicit-any */
+   
   // Disabling explicit-any for GSAP refs temporarily due to complex types
   const masterTLRef = useRef<gsap.core.Timeline | null>(null);
   const progressTriggerRef = useRef<ScrollTrigger | null>(null);

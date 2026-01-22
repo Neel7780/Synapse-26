@@ -28,7 +28,7 @@ export async function GET(request: Request) {
 
   if (error) {
     const response = NextResponse.json(
-      { error: error.message },
+      { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
     );
     return addCorsHeaders(response, origin);
@@ -90,8 +90,8 @@ export async function POST(request: Request) {
         const response = NextResponse.json({ success: true, category: data }, { status: 201 })
         return addCorsHeaders(response, origin)
 
-    } catch (error: any) {
-        const response = NextResponse.json({ error: error.message }, { status: 500 })
+    } catch (error: unknown) {
+        const response = NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 })
         return addCorsHeaders(response, origin)
     }
 }
@@ -154,9 +154,9 @@ export async function DELETE(request: Request) {
 
     const response = NextResponse.json({ success: true });
     return addCorsHeaders(response, origin);
-  } catch (error: any) {
+  } catch (error: unknown) {
     const response = NextResponse.json(
-      { error: error.message },
+      { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
     );
     return addCorsHeaders(response, origin);
@@ -251,8 +251,8 @@ export async function PUT(request: Request) {
                         })
                         newImageUrl = uploadResult.publicUrl
                     }
-                } catch (err) {
-                    console.error('Failed to replace image:', err)
+                } catch (error) {
+                    console.error('Failed to replace image:', error)
                     // If parsing fails, just upload new image
                     const uploadResult = await uploadImage({
                         file: imageFile,
@@ -285,10 +285,10 @@ export async function PUT(request: Request) {
 
     const response = NextResponse.json({ success: true, category: data });
     return addCorsHeaders(response, origin);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Update Category Error:", error);
     const response = NextResponse.json(
-      { error: error.message },
+      { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
     );
     return addCorsHeaders(response, origin);

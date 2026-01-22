@@ -152,8 +152,8 @@ export async function GET(req: NextRequest) {
             },
             data: rows,
         });
-    } catch (err) {
-        console.error(err);
+    } catch (error) {
+        console.error(error);
         return NextResponse.json(
             { error: "Internal Server Error" },
             { status: 500 }

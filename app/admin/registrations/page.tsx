@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRegistrations, useRegistrationEventList } from "@/hooks/use-admin-data";
 import { AdminPageHeader } from "@/components/admin/ui/AdminSidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
@@ -33,7 +33,6 @@ import {
 import {
   Download,
   Search,
-  Settings,
   Eye,
   DollarSign,
   TrendingUp,

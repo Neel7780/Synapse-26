@@ -17,11 +17,11 @@ export const revalidate = 30;
  * 
  * Requires admin authentication via cookie-based session.
  */
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     // Verify admin authentication using cookie-based session
     const userSupabase = await createClient();
-    const isAdmin = await checkAdmin(userSupabase as any);
+    const isAdmin = await checkAdmin(userSupabase as Parameters<typeof checkAdmin>[0]);
     
     if (!isAdmin) {
       return NextResponse.json(

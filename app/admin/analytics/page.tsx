@@ -35,7 +35,6 @@ import {
     PieChart,
     Pie,
     Cell,
-    Legend,
 } from "recharts";
 
 // Types for analytics data
@@ -169,7 +168,7 @@ export default function AnalyticsPage() {
 
     const pageViewsData = analyticsData.pageViews.length > 0 
         ? analyticsData.pageViews 
-        : Array.from({ length: 7 }, (_, i) => ({ day: "Mon", views: 0, visitors: 0 }));
+        : Array.from({ length: 7 }, () => ({ day: "Mon", views: 0, visitors: 0 }));
 
     const trafficSources = analyticsData.trafficSources.length > 0 
         ? analyticsData.trafficSources 
@@ -177,7 +176,7 @@ export default function AnalyticsPage() {
 
     const hourlyTraffic = analyticsData.hourlyTraffic.length > 0 
         ? analyticsData.hourlyTraffic 
-        : Array.from({ length: 9 }, (_, i) => ({ hour: "0am", visitors: 0 }));
+        : Array.from({ length: 9 }, () => ({ hour: "0am", visitors: 0 }));
 
     const topPages = analyticsData.topPages.length > 0 
         ? analyticsData.topPages 

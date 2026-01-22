@@ -12,7 +12,7 @@ const Pricing = {
 // ... (rest of imports/constants)
 
 // Animation variants
-const containerVariants: Variants = {
+const _containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -22,7 +22,7 @@ const containerVariants: Variants = {
   },
 };
 
-const itemVariants: Variants = {
+const _itemVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,

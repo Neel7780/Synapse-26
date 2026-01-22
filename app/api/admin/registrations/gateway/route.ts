@@ -1,32 +1,33 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { SupabaseClient } from "@supabase/supabase-js";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const supabase = (await createClient()) as any;
+    const supabase = (await createClient()) as SupabaseClient;
 
-    const { data, error } = await supabase.from("payment_method").select(`*`);
+    const { data } = await supabase.from("payment_method").select(`*`);
 
     return NextResponse.json({ data: data });
-  } catch (error: any) {
+  } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
 export async function PATCH(request: NextRequest) {
   try {
-    const supabase = (await createClient()) as any;
+    const supabase = (await createClient()) as SupabaseClient;
     const body = await request.json();
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("payment_method")
       .upsert(body)
       .select(`*`);
 
     return NextResponse.json({ data: data }, { status: 200 });
-  } catch (error: any) {
+  } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
