@@ -43,8 +43,7 @@ export default function HeroSection({
 
   const [showEnter, setShowEnter] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
-  const [part3Active, setPart3Active] = useState(false);
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   const hasRunMaskRef = useRef(false);
   const enterTriggeredRef = useRef(false);
@@ -83,7 +82,7 @@ export default function HeroSection({
     pending: new Set<string>(),
     resolved: new Set<string>(),
   });
-   
+
   // Disabling explicit-any for GSAP refs temporarily due to complex types
   const masterTLRef = useRef<gsap.core.Timeline | null>(null);
   const progressTriggerRef = useRef<ScrollTrigger | null>(null);
@@ -352,7 +351,7 @@ export default function HeroSection({
         pin: true,
         pinSpacing: false,
         anticipatePin: 1.2,
-        onUpdate: (self) => {
+        onUpdate: (_self) => {
           // Logic for part3Active removed as we use pointer-events-auto on button directly
         },
       },

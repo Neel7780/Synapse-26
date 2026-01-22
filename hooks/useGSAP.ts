@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -120,7 +120,7 @@ export function useTextReveal(
       } else if (splitType === "lines") {
         // For lines, we wrap each line break
         const lines = text.split("\n");
-        lines.forEach((line, i) => {
+        lines.forEach((line, _i) => {
           const span = document.createElement("span");
           span.className = "gsap-line block";
           span.textContent = line;
@@ -151,16 +151,16 @@ export function useTextReveal(
           delay: options.delay || 0,
           scrollTrigger: options.scrub !== undefined
             ? {
-                trigger: element,
-                start: options.start || "top 85%",
-                end: options.end || "top 50%",
-                scrub: options.scrub,
-              }
+              trigger: element,
+              start: options.start || "top 85%",
+              end: options.end || "top 50%",
+              scrub: options.scrub,
+            }
             : {
-                trigger: element,
-                start: options.start || "top 85%",
-                once: true,
-              },
+              trigger: element,
+              start: options.start || "top 85%",
+              once: true,
+            },
         }
       );
 

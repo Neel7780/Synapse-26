@@ -41,7 +41,6 @@ import {
   Settings,
   BarChart3,
   ChevronUp,
-  CreditCard,
   Home,
   ImageIcon,
 } from "lucide-react";

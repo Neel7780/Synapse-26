@@ -10,13 +10,13 @@ if (typeof window !== "undefined") {
 }
 
 // Hero card component - moved outside to avoid creating during render
-const HeroCard = ({ 
-  refIndex, 
-  gridStyle, 
+const HeroCard = ({
+  refIndex: _refIndex,
+  gridStyle,
   titleSize,
   refSetter
-}: { 
-  refIndex: number; 
+}: {
+  refIndex: number;
   gridStyle: React.CSSProperties;
   titleSize: string;
   refSetter: (el: HTMLDivElement | null) => void;
@@ -410,7 +410,7 @@ export default function HallOfFame() {
   // Scroll indicator bounce animation
   useEffect(() => {
     if (!scrollIndicatorRef.current) return;
-    
+
     const arrow = scrollIndicatorRef.current.querySelector('.scroll-arrow');
     if (arrow) {
       gsap.to(arrow, {
@@ -580,14 +580,14 @@ export default function HallOfFame() {
   );
 
   // Image card component for cleaner code
-  const ImageCard = ({ 
-    image, 
-    index, 
-    refSetter, 
-    gridStyle 
-  }: { 
-    image: typeof gridImages[0]; 
-    index: number; 
+  const ImageCard = ({
+    image,
+    index,
+    refSetter,
+    gridStyle
+  }: {
+    image: typeof gridImages[0];
+    index: number;
     refSetter: (el: HTMLDivElement | null) => void;
     gridStyle: React.CSSProperties;
   }) => (
@@ -621,7 +621,7 @@ export default function HallOfFame() {
     <div className="relative overflow-hidden w-full bg-black">
       <div ref={hallContainerRef} className="relative">
         <div className="h-[100svh] w-full bg-black">
-          
+
           {/* Mobile Grid (3x3) */}
           <div className="md:hidden absolute inset-0 flex items-center justify-center p-2">
             <div
@@ -648,7 +648,7 @@ export default function HallOfFame() {
                 );
               })}
 
-              <HeroCard 
+              <HeroCard
                 refIndex={0}
                 gridStyle={{
                   gridColumn: "2 / 3",
@@ -686,7 +686,7 @@ export default function HallOfFame() {
                 );
               })}
 
-              <HeroCard 
+              <HeroCard
                 refIndex={1}
                 gridStyle={{
                   gridColumn: "2 / 5",
@@ -720,7 +720,7 @@ export default function HallOfFame() {
                 />
               ))}
 
-              <HeroCard 
+              <HeroCard
                 refIndex={2}
                 gridStyle={{
                   gridColumn: "3 / 5",
@@ -741,18 +741,18 @@ export default function HallOfFame() {
               Scroll
             </span>
             <div className="scroll-arrow flex flex-col items-center gap-1">
-              <svg 
-                width="24" 
-                height="24" 
-                viewBox="0 0 24 24" 
-                fill="none" 
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
                 className="opacity-60"
               >
-                <path 
-                  d="M12 4L12 20M12 20L6 14M12 20L18 14" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
+                <path
+                  d="M12 4L12 20M12 20L6 14M12 20L18 14"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               </svg>

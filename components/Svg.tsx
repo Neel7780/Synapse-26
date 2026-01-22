@@ -12,7 +12,7 @@ export default function Svg() {
     );
 
     const svgRef = useRef<SVGSVGElement>(null);
-    const pathsRef = useRef<SVGPathElement[]>([]);
+    const _pathsRef = useRef<SVGPathElement[]>([]);
     const hasAnimated = useRef(false);
 
     useEffect(() => {
@@ -37,11 +37,11 @@ export default function Svg() {
         const pathData = Array.from(paths).map((path) => {
             const pathElement = path as SVGPathElement;
             const length = pathElement.getTotalLength();
-            
+
             // Set initial stroke-dasharray and stroke-dashoffset
             pathElement.style.strokeDasharray = `${length}`;
             pathElement.style.strokeDashoffset = `${length}`;
-            
+
             return {
                 element: pathElement,
                 length: length,

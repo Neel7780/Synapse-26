@@ -15,11 +15,11 @@ interface SponsorTierProps {
 }
 
 // Memoized sponsor box with hover effects
-const SponsorBox = memo(function SponsorBox({ 
-  name, 
-  index 
-}: { 
-  name: string; 
+const SponsorBox = memo(function SponsorBox({
+  name,
+  index: _index
+}: {
+  name: string;
   index: number;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
@@ -226,7 +226,7 @@ export default function SponsorTier({
   }, [sponsors]);
 
   return (
-    <section 
+    <section
       ref={sectionRef}
       className="w-full flex flex-col items-center mt-16 md:mt-24 mb-14 px-4"
     >
