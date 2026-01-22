@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRegistrations, useRegistrationEventList } from "@/hooks/use-admin-data";
 import { AdminPageHeader } from "@/components/admin/ui/AdminSidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
