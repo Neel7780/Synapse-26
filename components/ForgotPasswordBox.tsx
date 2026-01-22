@@ -5,13 +5,12 @@ import { useState } from "react";
 interface ForgotPasswordBoxProps {
   goLogin: () => void;
   goRegister: () => void;
-  goOtp: (email: string) => void;
+  goOtp?: (email: string) => void;
 }
 
 export default function ForgotPasswordBox({
   goLogin,
   goRegister,
-  goOtp,
 }: ForgotPasswordBoxProps) {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);

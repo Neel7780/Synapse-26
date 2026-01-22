@@ -16,7 +16,7 @@ export async function GET() {
     `)
     .order('reveal_date', { ascending: true })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 })
 
   return NextResponse.json(data)
 }
@@ -71,8 +71,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, data })
 
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  } catch (error: unknown) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 })
   }
 }
 
@@ -153,8 +153,8 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({ success: true, data })
 
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  } catch (error: unknown) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 })
   }
 }
 
@@ -206,7 +206,7 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ success: true })
 
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  } catch (error: unknown) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 })
   }
 }

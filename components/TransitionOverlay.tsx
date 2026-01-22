@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useNavigationState } from "@/lib/useNavigationState";
 import { useEffect, useState } from "react";
 
@@ -35,6 +35,7 @@ export default function TransitionOverlay() {
                 return () => clearTimeout(t);
             }
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isTransitioning]);
 
     /* ---------------- POSITIONS ---------------- */

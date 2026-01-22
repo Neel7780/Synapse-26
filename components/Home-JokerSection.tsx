@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ChevronDown } from "lucide-react";
@@ -420,8 +420,9 @@ export default function JokerSection() {
         window.removeEventListener("resize", handleResize);
         jokerTl.scrollTrigger?.kill();
         cleanupHover?.();
+        const sectionRef = jokerSectionRef.current;
         ScrollTrigger.getAll().forEach((trigger) => {
-          if (trigger.trigger === jokerSectionRef.current) {
+          if (trigger.trigger === sectionRef) {
             trigger.kill();
           }
         });
