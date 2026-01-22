@@ -42,6 +42,8 @@ import {
   BarChart3,
   ChevronUp,
   CreditCard,
+  Home,
+  ImageIcon,
 } from "lucide-react";
 
 // Navigation configuration
@@ -77,7 +79,12 @@ const navSections = [
       {
         href: "/admin/accommodation",
         label: "Accommodation",
-        icon: CreditCard,
+        icon: Home,
+      },
+      {
+        href: "/admin/accommodation/orders",
+        label: "Accom. Orders",
+        icon: ImageIcon,
       },
     ],
   },

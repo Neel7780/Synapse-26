@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload, X, CheckCircle } from "lucide-react";
 
 // Default fallback pricing if API fails
 const DEFAULT_PRICING: Record<number, number> = {
@@ -144,6 +144,13 @@ export function AccommodationComponent() {
   const [submitError, setSubmitError] = useState("");
   const [bookingId, setBookingId] = useState<number | null>(null);
 
+  // File upload state
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // API-fetched state
   const [packages, setPackages] = useState<AccommodationPackage[]>([]);
   const [pricing, setPricing] = useState<Record<number, number>>(DEFAULT_PRICING);
@@ -261,9 +268,102 @@ export function AccommodationComponent() {
     setStep("payment");
   };
 
+  // File upload handlers
+  const handleFileSelect = useCallback((file: File) => {
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      setSubmitError("Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setSubmitError("File too large. Maximum size is 5MB.");
+      return;
+    }
+
+    setSelectedFile(file);
+    setSubmitError("");
+
+    // Create preview URL
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+  }, []);
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileSelect(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      handleFileSelect(file);
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setSelectedFile(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+    setPaymentScreenshot("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const uploadScreenshot = async (): Promise<string | null> => {
+    if (!selectedFile) return null;
+
+    setUploadingFile(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      const res = await fetch("/api/accommodation/upload-screenshot", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to upload screenshot");
+      }
+
+      return data.url;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to upload screenshot";
+      setSubmitError(message);
+      return null;
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
   const handleSubmitBooking = async () => {
-    if (!paymentScreenshot.trim()) {
-      setSubmitError("Please enter the payment screenshot URL or transaction ID");
+    // Check if we have either a file or a URL
+    if (!selectedFile && !paymentScreenshot.trim()) {
+      setSubmitError("Please upload a payment screenshot or enter a URL");
       return;
     }
 
@@ -276,6 +376,17 @@ export function AccommodationComponent() {
     setSubmitError("");
 
     try {
+      // Upload file if selected
+      let screenshotUrl = paymentScreenshot.trim();
+      if (selectedFile) {
+        const uploadedUrl = await uploadScreenshot();
+        if (!uploadedUrl) {
+          setSubmitting(false);
+          return; // Error already set in uploadScreenshot
+        }
+        screenshotUrl = uploadedUrl;
+      }
+
       const res = await fetch("/api/accommodation/book", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -285,7 +396,7 @@ export function AccommodationComponent() {
           check_out: selectedRange.endDate.toISOString().split('T')[0],
           nights: selectedNights,
           amount: totalPrice,
-          payment_screenshot_url: paymentScreenshot.trim(),
+          payment_screenshot_url: screenshotUrl,
         }),
       });
 
@@ -297,7 +408,7 @@ export function AccommodationComponent() {
         setBookingId(data.booking_id);
         setStep("success");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setSubmitError("Failed to submit booking");
     } finally {
       setSubmitting(false);
@@ -465,13 +576,23 @@ export function AccommodationComponent() {
                 </div>
               </div>
 
-              <Button
-                onClick={handleProceedToPayment}
-                disabled={!selectedRange}
-                className="w-full md:w-auto bg-white text-black hover:bg-white/90 cursor-pointer px-8 md:px-12 py-4 md:py-6 text-lg md:text-2xl font-jqka uppercase disabled:opacity-50"
-              >
-                {isAuthenticated ? "Proceed to Payment" : "Login to Book"}
-              </Button>
+              <div className="w-full md:w-auto flex flex-col items-end gap-2">
+                {selectedNights && !selectedRange && (
+                  <p className="text-amber-400 text-sm animate-pulse">
+                    ↑ Please select your dates above to continue
+                  </p>
+                )}
+                <Button
+                  onClick={handleProceedToPayment}
+                  disabled={!selectedRange}
+                  className={`w-full md:w-auto px-8 md:px-12 py-4 md:py-6 text-lg md:text-2xl font-jqka uppercase transition-all ${selectedRange
+                      ? "bg-white text-black hover:bg-white/90 cursor-pointer"
+                      : "bg-white/30 text-white/50 cursor-not-allowed"
+                    }`}
+                >
+                  {isAuthenticated ? "Proceed to Payment" : "Login to Book"}
+                </Button>
+              </div>
             </div>
 
             {/* Guidelines Section */}
@@ -553,7 +674,7 @@ export function AccommodationComponent() {
             </div>
 
             {/* QR Code */}
-            {qrUrl && (
+            {qrUrl ? (
               <div className="flex flex-col items-center gap-4">
                 <div className="bg-white p-4 rounded-lg">
                   <Image
@@ -568,33 +689,118 @@ export function AccommodationComponent() {
                   Scan this QR code using any UPI app to pay
                 </p>
               </div>
+            ) : (
+              <div className="text-center p-8 border-2 border-dashed border-white/30 rounded-lg">
+                <p className="text-white/70">
+                  Payment QR code not available. Please contact support for payment details.
+                </p>
+              </div>
             )}
 
             {/* Screenshot Upload */}
             <div className="space-y-4">
-              <label className="block">
-                <span className="text-lg md:text-xl uppercase mb-2 block">
-                  Upload Payment Screenshot URL
-                </span>
-                <span className="text-sm text-white/70 block mb-3">
-                  After making the payment, upload your payment screenshot to any image hosting service (like Imgur, Postimages, etc.) and paste the URL below.
-                </span>
+              <span className="text-lg md:text-xl uppercase mb-2 block">
+                Upload Payment Screenshot
+              </span>
+              <span className="text-sm text-white/70 block mb-3">
+                After making the payment, upload your payment screenshot below or paste a URL.
+              </span>
+
+              {/* File Upload Area */}
+              {!selectedFile ? (
+                <div
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`
+                    border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
+                    transition-all duration-200
+                    ${isDragging
+                      ? "border-[#0088FF] bg-[#0088FF]/10"
+                      : "border-white/30 hover:border-white/60 hover:bg-white/5"}
+                  `}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    onChange={handleFileInputChange}
+                    className="hidden"
+                  />
+                  <Upload className="w-12 h-12 mx-auto mb-4 text-white/50" />
+                  <p className="text-white mb-2">
+                    {isDragging ? "Drop your image here" : "Click or drag to upload screenshot"}
+                  </p>
+                  <p className="text-sm text-white/50">
+                    Supports: JPEG, PNG, GIF, WebP (Max 5MB)
+                  </p>
+                </div>
+              ) : (
+                <div className="relative border-2 border-white/30 rounded-lg p-4">
+                  <div className="flex items-center gap-4">
+                    {previewUrl && (
+                      <div className="relative w-24 h-24 flex-shrink-0">
+                        <Image
+                          src={previewUrl}
+                          alt="Screenshot preview"
+                          fill
+                          className="object-cover rounded-lg"
+                        />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 text-green-400 mb-1">
+                        <CheckCircle className="w-5 h-5" />
+                        <span>File selected</span>
+                      </div>
+                      <p className="text-sm text-white truncate">{selectedFile.name}</p>
+                      <p className="text-xs text-white/50">
+                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRemoveFile}
+                      className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                    >
+                      <X className="w-5 h-5 text-white/70" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Divider with OR */}
+              <div className="flex items-center gap-4 my-4">
+                <div className="flex-1 h-px bg-white/20" />
+                <span className="text-white/50 text-sm">OR</span>
+                <div className="flex-1 h-px bg-white/20" />
+              </div>
+
+              {/* URL Input as fallback */}
+              <div>
+                <label className="text-sm text-white/70 block mb-2">
+                  Paste screenshot URL (if uploaded elsewhere)
+                </label>
                 <input
                   type="url"
                   value={paymentScreenshot}
                   onChange={(e) => setPaymentScreenshot(e.target.value)}
                   placeholder="https://example.com/your-screenshot.png"
-                  className="w-full bg-white/10 border border-white/30 rounded-lg px-4 py-3 text-white placeholder:text-white/40 focus:outline-none focus:border-white"
+                  disabled={!!selectedFile}
+                  className="w-full bg-white/10 border border-white/30 rounded-lg px-4 py-3 text-white placeholder:text-white/40 focus:outline-none focus:border-white disabled:opacity-50 disabled:cursor-not-allowed"
                 />
-              </label>
+              </div>
 
               {submitError && (
                 <p className="text-red-500 text-sm">{submitError}</p>
               )}
 
-              <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex flex-col md:flex-row gap-4 pt-4">
                 <Button
-                  onClick={() => setStep("dates")}
+                  onClick={() => {
+                    setStep("dates");
+                    handleRemoveFile();
+                  }}
                   variant="outline"
                   className="w-full md:w-auto border-white/30 text-white hover:bg-white/10 px-8 py-4"
                 >
@@ -602,13 +808,13 @@ export function AccommodationComponent() {
                 </Button>
                 <Button
                   onClick={handleSubmitBooking}
-                  disabled={submitting || !paymentScreenshot.trim()}
+                  disabled={submitting || uploadingFile || (!selectedFile && !paymentScreenshot.trim())}
                   className="w-full md:w-auto bg-white text-black hover:bg-white/90 px-8 py-4 disabled:opacity-50"
                 >
-                  {submitting ? (
+                  {submitting || uploadingFile ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Submitting...
+                      {uploadingFile ? "Uploading..." : "Submitting..."}
                     </>
                   ) : (
                     "Submit Booking"
