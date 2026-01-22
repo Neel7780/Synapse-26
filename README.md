@@ -2,7 +2,7 @@
 
 The official codebase for the Synapse 2026 Website.
 
-## DA Ka Tyohaar
+## DA Ka Tyohaar 
 
 ### Getting Started
 

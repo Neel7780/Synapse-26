@@ -226,7 +226,7 @@ export default function PronitePage() {
             className="text-[clamp(3.5rem,15vw,10rem)] font-texgyreadventor leading-none mb-4"
             style={{ perspective: "1000px" }}
           >
-            Join the <br /> Celebration
+            Join the<br /> Celebration
           </h1>
 
           <p

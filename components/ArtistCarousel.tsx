@@ -48,8 +48,7 @@ export default function ArtistCarousel() {
   return (
     <div ref={containerRef} className="relative h-[400vh] bg-black">
       <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
-        {/* Adjusted height to be more responsive and ensuring center alignment */}
-        <div className="relative w-full max-w-6xl h-[min(600px,80vh)] px-4">
+        <div className="relative w-full max-w-6xl h-[min(600px,80vh)] mx-4">
           {artistData.map((data, index) => {
             return (
               <Card
@@ -99,13 +98,31 @@ const Card = ({ data, index, total, progress }: CardProps) => {
     nextStartFocus
   ];
 
+  // X-Range: Percentage of card width + gap to keep space between them
   const xValues = isFirst
-    ? ["0%", "0%", "0%", "-120%"]
+    ? ["0%", "0%", "0%", "-110%"]
     : isLast
-      ? ["120%", "0%", "0%", "0%"]
-      : ["120%", "0%", "0%", "-120%"];
+      ? ["110%", "0%", "0%", "0%"]
+      : ["110%", "0%", "0%", "-110%"];
 
   const x = useTransform(progress, xRange, xValues);
+
+  // Opacity: Ensure card is only visible when it's the active one or part of the transition
+  // We use a small buffer (0.05) to allow it to be seen while entering/exiting
+  const opacityValues = isFirst
+    ? [1, 1, 1, 0]
+    : isLast
+      ? [0, 1, 1, 1]
+      : [0, 1, 1, 0];
+
+  const opacityRange = [
+    startFocus - sectionSize,
+    startFocus - sectionSize + 0.05,
+    nextStartFocus - 0.05,
+    nextStartFocus
+  ];
+
+  const opacity = useTransform(progress, opacityRange, opacityValues);
 
   // Rotation: Straighten by 40% of the way to center
   const rotateRange = [
@@ -133,7 +150,7 @@ const Card = ({ data, index, total, progress }: CardProps) => {
         x,
         y,
         rotate,
-        opacity: 1,
+        opacity,
         backgroundColor: data.hexColor,
         zIndex,
         transformOrigin: "center center",
