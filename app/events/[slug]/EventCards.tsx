@@ -120,7 +120,7 @@ const EventCardItem = memo(function EventCardItem({
 
       {/* CONTENT */}
       <div className="p-5 flex flex-col gap-3 flex-1 relative z-20">
-        <h2 className="font-adventor text-[40px] leading-tight">{card.name}</h2>
+        <h2 className="font-adventor text-[50px] md:text-[60px] leading-tight">{card.name}</h2>
 
         <p className="text-sm text-[#c0c0c0] leading-relaxed event-card-desc">
           {card.description.map((line, i) => (
@@ -254,7 +254,7 @@ export default function EventCards({ cards }: { cards: EventCard[] }) {
 
   return (
     <section className="px-4 sm:px-10 lg:px-24 pb-32" ref={containerRef}>
-      <div className="flex justify-center gap-10 flex-wrap">
+      <div className="flex justify-center gap-x-16 lg:gap-x-20 gap-y-26 flex-wrap">
         {cards.map((card, idx) => (
           <EventCardItem
             key={idx}

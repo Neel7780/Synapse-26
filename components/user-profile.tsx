@@ -4,9 +4,14 @@ import { useEffect, useRef, useState, useCallback, memo } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { Navbar } from "@/components/ui/Resizable-navbar";
+import NavigationPanel from "@/components/ui/NavigationPanel";
+import { useNavigationState } from "@/lib/useNavigationState";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -30,13 +35,13 @@ type RegisteredEvent = {
 };
 
 // Memoized profile field component
-const ProfileField = memo(function ProfileField({ 
-  label, 
-  value, 
-  className = "" 
-}: { 
-  label: string; 
-  value: string; 
+const ProfileField = memo(function ProfileField({
+  label,
+  value,
+  className = ""
+}: {
+  label: string;
+  value: string;
   className?: string;
 }) {
   return (
@@ -60,11 +65,10 @@ const EventCard = memo(function EventCard({ event }: { event: RegisteredEvent })
           {event.name}
         </h3>
         <span
-          className={`px-2 py-0.5 md:px-3 md:py-1 rounded-full text-xs md:text-sm whitespace-nowrap font-medium ${
-            event.status === "Registered"
-              ? "bg-green-500/20 text-green-400"
-              : "bg-orange-500/20 text-orange-400"
-          }`}
+          className={`px-2 py-0.5 md:px-3 md:py-1 rounded-full text-xs md:text-sm whitespace-nowrap font-medium ${event.status === "Registered"
+            ? "bg-green-500/20 text-green-400"
+            : "bg-orange-500/20 text-orange-400"
+            }`}
         >
           {event.status}
         </span>
@@ -87,7 +91,8 @@ const ProfileSkeleton = () => (
 export default function UserProfile() {
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, logout } = useAuth();
+  const { startTransition } = useNavigationState();
 
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [registeredEvents, setRegisteredEvents] = useState<RegisteredEvent[]>([]);
@@ -179,7 +184,7 @@ export default function UserProfile() {
 
   useEffect(() => {
     if (dataLoading || !ref.current) return;
-    
+
     const ctx = gsap.context(() => {
       gsap.fromTo(
         ".animate",
@@ -209,8 +214,8 @@ export default function UserProfile() {
     return (
       <div className="min-h-[100svh] bg-background px-4 py-6 md:px-8 md:py-12 flex flex-col items-center justify-center">
         <div className="text-white mb-4">{error || "Failed to load profile."}</div>
-        <button 
-          onClick={handleBack} 
+        <button
+          onClick={handleBack}
           className="text-white underline hover:text-white/80 transition-colors"
         >
           Go Back
@@ -220,23 +225,32 @@ export default function UserProfile() {
   }
 
   return (
-    <div ref={ref} className="min-h-[100dvh] bg-background px-4 py-6 md:px-8 md:py-12">
+    <div ref={ref} className="min-h-[100dvh] bg-background px-4 py-6 md:px-8 md:py-12 pt-28 md:pt-36">
+      <Navbar visible={true}>
+        <NavigationPanel />
+      </Navbar>
       {/* HEADER */}
-      <div className="max-w-7xl mx-auto mb-6 md:mb-10">
-        <button
-          onClick={handleBack}
-          className="group relative inline-flex items-center justify-center text-muted-foreground hover:text-foreground transition-all"
-          aria-label="Go Back"
-        >
-          <ArrowLeft className="cursor-pointer w-6 h-6 md:w-8 md:h-8" />
-        </button>
-      </div>
+
 
       {/* MAIN GRID */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
         {/* LEFT COLUMN: Profile */}
         <div className="animate flex flex-col gap-6">
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">Profile</h2>
+          <div className="flex flex-row flex-wrap justify-between items-center gap-4">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">Profile</h2>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                startTransition();
+                logout();
+                router.push("/");
+              }}
+              className="px-6 md:px-3 lg:px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-jqka uppercase transition-all whitespace-nowrap cursor-pointer shadow-lg shadow-red-900/20 hover:shadow-red-900/40 text-lg md:text-xl md:tracking-[0.15em]"
+            >
+              Logout
+            </motion.button>
+          </div>
 
           <div className="space-y-3 md:space-y-4">
             {/* Name Row */}
@@ -250,11 +264,22 @@ export default function UserProfile() {
             <ProfileField label="College" value={userDetails.university} className="animate" />
             <ProfileField label="Email Address" value={userDetails.email} className="animate" />
 
+
             {/* Demographics Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
               <ProfileField label="Date of Birth" value={userDetails.dateOfBirth} className="animate" />
               <ProfileField label="Gender" value={userDetails.gender} className="animate" />
             </div>
+
+            <Link
+              href="/auth?view=forgot"
+              onClick={() => startTransition()}
+              className="block w-full px-6 py-3 border border-white/20 hover:bg-white/5 rounded text-base font-jqka uppercase tracking-[0.15em] transition-all whitespace-nowrap hover:border-white/40 text-center text-lg md:text-xl mt-6"
+            >
+              Change Password
+            </Link>
+
+
           </div>
         </div>
 
@@ -291,11 +316,10 @@ export default function UserProfile() {
                   2 Days Accommodation
                 </p>
                 <span
-                  className={`px-3 py-1 rounded-full text-xs md:text-sm font-medium ${
-                    hasAccommodation
-                      ? "bg-green-500/20 text-green-400"
-                      : "bg-orange-500/20 text-orange-400"
-                  }`}
+                  className={`px-3 py-1 rounded-full text-xs md:text-sm font-medium ${hasAccommodation
+                    ? "bg-green-500/20 text-green-400"
+                    : "bg-orange-500/20 text-orange-400"
+                    }`}
                 >
                   {hasAccommodation ? "Registered" : "Unregistered"}
                 </span>
@@ -303,7 +327,7 @@ export default function UserProfile() {
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }

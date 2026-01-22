@@ -278,6 +278,7 @@ const DaySection = memo(function DaySection({
 
   return (
     <div
+      id={`day-${daySchedule.day}`}
       ref={sectionRef}
       className="day-section max-w-7xl mx-auto px-3 sm:px-4 space-y-6 md:space-y-12 relative"
     >

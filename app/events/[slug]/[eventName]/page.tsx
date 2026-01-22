@@ -242,9 +242,10 @@ export default function EventPage() {
                         </h2>
 
                         <ul className="space-y-4 mb-10 text-gray-300 text-lg font-light leading-relaxed list-disc pl-5 font-roboto">
-                            {event.rules.map((rule, i) => (
-                                <li key={i}>{rule}</li>
-                            ))}
+                            <li>Participants must carry their own instruments, props, or tracks if required.</li>
+                            <li>Failure to adhere to the rules may result in disqualification.</li>
+                            <li>The judges’ and committee&apos;s decision will be final and binding.</li>
+                            <li>For event specific details see the rule book.</li>
                         </ul>
 
                         {event.rulebook && (
