@@ -75,8 +75,8 @@ const navSections = [
         title: "Commerce",
         items: [
             { href: "/admin/merchandise", label: "Merchandise", icon: ShoppingBag },
-            { href: "/admin/merchandise/orders", label: "Orders", icon: Package },
             { href: "/admin/accommodation", label: "Accommodation", icon: CreditCard },
+            { href: "/admin/accommodation/orders", label: "Booking Orders", icon: Package },
         ],
     },
 ];
