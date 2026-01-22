@@ -5,7 +5,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 export async function GET() {
   try {
     const supabase = (await createClient()) as SupabaseClient;
-    const { data } = await supabase.from("event").select("event_name");
+    const { data, error } = await supabase.from("event").select("event_name");
 
     if (error) {
       console.error(error);
