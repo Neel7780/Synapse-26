@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useUsers, useUserEventList } from "@/hooks/use-admin-data";
 import { AdminPageHeader } from "@/components/admin/ui/AdminSidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
@@ -49,11 +49,23 @@ import {
 } from "lucide-react";
 
 export default function UsersPage() {
+  const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [eventFilter, setEventFilter] = useState("all");
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [page, setPage] = useState(1);
   const limit = 10;
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (searchInput !== searchTerm) {
+        setSearchTerm(searchInput);
+        setPage(1);
+      }
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [searchInput, searchTerm]);
 
   const { data: eventListData } = useUserEventList();
   const { data, loading, error, refetch } = useUsers({
@@ -67,40 +79,36 @@ export default function UsersPage() {
   const total = data?.total || 0;
   const totalPages = Math.ceil(total / limit);
 
+  const showTableOverlay = loading && users.length === 0;
+
   const allEvents = eventListData?.events || [];
 
-  // Download CSV
-  const downloadCSV = () => {
-    const headers = ["Name", "Email", "Phone", "College", "Registration Date", "Events"];
-    const rows = users.map((u) => [
-      u.user_name,
-      u.email,
-      u.phone,
-      u.college,
-      u.registration_date,
-      u.event_count,
-    ]);
-    const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `users_${eventFilter === "all" ? "all" : eventFilter.replace(/\\s+/g, "_")}_${new Date().toISOString().split("T")[0]}.csv`;
-    a.click();
+  // Download CSV (all entries from server)
+  const downloadCSV = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (searchTerm) params.append("searchParams", searchTerm);
+      if (eventFilter !== "all") params.append("filter", eventFilter);
+
+      const res = await fetch(`/api/admin/users/export?${params.toString()}`);
+      if (!res.ok) throw new Error("Export failed");
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `users_${eventFilter === "all" ? "all" : eventFilter.replace(/\s+/g, "_")}_${new Date().toISOString().split("T")[0]}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      alert(err?.message ?? "Export failed");
+    }
   };
 
   // Get initials
   const getInitials = (name: string) => {
     return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-red-500" />
-      </div>
-    );
-  }
 
   if (error) {
     return (
@@ -140,17 +148,16 @@ export default function UsersPage() {
       <Card className="border-border/50">
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name, email, or college..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setPage(1);
-                }}
-                className="pl-10 bg-muted/50 border-border/50"
-              />
+            <div className="flex-1 flex gap-2">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name, email, or college..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="pl-10 bg-muted/50 border-border/50"
+                />
+              </div>
             </div>
             <Select value={eventFilter} onValueChange={(v) => { setEventFilter(v); setPage(1); }}>
               <SelectTrigger className="w-full md:w-56 bg-muted/50 border-border/50">
@@ -172,7 +179,7 @@ export default function UsersPage() {
               {searchTerm && (
                 <Badge variant="secondary" className="gap-1 bg-muted border-border/50">
                   Search: &quot;{searchTerm}&quot;
-                  <X className="h-3 w-3 cursor-pointer" onClick={() => { setSearchTerm(""); setPage(1); }} />
+                  <X className="h-3 w-3 cursor-pointer" onClick={() => { setSearchTerm(""); setSearchInput(""); setPage(1); }} />
                 </Badge>
               )}
               {eventFilter !== "all" && (
@@ -182,7 +189,7 @@ export default function UsersPage() {
                 </Badge>
               )}
               <button
-                onClick={() => { setSearchTerm(""); setEventFilter("all"); setPage(1); }}
+                onClick={() => { setSearchTerm(""); setSearchInput(""); setEventFilter("all"); setPage(1); }}
                 className="text-red-400 hover:text-red-300 text-sm font-medium"
               >
                 Clear all
@@ -207,10 +214,18 @@ export default function UsersPage() {
                   {eventFilter !== "all" && ` registered for "${eventFilter}"`}
                 </CardDescription>
               </div>
+              {loading && (
+                <Loader2 className="ml-auto h-5 w-5 animate-spin text-red-500" />
+              )}
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 relative">
+          {showTableOverlay && (
+            <div className="absolute inset-0 bg-background/50 backdrop-blur-sm z-10 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-red-500" />
+            </div>
+          )}
           <Table>
             <TableHeader>
               <TableRow className="border-border/50 hover:bg-muted/50">
@@ -253,11 +268,20 @@ export default function UsersPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">{user.registration_date.split("T")[0]}</TableCell>
-                    <TableCell>
-                      <Badge className="bg-red-500/20 text-red-300 border-red-500/30">
-                        {user.event_count} events
-                      </Badge>
-                    </TableCell>
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setSelectedUser(user)}
+                          className={
+                            user.event_count > 0
+                              ? "border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 hover:text-emerald-200"
+                              : "border-border/50 text-muted-foreground hover:bg-muted/50"
+                          }
+                        >
+                          {user.event_count} events
+                        </Button>
+                      </TableCell>
                     <TableCell className="text-right">
                       <Button
                         size="sm"
@@ -356,9 +380,17 @@ export default function UsersPage() {
                   <Tag className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">Registered Events ({selectedUser.event_count})</span>
                 </div>
-                <Badge className="bg-red-500/20 text-red-300 border-red-500/30">
-                  {selectedUser.event_count} events
-                </Badge>
+                {selectedUser.events && selectedUser.events.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {selectedUser.events.map((evt: string) => (
+                      <Badge key={evt} className="bg-emerald-500/20 text-emerald-200 border-emerald-500/30">
+                        {evt}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No event registrations</p>
+                )}
               </div>
             </div>
           )}

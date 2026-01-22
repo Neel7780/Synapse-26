@@ -55,18 +55,30 @@ export async function GET(req: NextRequest) {
       "College",
       "Registration Date",
       "Event Count",
+      "Events",
     ];
 
     const csvRows = [
       headers.join(","),
       ...(data ?? []).map((user: any) => {
-        let eventCount = 0;
+        const eventNames = new Set<string>();
 
         user.team_members?.forEach((tm: any) => {
-          if (tm.team?.event_registrations) {
-            eventCount += 1;
+          const registrations = tm.team?.event_registrations;
+
+          if (Array.isArray(registrations)) {
+            registrations.forEach((er: any) => {
+              const eventName = er?.event_fee?.event?.event_name;
+              if (eventName) eventNames.add(eventName);
+            });
+          } else {
+            const eventName = registrations?.event_fee?.event?.event_name;
+            if (eventName) eventNames.add(eventName);
           }
         });
+
+        const eventsList = Array.from(eventNames);
+        const eventCount = eventsList.length;
 
         return [
           user.user_id,
@@ -76,6 +88,7 @@ export async function GET(req: NextRequest) {
           `"${user.college}"`,
           user.registration_date,
           eventCount,
+          `"${eventsList.join("; ")}"`,
         ].join(",");
       }),
     ];

@@ -13,7 +13,6 @@ export async function GET(req: NextRequest) {
 
     const search = searchParams.get("searchParams") ?? ""; //name,email,college,transactionId
     const eventFilter = searchParams.get("filter");
-    const paymentMethod = searchParams.get("paymentMethod");
     const paymentStatus = searchParams.get("paymentStatus");
 
         const buildQueryUsers = () => {
@@ -24,6 +23,7 @@ export async function GET(req: NextRequest) {
       transaction_id,
       registration_id,
       payment_status,
+      payment_screenshot_url,
       gross_amount,
       team (
         team_members ( user_id )
@@ -32,8 +32,7 @@ export async function GET(req: NextRequest) {
       event_fee(
         event(event_name,event_category(category_name)),
         fee(participation_type)
-      ),
-      payment_method(method_name,gateway_charge)
+      )
       `,
                     { count: "exact" }
                 );
@@ -46,7 +45,6 @@ export async function GET(req: NextRequest) {
             }
 
             if (eventFilter) q = q.eq("event_fee.event.event_name", eventFilter);
-            if (paymentMethod) q = q.eq("payment_method.method_name", paymentMethod);
             if (paymentStatus) q = q.eq("payment_status", paymentStatus);
 
             return q;
@@ -60,6 +58,7 @@ export async function GET(req: NextRequest) {
       transaction_id,
       registration_id,
       payment_status,
+      payment_screenshot_url,
       gross_amount,
       team (
         team_members ( user_id )
@@ -68,8 +67,7 @@ export async function GET(req: NextRequest) {
       event_fee(
         event(event_name,event_category(category_name)),
         fee(participation_type)
-      ),
-      payment_method(method_name,gateway_charge)
+      )
       `,
                     { count: "exact" }
                 );
@@ -79,7 +77,6 @@ export async function GET(req: NextRequest) {
             }
 
             if (eventFilter) q = q.eq("event_fee.event.event_name", eventFilter);
-            if (paymentMethod) q = q.eq("payment_method.method_name", paymentMethod);
             if (paymentStatus) q = q.eq("payment_status", paymentStatus);
 
       return q;
@@ -90,15 +87,20 @@ export async function GET(req: NextRequest) {
 
         const merged = [...(d1 ?? []), ...(d2 ?? [])];
 
+        const filtered = merged.filter((row: any) => {
+          if (eventFilter && row.event_fee?.event?.event_name !== eventFilter) return false;
+          return true;
+        });
+
         const uniqueMap = new Map();
-        merged.forEach((row: any) => {
+        filtered.forEach((row: any) => {
             uniqueMap.set(row.registration_id, row);
         });
 
         const uniqueData = Array.from(uniqueMap.values());
 
 
-        const totalRegistrations = uniqueData?.length ?? 0;
+        let totalRegistrations = uniqueData?.length ?? 0;
         let paid = 0;
         let grossRevenue = 0;
         let gatewayCharges = 0;
@@ -133,6 +135,7 @@ export async function GET(req: NextRequest) {
           payment_method: row.payment_method?.method_name,
           group_size: groupSize,
           payment_status: row.payment_status,
+          payment_screenshot_url: row.payment_screenshot_url,
           gross_amount: price,
           gateway_charge: gateway,
           net_amount: price - gateway,

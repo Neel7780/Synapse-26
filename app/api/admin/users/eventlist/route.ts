@@ -4,9 +4,15 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
   try {
     const supabase = (await createClient()) as any;
-    const { data } = await supabase.from("event").select("event_name");
+    const { data, error } = await supabase.from("event").select("event_name");
 
-    return NextResponse.json(data);
+    if (error) {
+      console.error(error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    const events = (data ?? []).map((e: { event_name: string }) => e.event_name);
+    return NextResponse.json({ events });
   } catch (error) {
     console.error(error);
     return NextResponse.json(

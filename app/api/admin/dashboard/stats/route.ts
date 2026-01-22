@@ -3,8 +3,8 @@ import { createClient } from "@/utils/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabaseServer";
 import { NextRequest, NextResponse } from "next/server";
 
-// Revalidate every 30 seconds for this API
-export const revalidate = 30;
+// Force dynamic for this API route since it uses cookies
+export const dynamic = "force-dynamic";
 
 /**
  * GET /api/admin/dashboard/stats
@@ -22,7 +22,7 @@ export async function GET(_req: NextRequest) {
     // Verify admin authentication using cookie-based session
     const userSupabase = await createClient();
     const isAdmin = await checkAdmin(userSupabase as Parameters<typeof checkAdmin>[0]);
-    
+
     if (!isAdmin) {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -61,7 +61,7 @@ export async function GET(_req: NextRequest) {
       supabase.from("users").select("user_id", { count: "exact", head: true }),
       supabase.from("sponsors").select("sponsor_id", { count: "exact", head: true }),
       supabase.from("event").select("event_id", { count: "exact", head: true }).eq("is_registration_open", true),
-      
+
       // Today's registrations (only fetch needed fields)
       supabase
         .from("event_registrations")
@@ -69,7 +69,7 @@ export async function GET(_req: NextRequest) {
         .not("created_at", "is", null)
         .gte("created_at", todayStart)
         .lt("created_at", todayEnd),
-      
+
       // Yesterday's registrations for comparison
       supabase
         .from("event_registrations")
@@ -77,7 +77,7 @@ export async function GET(_req: NextRequest) {
         .not("created_at", "is", null)
         .gte("created_at", yesterdayStart)
         .lt("created_at", todayStart),
-      
+
       // Recent paid registrations (limit 5)
       supabase
         .from("event_registrations")
@@ -122,7 +122,7 @@ export async function GET(_req: NextRequest) {
     let todayGross = 0;
     let todayGateway = 0;
     let todayPaidCount = 0;
-    
+
     (todayRegistrationsResult.data ?? []).forEach((reg: any) => {
       if (reg.payment_status === "done") {
         todayPaidCount++;
@@ -137,7 +137,7 @@ export async function GET(_req: NextRequest) {
     let yesterdayGross = 0;
     let yesterdayGateway = 0;
     let yesterdayPaidCount = 0;
-    
+
     (yesterdayRegistrationsResult.data ?? []).forEach((reg: any) => {
       if (reg.payment_status === "done") {
         yesterdayPaidCount++;

@@ -2,6 +2,7 @@
 
 import React, { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
+import Image from "next/image";
 
 const galleryImages = [
   "/images_halloffame/15.jpeg",
@@ -62,10 +63,12 @@ export default function ProniteGallery() {
                 key={idx}
                 className="relative w-full h-[850px] md:border-[6px] border-black shadow-2xl overflow-hidden -mb-56"
               >
-                <img
+                <Image
                   src={src}
                   className="w-full h-full object-cover grayscale-0 md:grayscale-[0.8] md:hover:grayscale-0 transition-all duration-500"
                   alt="Festival Moment"
+                  fill
+                  sizes="(max-width: 768px) 50vw, 20vw"
                 />
               </div>
             ))}

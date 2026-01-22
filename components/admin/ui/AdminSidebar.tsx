@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Sidebar,
@@ -41,7 +42,8 @@ import {
   Settings,
   BarChart3,
   ChevronUp,
-  CreditCard,
+  Home,
+  ImageIcon,
 } from "lucide-react";
 
 // Navigation configuration
@@ -77,7 +79,12 @@ const navSections = [
       {
         href: "/admin/accommodation",
         label: "Accommodation",
-        icon: CreditCard,
+        icon: Home,
+      },
+      {
+        href: "/admin/accommodation/orders",
+        label: "Accom. Orders",
+        icon: ImageIcon,
       },
     ],
   },
@@ -113,10 +120,12 @@ function AdminSidebarContent() {
       {/* Header with Logo */}
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-3 px-2 py-2">
-          <img
+          <Image
             src="/Synapse Logo.png"
             alt="Synapse Logo"
-            className="h-10 w-10 rounded-xl object-contain"
+            width={40}
+            height={40}
+            className="rounded-xl object-contain"
           />
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
             <span className="font-semibold text-sidebar-foreground">

@@ -153,7 +153,7 @@ export default function TransitionOverlay() {
                             ease: [0.22, 1, 0.36, 1],
                         }}
                     >
-                        <img
+                        <Image
                             src={src}
                             alt=""
                             className="

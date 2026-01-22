@@ -14,6 +14,7 @@ import { NavbarButton } from "@/components/ui/Resizable-navbar";
 import Svg from "@/components/Svg";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import Image from "next/image";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -43,8 +44,7 @@ export default function HeroSection({
 
   const [showEnter, setShowEnter] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
-  const [part3Active, setPart3Active] = useState(false);
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   const hasRunMaskRef = useRef(false);
   const enterTriggeredRef = useRef(false);
@@ -83,7 +83,7 @@ export default function HeroSection({
     pending: new Set<string>(),
     resolved: new Set<string>(),
   });
-   
+
   // Disabling explicit-any for GSAP refs temporarily due to complex types
   const masterTLRef = useRef<gsap.core.Timeline | null>(null);
   const progressTriggerRef = useRef<ScrollTrigger | null>(null);
@@ -151,7 +151,7 @@ export default function HeroSection({
     if (enterBtnRef.current) {
       setShowEnter(true);
     }
-  }, []);
+  }, [updateProgressText]);
 
   const FINISH_THRESHOLD = 0.99;
   const observeBrowserLoading = (
@@ -352,7 +352,7 @@ export default function HeroSection({
         pin: true,
         pinSpacing: false,
         anticipatePin: 1.2,
-        onUpdate: (self) => {
+        onUpdate: (_self) => {
           // Logic for part3Active removed as we use pointer-events-auto on button directly
         },
       },
@@ -555,7 +555,8 @@ export default function HeroSection({
         },
         "together2"
       ).to({}, { duration: 5, ease: "none" });
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setShowNavbar]);
 
   const initScrollProgress = useCallback(() => {
     const trigger = ScrollTrigger.create({
@@ -600,7 +601,7 @@ export default function HeroSection({
         gsap.getById("scrollHintIdle")?.kill();
       }
     };
-  }, [isLoading]);
+  }, [isLoading, lockScroll]);
 
   useEffect(() => {
     const clearIntroOnReload = () => {
@@ -627,7 +628,8 @@ export default function HeroSection({
       window.removeEventListener("beforeunload", clearIntroOnReload);
       window.removeEventListener("resize", handleResize);
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enterSilently, isLoading, startBrowserPreloadTracking]);
 
   useLayoutEffect(() => {
     if (isLoading) return;
@@ -674,7 +676,7 @@ export default function HeroSection({
         check = false;
       },
     });
-  }, [isLoading, initScrollAnimations, unlockScroll]);
+  }, [isLoading, initScrollAnimations, unlockScroll, initScrollProgress]);
   useEffect(() => {
     // subtle breathing animation (idle)
     if (scrollHintHomeRef.current) {
@@ -699,6 +701,11 @@ export default function HeroSection({
 
   // Cleanup GSAP and RAF on unmount to avoid lingering transitions and memory leaks
   useEffect(() => {
+    // Capture refs at start of effect to ensure we have the correct elements during cleanup
+    const maskLayer = maskLayerRef.current;
+    const scrollHint = scrollHintRef.current;
+    const scrollHintHome = scrollHintHomeRef.current;
+
     return () => {
       try {
         // cancel any running RAF
@@ -725,10 +732,10 @@ export default function HeroSection({
         }
 
         // kill all tweens on important refs
-        gsap.killTweensOf(maskLayerRef.current);
-        gsap.killTweensOf(scrollHintRef.current);
-        gsap.killTweensOf(scrollHintHomeRef.current);
-      } catch (e) {
+        gsap.killTweensOf(maskLayer);
+        gsap.killTweensOf(scrollHint);
+        gsap.killTweensOf(scrollHintHome);
+      } catch {
         // swallow errors during cleanup
         // console.warn("Error cleaning up animations:", e);
       }
@@ -768,10 +775,10 @@ export default function HeroSection({
           maskPosition: 'center',
           maskSize: '0% 0%',
         }}>
-          <img id="coloredImage" src="/images_home/RedHand2.jpeg" alt="Red Hand" ref={coloredImageRef} className="absolute inset-0 h-full w-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none max-[600px]:scale-250" />
+          <Image id="coloredImage" src="/images_home/RedHand2.jpeg" alt="Red Hand" fill className="absolute inset-0 h-full w-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none max-[600px]:scale-250" priority ref={coloredImageRef} />
 
           <div id="flipCard" className="absolute inset-0 transform-3d will-change-transform" ref={flipCardRef}>
-            <img id="redCard" className="absolute inset-0 w-full h-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none backface-hidden max-[600px]:scale-250" src="/images_home/redcard4.png" alt="Red Card" ref={cardRef} />
+            <Image id="redCard" className="absolute inset-0 w-full h-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none backface-hidden max-[600px]:scale-250" src="/images_home/redcard4.png" alt="Red Card" fill priority ref={cardRef} />
 
             <div id="part3_2" ref={part3_2Ref} style={{
               backgroundImage:
@@ -782,7 +789,7 @@ export default function HeroSection({
               <div className="screen-container relative w-screen h-full flex items-center justify-center perspective-[1000px] transform-3d" ref={screenContainerRef}>
                 <div ref={frontScreenRef} className="screen-front absolute inset-0 bg-black bg-[url('/images_home/part3-image.png')] bg-no-repeat bg-center bg-contain z-2 backface-hidden border-4 border-solid rounded " style={{ borderColor: "rgba(250,235,215,0)" }}></div>
                 <div className="center-joker-container absolute inset-0 flex items-center justify-center transform-[rotateY(180deg)] backface-hidden z-1">
-                  <img src="/images_home/card_center.png" className="center-joker w-full h-auto rotate-[-64deg] object-contain" alt="Joker Card" />
+                  <Image src="/images_home/card_center.png" className="center-joker w-full h-auto rotate-[-64deg] object-contain" alt="Joker Card" width={500} height={500} />
                 </div>
               </div>
             </div>
@@ -796,7 +803,7 @@ export default function HeroSection({
               </div>
 
               <div className="title-wrapper flex justify-center pt-[80px] sm:pt-[60px] md:pt-[120px] h-[calc(100dvh-120px)] md:h-[calc(100dvh-200px)] pointer-events-none">
-                <h1 className="title text-4xl min-[450px]:text-6xl sm:text-7xl md:text-[clamp(40px,12vw,140px)] font-joker leading-none text-center px-4" ref={titleRef}>synapse' 26</h1>
+                <h1 className="title text-4xl min-[450px]:text-6xl sm:text-7xl md:text-[clamp(40px,12vw,140px)] font-joker leading-none text-center px-4" ref={titleRef}>synapse&apos; 26</h1>
               </div>
 
               <div className="scroll-hint-home absolute bottom-[8%] left-1/2 -translate-x-1/2 text-white text-center z-40 pointer-events-none opacity-0 will-change-transform mix-blend-difference" ref={scrollHintHomeRef}>

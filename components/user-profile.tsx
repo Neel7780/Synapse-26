@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback, memo } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -32,6 +32,17 @@ type RegisteredEvent = {
   name: string;
   category: string;
   status: string;
+};
+
+type AccommodationBooking = {
+  booking_id: number;
+  nights: number;
+  check_in: string | null;
+  check_out: string | null;
+  amount: number;
+  verification_status: "pending" | "verified" | "rejected" | null;
+  payment_status: string | null;
+  created_at: string | null;
 };
 
 // Memoized profile field component
@@ -96,7 +107,7 @@ export default function UserProfile() {
 
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [registeredEvents, setRegisteredEvents] = useState<RegisteredEvent[]>([]);
-  const [hasAccommodation, setHasAccommodation] = useState(false);
+  const [accommodationBookings, setAccommodationBookings] = useState<AccommodationBooking[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -123,7 +134,11 @@ export default function UserProfile() {
             )
           `)
           .eq("registered_by_user_id", userId),
-        supabase.from("accommodation_bookings").select("booking_id").eq("user_id", userId),
+        supabase
+          .from("accommodation_bookings")
+          .select("booking_id, nights, check_in, check_out, amount, verification_status, payment_status, created_at")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false }),
       ]);
 
       // Process user data
@@ -162,7 +177,9 @@ export default function UserProfile() {
       }
 
       // Process accommodation data
-      setHasAccommodation(!!(accResult.data && accResult.data.length > 0));
+      if (accResult.data && accResult.data.length > 0) {
+        setAccommodationBookings(accResult.data as AccommodationBooking[]);
+      }
 
     } catch (err) {
       console.error("Error fetching profile data:", err);
@@ -310,20 +327,72 @@ export default function UserProfile() {
               Accommodation
             </h2>
 
-            <div className="animate border border-white p-3 md:p-4 min-h-[72px] flex items-center">
-              <div className="flex justify-between items-center w-full gap-4">
-                <p className="text-sm md:text-base font-semibold font-roboto">
-                  2 Days Accommodation
-                </p>
-                <span
-                  className={`px-3 py-1 rounded-full text-xs md:text-sm font-medium ${hasAccommodation
-                    ? "bg-green-500/20 text-green-400"
-                    : "bg-orange-500/20 text-orange-400"
-                    }`}
-                >
-                  {hasAccommodation ? "Registered" : "Unregistered"}
-                </span>
-              </div>
+            <div className="animate space-y-3">
+              {accommodationBookings.length > 0 ? (
+                accommodationBookings.map((booking) => {
+                  const getStatusBadge = () => {
+                    switch (booking.verification_status) {
+                      case "verified":
+                        return {
+                          text: "Verified",
+                          className: "bg-green-500/20 text-green-400"
+                        };
+                      case "rejected":
+                        return {
+                          text: "Rejected",
+                          className: "bg-red-500/20 text-red-400"
+                        };
+                      default:
+                        return {
+                          text: "Pending Verification",
+                          className: "bg-orange-500/20 text-orange-400"
+                        };
+                    }
+                  };
+                  const status = getStatusBadge();
+
+                  const formatDate = (dateStr: string | null) => {
+                    if (!dateStr) return "N/A";
+                    return new Date(dateStr).toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric"
+                    });
+                  };
+
+                  return (
+                    <div key={booking.booking_id} className="border border-white p-3 md:p-4">
+                      <div className="flex justify-between items-start w-full gap-4">
+                        <div className="flex-1">
+                          <p className="text-sm md:text-base font-semibold font-roboto">
+                            {booking.nights} Night{booking.nights > 1 ? "s" : ""} Accommodation
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {formatDate(booking.check_in)} - {formatDate(booking.check_out)}
+                          </p>
+                          <p className="text-sm text-white/80 mt-1">
+                            ₹{booking.amount.toLocaleString()}
+                          </p>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs md:text-sm font-medium whitespace-nowrap ${status.className}`}>
+                          {status.text}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="border border-white/20 border-dashed p-6 text-center">
+                  <p className="text-muted-foreground mb-3">No accommodation booked yet.</p>
+                  <Link
+                    href="/accomodation"
+                    onClick={() => startTransition()}
+                    className="inline-block px-4 py-2 border border-white/30 hover:bg-white/10 rounded text-sm font-jqka uppercase tracking-wider transition-all"
+                  >
+                    Book Accommodation
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>
