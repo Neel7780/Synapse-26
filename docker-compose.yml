@@ -1,34 +1,13 @@
 # =============================================================================
 # Docker Compose - Synapse'26
-# Development and Production configurations
-# Enhanced with mobile optimization settings
+# Production configuration with mobile optimization settings
 # =============================================================================
 
 services:
   # ---------------------------------------------------------------------------
-  # Development Service
-  # ---------------------------------------------------------------------------
-  dev:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-    ports:
-      - "3000:3000"
-    volumes:
-      - .:/app
-      - /app/node_modules
-      - /app/.next
-    environment:
-      - NODE_ENV=development
-      - NEXT_TELEMETRY_DISABLED=1
-    env_file:
-      - .env.local
-    restart: unless-stopped
-
-  # ---------------------------------------------------------------------------
   # Production Service - Mobile Optimized
   # ---------------------------------------------------------------------------
-  prod:
+  app:
     build:
       context: .
       dockerfile: Dockerfile
@@ -64,18 +43,6 @@ services:
       start_period: 40s
 
   # ---------------------------------------------------------------------------
-  # CI Service (for GitHub Actions)
-  # ---------------------------------------------------------------------------
-  ci:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-    environment:
-      - NODE_ENV=production
-      - NEXT_TELEMETRY_DISABLED=1
-    command: sh -c "npm run lint && npx tsc --noEmit && npm run build"
-
-  # ---------------------------------------------------------------------------
   # Mobile Testing Service
   # Simulates mobile network conditions for testing
   # ---------------------------------------------------------------------------
@@ -91,6 +58,8 @@ services:
       - NEXT_TELEMETRY_DISABLED=1
       # Simulate mobile constraints
       - NODE_OPTIONS=--max-old-space-size=256
+    env_file:
+      - .env.production
     deploy:
       resources:
         limits:
@@ -101,3 +70,4 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+      start_period: 30s
