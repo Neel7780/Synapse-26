@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 import { useRef, useCallback, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -29,10 +31,12 @@ const HeroCard = ({
       transformOrigin: "center center",
     }}
   >
-    <img
+    <Image
       src="/images_home/HallOfFame.png"
       alt="Hall of Fame"
-      className="w-full h-full object-cover"
+      fill
+      className="object-cover"
+      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
     />
     <div className="hof-title absolute inset-0 flex items-end justify-center pb-6 md:pb-8">
       <span className={`${titleSize} text-center font-white font-joker text-white drop-shadow-lg tracking-wider`}>
@@ -598,11 +602,13 @@ export default function HallOfFame() {
       style={gridStyle}
     >
       <div className="relative w-full h-full overflow-hidden">
-        <img
+        <Image
           src={image.src}
           alt={image.alt}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          fill
+          className="object-cover transition-transform duration-700 group-hover:scale-110"
           loading="lazy"
+          sizes="(max-width: 768px) 33vw, (max-width: 1024px) 20vw, 16vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       </div>

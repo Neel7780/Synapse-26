@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useNavigationState } from "@/lib/useNavigationState";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 type Phase = "idle" | "delay" | "enter" | "exit";
 
@@ -35,7 +36,7 @@ export default function TransitionOverlay() {
                 return () => clearTimeout(t);
             }
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isTransitioning]);
 
     /* ---------------- POSITIONS ---------------- */
@@ -108,10 +109,12 @@ export default function TransitionOverlay() {
                             ease: [0.22, 1, 0.36, 1],
                         }}
                     >
-                        <img
+                        <Image
                             src={src}
                             alt=""
-                            className="object-fill transform origin-center w-[50dvh] h-[50vw] rotate-90 md:w-full md:h-full md:rotate-0"
+                            fill
+                            className="object-fill transform origin-center rotate-90 md:rotate-0"
+                            sizes="50vw"
                         />
                     </motion.div>
                 ))}
