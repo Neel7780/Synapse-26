@@ -10,199 +10,25 @@ import NavigationPanel from "@/components/ui/NavigationPanel";
 import { Navbar } from "@/components/ui/Resizable-navbar";
 import { useNavigationState } from "@/lib/useNavigationState";
 import { useImagePreload } from "@/hooks/useImagePreload";
+import { useEventCategories } from "@/hooks/useEvents";
+import { generateSlug } from "@/types/events";
 
 if (typeof window !== "undefined") {
     gsap.registerPlugin(ScrollTrigger);
 }
 
-type EventItem = {
+type CategoryItem = {
     slug: string;
     title: string;
     cover: string;
+    category_id: number;
 };
 
-const EVENTS: EventItem[] = [
-    { slug: "dance", title: "DANCE EVENT", cover: "/images_events/dance.png" },
-    { slug: "fashion", title: "Fashion Show", cover: "/images_events/fashionshow.png" },
-    { slug: "music", title: "MUSIC EVENT", cover: "/images_events/music.png" },
-    { slug: "theatre", title: "THEATRE SHOW", cover: "/images_events/theatre.png" },
-    { slug: "gaming", title: "GAMING EVENT", cover: "/images_events/gaming.png" },
-];
-
-// Enhanced event card with GSAP flip
-const EventCard = memo(function EventCard({
-    event,
-    isFlipped,
-    onReveal,
-    onClick,
-    index,
-}: {
-    event: EventItem;
-    isFlipped: boolean;
-    onReveal: () => void;
-    onClick: () => void;
-    index: number;
-}) {
-    const cardRef = useRef<HTMLDivElement>(null);
-    const innerRef = useRef<HTMLDivElement>(null);
-    const glowRef = useRef<HTMLDivElement>(null);
-
-    // GSAP-controlled flip animation
-    useEffect(() => {
-        if (!innerRef.current) return;
-
-        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-        gsap.to(innerRef.current, {
-            rotateY: isFlipped ? 180 : 0,
-            duration: prefersReducedMotion ? 0 : 0.8,
-            ease: "back.out(1.5)",
-        });
-
-        // Add sparkle effect on flip
-        if (isFlipped && cardRef.current && !prefersReducedMotion) {
-            const sparkles = cardRef.current.querySelectorAll(".sparkle");
-            gsap.fromTo(
-                sparkles,
-                { scale: 0, opacity: 1 },
-                {
-                    scale: 1.5,
-                    opacity: 0,
-                    duration: 0.6,
-                    stagger: 0.05,
-                    ease: "power2.out",
-                }
-            );
-        }
-    }, [isFlipped]);
-
-    // Hover glow effect
-    useEffect(() => {
-        if (!cardRef.current) return;
-
-        const card = cardRef.current;
-        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        if (prefersReducedMotion) return;
-
-        const handleMouseMove = (e: MouseEvent) => {
-            const rect = card.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            if (glowRef.current) {
-                gsap.to(glowRef.current, {
-                    x: x - 75,
-                    y: y - 75,
-                    opacity: 0.6,
-                    duration: 0.3,
-                });
-            }
-        };
-
-        const handleMouseLeave = () => {
-            if (glowRef.current) {
-                gsap.to(glowRef.current, {
-                    opacity: 0,
-                    duration: 0.3,
-                });
-            }
-        };
-
-        card.addEventListener("mousemove", handleMouseMove);
-        card.addEventListener("mouseleave", handleMouseLeave);
-
-        return () => {
-            card.removeEventListener("mousemove", handleMouseMove);
-            card.removeEventListener("mouseleave", handleMouseLeave);
-        };
-    }, []);
-
+// Loading skeleton for cards
+const CardSkeleton = memo(function CardSkeleton() {
     return (
-        <div
-            ref={cardRef}
-            onMouseEnter={onReveal}
-            className="event-card relative cursor-pointer"
-            style={{ perspective: "1500px" }}
-        >
-            {/* Glow effect */}
-            <div
-                ref={glowRef}
-                className="absolute w-[150px] h-[150px] rounded-full bg-red-500 blur-[60px] pointer-events-none opacity-0 z-10"
-            />
-
-            {/* Sparkle effects */}
-            {[...Array(6)].map((_, i) => (
-                <div
-                    key={i}
-                    className="sparkle absolute w-2 h-2 bg-yellow-400 rounded-full pointer-events-none z-20"
-                    style={{
-                        left: `${20 + ((i * 17) % 60)}%`,
-                        top: `${20 + ((i * 23) % 60)}%`,
-                    }}
-                />
-            ))}
-
-            {/* CARD FRAME — responsive sizing */}
-            <div className="relative w-[110px] xs:w-[130px] sm:w-[180px] md:w-[220px] lg:w-[260px] xl:w-[320px] 2xl:w-[400px] aspect-[457/640]">
-                <div
-                    ref={innerRef}
-                    className="relative w-full h-full"
-                    style={{
-                        transformStyle: "preserve-3d",
-                    }}
-                >
-                    {/* FRONT */}
-                    <div
-                        className="absolute inset-0 rounded-lg overflow-hidden"
-                        style={{ backfaceVisibility: "hidden" }}
-                    >
-                        <Image
-                            src="/images_events/card.png"
-                            alt="Card back"
-                            fill
-                            sizes="(max-width: 640px) 110px, (max-width: 768px) 180px, (max-width: 1024px) 220px, (max-width: 1280px) 260px, 400px"
-                            className="object-contain"
-                            loading="lazy"
-                        />
-                    </div>
-
-                    {/* BACK */}
-                    <div
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            if (isFlipped) onClick();
-                        }}
-                        className="absolute inset-0 rounded-lg overflow-hidden cursor-pointer"
-                        style={{
-                            backfaceVisibility: "hidden",
-                            transform: "rotateY(180deg)",
-                        }}
-                    >
-                        <Image
-                            src={event.cover}
-                            alt={event.title}
-                            fill
-                            sizes="(max-width: 640px) 110px, (max-width: 768px) 180px, (max-width: 1024px) 220px, (max-width: 1280px) 260px, 400px"
-                            className="object-cover"
-                            loading="lazy"
-                        />
-                        {/* TITLE */}
-                        <div
-                            className="
-                                absolute bottom-2 xs:bottom-2 sm:bottom-3 md:bottom-4 lg:bottom-5 xl:bottom-7 2xl:bottom-9
-                                left-0 right-0
-                                px-1.5 xs:px-2 sm:px-3 md:px-4 lg:px-5 xl:px-7 2xl:px-8
-                                font-card
-                                text-[9px] xs:text-[10px] sm:text-[14px] md:text-[17px] lg:text-[20px] xl:text-[26px] 2xl:text-[32px]
-                                text-white text-center
-                                leading-tight
-                            "
-                        >
-                            {event.title}
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div className="relative w-[110px] xs:w-[130px] sm:w-[180px] md:w-[220px] lg:w-[260px] xl:w-[320px] 2xl:w-[400px] aspect-[401/600] bg-gray-800 rounded-lg animate-pulse">
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent" />
         </div>
     );
 });
@@ -214,11 +40,28 @@ export default function EventsPage() {
     const containerRef = useRef<HTMLDivElement>(null);
     const titleRef = useRef<HTMLHeadingElement>(null);
 
+    // Fetch categories from backend using Supabase
+    const { categories, loading, error } = useEventCategories();
+
     useImagePreload("/top.jpg");
+
+    // Transform categories to display format
+    const CATEGORIES: CategoryItem[] = useMemo(() => {
+        if (!categories || categories.length === 0) {
+            return [];
+        }
+
+        return categories.map((category) => ({
+            slug: generateSlug(category.category_name),
+            title: category.category_name.toUpperCase(),
+            cover: category.category_image || "/images_events/default.png",
+            category_id: category.category_id,
+        }));
+    }, [categories]);
 
     // Entrance animations
     useEffect(() => {
-        if (!containerRef.current) return;
+        if (!containerRef.current || loading) return;
 
         const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         if (prefersReducedMotion) return;
@@ -229,7 +72,7 @@ export default function EventsPage() {
                 const text = titleRef.current.textContent || "";
                 titleRef.current.innerHTML = "";
 
-                text.split("").forEach((char, i) => {
+                text.split("").forEach((char) => {
                     const span = document.createElement("span");
                     span.className = "inline-block";
                     span.textContent = char === " " ? "\u00A0" : char;
@@ -259,7 +102,7 @@ export default function EventsPage() {
         }, containerRef);
 
         return () => ctx.revert();
-    }, []);
+    }, [loading]);
 
     const handleCardClick = useCallback((slug: string) => {
         startTransition();
@@ -277,14 +120,14 @@ export default function EventsPage() {
 
     const toggleRevealAll = useCallback(() => {
         setRevealedCards((prev) => {
-            if (prev.size === EVENTS.length) {
+            if (prev.size === CATEGORIES.length) {
                 return new Set();
             }
-            return new Set(EVENTS.map((e) => e.slug));
+            return new Set(CATEGORIES.map((e) => e.slug));
         });
-    }, []);
+    }, [CATEGORIES]);
 
-    const allRevealed = useMemo(() => revealedCards.size === EVENTS.length, [revealedCards.size]);
+    const allRevealed = useMemo(() => revealedCards.size === CATEGORIES.length, [revealedCards.size, CATEGORIES.length]);
 
     return (
         <div ref={containerRef}>
@@ -313,105 +156,127 @@ export default function EventsPage() {
                         events
                     </h1>
 
-                    <div className="absolute flex flex-col items-end right-4 sm:right-9 lg:right-15 top-[90%] mt-4 mb-8 sm:mt-6 text-right leading-snug select-none font-jqka z-10">
-                        <button
-                            onClick={toggleRevealAll}
-                            className="self-end text-xs sm:text-base md:text-lg opacity-60 hover:opacity-100 transition-opacity"
-                            aria-label={allRevealed ? "Hide all cards" : "Reveal all cards"}
-                        >
-                            👁 Reveal / Unreveal all
-                        </button>
+                    {CATEGORIES.length > 0 && (
+                        <div className="absolute flex flex-col items-end right-4 sm:right-9 lg:right-15 top-[90%] mt-4 mb-8 sm:mt-6 text-right leading-snug select-none font-jqka z-10">
+                            <button
+                                onClick={toggleRevealAll}
+                                className="self-end text-xs sm:text-base md:text-lg opacity-60 hover:opacity-100 transition-opacity"
+                                aria-label={allRevealed ? "Hide all cards" : "Reveal all cards"}
+                            >
+                                👁 Reveal / Unreveal all
+                            </button>
 
-                        <div className="text-xs sm:text-base md:text-lg opacity-60 mb-3 flex">
-                            <span className="hidden md:flex">Hover to reveal •</span> Click to explore
+                            <div className="text-xs sm:text-base md:text-lg opacity-60 mb-3 flex">
+                                <span className="hidden md:flex">Hover to reveal •</span> Click to explore
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </section>
 
                 {/* CARDS */}
                 <section className="px-4 py-20">
-                    <div className="grid grid-cols-3 gap-x-4 gap-y-4">
-                        {EVENTS.map((event, index) => {
-                            const isFlipped = revealedCards.has(event.slug);
-
-                            return (
-                                <React.Fragment key={event.slug}>
+                    {loading ? (
+                        // Loading state with skeletons
+                        <div className="grid grid-cols-3 gap-x-4 gap-y-4">
+                            {[1, 2, 3, 4, 5].map((_, index) => (
+                                <React.Fragment key={index}>
                                     <div className="flex justify-center items-center h-full">
-                                        <div
-                                            onMouseEnter={() => revealCard(event.slug)}
-                                            className="relative cursor-pointer transform-gpu"
-                                            style={{ perspective: "1500px" }}
-                                        >
-                                            {/* CARD FRAME — responsive sizing */}
-                                            <div className="relative w-[110px] xs:w-[130px] sm:w-[180px] md:w-[220px] lg:w-[260px] xl:w-[320px] 2xl:w-[400px] aspect-[401/600]">
-                                                <div
-                                                    className="relative w-full h-full transition-transform ease-in-out"
-                                                    style={{
-                                                        transformStyle: "preserve-3d",
-                                                        transitionDuration: "900ms",
-                                                        transform: isFlipped
-                                                            ? "rotateY(180deg)"
-                                                            : "rotateY(0deg)",
-                                                    }}
-                                                >
-                                                    {/* FRONT */}
-                                                    <div
-                                                        className="absolute inset-0 rounded-lg overflow-hidden"
-                                                        style={{
-                                                            backfaceVisibility: "hidden",
-                                                            backgroundImage: "url(/images_events/card.jpeg)",
-                                                            backgroundRepeat: "no-repeat",
-                                                            backgroundPosition: "center",
-                                                            backgroundSize: "contain",
-                                                            backgroundOrigin: "content-box",
-                                                            backgroundClip: "content-box",
-                                                        }}
-                                                    />
+                                        <CardSkeleton />
+                                    </div>
+                                    {index !== 4 && <div className="h-full" />}
+                                </React.Fragment>
+                            ))}
+                        </div>
+                    ) : CATEGORIES.length === 0 ? (
+                        // No categories state
+                        <div className="text-center py-20">
+                            <p className="text-gray-400 text-xl mb-4">No event categories found</p>
+                            {error && <p className="text-red-500 text-sm">{error}</p>}
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-3 gap-x-4 gap-y-4">
+                            {CATEGORIES.map((category, index) => {
+                                const isFlipped = revealedCards.has(category.slug);
 
-                                                    {/* BACK */}
+                                return (
+                                    <React.Fragment key={category.category_id}>
+                                        <div className="flex justify-center items-center h-full">
+                                            <div
+                                                onMouseEnter={() => revealCard(category.slug)}
+                                                className="relative cursor-pointer transform-gpu"
+                                                style={{ perspective: "1500px" }}
+                                            >
+                                                {/* CARD FRAME — responsive sizing */}
+                                                <div className="relative w-[110px] xs:w-[130px] sm:w-[180px] md:w-[220px] lg:w-[260px] xl:w-[320px] 2xl:w-[400px] aspect-[401/600]">
                                                     <div
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleCardClick(event.slug);
-                                                        }}
-                                                        className="absolute inset-0 rounded-lg overflow-hidden cursor-pointer"
+                                                        className="relative w-full h-full transition-transform ease-in-out"
                                                         style={{
-                                                            backfaceVisibility: "hidden",
-                                                            transform: "rotateY(180deg)",
-                                                            backgroundImage: `url(${event.cover})`,
-                                                            backgroundRepeat: "no-repeat",
-                                                            backgroundPosition: "center",
-                                                            backgroundSize: "cover",
-                                                            backgroundOrigin: "content-box",
-                                                            backgroundClip: "content-box",
+                                                            transformStyle: "preserve-3d",
+                                                            transitionDuration: "900ms",
+                                                            transform: isFlipped
+                                                                ? "rotateY(180deg)"
+                                                                : "rotateY(0deg)",
                                                         }}
                                                     >
-                                                        {/* TITLE */}
+                                                        {/* FRONT */}
                                                         <div
-                                                            className="
-    absolute bottom-2 xs:bottom-2 sm:bottom-3 md:bottom-4 lg:bottom-5 xl:bottom-7 2xl:bottom-9
-    left-0 right-0
-    px-1.5 xs:px-2 sm:px-3 md:px-4 lg:px-5 xl:px-7 2xl:px-8
-    font-card
-    text-[9px] xs:text-[10px] sm:text-[14px] md:text-[17px] lg:text-[20px] xl:text-[26px] 2xl:text-[32px]
-    text-white text-center
-    leading-tight
-  "
+                                                            className="absolute inset-0 rounded-lg overflow-hidden"
+                                                            style={{
+                                                                backfaceVisibility: "hidden",
+                                                                backgroundImage: "url(/images_events/card.jpeg)",
+                                                                backgroundRepeat: "no-repeat",
+                                                                backgroundPosition: "center",
+                                                                backgroundSize: "contain",
+                                                                backgroundOrigin: "content-box",
+                                                                backgroundClip: "content-box",
+                                                            }}
+                                                        />
+
+                                                        {/* BACK */}
+                                                        <div
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleCardClick(category.slug);
+                                                            }}
+                                                            className="absolute inset-0 rounded-lg overflow-hidden cursor-pointer"
+                                                            style={{
+                                                                backfaceVisibility: "hidden",
+                                                                transform: "rotateY(180deg)",
+                                                                backgroundImage: `url(${category.cover})`,
+                                                                backgroundRepeat: "no-repeat",
+                                                                backgroundPosition: "center",
+                                                                backgroundSize: "cover",
+                                                                backgroundOrigin: "content-box",
+                                                                backgroundClip: "content-box",
+                                                            }}
                                                         >
-                                                            {event.title}
+                                                            {/* TITLE */}
+                                                            <div
+                                                                className="
+                                                                    absolute bottom-2 xs:bottom-2 sm:bottom-3 md:bottom-4 lg:bottom-5 xl:bottom-7 2xl:bottom-9
+                                                                    left-0 right-0
+                                                                    px-1.5 xs:px-2 sm:px-3 md:px-4 lg:px-5 xl:px-7 2xl:px-8
+                                                                    font-card
+                                                                    text-[9px] xs:text-[10px] sm:text-[14px] md:text-[17px] lg:text-[20px] xl:text-[26px] 2xl:text-[32px]
+                                                                    text-white text-center
+                                                                    leading-tight
+                                                                "
+                                                            >
+                                                                {category.title}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    {/* EMPTY COLUMN — cross layout pattern */}
-                                    {index !== EVENTS.length - 1 && <div className="h-full" />}
-                                </React.Fragment>
-                            );
-                        })}
-                    </div>
+                                        {/* EMPTY COLUMN — cross layout pattern */}
+                                        {index !== CATEGORIES.length - 1 && <div className="h-full" />}
+                                    </React.Fragment>
+                                );
+                            })}
+                        </div>
+                    )}
                 </section>
 
                 <Footer />

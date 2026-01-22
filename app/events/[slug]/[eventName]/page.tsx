@@ -1,15 +1,16 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { Navbar } from "@/components/ui/Resizable-navbar";
 import NavigationPanel from "@/components/ui/NavigationPanel";
 import Footer from "@/components/ui/Footer";
 import { Button } from "@/components/ui/Button";
-import { EVENT_PAGES, EventCard } from "../eventcontent";
-import { Calendar, Clock, MapPin, Users } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
+import { useEventBySlug } from "@/hooks/useEvents";
+import { FormattedFee } from "@/types/events";
 
 export default function EventPage() {
     const params = useParams();
@@ -19,43 +20,31 @@ export default function EventPage() {
     const slug = params?.slug as string;
     const eventNameSlug = params?.eventName as string;
 
-    // Direct lookup
-    let event: EventCard | null = null;
-    let error: string | null = null;
-
-    if (slug && eventNameSlug) {
-        const categoryData = EVENT_PAGES[slug];
-        if (!categoryData) {
-            error = "Category not found.";
-        } else {
-            const foundEvent = categoryData.cards.find(card =>
-                card.name.toLowerCase().replace(/\s+/g, "-") === eventNameSlug
-            );
-            if (!foundEvent) {
-                error = "Event not found.";
-            } else {
-                event = foundEvent;
-            }
-        }
-    }
+    // Fetch event from backend using Supabase
+    const { event, fees, loading, error } = useEventBySlug(slug, eventNameSlug);
 
     // State for selected fee type (default to first available)
     const [selectedFeeIndex, setSelectedFeeIndex] = useState(0);
 
-    // Initial check (if event exists but logic needs to run once)
+    // Sort fees: Solo -> Duet -> Group
+    const sortedFees = useMemo(() => {
+        if (!fees || fees.length === 0) return [];
+        const order = ["solo", "duet", "group"];
+        return [...fees].sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type));
+    }, [fees]);
+
+    // Reset selection when fees change
     useEffect(() => {
-        if (event && event.fees && event.fees.length > 0) {
-            // Sort fees logic: Solo -> Duet -> Group
-            const order = ["solo", "duet", "group"];
-            event.fees.sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type));
+        if (sortedFees.length > 0) {
             setSelectedFeeIndex(0);
         }
-    }, [event]);
+    }, [sortedFees.length]);
 
-
-    if (error || !event) {
+    // Handle errors
+    if (error || (!loading && !event)) {
         return (
             <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center font-joker">
+                <AlertCircle className="w-16 h-16 text-red-600 mb-4" />
                 <h1 className="text-4xl text-red-600 mb-4">Error</h1>
                 <p className="text-xl font-roboto">{error || "Event not found"}</p>
                 <Button onClick={() => router.back()} className="mt-6 rounded-none font-jqka bg-red-600 hover:bg-red-700">
@@ -65,12 +54,26 @@ export default function EventPage() {
         );
     }
 
-    const currentFee = event.fees && event.fees.length > 0 ? event.fees[selectedFeeIndex] : null;
+    // Show minimal loading or just render with available data
+    if (!event) {
+        return null;
+    }
 
-    // Fake metadata since it's missing from content
-    const eventDate = "26th Feb, 2026";
-    const eventTime = "10:00 PM";
-    const eventVenue = "OAT";
+    const currentFee: FormattedFee | null = sortedFees.length > 0 ? sortedFees[selectedFeeIndex] : null;
+
+    // Parse event date and time
+    const eventDateTime = event.event_date ? new Date(event.event_date) : null;
+    const eventDate = eventDateTime
+        ? eventDateTime.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+        : "TBD";
+    const eventTime = eventDateTime
+        ? eventDateTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
+        : "TBD";
+
+    // Description lines
+    const descriptionLines = event.description
+        ? event.description.split('\n').filter(line => line.trim())
+        : ['Event details coming soon.'];
 
     return (
         <main className="bg-black text-white min-h-screen overflow-x-hidden font-roboto">
@@ -88,8 +91,8 @@ export default function EventPage() {
                     className="relative w-full h-[50vh] md:h-[60vh] lg:h-[70vh] overflow-hidden"
                 >
                     <Image
-                        src={event.image}
-                        alt={event.name}
+                        src={event.event_picture || "/images_events/default.png"}
+                        alt={event.event_name}
                         fill
                         className="object-cover object-top"
                         priority
@@ -102,9 +105,9 @@ export default function EventPage() {
                     initial={{ opacity: 0, y: 50 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.3, ease: "backOut" }}
-                    className="font-joker text-5xl md:text-7xl lg:text-[150px] leading-none text-white mt-[-30px] md:mt-[-50px] lg:mt-[-80px] relative z-10 drop-shadow-2xl text-center lowercase tracking-widest pointer-events-none"
+                    className="font-joker text-3xl sm:text-5xl md:text-8xl leading-none text-white mt-[-30px] md:mt-[-50px] lg:mt-[-80px] relative z-10 drop-shadow-2xl text-center lowercase tracking-widest pointer-events-none"
                 >
-                    {event.name}
+                    {event.event_name}
                 </motion.h1>
             </div>
 
@@ -124,7 +127,7 @@ export default function EventPage() {
                             About the event
                         </h2>
                         <div className="text-gray-300 leading-relaxed text-base md:text-lg whitespace-pre-wrap font-light opacity-90 font-roboto">
-                            {event.description.map((line, i) => (
+                            {descriptionLines.map((line, i) => (
                                 <p key={i} className="mb-4">{line}</p>
                             ))}
                         </div>
@@ -137,57 +140,52 @@ export default function EventPage() {
                     >
                         <div className="flex items-center gap-4">
                             <Calendar className="text-red-600 w-6 h-6" />
-                            <span>Date: {currentFee?.date || event.date || "TBD"}</span>
+                            <span>Date: {eventDate}</span>
                         </div>
                         <div className="flex items-center gap-4">
                             <Clock className="text-red-600 w-6 h-6" />
-                            <span>Time: {currentFee?.time || event.time || "TBD"}</span>
+                            <span>Time: {eventTime}</span>
                         </div>
                         <div className="flex items-center gap-4">
                             <MapPin className="text-red-600 w-6 h-6" />
-                            <span>Venue: {currentFee?.venue || event.venue || "TBD"}</span>
+                            <span>Venue: TBD</span>
                         </div>
                         <div className="flex items-center gap-4">
                             <Users className="text-red-600 w-6 h-6" />
-                            <span>Team: {currentFee?.type === 'solo' ? 'Single' : currentFee?.type === 'duet' ? 'Duo' : 'Group (2+)'}</span>
+                            <span>Team: {currentFee?.type === 'solo' ? 'Solo' : currentFee?.type === 'duet' ? 'Duet' : 'Group (2+)'}</span>
                         </div>
                     </div>
 
                     {/* Registration Section */}
                     <section className="mt-10">
-                        {event.fees && event.fees.length > 0 ? (
+                        {sortedFees.length > 0 ? (
                             <div className="flex flex-col gap-8">
                                 <div className="flex flex-wrap items-center gap-4">
                                     <span className="text-red-600 text-xl md:text-2xl font-normal">Select Team:</span>
                                     {/* Toggle Group */}
                                     <div className="flex bg-white rounded-full relative p-0 overflow-hidden">
-                                        {event.fees
-                                            .sort((a, b) => {
-                                                const order = ["solo", "duet", "group"];
-                                                return order.indexOf(a.type) - order.indexOf(b.type);
-                                            })
-                                            .map((fee, index) => {
-                                                const isActive = event.fees[selectedFeeIndex].type === fee.type;
-                                                return (
-                                                    <button
-                                                        key={index}
-                                                        onClick={() => setSelectedFeeIndex(index)}
-                                                        className={`relative px-6 py-2 text-base font-medium capitalize rounded-full transition-colors duration-300 z-10 ${isActive ? "text-white" : "text-black hover:bg-gray-100"
-                                                            }`}
-                                                    >
-                                                        {isActive && (
-                                                            <motion.div
-                                                                layoutId="active-pill"
-                                                                className="absolute inset-0 bg-red-600 rounded-full -z-10"
-                                                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                                            />
-                                                        )}
-                                                        <span className="relative z-20">
-                                                            {fee.type === 'solo' ? 'Single' : fee.type}
-                                                        </span>
-                                                    </button>
-                                                );
-                                            })}
+                                        {sortedFees.map((fee, index) => {
+                                            const isActive = selectedFeeIndex === index;
+                                            return (
+                                                <button
+                                                    key={fee.fee_id}
+                                                    onClick={() => setSelectedFeeIndex(index)}
+                                                    className={`relative px-6 py-2 text-base font-medium capitalize rounded-full transition-colors duration-300 z-10 ${isActive ? "text-white" : "text-black hover:bg-gray-100"
+                                                        }`}
+                                                >
+                                                    {isActive && (
+                                                        <motion.div
+                                                            layoutId="active-pill"
+                                                            className="absolute inset-0 bg-red-600 rounded-full -z-10"
+                                                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                                        />
+                                                    )}
+                                                    <span className="relative z-20">
+                                                        {fee.type === 'solo' ? 'Solo' : fee.type === 'duet' ? 'Duet' : 'Group'}
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
 
@@ -202,16 +200,16 @@ export default function EventPage() {
                                     className="w-fit px-12 py-6 text-xl font-jqka tracking-[0.2em] uppercase bg-transparent border border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-all duration-300 rounded-none mt-4 shadow-[0_0_15px_rgba(220,38,38,0.2)] cursor-pointer"
                                     onClick={() => {
                                         if (!currentFee) return;
-                                        const params = new URLSearchParams({
+                                        const queryParams = new URLSearchParams({
                                             fee_id: String(currentFee.fee_id || 0),
                                             type: currentFee.type,
                                             price: String(currentFee.price),
                                             min: String(currentFee.min_members || 1),
                                             max: String(currentFee.max_members || 1),
-                                            qr_url: currentFee.qr_url || "",
+                                            qr_code: currentFee.qr_code || "",
                                             event_id: String(currentFee.event_id || 0),
                                         });
-                                        router.push(`/events/${slug}/${eventNameSlug}/register?${params.toString()}`);
+                                        router.push(`/events/${slug}/${eventNameSlug}/register?${queryParams.toString()}`);
                                     }}
                                 >
                                     REGISTER
@@ -244,7 +242,7 @@ export default function EventPage() {
                         <ul className="space-y-4 mb-10 text-gray-300 text-lg font-light leading-relaxed list-disc pl-5 font-roboto">
                             <li>Participants must carry their own instruments, props, or tracks if required.</li>
                             <li>Failure to adhere to the rules may result in disqualification.</li>
-                            <li>The judges’ and committee&apos;s decision will be final and binding.</li>
+                            <li>The judges&apos; and committee&apos;s decision will be final and binding.</li>
                             <li>For event specific details see the rule book.</li>
                         </ul>
 
