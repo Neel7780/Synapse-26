@@ -403,13 +403,18 @@ export function useGSAPContext(
   deps: React.DependencyList = [],
   scope?: React.RefObject<HTMLElement | null>
 ) {
+  // Store callback in ref to avoid re-running effect on every render
+  const callbackRef = useRef(callback);
+  callbackRef.current = callback;
+
   useEffect(() => {
     if (prefersReducedMotion()) return;
 
     const ctx = gsap.context((self) => {
-      callback(self);
+      callbackRef.current(self);
     }, scope?.current || undefined);
 
     return () => ctx.revert();
-  }, deps);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [...deps, scope]);
 }

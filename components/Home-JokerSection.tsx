@@ -416,11 +416,12 @@ export default function JokerSection() {
 
       window.addEventListener("resize", handleResize);
 
+      // Store ref value before cleanup to avoid stale ref
+      const sectionRef = jokerSectionRef.current;
       return () => {
         window.removeEventListener("resize", handleResize);
         jokerTl.scrollTrigger?.kill();
         cleanupHover?.();
-        const sectionRef = jokerSectionRef.current;
         ScrollTrigger.getAll().forEach((trigger) => {
           if (trigger.trigger === sectionRef) {
             trigger.kill();

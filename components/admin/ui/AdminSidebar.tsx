@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Sidebar,
@@ -119,10 +120,12 @@ function AdminSidebarContent() {
       {/* Header with Logo */}
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-3 px-2 py-2">
-          <img
+          <Image
             src="/Synapse Logo.png"
             alt="Synapse Logo"
-            className="h-10 w-10 rounded-xl object-contain"
+            width={40}
+            height={40}
+            className="rounded-xl object-contain"
           />
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
             <span className="font-semibold text-sidebar-foreground">
