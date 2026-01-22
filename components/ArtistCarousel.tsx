@@ -2,7 +2,7 @@
 
 import React, { useRef } from "react";
 import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
-import Image from "next/image";
+
 const artistData = [
   {
     day: "DAY 01",
@@ -180,7 +180,7 @@ const Card = ({ data, index, total, progress }: CardProps) => {
 
         {/* Central Inset Image Area - Flex-1 ensures it fills exactly the remaining space */}
         <div className="relative flex-1 min-h-0 mb-2 ml-16 md:ml-20 mr-2 md:mr-4 rounded-[16px] overflow-hidden shadow-2xl border border-white/10 bg-black/20">
-          <Image
+          <img
             src={data.image}
             alt={data.artist}
             className="w-full h-full object-cover"

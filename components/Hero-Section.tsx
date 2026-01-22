@@ -126,54 +126,19 @@ export default function HeroSection({
         svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
       }
       const pathsArray = Array.from(svg.querySelectorAll("path")) as SVGPathElement[];
-      
-      // Mobile optimization: Only animate a subset of paths on mobile devices
-      const isMobile = window.innerWidth < 768;
-      const pathsToAnimate = isMobile 
-        ? pathsArray.filter((_, i) => i % 3 === 0) // Only animate every 3rd path on mobile
-        : pathsArray;
-      
-      assetsRef.current.paths = pathsToAnimate;
+      assetsRef.current.paths = pathsArray;
 
-      // Use requestIdleCallback for non-critical path setup on mobile
-      const setupPaths = () => {
-        pathsToAnimate.forEach((p, index) => {
-          p.style.fillOpacity = "0";
-          p.style.stroke = "#ffffff";
-          p.style.strokeWidth = "1.6";
-          
-          // Add GPU acceleration hints
-          p.style.willChange = "stroke-dashoffset";
-          p.style.transform = "translateZ(0)";
+      pathsArray.forEach((p) => {
+        p.style.fillOpacity = "0";
+        p.style.stroke = "#ffffff";
+        p.style.strokeWidth = "1.6";
 
-          const len = p.getTotalLength();
-          p.style.strokeDasharray = `${len}`;
-          p.style.strokeDashoffset = `${len}`;
-          (p as SVGPathElement & { dataset: { len: string } }).dataset.len = String(len);
-          p.style.opacity = "1";
-          
-          // Stagger the animation start for smoother performance
-          (p as SVGPathElement & { dataset: { delay: string } }).dataset.delay = String(index * 0.001);
-        });
-        
-        // Hide non-animated paths on mobile (they'll appear at the end)
-        if (isMobile) {
-          pathsArray.forEach((p, i) => {
-            if (i % 3 !== 0) {
-              p.style.opacity = "0";
-              p.style.stroke = "#ffffff";
-              p.style.fillOpacity = "0";
-            }
-          });
-        }
-      };
-      
-      // Use requestIdleCallback if available for better performance
-      if ('requestIdleCallback' in window) {
-        (window as Window & { requestIdleCallback: (cb: () => void) => void }).requestIdleCallback(setupPaths);
-      } else {
-        setupPaths();
-      }
+        const len = p.getTotalLength();
+        p.style.strokeDasharray = `${len}`;
+        p.style.strokeDashoffset = `${len}`;
+        (p as SVGPathElement & { dataset: { len: string } }).dataset.len = String(len);
+        p.style.opacity = "1";
+      });
     }
   }, []);
 
@@ -238,109 +203,51 @@ export default function HeroSection({
     });
   };
 
-  // Track last frame time for throttling on mobile
-  const lastFrameTimeRef = useRef(0);
-  
   const drawStroke = useCallback(() => {
     const now = Date.now();
     const elapsed = now - assetsRef.current.strokeStartTime;
-    const isMobile = window.innerWidth < 768;
-    
-    // Throttle frame rate on mobile to 30fps for better performance
-    const targetFrameTime = isMobile ? 33 : 16; // 30fps on mobile, 60fps on desktop
-    const timeSinceLastFrame = now - lastFrameTimeRef.current;
-    
-    // Skip this frame if we're throttling (but still schedule next frame)
-    const shouldSkipFrame = timeSinceLastFrame < targetFrameTime;
-    
-    if (!shouldSkipFrame) {
-      lastFrameTimeRef.current = now;
 
-      const timeProgress = Math.min(1, elapsed / FIRST_PHASE_TIME);
-      const combinedProgress =
-        0.5 * timeProgress + 0.5 * assetsRef.current.assetProgress;
+    const timeProgress = Math.min(1, elapsed / FIRST_PHASE_TIME);
+    const combinedProgress =
+      0.5 * timeProgress + 0.5 * assetsRef.current.assetProgress;
 
-      const target = assetsRef.current.finishing ? 1 : combinedProgress;
+    const target = assetsRef.current.finishing ? 1 : combinedProgress;
 
-      const ease = assetsRef.current.finishing ? 0.35 : 0.08;
+    const ease = assetsRef.current.finishing ? 0.35 : 0.08;
 
-      assetsRef.current.strokeProgress +=
-        (target - assetsRef.current.strokeProgress) * ease;
+    assetsRef.current.strokeProgress +=
+      (target - assetsRef.current.strokeProgress) * ease;
 
-      // Mobile optimization: Update paths in batches to reduce main thread blocking
-      const batchSize = isMobile ? 30 : 200; // Even smaller batches on mobile
-      const paths = assetsRef.current.paths;
-      const totalPaths = paths.length;
-      
-      // Calculate which batch to update this frame (rotating through batches)
-      const frameCount = Math.floor(elapsed / targetFrameTime);
-      const startIndex = (frameCount * batchSize) % totalPaths;
-      const endIndex = Math.min(startIndex + batchSize, totalPaths);
-      
-      // Update only a batch of paths per frame for smoother performance
-      for (let i = startIndex; i < endIndex; i++) {
-        const p = paths[i];
-        const len = Number((p as SVGPathElement & { dataset: { len: string } }).dataset.len);
-        p.style.strokeDashoffset = `${len * (1 - assetsRef.current.strokeProgress)}`;
-      }
-      
-      // Also do a quick pass on all paths every few frames to ensure consistency
-      // Less frequent on mobile to reduce CPU load
-      const syncInterval = isMobile ? 15 : 10;
-      if (frameCount % syncInterval === 0) {
-        paths.forEach((p) => {
-          const len = Number((p as SVGPathElement & { dataset: { len: string } }).dataset.len);
-          p.style.strokeDashoffset = `${len * (1 - assetsRef.current.strokeProgress)}`;
-        });
-      }
+    assetsRef.current.paths.forEach((p) => {
+      p.style.strokeDashoffset = `${Number((p as SVGPathElement & { dataset: { len: string } }).dataset.len) * (1 - assetsRef.current.strokeProgress)
+        }`;
+    });
 
-      updateProgressText(assetsRef.current.strokeProgress);
+    updateProgressText(assetsRef.current.strokeProgress);
 
-      const timeDone = elapsed >= FIRST_PHASE_TIME;
-      const assetsDone = assetsRef.current.assetProgress >= 0.9;
+    const timeDone = elapsed >= FIRST_PHASE_TIME;
+    const assetsDone = assetsRef.current.assetProgress >= 0.9;
 
-      // 🔑 enter finishing phase (once)
-      if (timeDone && assetsDone && !assetsRef.current.finishing) {
-        assetsRef.current.finishing = true;
-      }
+    // 🔑 enter finishing phase (once)
+    if (timeDone && assetsDone && !assetsRef.current.finishing) {
+      assetsRef.current.finishing = true;
+    }
 
-      // ✅ final snap & completion
-      if (
-        assetsRef.current.finishing &&
-        assetsRef.current.strokeProgress >= FINISH_THRESHOLD
-      ) {
-        assetsRef.current.strokeProgress = 1;
+    // ✅ final snap & completion
+    if (
+      assetsRef.current.finishing &&
+      assetsRef.current.strokeProgress >= FINISH_THRESHOLD
+    ) {
+      assetsRef.current.strokeProgress = 1;
 
-        // Final update: set all paths to complete and remove will-change
-        assetsRef.current.paths.forEach((p) => {
-          p.style.strokeDashoffset = "0";
-          p.style.willChange = "auto"; // Remove will-change after animation completes
-          p.style.transform = ""; // Remove GPU layer
-        });
-        
-        // On mobile, reveal all hidden paths
-        if (isMobile) {
-          const svg = svgContainerRef.current?.querySelector("svg");
-          if (svg) {
-            const allPaths = svg.querySelectorAll("path");
-            allPaths.forEach((p) => {
-              (p as SVGElement).style.opacity = "1";
-              (p as SVGElement).style.strokeDashoffset = "0";
-            });
-          }
-        }
-        
-        // Update CSS classes for animation completion
-        if (svgContainerRef.current) {
-          svgContainerRef.current.classList.remove("animating");
-          svgContainerRef.current.classList.add("animation-complete");
-        }
+      assetsRef.current.paths.forEach((p) => {
+        p.style.strokeDashoffset = "0";
+      });
 
-        updateProgressText(0.99);
-        assetsRef.current.finished = true;
-        revealFill();
-        return;
-      }
+      updateProgressText(0.99);
+      assetsRef.current.finished = true;
+      revealFill();
+      return;
     }
 
     const id = requestAnimationFrame(drawStroke);
@@ -831,7 +738,7 @@ export default function HeroSection({
     <div>
       <div
         id="svgContainer"
-        className="fixed inset-0 z-10 transition-opacity duration-2400 svg-container animating"
+        className="fixed inset-0 z-10 transition-opacity duration-2400"
         ref={svgContainerRef}
       >
         <Svg />
@@ -850,7 +757,7 @@ export default function HeroSection({
         </>
       ) : <></>
       }
-      <div className="hero relative inset-0 h-dvh z-25" ref={heroRef}>
+      <div className="hero relative inset-0 h-[100dvh] z-25" ref={heroRef}>
         <div id="maskLayer" className="absolute inset-0 opacity-100 " ref={maskLayerRef} style={{
           WebkitMaskImage: 'url("/images_home/inkReveal2.gif")',
           WebkitMaskRepeat: 'no-repeat',

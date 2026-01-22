@@ -1,22 +1,73 @@
 # =============================================================================
 # Docker Compose - Synapse'26
+# Production configuration with mobile optimization settings
 # =============================================================================
 
 services:
+  # ---------------------------------------------------------------------------
+  # Production Service - Mobile Optimized
+  # ---------------------------------------------------------------------------
   app:
     build:
       context: .
       dockerfile: Dockerfile
+      target: runner
+      args:
+        - ENABLE_MOBILE_OPTIMIZATIONS=true
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+      # Mobile optimization settings
+      - NODE_OPTIONS=--max-old-space-size=512 --optimize-for-size
+      - NEXT_COMPRESS=true
+      - NEXT_IMAGE_OPTIMIZATION=true
     env_file:
       - .env.production
-    restart: unless-stopped
+    restart: always
+    # Resource limits for consistent mobile performance
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ---------------------------------------------------------------------------
+  # Mobile Testing Service
+  # Simulates mobile network conditions for testing
+  # ---------------------------------------------------------------------------
+  mobile-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+      # Simulate mobile constraints
+      - NODE_OPTIONS=--max-old-space-size=256
+    env_file:
+      - .env.production
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
       retries: 3
       start_period: 30s
