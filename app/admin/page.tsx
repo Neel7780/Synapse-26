@@ -64,7 +64,6 @@ export default function AdminDashboard() {
     const summary = registrationsData?.summary;
     return {
       grossRevenue: summary?.gross_revenue || 0,
-      gatewayCharges: summary?.gateway_charges || 0,
       netRevenue: summary?.net_revenue || 0,
       paidCount: summary?.paid || 0,
     };
@@ -186,10 +185,6 @@ export default function AdminDashboard() {
                     <div>
                       <p className="text-muted-foreground">Gross</p>
                       <p className="font-semibold">₹{revenueData.grossRevenue.toLocaleString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Gateway Fees</p>
-                      <p className="font-semibold text-red-400">-₹{revenueData.gatewayCharges.toLocaleString()}</p>
                     </div>
                   </div>
                 </div>

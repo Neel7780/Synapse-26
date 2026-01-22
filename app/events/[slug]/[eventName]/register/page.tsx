@@ -9,7 +9,7 @@ import Footer from "@/components/ui/Footer";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/app/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, CheckCircle, AlertCircle, Plus, X, QrCode } from "lucide-react";
+import { Loader2, CheckCircle, AlertCircle, Plus, X, QrCode, Upload } from "lucide-react";
 
 type Step = "team" | "payment" | "success";
 
@@ -46,6 +46,7 @@ export default function RegisterPage() {
     const [validating, setValidating] = useState(false);
     const [validationError, setValidationError] = useState("");
     const [paymentScreenshot, setPaymentScreenshot] = useState("");
+    const [transactionId, setTransactionId] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState("");
     const [registrationId, setRegistrationId] = useState<number | null>(null);
@@ -131,7 +132,13 @@ export default function RegisterPage() {
         setSubmitError("");
 
         if (!paymentScreenshot.trim()) {
-            setSubmitError("Please enter the payment screenshot URL or transaction ID");
+            setSubmitError("Please upload payment screenshot");
+            setSubmitting(false);
+            return;
+        }
+
+        if (!transactionId.trim()) {
+            setSubmitError("Please enter transaction ID");
             setSubmitting(false);
             return;
         }
@@ -148,6 +155,7 @@ export default function RegisterPage() {
                         ? teamEmails.filter((e) => e.trim())
                         : [],
                     payment_screenshot_url: paymentScreenshot.trim(),
+                    transaction_id: transactionId.trim(),
                 }),
             });
 
@@ -348,18 +356,102 @@ export default function RegisterPage() {
                         {/* Payment Screenshot Input */}
                         <div className="mb-6">
                             <label className="block text-sm font-medium mb-2">
-                                Payment Screenshot URL / Transaction ID
+                                Payment Screenshot
+                            </label>
+
+                            <div className="space-y-4">
+                                {/* File Upload */}
+                                <div className="border-2 border-dashed border-white/10 rounded-lg p-6 text-center hover:bg-white/5 transition-colors">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+
+                                            // Validate file type
+                                            if (!file.type.startsWith("image/")) {
+                                                setSubmitError("Please upload an image file");
+                                                return;
+                                            }
+
+                                            // Validate file size (5MB)
+                                            if (file.size > 5 * 1024 * 1024) {
+                                                setSubmitError("File size too large (max 5MB)");
+                                                return;
+                                            }
+
+                                            setSubmitError("");
+                                            setSubmitting(true); // Re-using submitting state for upload loading or add new one? 
+                                            // Better to have separate state but for quick task reusing submitting or validation state is risky if it blocks UI.
+                                            // Let's add separate state if possible, but I can't change useState definitions easily in replace_file_content without context.
+                                            // I'll assume I can just use a local logic or reuse submitting but make sure to communicate "Uploading..."
+
+                                            try {
+                                                const formData = new FormData();
+                                                formData.append("file", file);
+
+                                                // Show local preview immediately? 
+                                                // Yes, but let's wait for upload to get real URL
+
+                                                const res = await fetch("/api/events/upload-screenshot", {
+                                                    method: "POST",
+                                                    body: formData,
+                                                });
+
+                                                const data = await res.json();
+
+                                                if (!res.ok) throw new Error(data.error || "Upload failed");
+
+                                                setPaymentScreenshot(data.url);
+                                            } catch (err: any) {
+                                                setSubmitError(err.message || "Failed to upload image");
+                                            } finally {
+                                                setSubmitting(false);
+                                            }
+                                        }}
+                                        className="hidden"
+                                        id="screenshot-upload"
+                                        disabled={submitting}
+                                    />
+                                    <label htmlFor="screenshot-upload" className="cursor-pointer flex flex-col items-center">
+                                        {paymentScreenshot ? (
+                                            <div className="relative w-full max-w-xs aspect-[9/16] bg-black/50 rounded-lg overflow-hidden mb-2">
+                                                <Image
+                                                    src={paymentScreenshot}
+                                                    alt="Payment Screenshot"
+                                                    fill
+                                                    className="object-contain"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="bg-white/10 p-4 rounded-full mb-3">
+                                                <Upload className="w-6 h-6 text-gray-300" />
+                                            </div>
+                                        )}
+                                        <span className="text-sm text-gray-400">
+                                            {paymentScreenshot ? "Click to change screenshot" : "Click to upload screenshot"}
+                                        </span>
+                                        <span className="text-xs text-gray-600 mt-1">Max 5MB (JPEG, PNG, WEBP)</span>
+                                    </label>
+                                </div>
+
+
+                            </div>
+                        </div>
+
+                        {/* Transaction ID Input */}
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium mb-2">
+                                Transaction ID
                             </label>
                             <Input
                                 type="text"
-                                value={paymentScreenshot}
-                                onChange={(e) => setPaymentScreenshot(e.target.value)}
-                                placeholder="Paste your payment screenshot URL or transaction ID"
+                                value={transactionId}
+                                onChange={(e) => setTransactionId(e.target.value)}
+                                placeholder="Enter Transaction ID / UTR Number"
                                 className="w-full bg-white/5 border-white/10 text-white placeholder:text-gray-500"
                             />
-                            <p className="text-xs text-gray-500 mt-2">
-                                Upload your payment screenshot to a service like Imgur and paste the URL, or enter your transaction ID
-                            </p>
                         </div>
 
                         {submitError && (

@@ -12,6 +12,7 @@ export async function POST(request: NextRequest) {
             fee_id,
             team_member_emails,
             payment_screenshot_url,
+            transaction_id, // New field
             registered_by_user_id
         } = await request.json();
 
@@ -26,6 +27,13 @@ export async function POST(request: NextRequest) {
         if (!payment_screenshot_url || !payment_screenshot_url.trim()) {
             return NextResponse.json(
                 { error: "Payment screenshot URL is required" },
+                { status: 400 }
+            );
+        }
+
+        if (!transaction_id || !transaction_id.trim()) {
+            return NextResponse.json(
+                { error: "Transaction ID is required" },
                 { status: 400 }
             );
         }
@@ -53,6 +61,7 @@ export async function POST(request: NextRequest) {
                 fee_id,
                 registered_by_user_id,
                 payment_screenshot_url: payment_screenshot_url.trim(),
+                transaction_id: transaction_id.trim(),
                 payment_status: "pending" as const,
                 gross_amount: feeData?.price || 0,
                 registration_date: new Date().toISOString(),
