@@ -7,7 +7,7 @@ import ProniteHero from "@/components/ProniteHero";
 import ArtistCarousel from "@/components/ArtistCarousel";
 import ProniteGallery from "@/components/ProniteGallery";
 import Footer from "@/components/ui/Footer";
-import { Navbar, NavbarButton } from "@/components/ui/Resizable-navbar";
+import { Navbar } from "@/components/ui/Resizable-navbar";
 import NavigationPanel from "@/components/ui/NavigationPanel";
 import { useAuth } from "@/hooks/useAuth";
 import TextReveal from "@/components/TextReveal";
