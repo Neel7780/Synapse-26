@@ -98,7 +98,7 @@ const schedule: DaySchedule[] = [
 
 const EventRow = memo(function EventRow({
   event,
-  index
+  index: _index
 }: {
   event: Event;
   index: number;
