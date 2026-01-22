@@ -105,10 +105,9 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { data: user } = await supabase.auth.getUser();
 
-    // Build update data
-    const updateData: any = {};
+    // Build update data - only include fields that exist in the database
+    const updateData: Record<string, string | null> = {};
 
     // Handle verification status changes
     if (body.verification_status) {
@@ -116,11 +115,11 @@ export async function PATCH(
 
       if (body.verification_status === "verified") {
         updateData.verified_at = new Date().toISOString();
-        updateData.verified_by = user?.user?.id;
-        updateData.payment_status = "done"; // Mark payment as confirmed
+        // Note: payment_status might be a text field, so we use 'done' string
+        updateData.payment_status = "done";
       } else if (body.verification_status === "rejected") {
         updateData.rejection_reason = body.rejection_reason || null;
-        updateData.payment_status = "failed"; // Mark payment as failed
+        updateData.payment_status = "failed";
       }
     }
 
@@ -143,6 +142,7 @@ export async function PATCH(
       .maybeSingle();
 
     if (fetchError) {
+      console.error("Error fetching booking:", fetchError);
       return NextResponse.json({ error: fetchError.message }, { status: 500 });
     }
 
@@ -150,19 +150,27 @@ export async function PATCH(
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
 
+    console.log("Updating booking", bookingId, "with data:", updateData);
+
     // Perform the update
-    const { data: updatedBookings, error } = await supabase
+    const { data: updatedBookings, error, status, statusText } = await supabase
       .from("accommodation_bookings")
       .update(updateData)
       .eq("booking_id", bookingId)
       .select();
 
+    console.log("Update result - status:", status, "statusText:", statusText, "error:", error, "data:", updatedBookings);
+
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("Error updating booking:", JSON.stringify(error, null, 2));
+      return NextResponse.json({ error: error.message || "Database update failed" }, { status: 500 });
     }
 
     if (!updatedBookings || updatedBookings.length === 0) {
-      return NextResponse.json({ error: "Failed to update booking" }, { status: 500 });
+      console.error("Update returned no data - likely RLS policy is blocking the update");
+      return NextResponse.json({
+        error: "Failed to update booking - please check database RLS policies allow updates for authenticated users"
+      }, { status: 500 });
     }
 
     const updatedBooking = updatedBookings[0];
