@@ -7,7 +7,9 @@ on:
   pull_request:
     branches:
       - main
+    types: [opened, synchronize, reopened]
 
+# Cancel in-progress runs for the same branch
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -19,10 +21,10 @@ env:
 
 jobs:
   # ===========================================================================
-  # Build & Lint - Core validation
+  # Code Quality Checks - Runs on all events
   # ===========================================================================
-  build:
-    name: Build & Lint
+  code-quality:
+    name: Code Quality
     runs-on: ubuntu-latest
     
     steps:
@@ -38,22 +40,186 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint
+      - name: TypeScript Type Check
+        run: npx tsc --noEmit --pretty
+
+      - name: Run ESLint
         run: npm run lint
 
-      - name: Type Check
-        run: npx tsc --noEmit
+  # ===========================================================================
+  # PR Validation - Additional checks for pull requests
+  # ===========================================================================
+  pr-validation:
+    name: PR Validation
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: code-quality
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Build
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check for package-lock.json changes
+        run: |
+          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q "package-lock.json"; then
+            echo "⚠️ package-lock.json has changed. Verifying integrity..."
+            npm ci --ignore-scripts
+          fi
+
+      - name: Security Audit
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Check for console.log statements
+        run: |
+          echo "Checking for debug statements in source code..."
+          if grep -rn "console\.log\|console\.debug" --include="*.ts" --include="*.tsx" app/ components/ lib/ hooks/ utils/ 2>/dev/null | grep -v "// eslint-disable" | grep -v ".test." | head -20; then
+            echo "⚠️ Warning: Found console.log/debug statements. Consider removing before merge."
+          fi
+        continue-on-error: true
+
+  # ===========================================================================
+  # Build Verification
+  # ===========================================================================
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
+            ${{ runner.os }}-nextjs-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
         run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: 1
 
+      - name: Upload build artifacts
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: |
+            .next
+            public
+            package.json
+            package-lock.json
+          retention-days: 1
+
+      - name: Generate Build Size Report
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "## 📦 Build Size Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Directory | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| .next/static | $(du -sh .next/static 2>/dev/null | cut -f1 || echo 'N/A') |" >> $GITHUB_STEP_SUMMARY
+          echo "| .next/server | $(du -sh .next/server 2>/dev/null | cut -f1 || echo 'N/A') |" >> $GITHUB_STEP_SUMMARY
+          echo "| Total .next | $(du -sh .next 2>/dev/null | cut -f1 || echo 'N/A') |" >> $GITHUB_STEP_SUMMARY
+
   # ===========================================================================
-  # Docker Build (main branch only)
+  # Bundle Analysis (PR only)
+  # ===========================================================================
+  bundle-analysis:
+    name: Bundle Analysis
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: code-quality
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Analyze bundle
+        run: |
+          ANALYZE=true npm run build 2>&1 || true
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+
+      - name: Report bundle info
+        run: |
+          echo "## 📊 Bundle Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f ".next/analyze/client.html" ]; then
+            echo "Bundle analysis generated successfully." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Bundle analysis report not available (add @next/bundle-analyzer for detailed reports)." >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ===========================================================================
+  # Mobile Compatibility Check (PR only)
+  # ===========================================================================
+  mobile-check:
+    name: Mobile Compatibility
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: build
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check viewport meta tags
+        run: |
+          echo "## 📱 Mobile Compatibility Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if grep -rn "useMediaQuery\|useMobile\|@media" --include="*.ts" --include="*.tsx" --include="*.css" app/ components/ 2>/dev/null | head -5; then
+            echo "✅ Responsive design patterns detected" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Limited responsive design patterns found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Check image optimization
+        run: |
+          IMAGE_COUNT=$(grep -rn "from ['\"]next/image['\"]" --include="*.tsx" --include="*.ts" app/ components/ 2>/dev/null | wc -l || echo "0")
+          echo "📷 Next.js Image components: $IMAGE_COUNT files" >> $GITHUB_STEP_SUMMARY
+
+  # ===========================================================================
+  # Docker Build
   # ===========================================================================
   docker:
-    name: Docker Build
+    name: Build Docker Image
     runs-on: ubuntu-latest
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -66,6 +232,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -76,28 +245,43 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
+          file: ./Dockerfile
           push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
+            ENABLE_MOBILE_OPTIMIZATIONS=true
             NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
             NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
   # ===========================================================================
-  # Deploy to Vercel (main branch only)
+  # Deploy to Vercel (Production)
   # ===========================================================================
   deploy:
-    name: Deploy
+    name: Deploy to Vercel
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
     
     environment:
       name: production
@@ -116,13 +300,222 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
+      - name: Pull Vercel Environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Build Project
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
       - name: Deploy to Vercel
         id: deploy
         run: |
-          vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-          vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-          url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          url=$(vercel deploy --prebuilt --prod --archive=tgz --token=${{ secrets.VERCEL_TOKEN }})
           echo "url=$url" >> $GITHUB_OUTPUT
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+  # ===========================================================================
+  # PR Preview Deployment
+  # ===========================================================================
+  preview-deploy:
+    name: Preview Deployment
+    needs: [pr-validation, build]
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    
+    outputs:
+      url: ${{ steps.preview.outputs.url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel Environment
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        continue-on-error: true
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Build Project
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        continue-on-error: true
+
+      - name: Deploy Preview
+        id: preview
+        run: |
+          url=$(vercel deploy --prebuilt --archive=tgz --token=${{ secrets.VERCEL_TOKEN }} 2>/dev/null || echo "")
+          echo "url=$url" >> $GITHUB_OUTPUT
+        continue-on-error: true
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Comment Preview URL on PR
+        if: steps.preview.outputs.url != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Preview Deployment Ready')
+            );
+            
+            const body = '🚀 **Preview Deployment Ready!**\n\n📱 Preview URL: ${{ steps.preview.outputs.url }}\n\n_This preview will be updated with each push to this PR._';
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: body
+              });
+            }
+
+  # ===========================================================================
+  # Lighthouse Performance Audit (Production)
+  # ===========================================================================
+  lighthouse:
+    name: Lighthouse Audit
+    needs: deploy
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Wait for deployment
+        run: sleep 30
+
+      - name: Run Lighthouse (Desktop)
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: |
+            ${{ needs.deploy.outputs.url || 'https://synapse26.vercel.app' }}
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+          configJson: |
+            {
+              "ci": {
+                "collect": {
+                  "settings": {
+                    "preset": "desktop"
+                  }
+                }
+              }
+            }
+        continue-on-error: true
+
+      - name: Run Lighthouse (Mobile)
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: |
+            ${{ needs.deploy.outputs.url || 'https://synapse26.vercel.app' }}
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+          configJson: |
+            {
+              "ci": {
+                "collect": {
+                  "settings": {
+                    "preset": "mobile",
+                    "throttling": {
+                      "rttMs": 150,
+                      "throughputKbps": 1638.4,
+                      "cpuSlowdownMultiplier": 4
+                    },
+                    "screenEmulation": {
+                      "mobile": true,
+                      "width": 375,
+                      "height": 667,
+                      "deviceScaleFactor": 2
+                    }
+                  }
+                },
+                "assert": {
+                  "assertions": {
+                    "categories:performance": ["warn", {"minScore": 0.7}],
+                    "categories:accessibility": ["warn", {"minScore": 0.9}],
+                    "categories:best-practices": ["warn", {"minScore": 0.8}],
+                    "categories:seo": ["warn", {"minScore": 0.9}]
+                  }
+                }
+              }
+            }
+        continue-on-error: true
+
+  # ===========================================================================
+  # PR Lighthouse Check
+  # ===========================================================================
+  pr-lighthouse:
+    name: PR Lighthouse Check
+    needs: preview-deploy
+    if: github.event_name == 'pull_request' && needs.preview-deploy.outputs.url != ''
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Wait for preview deployment
+        run: sleep 30
+
+      - name: Run Mobile Lighthouse on Preview
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: |
+            ${{ needs.preview-deploy.outputs.url }}
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+          configJson: |
+            {
+              "ci": {
+                "collect": {
+                  "settings": {
+                    "preset": "mobile"
+                  }
+                },
+                "assert": {
+                  "assertions": {
+                    "categories:performance": ["warn", {"minScore": 0.6}],
+                    "categories:accessibility": ["warn", {"minScore": 0.8}]
+                  }
+                }
+              }
+            }
+        continue-on-error: true

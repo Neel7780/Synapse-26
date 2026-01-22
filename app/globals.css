@@ -269,58 +269,6 @@ html.lenis body {
   backface-visibility: hidden;
 }
 
-/* SVG Animation Performance Optimizations */
-.svg-container {
-  contain: layout style paint;
-  content-visibility: auto;
-}
-
-.svg-container svg {
-  /* Force GPU compositing for the entire SVG */
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  /* Prevent layout recalculations */
-  contain: strict;
-}
-
-.svg-container svg path {
-  /* GPU acceleration for stroke animations */
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  /* Optimize paint operations */
-  shape-rendering: optimizeSpeed;
-  /* Reduce memory usage on mobile */
-  vector-effect: non-scaling-stroke;
-}
-
-/* Mobile-specific SVG optimizations */
-@media (max-width: 768px) {
-  .svg-container svg {
-    /* Reduce quality for better performance on mobile */
-    image-rendering: optimizeSpeed;
-  }
-  
-  .svg-container svg path {
-    /* Simpler rendering on mobile */
-    shape-rendering: crispEdges;
-    /* Remove will-change after animation to free memory */
-    will-change: auto;
-  }
-  
-  /* Reduce animation complexity on mobile */
-  .svg-container.animating svg path {
-    will-change: stroke-dashoffset;
-    /* Batch paint operations */
-    contain: layout paint;
-  }
-}
-
-/* Animation complete state - remove will-change to free GPU memory */
-.svg-container.animation-complete svg path {
-  will-change: auto;
-  transform: none;
-}
-
 /* Custom cursor styles */
 .cursor-hidden {
   cursor: none !important;
