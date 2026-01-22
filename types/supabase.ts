@@ -22,9 +22,14 @@ export type Database = {
           check_out: string | null;
           nights: number;
           amount: number;
-          razorpay_order_id: string | null;
-          razorpay_payment_id: string | null;
           payment_status: string | null;
+          payment_screenshot_url: string | null;
+          verification_status: "pending" | "verified" | "rejected" | null;
+          transaction_reference: string | null;
+          admin_notes: string | null;
+          rejection_reason: string | null;
+          verified_at: string | null;
+          verified_by: string | null;
           created_at: string | null;
         };
         Insert: {
@@ -34,9 +39,14 @@ export type Database = {
           check_out?: string | null;
           nights: number;
           amount: number;
-          razorpay_order_id?: string | null;
-          razorpay_payment_id?: string | null;
           payment_status?: string | null;
+          payment_screenshot_url?: string | null;
+          verification_status?: "pending" | "verified" | "rejected" | null;
+          transaction_reference?: string | null;
+          admin_notes?: string | null;
+          rejection_reason?: string | null;
+          verified_at?: string | null;
+          verified_by?: string | null;
           created_at?: string | null;
         };
         Update: {
@@ -46,9 +56,14 @@ export type Database = {
           check_out?: string | null;
           nights?: number;
           amount?: number;
-          razorpay_order_id?: string | null;
-          razorpay_payment_id?: string | null;
           payment_status?: string | null;
+          payment_screenshot_url?: string | null;
+          verification_status?: "pending" | "verified" | "rejected" | null;
+          transaction_reference?: string | null;
+          admin_notes?: string | null;
+          rejection_reason?: string | null;
+          verified_at?: string | null;
+          verified_by?: string | null;
           created_at?: string | null;
         };
         Relationships: [
