@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useNavigationState } from "@/lib/useNavigationState";
 import { usePathname } from "next/navigation";
 
-import React, { useRef, useState, forwardRef, memo } from "react";
+import React, { useState, forwardRef, memo } from "react";
 
 interface NavbarProps {
   children: React.ReactNode;
@@ -248,7 +248,7 @@ export const MobileNavMenu = forwardRef<
     onClose: () => void;
   }
 >(function MobileNavMenu(
-  { children, className, isOpen, onClose },
+  { children, className, isOpen },
   ref
 ) {
   return (

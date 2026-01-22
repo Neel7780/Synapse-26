@@ -85,8 +85,8 @@ export async function PUT(
             });
             newImageUrl = uploadResult.publicUrl;
           }
-        } catch (err) {
-          console.error('Failed to replace image:', err);
+        } catch (error) {
+          console.error('Failed to replace image:', error);
           // If parsing fails, just upload new image
           const uploadResult = await uploadImage({
             file: imageFile,
@@ -116,7 +116,7 @@ export async function PUT(
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
     }
 
     return NextResponse.json(
@@ -158,7 +158,7 @@ export async function DELETE(
       .eq("product_id", Number(id));
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
     }
 
     // Delete the image from storage if it exists

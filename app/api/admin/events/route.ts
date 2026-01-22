@@ -61,7 +61,7 @@ export async function GET(request: Request) {
 
   if (error) {
     const response = NextResponse.json(
-      { error: error.message },
+      { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
     );
     return addCorsHeaders(response, origin);
@@ -199,10 +199,10 @@ export async function POST(request: Request) {
       { status: 201 }
     );
     return addCorsHeaders(response, origin);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Create Error:", error);
     const response = NextResponse.json(
-      { error: error.message },
+      { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
     );
     return addCorsHeaders(response, origin);
@@ -448,10 +448,10 @@ export async function PUT(request: Request) {
 
     const response = NextResponse.json({ success: true, event: eventData });
     return addCorsHeaders(response, origin);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Update Error:", error);
     const response = NextResponse.json(
-      { error: error.message },
+      { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
     );
     return addCorsHeaders(response, origin);
@@ -543,9 +543,9 @@ export async function DELETE(request: Request) {
 
     const response = NextResponse.json({ success: true });
     return addCorsHeaders(response, origin);
-  } catch (error: any) {
+  } catch (error: unknown) {
     const response = NextResponse.json(
-      { error: error.message },
+      { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
     );
     return addCorsHeaders(response, origin);

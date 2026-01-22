@@ -23,7 +23,7 @@ async function verifyAdmin(): Promise<{ isAdmin: boolean; error?: string }> {
 
         const isAdmin = user.email === process.env.ADMIN_EMAIL;
         return { isAdmin, error: isAdmin ? undefined : "Forbidden: Admin access required" };
-    } catch {
+    } catch (error) {
         return { isAdmin: false, error: "Authentication failed" };
     }
 }
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
 
         if (error) {
             console.error("Failed to fetch settings:", error);
-            return NextResponse.json({ error: error.message }, { status: 500 });
+            return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
         }
 
         // Build settings object
@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
 
         if (error) {
             console.error("Failed to update setting:", error);
-            return NextResponse.json({ error: error.message }, { status: 500 });
+            return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
         }
 
         // Revalidate settings cache
@@ -234,7 +234,7 @@ export async function DELETE(request: NextRequest) {
 
         if (error) {
             console.error("Failed to delete setting:", error);
-            return NextResponse.json({ error: error.message }, { status: 500 });
+            return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
         }
 
         // Revalidate settings cache

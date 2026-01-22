@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 401 });
+      return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 401 });
     }
 
     const isAdmin = email === process.env.ADMIN_EMAIL;

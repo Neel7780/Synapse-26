@@ -11,7 +11,7 @@ export default function TransitionProvider({
     children: React.ReactNode;
 }) {
     const pathname = usePathname();
-    const { startTransition, endTransition, isFirstLoad, isTransitioning, loadingCount } =
+    const { endTransition, isTransitioning, loadingCount } =
         useNavigationState();
 
     // Smart Loading Logic
@@ -22,6 +22,7 @@ export default function TransitionProvider({
         if (isTransitioning) {
             startPathRef.current = pathname;
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isTransitioning]); // Don't include pathname here, we want the path AT START
 
     useEffect(() => {
@@ -34,7 +35,7 @@ export default function TransitionProvider({
         // Check constantly if we can dismiss
         const interval = setInterval(() => {
             const elapsed = Date.now() - startTime;
-            const currentPath = window.location.pathname; // Safety check using window or rely on hook prop
+            // Safety check using window
 
             // If we exceeded max duration, force close
             if (elapsed > MAX_DURATION) {
