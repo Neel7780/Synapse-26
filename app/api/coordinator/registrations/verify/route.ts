@@ -123,6 +123,45 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Fetch team members if it's a team registration
+    let teamMembers: Array<{ user_name: string; email: string; phone?: string; college?: string }> = [];
+    if (registrationData?.registration_id) {
+      // First, get the team_id from the team table
+      const { data: teamData } = await supabase
+        .from("team")
+        .select("team_id")
+        .eq("registration_id", registrationData.registration_id)
+        .maybeSingle();
+
+      if (teamData?.team_id) {
+        // Then get all team members
+        const { data: membersData } = await supabase
+          .from("team_members")
+          .select("user_id")
+          .eq("team_id", teamData.team_id);
+
+        if (membersData && membersData.length > 0) {
+          // Fetch user details for each team member
+          for (const member of membersData) {
+            const { data: memberUserData } = await supabase
+              .from("users")
+              .select("user_name, email, phone, college")
+              .eq("user_id", member.user_id)
+              .single();
+
+            if (memberUserData) {
+              teamMembers.push({
+                user_name: memberUserData.user_name || "Team Member",
+                email: memberUserData.email,
+                phone: memberUserData.phone,
+                college: memberUserData.college,
+              });
+            }
+          }
+        }
+      }
+    }
+
     // Send email only if status is accepted or rejected (not pending)
     if ((status === "accepted" || status === "rejected") && participantEmail && senderEmail) {
       try {
@@ -139,6 +178,7 @@ export async function POST(request: NextRequest) {
             participationType,
             registrationId: registration_id,
             amount,
+            teamMembers: teamMembers.length > 0 ? teamMembers : undefined,
           });
         } else {
           emailTemplate = rejectionEmailTemplate({

@@ -69,6 +69,13 @@ interface Registration {
     max_members: number;
     price: number;
   } | null;
+  team_members?: Array<{
+    user_id: string;
+    user_name: string | null;
+    email: string;
+    phone: string | null;
+    college: string | null;
+  }>;
 }
 
 export default function EventRegistrationsPage({
@@ -503,6 +510,39 @@ export default function EventRegistrationsPage({
                     </div>
                   </div>
                 </div>
+
+                {/* Team Members (if any) */}
+                {selectedRegistration.team_members && selectedRegistration.team_members.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-400 mb-3">
+                      Team Members
+                    </h3>
+                    <div className="space-y-3">
+                      {selectedRegistration.team_members.map((member) => (
+                        <div key={member.user_id} className="grid grid-cols-2 gap-4">
+                          <div className="flex items-start gap-3">
+                            <User className="h-4 w-4 text-gray-500 mt-0.5" />
+                            <div className="min-w-0">
+                              <p className="text-xs text-gray-500">Name</p>
+                              <p className="text-sm font-medium break-words">
+                                {member.user_name || "N/A"}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <Mail className="h-4 w-4 text-gray-500 mt-0.5" />
+                            <div className="min-w-0">
+                              <p className="text-xs text-gray-500">Email</p>
+                              <p className="text-sm font-medium break-words">
+                                {member.email}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Event & Payment Info */}
                 <div>

@@ -6,216 +6,248 @@ interface EmailTemplateProps {
   registrationId: number;
   amount: number;
   eventDate?: string;
+  teamMembers?: Array<{
+    user_name: string;
+    email: string;
+    phone?: string;
+    college?: string;
+  }>;
+}
+
+// Basic mapping to pick an event cover image for the email header
+// Fallback to Synapse branding if not matched
+const EVENT_COVERS: Record<string, string> = {
+  "DANCE EVENT": "/images_events/dance.png",
+  "Fashion Show": "/images_events/fashionshow.png",
+  "MUSIC EVENT": "/images_events/music.png",
+  "THEATRE SHOW": "/images_events/theatre.png",
+  "GAMING EVENT": "/images_events/gaming.png",
+};
+
+const SITE_BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://synapse-daiict.co.in";
+
+function getEventCoverUrl(eventName: string): string | null {
+  const cover = EVENT_COVERS[eventName];
+  return cover ? `${SITE_BASE_URL}${cover}` : null;
 }
 
 export const acceptanceEmailTemplate = (props: EmailTemplateProps) => {
-  const { participantName, eventName, participationType, registrationId, amount, eventDate } = props;
+  const { participantName, eventName, participationType, registrationId, amount, eventDate, teamMembers } = props;
+  const coverUrl = getEventCoverUrl(eventName);
+
+  // Generate team members HTML if available
+  const teamMembersHtml = teamMembers && teamMembers.length > 0 ? `
+    <div style="margin-top: 24px;">
+      <h3 style="color: #10b981; font-size: 16px; margin-bottom: 12px; font-weight: 700;">🎴 TEAM PLAYERS</h3>
+      <div class="details">
+        ${teamMembers.map((member, index) => `
+          <div style="padding: 12px; margin-bottom: 8px; background: rgba(16,185,129,0.05); border-left: 3px solid #10b981; border-radius: 6px;">
+            <div style="color: #10b981; font-weight: 700; font-size: 13px; margin-bottom: 4px;">Player ${index + 1}</div>
+            <div style="font-size: 14px; color: #e5e7eb; font-weight: 600;">${member.user_name}</div>
+            <div style="font-size: 12px; color: #9ca3af; margin-top: 4px;">${member.email}</div>
+            ${member.phone ? `<div style="font-size: 12px; color: #9ca3af;">📞 ${member.phone}</div>` : ''}
+            ${member.college ? `<div style="font-size: 12px; color: #9ca3af;">🏛️ ${member.college}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  ` : '';
 
   return {
-    subject: `🎉 Your Registration Has Been Accepted - ${eventName}`,
+    subject: `🎴 GAME CLEARED — ${eventName} Registration Verified`,
     html: `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="UTF-8">
           <style>
-            body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; background: #0a0a0a; margin: 0; padding: 20px; }
-            .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); }
-            .brand-header { background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); padding: 40px 30px; text-align: center; }
-            .logo { max-width: 180px; height: auto; margin-bottom: 15px; }
-            .brand-name { font-size: 32px; font-weight: 800; color: white; margin: 0; letter-spacing: 2px; text-transform: uppercase; }
-            .tagline { font-size: 14px; color: rgba(255,255,255,0.9); margin: 5px 0 0 0; letter-spacing: 1px; }
-            .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; text-align: center; }
-            .content { background: #f9f9f9; padding: 30px; }
-            .success-badge { display: inline-block; background: #10b981; color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold; margin-bottom: 15px; }
-            .details { background: white; padding: 15px; margin: 15px 0; border-left: 4px solid #10b981; border-radius: 4px; }
-            .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
-            .detail-row:last-child { border-bottom: none; }
-            .label { font-weight: bold; color: #666; }
-            .value { color: #333; }
-            .footer { text-align: center; margin-top: 30px; padding: 20px; background: #f3f4f6; font-size: 12px; color: #6b7280; }
-            .cta-button { display: inline-block; background: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin-top: 20px; font-weight: 600; }
+            body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #e5e7eb; background: #0a0a0a; margin: 0; padding: 24px; }
+            .container { max-width: 640px; margin: 0 auto; background: #111827; border: 1px solid #1f2937; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.35); }
+            .brand { background: #0f172a; padding: 24px; text-align: center; border-bottom: 1px solid #1f2937; }
+            .logo { max-width: 120px; height: auto; margin: 0 auto 8px; display: block; }
+            .title { font-size: 22px; font-weight: 800; color: #ffffff; margin: 0; letter-spacing: 1px; }
+            .banner { width: 100%; display: block; background: linear-gradient(135deg, #14b8a6 0%, #0ea5e9 100%); }
+            .banner img { width: 100%; height: auto; display: block; }
+            .hero { padding: 32px 24px; text-align: center; background: linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(34,197,94,0.15) 100%); border-bottom: 1px solid #1f2937; }
+            .hero .game-cleared { font-size: 32px; color: #10b981; font-weight: 900; letter-spacing: 2px; margin: 0 0 12px 0; }
+            .hero .subtitle { font-size: 16px; color: #d1fae5; font-weight: 600; margin: 0; }
+            .content { padding: 24px; }
+            .badge { display: inline-block; background: #10b981; color: #052e2b; padding: 8px 16px; border-radius: 999px; font-weight: 700; margin-bottom: 16px; font-size: 14px; letter-spacing: 0.5px; }
+            .details { background: #0b1020; border: 1px solid #1f2937; border-radius: 10px; padding: 14px; margin: 16px 0; }
+            .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #1f2937; font-size: 14px; }
+            .row:last-child { border-bottom: none; }
+            .label { color: #9ca3af; font-weight: 600; }
+            .value { color: #e5e7eb; font-weight: 600; }
+            .quote { font-style: italic; color: #10b981; font-size: 15px; margin: 24px 0; padding: 16px; border-left: 3px solid #10b981; background: rgba(16,185,129,0.05); }
+            .footer { text-align: center; padding: 18px; border-top: 1px solid #1f2937; font-size: 12px; color: #9ca3af; }
           </style>
         </head>
         <body>
           <div class="container">
-            <div class="brand-header">
-              <img src="https://synapse-daiict.co.in/Synapse%20Logo.png" alt="Synapse Logo" class="logo" />
-              <h1 class="brand-name">SYNAPSE</h1>
-              <p class="tagline">DA-IICT Annual Techno-Management Fest</p>
+            <div class="brand">
+              <img src="${SITE_BASE_URL}/Synapse%20Logo.png" alt="Synapse Logo" class="logo" />
+              <p class="title">SYNAPSE • DA-IICT</p>
             </div>
-            <div class="header">
-              <h1 style="margin: 0; font-size: 28px;">Registration Accepted! 🎉</h1>
-              <p style="margin: 10px 0 0 0; font-size: 16px;">Great news from ${eventName}</p>
+            <div class="banner">${coverUrl ? `<img src="${coverUrl}" alt="${eventName} Banner"/>` : ""}</div>
+            <div class="hero">
+              <div class="game-cleared">🎴 GAME CLEARED</div>
+              <p class="subtitle">Your visa has been approved for ${eventName}</p>
             </div>
             <div class="content">
-              <div class="success-badge">✓ ACCEPTED</div>
+              <div class="badge">✓ REGISTRATION VERIFIED</div>
               
-              <p>Dear <strong>${participantName}</strong>,</p>
+              <p style="font-size: 16px; color: #e5e7eb;">Dear <strong>${participantName}</strong>,</p>
               
-              <p>We're thrilled to inform you that your registration for <strong>${eventName}</strong> has been <strong>accepted</strong>!</p>
+              <div class="quote">
+                "The only way to survive is to keep moving forward."
+              </div>
+              
+              <p style="color: #d1d5db;">Congratulations! Your registration for <strong>${eventName}</strong> has been <strong>verified</strong>. You've successfully entered the game.</p>
               
               <div class="details">
-                <div class="detail-row">
-                  <span class="label">Registration ID:</span>
-                  <span class="value">#${registrationId}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="label">Event:</span>
-                  <span class="value">${eventName}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="label">Participation Type:</span>
-                  <span class="value">${participationType}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="label">Amount Paid:</span>
-                  <span class="value">₹${amount}</span>
-                </div>
-                ${eventDate ? `
-                <div class="detail-row">
-                  <span class="label">Event Date:</span>
-                  <span class="value">${eventDate}</span>
-                </div>
-                ` : ''}
+                <div class="row"><span class="label">🎫 Registration ID:</span><span class="value">#${registrationId}</span></div>
+                <div class="row"><span class="label">🎯 Event:</span><span class="value">${eventName}</span></div>
+                <div class="row"><span class="label">👥 Participation Type:</span><span class="value">${participationType}</span></div>
+                <div class="row"><span class="label">💰 Amount Paid:</span><span class="value">₹${amount}</span></div>
+                ${eventDate ? `<div class="row"><span class="label">📅 Event Date:</span><span class="value">${eventDate}</span></div>` : ''}
               </div>
               
-              <p>Your participation has been confirmed. Please keep this email for your reference. Make sure to arrive on time and bring a valid ID.</p>
+              ${teamMembersHtml}
               
-              <p>If you have any questions or need to make changes to your registration, please don't hesitate to contact our support team.</p>
+              <p style="margin-top: 24px; padding: 16px; background: rgba(16,185,129,0.08); border-radius: 8px; font-size: 14px; color: #d1d5db;">
+                <strong>⚠️ Rules of the Game:</strong><br>
+                • Arrive on time with a valid ID<br>
+                • Keep this email for reference<br>
+                • Your survival depends on your performance
+              </p>
+
+              <p style="margin-top: 20px; color:#9ca3af; font-size: 13px;">For further queries, contact the game master (event coordinator).</p>
+
+              <p style="margin-top: 32px; font-size: 16px; color: #e5e7eb;">May the odds be in your favor,<br><strong style="color: #10b981;">Team Synapse</strong></p>
               
-              <p style="margin-top: 30px;">Best regards,<br><strong>The Event Team</strong></p>
-              
-              <div class="footer">
-                <p>This is an automated email. Please do not reply to this message.</p>
-              </div>
+              <div class="footer">This is an automated message from the game system. Do not reply.</div>
             </div>
           </div>
         </body>
       </html>
     `,
     text: `
-Your Registration Has Been Accepted - ${eventName}
+🎴 GAME CLEARED — ${eventName} Registration Verified
 
 Dear ${participantName},
 
-We're thrilled to inform you that your registration for ${eventName} has been accepted!
+"The only way to survive is to keep moving forward."
+
+Congratulations! Your registration for ${eventName} has been verified. You've successfully entered the game.
 
 Registration Details:
-- Registration ID: #${registrationId}
-- Event: ${eventName}
-- Participation Type: ${participationType}
-- Amount Paid: ₹${amount}
-${eventDate ? `- Event Date: ${eventDate}` : ''}
+- 🎫 Registration ID: #${registrationId}
+- 🎯 Event: ${eventName}
+- 👥 Participation Type: ${participationType}
+- 💰 Amount Paid: ₹${amount}
+${eventDate ? `- 📅 Event Date: ${eventDate}` : ''}
 
-Your participation has been confirmed. Please keep this email for your reference.
+${teamMembers && teamMembers.length > 0 ? `
+🎴 TEAM PLAYERS:
+${teamMembers.map((member, index) => `
+Player ${index + 1}: ${member.user_name}
+Email: ${member.email}${member.phone ? `\nPhone: ${member.phone}` : ''}${member.college ? `\nCollege: ${member.college}` : ''}
+`).join('')}
+` : ''}
+⚠️ Rules of the Game:
+• Arrive on time with a valid ID
+• Keep this email for reference
+• Your survival depends on your performance
 
-Best regards,
-The Event Team
+For further queries, contact the game master (event coordinator).
+
+May the odds be in your favor,
+Team Synapse
     `,
   };
 };
 
 export const rejectionEmailTemplate = (props: EmailTemplateProps & { rejectionReason?: string }) => {
-  const { participantName, eventName, participationType, registrationId, amount, rejectionReason } = props;
+  const { participantName, eventName } = props;
+  const coverUrl = getEventCoverUrl(eventName);
 
   return {
-    subject: `Registration Status Update - ${eventName}`,
+    subject: `🂡 GAME OVER — ${eventName}`,
     html: `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="UTF-8">
           <style>
-            body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; background: #0a0a0a; margin: 0; padding: 20px; }
-            .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); }
-            .brand-header { background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); padding: 40px 30px; text-align: center; }
-            .logo { max-width: 180px; height: auto; margin-bottom: 15px; }
-            .brand-name { font-size: 32px; font-weight: 800; color: white; margin: 0; letter-spacing: 2px; text-transform: uppercase; }
-            .tagline { font-size: 14px; color: rgba(255,255,255,0.9); margin: 5px 0 0 0; letter-spacing: 1px; }
-            .header { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 30px; text-align: center; }
-            .content { background: #f9f9f9; padding: 30px; }
-            .rejection-badge { display: inline-block; background: #ef4444; color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold; margin-bottom: 15px; }
-            .details { background: white; padding: 15px; margin: 15px 0; border-left: 4px solid #ef4444; border-radius: 4px; }
-            .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
-            .detail-row:last-child { border-bottom: none; }
-            .label { font-weight: bold; color: #666; }
-            .value { color: #333; }
-            .reason-box { background: #fef2f2; border: 1px solid #fecaca; padding: 15px; border-radius: 4px; margin: 15px 0; }
-            .footer { text-align: center; margin-top: 30px; padding: 20px; background: #f3f4f6; font-size: 12px; color: #6b7280; }
-            .cta-button { display: inline-block; background: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin-top: 20px; font-weight: 600; }
+            body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #e5e7eb; background: #0a0a0a; margin: 0; padding: 24px; }
+            .container { max-width: 640px; margin: 0 auto; background: #111827; border: 1px solid #1f2937; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.35); }
+            .brand { background: #0f172a; padding: 24px; text-align: center; border-bottom: 1px solid #1f2937; }
+            .logo { max-width: 120px; height: auto; margin: 0 auto 8px; display: block; }
+            .title { font-size: 22px; font-weight: 800; color: #ffffff; margin: 0; letter-spacing: 1px; }
+            .banner { width: 100%; display: block; background: linear-gradient(135deg, #ef4444 0%, #f43f5e 100%); }
+            .banner img { width: 100%; height: auto; display: block; }
+            .hero { padding: 40px 24px; text-align: center; background: linear-gradient(135deg, rgba(244,63,94,0.2) 0%, rgba(239,68,68,0.2) 100%); border-bottom: 1px solid #1f2937; position: relative; }
+            .hero .card-symbol { font-size: 48px; color: #ef4444; margin-bottom: 16px; opacity: 0.6; }
+            .hero .game-over { font-size: 38px; color: #ef4444; font-weight: 900; letter-spacing: 3px; margin: 8px 0; text-shadow: 0 0 20px rgba(239,68,68,0.5); }
+            .hero .subtitle { font-size: 15px; color: #fca5a5; font-weight: 600; margin: 8px 0 0 0; letter-spacing: 1px; }
+            .content { padding: 32px 24px; text-align: center; }
+            .quote { font-style: italic; color: #9ca3af; font-size: 17px; margin: 28px 0; padding: 20px; border-left: 4px solid #ef4444; background: rgba(239,68,68,0.08); border-radius: 4px; line-height: 1.7; }
+            .warning-box { background: rgba(239,68,68,0.12); border: 1px solid #ef4444; border-radius: 8px; padding: 16px; margin: 24px 0; }
+            .footer { text-align: center; padding: 18px; border-top: 1px solid #1f2937; font-size: 12px; color: #9ca3af; }
           </style>
         </head>
         <body>
           <div class="container">
-            <div class="brand-header">
-              <img src="https://synapse-daiict.co.in/Synapse%20Logo.png" alt="Synapse Logo" class="logo" />
-              <h1 class="brand-name">SYNAPSE</h1>
-              <p class="tagline">DA-IICT Annual Techno-Management Fest</p>
+            <div class="brand">
+              <img src="${SITE_BASE_URL}/Synapse%20Logo.png" alt="Synapse Logo" class="logo" />
+              <p class="title">SYNAPSE • DA-IICT</p>
             </div>
-            <div class="header">
-              <h1 style="margin: 0; font-size: 28px;">Registration Status Update</h1>
-              <p style="margin: 10px 0 0 0; font-size: 16px;">Regarding your application to ${eventName}</p>
+            <div class="banner">${coverUrl ? `<img src="${coverUrl}" alt="${eventName} Banner"/>` : ""}</div>
+            <div class="hero">
+              <div class="card-symbol">🂡</div>
+              <div class="game-over">GAME OVER</div>
+              <p class="subtitle">Your visa has been REJECTED</p>
             </div>
             <div class="content">
-              <div class="rejection-badge">⚠ NOT ACCEPTED</div>
+              <p style="font-size: 18px; color: #d1d5db; margin-bottom: 8px;">Dear <strong>${participantName}</strong>,</p>
+              <p style="font-size: 14px; color: #9ca3af; margin-top: 0;">Participant in ${eventName}</p>
               
-              <p>Dear <strong>${participantName}</strong>,</p>
-              
-              <p>Thank you for your interest in registering for <strong>${eventName}</strong>. After careful review, we regret to inform you that your registration could not be accepted at this time.</p>
-              
-              <div class="details">
-                <div class="detail-row">
-                  <span class="label">Registration ID:</span>
-                  <span class="value">#${registrationId}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="label">Event:</span>
-                  <span class="value">${eventName}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="label">Participation Type:</span>
-                  <span class="value">${participationType}</span>
-                </div>
+              <div class="warning-box">
+                <div style="font-size: 15px; color: #fca5a5; font-weight: 700; margin-bottom: 8px;">⚠️ REGISTRATION STATUS</div>
+                <div style="font-size: 14px; color: #e5e7eb;">Your registration has been <strong style="color: #ef4444;">REJECTED</strong></div>
               </div>
               
-              ${rejectionReason ? `
-              <div class="reason-box">
-                <strong>Reason:</strong><br>
-                ${rejectionReason}
-              </div>
-              ` : ''}
+<p style="margin-top: 28px; font-size: 14px; color: #d1d5db; line-height: 1.7;">
+          Unfortunately, your participation cannot be approved at this time.<br>
+          Contact the game master (event coordinator) for further details.
+        </p>
+        
+        <p style="margin-top: 40px; font-size: 16px; font-weight: 600; color: #e5e7eb;">
+                The game continues without you,<br>
+                <strong style="color: #dc2626;">Team Synapse</strong>
+              </p>
               
-              <p>We appreciate your understanding. If you believe this decision was made in error or if you have any questions, please feel free to contact our support team.</p>
-              
-              <p style="margin-top: 30px;">Best regards,<br><strong>The Event Team</strong></p>
-              
-              <div class="footer">
-                <p>This is an automated email. Please do not reply to this message.</p>
-              </div>
+              <div class="footer">This is an automated message from the game system. Do not reply.</div>
             </div>
           </div>
         </body>
       </html>
     `,
     text: `
-Registration Status Update - ${eventName}
+🂡 GAME OVER — ${eventName}
 
 Dear ${participantName},
+Participant in ${eventName}
 
-Thank you for your interest in registering for ${eventName}. After careful review, we regret to inform you that your registration could not be accepted at this time.
 
-Registration Details:
-- Registration ID: #${registrationId}
-- Event: ${eventName}
-- Participation Type: ${participationType}
+⚠️ REGISTRATION STATUS:
+Your registration has been REJECTED
 
-${rejectionReason ? `Reason: ${rejectionReason}` : ''}
+Unfortunately, your participation cannot be approved at this time.
+Contact the game master (event coordinator) for further details.
 
-We appreciate your understanding. If you have any questions, please contact our support team.
-
-Best regards,
-The Event Team
+The game continues without you,
+Team Synapse
     `,
   };
 };

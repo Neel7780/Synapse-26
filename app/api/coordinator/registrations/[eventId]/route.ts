@@ -79,11 +79,12 @@ export async function GET(
     // Debug: Log all registrations with fee_id
     console.log("Registrations fetched:", registrations?.map(r => ({ id: r.registration_id, fee_id: r.fee_id })));
 
-    // Fetch user details and fee info for each registration
+    // Fetch user details, fee info, and team members for each registration
     const enrichedRegistrations = await Promise.all(
       (registrations || []).map(async (reg: any) => {
         let userData = { user_id: "", user_name: null, email: "", phone: null, college: null };
         let feeData = { participation_type: "General", min_members: 0, max_members: 0, price: 0 };
+        let teamMembers: Array<{ user_id: string; user_name: string | null; email: string; phone: string | null; college: string | null }> = [];
 
         // Fetch user details
         if (reg.registered_by_user_id) {
@@ -127,10 +128,52 @@ export async function GET(
           console.warn(`Registration ${reg.registration_id} has no fee_id`);
         }
 
+        // If there could be multiple members (duet/group), fetch team and members
+        try {
+          const { data: teamRow, error: teamError } = await supabase
+            .from("team")
+            .select("team_id, registration_id")
+            .eq("registration_id", reg.registration_id)
+            .single();
+
+          if (teamError && teamError.code !== "PGRST116") { // ignore 'No rows' error
+            console.error(`Error fetching team for registration ${reg.registration_id}:`, teamError);
+          }
+
+          if (teamRow?.team_id) {
+            const { data: memberRows, error: membersError } = await supabase
+              .from("team_members")
+              .select("user_id")
+              .eq("team_id", teamRow.team_id);
+
+            if (membersError) {
+              console.error(`Error fetching team members for team ${teamRow.team_id}:`, membersError);
+            } else if (memberRows && memberRows.length > 0) {
+              // Fetch user details for each member
+              const membersDetailed = await Promise.all(
+                memberRows.map(async (m) => {
+                  const { data: memberUser } = await supabase
+                    .from("users")
+                    .select("user_id, user_name, email, phone, college")
+                    .eq("user_id", m.user_id)
+                    .single();
+                  return (
+                    memberUser || { user_id: m.user_id, user_name: null, email: "", phone: null, college: null }
+                  );
+                })
+              );
+              teamMembers = membersDetailed;
+            }
+          }
+        } catch (e) {
+          console.error(`Error while assembling team info for registration ${reg.registration_id}:`, e);
+        }
+
         return {
           ...reg,
           users: userData,
           fee: feeData,
+          team_members: teamMembers,
         };
       })
     );
