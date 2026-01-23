@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Database } from '@/types/supabase';
+import { useNavigationState } from '@/lib/useNavigationState';
 import {
     EventWithRelations,
     EventsApiResponse,
@@ -178,6 +179,7 @@ export function useEventBySlug(categorySlug: string | null, eventSlug: string | 
     const [fees, setFees] = useState<FormattedFee[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { registerLoading, unregisterLoading } = useNavigationState();
 
     useEffect(() => {
         if (!categorySlug || !eventSlug) {
@@ -187,10 +189,17 @@ export function useEventBySlug(categorySlug: string | null, eventSlug: string | 
             return;
         }
 
+        let isActive = true;
+
+        // Register loading so InitialLoader waits for this
+        registerLoading();
+
         async function fetchData() {
             try {
-                setLoading(true);
-                setError(null);
+                if (isActive) {
+                    setLoading(true);
+                    setError(null);
+                }
 
                 // Step 1: Fetch all categories to find matching category
                 const catResponse = await fetch('/api/events/categories');
@@ -202,8 +211,10 @@ export function useEventBySlug(categorySlug: string | null, eventSlug: string | 
                 const catData: CategoriesApiResponse = await catResponse.json();
 
                 if (catData.error) {
-                    setError(catData.error);
-                    setLoading(false);
+                    if (isActive) {
+                        setError(catData.error);
+                        setLoading(false);
+                    }
                     return;
                 }
 
@@ -212,8 +223,10 @@ export function useEventBySlug(categorySlug: string | null, eventSlug: string | 
                 );
 
                 if (!matchedCategory) {
-                    setError('Category not found');
-                    setLoading(false);
+                    if (isActive) {
+                        setError('Category not found');
+                        setLoading(false);
+                    }
                     return;
                 }
 
@@ -227,8 +240,10 @@ export function useEventBySlug(categorySlug: string | null, eventSlug: string | 
                 const eventsData: EventsApiResponse = await eventsResponse.json();
 
                 if (eventsData.error) {
-                    setError(eventsData.error);
-                    setLoading(false);
+                    if (isActive) {
+                        setError(eventsData.error);
+                        setLoading(false);
+                    }
                     return;
                 }
 
@@ -238,23 +253,49 @@ export function useEventBySlug(categorySlug: string | null, eventSlug: string | 
                 );
 
                 if (!matchedEvent) {
-                    setError('Event not found');
-                    setLoading(false);
+                    if (isActive) {
+                        setError('Event not found');
+                        setLoading(false);
+                    }
                     return;
                 }
 
-                setEvent(matchedEvent);
-                setFees(extractFees(matchedEvent));
+                if (isActive) {
+                    setEvent(matchedEvent);
+                    setFees(extractFees(matchedEvent));
+                }
             } catch (err) {
                 console.error('Failed to fetch event:', err);
-                setError(err instanceof Error ? err.message : 'Failed to fetch event');
+                if (isActive) {
+                    setError(err instanceof Error ? err.message : 'Failed to fetch event');
+                }
             } finally {
-                setLoading(false);
+                if (isActive) {
+                    setLoading(false);
+                    // Unregister loading when done
+                    unregisterLoading();
+                }
             }
         }
 
         fetchData();
-    }, [categorySlug, eventSlug]);
+
+        return () => {
+            // If unmounting or dependency changing, we shouldn't update state anymore
+            // But we MUST ensure we unregister if we haven't already
+            if (isActive) {
+                isActive = false;
+                // If the fetch hasn't finished (isActive is technically true until finally runs),
+                // we must unregister here to prevent hanging.
+                // However, finally block checks isActive.
+                // If we set isActive = false here, finally block won't unregister.
+                // So we must unregister here manually if the fetch is still in flight logic-wise?
+                // No, simpler: The unregister calls decrement a counter.
+                // If we unmount, we conceptually stop "waiting".
+                unregisterLoading();
+            }
+        };
+    }, [categorySlug, eventSlug, registerLoading, unregisterLoading]);
 
     return { event, fees, loading, error };
 }

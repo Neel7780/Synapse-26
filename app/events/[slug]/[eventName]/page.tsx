@@ -107,7 +107,7 @@ export default function EventPage() {
                     initial={{ opacity: 0, y: 50 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.3, ease: "backOut" }}
-                    className="font-joker text-3xl sm:text-5xl md:text-8xl leading-none text-white mt-[-30px] md:mt-[-50px] lg:mt-[-80px] relative z-10 drop-shadow-2xl text-center lowercase tracking-widest pointer-events-none"
+                    className="font-joker text-3xl sm:text-5xl md:text-8xl leading-none text-white mt-[-30px] md:mt-[-50px] lg:mt-[-80px] relative z-10 drop-shadow-2xl text-center lowercase tracking-widest pointer-events-none whitespace-nowrap"
                 >
                     {event.event_name}
                 </motion.h1>
@@ -202,7 +202,9 @@ export default function EventPage() {
                                     className="w-fit px-12 py-6 text-xl font-jqka tracking-[0.2em] uppercase bg-transparent border border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-all duration-300 rounded-none mt-4 shadow-[0_0_15px_rgba(220,38,38,0.2)] cursor-pointer"
                                     onClick={() => {
                                         if (!currentFee) return;
-                                        const params = new URLSearchParams({
+                                        // Start loading animation first
+                                        startTransition();
+                                        const queryParams = new URLSearchParams({
                                             fee_id: String(currentFee.fee_id || 0),
                                             type: currentFee.type,
                                             price: String(currentFee.price),

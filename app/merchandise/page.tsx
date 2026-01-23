@@ -8,6 +8,7 @@ import { useState, useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useNavigationState } from "@/lib/useNavigationState";
 
 type Product = {
   slug: string;
@@ -217,27 +218,44 @@ export default function MerchPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { registerLoading, unregisterLoading } = useNavigationState();
 
   // Fetch products from API
   useEffect(() => {
+    let isActive = true;
+
+    // Register loading so InitialLoader waits for this
+    registerLoading();
+
     const fetchProducts = async () => {
       try {
         const response = await fetch("/api/merchandise");
         const data = await response.json();
 
-        if (data.products && Array.isArray(data.products)) {
+        if (isActive && data.products && Array.isArray(data.products)) {
           const transformedProducts = data.products.map(transformProduct);
           setProducts(transformedProducts);
         }
       } catch (error) {
         console.error("Error fetching merchandise:", error);
       } finally {
-        setIsLoading(false);
+        if (isActive) {
+          setIsLoading(false);
+          // Unregister loading when done
+          unregisterLoading();
+        }
       }
     };
 
     fetchProducts();
-  }, []);
+
+    return () => {
+      if (isActive) {
+        isActive = false;
+        unregisterLoading();
+      }
+    };
+  }, [registerLoading, unregisterLoading]);
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
