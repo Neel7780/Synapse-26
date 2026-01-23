@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch team members if it's a team registration
-    let teamMembers: Array<{ user_name: string; email: string; phone?: string; college?: string }> = [];
+    const teamMembers: Array<{ user_name: string; email: string; phone?: string; college?: string }> = [];
     if (registrationData?.registration_id) {
       // First, get the team_id from the team table
       const { data: teamData } = await supabase
@@ -153,8 +153,8 @@ export async function POST(request: NextRequest) {
               teamMembers.push({
                 user_name: memberUserData.user_name || "Team Member",
                 email: memberUserData.email,
-                phone: memberUserData.phone,
-                college: memberUserData.college,
+                phone: memberUserData.phone || undefined,
+                college: memberUserData.college || undefined,
               });
             }
           }

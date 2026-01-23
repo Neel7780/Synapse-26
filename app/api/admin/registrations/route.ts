@@ -100,7 +100,7 @@ export async function GET(req: NextRequest) {
         const uniqueData = Array.from(uniqueMap.values());
 
 
-        let totalRegistrations = uniqueData?.length ?? 0;
+        const totalRegistrations = uniqueData?.length ?? 0;
         let paid = 0;
         let grossRevenue = 0;
         let gatewayCharges = 0;

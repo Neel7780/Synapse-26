@@ -82,7 +82,7 @@ export async function GET(
     // Fetch user details, fee info, and team members for each registration
     const enrichedRegistrations = await Promise.all(
       (registrations || []).map(async (reg: any) => {
-        let userData = { user_id: "", user_name: null, email: "", phone: null, college: null };
+        let userData: any = { user_id: "", user_name: null, email: "", phone: null, college: null };
         let feeData = { participation_type: "General", min_members: 0, max_members: 0, price: 0 };
         let teamMembers: Array<{ user_id: string; user_name: string | null; email: string; phone: string | null; college: string | null }> = [];
 
