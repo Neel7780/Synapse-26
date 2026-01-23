@@ -1,12 +1,12 @@
 "use client";
 
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useRef, useEffect, useCallback, memo } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import type { EventCard } from "./eventcontent";
 import { useNavigationState } from "@/lib/useNavigationState";
+import { generateSlug, EventWithRelations } from "@/types/events";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -14,16 +14,18 @@ if (typeof window !== "undefined") {
 
 // Memoized card component with tilt effect
 const EventCardItem = memo(function EventCardItem({
-  card,
+  event,
   index,
   onRegister,
 }: {
-  card: EventCard;
+  event: EventWithRelations;
   index: number;
   onRegister: () => void;
 }) {
   const cardRef = useRef<HTMLElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
+
+
 
   // 3D tilt effect on hover
   useEffect(() => {
@@ -52,7 +54,6 @@ const EventCardItem = memo(function EventCardItem({
         transformPerspective: 1000,
       });
 
-      // Move glow effect
       if (glowRef.current) {
         gsap.to(glowRef.current, {
           x: x - rect.width / 2,
@@ -89,6 +90,14 @@ const EventCardItem = memo(function EventCardItem({
     };
   }, []);
 
+  // Check if registration is closed
+  const isRegistrationClosed = event.is_registration_open === false;
+
+  // Event description - split by newlines or use as single item
+  const descriptionLines = event.description
+    ? event.description.split('\n').filter(line => line.trim())
+    : ['Event details coming soon.'];
+
   return (
     <article
       ref={cardRef}
@@ -105,25 +114,41 @@ const EventCardItem = memo(function EventCardItem({
         style={{ transform: "translate(-50%, -50%)" }}
       />
 
+      {/* Registration Status Badge */}
+      {event.is_registration_open !== undefined && (
+        <div className={`absolute top-4 right-4 z-30 px-3 py-1 rounded-full text-xs font-medium ${event.is_registration_open
+          ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+          : 'bg-red-500/20 text-red-400 border border-red-500/30'
+          }`}>
+          {event.is_registration_open ? 'Open' : 'Closed'}
+        </div>
+      )}
+
+      {/* DAU Free Badge */}
+      {event.is_dau_free && (
+        <div className="absolute top-4 left-4 z-30 px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
+          DAU Free
+        </div>
+      )}
+
       {/* IMAGE */}
       <div className="relative h-[320px] overflow-hidden">
         <Image
-          src={card.image}
-          alt={card.name}
+          src={event.event_picture || "/images_events/default.png"}
+          alt={event.event_name}
           fill
           sizes="(max-width: 640px) 100vw, 500px"
           className="object-cover transition-transform duration-500 group-hover:scale-110"
         />
-        {/* Shine effect on hover */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full hover-shine" />
       </div>
 
       {/* CONTENT */}
       <div className="p-5 flex flex-col gap-3 flex-1 relative z-20">
-        <h2 className="font-adventor text-[50px] md:text-[60px] leading-tight">{card.name}</h2>
+        <h2 className="font-adventor text-[50px] md:text-[60px] leading-tight">{event.event_name}</h2>
 
         <p className="text-sm text-[#c0c0c0] leading-relaxed event-card-desc">
-          {card.description.map((line, i) => (
+          {descriptionLines.slice(0, 3).map((line, i) => (
             <span key={i} className="block overflow-hidden">
               <span className="block desc-line translate-y-full opacity-0">
                 {line}
@@ -137,42 +162,55 @@ const EventCardItem = memo(function EventCardItem({
       <div className="p-5 pt-0 relative z-20">
         <button
           onClick={onRegister}
-          className="
+          disabled={isRegistrationClosed}
+          className={`
             register-btn
             w-full h-[52px]
-            bg-white text-black
             flex items-center justify-center gap-2
             font-jqka
             text-2xl md:text-3xl
-            transition-all duration-300 rounded-sm cursor-pointer
+            transition-all duration-300 rounded-sm
             relative overflow-hidden
-            hover:bg-[#b41c32] hover:text-white
             group
-          "
+            ${isRegistrationClosed
+              ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+              : 'bg-white text-black hover:bg-[#b41c32] hover:text-white cursor-pointer'
+            }
+          `}
         >
-          {/* Button shine effect */}
-          <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-          <span className="relative z-10">Register</span>
+          {!isRegistrationClosed && (
+            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+          )}
+          <span className="relative z-10">
+            {isRegistrationClosed ? 'Coming Soon' : 'Register'}
+          </span>
         </button>
       </div>
     </article>
   );
 });
 
-export default function EventCards({ cards }: { cards: EventCard[] }) {
+interface EventCardsProps {
+  events: EventWithRelations[];
+  categorySlug: string;
+}
+
+export default function EventCards({ events, categorySlug }: EventCardsProps) {
   const router = useRouter();
-  const params = useParams();
-  const currentSlug = params?.slug as string;
   const containerRef = useRef<HTMLDivElement>(null);
   const { startTransition } = useNavigationState();
 
   const handleRegisterClick = useCallback(
-    (cardName: string) => {
+    (event: EventWithRelations) => {
+      if (event.is_registration_open === false) {
+        return;
+      }
+
       startTransition();
-      const eventSlug = cardName.toLowerCase().replace(/\s+/g, "-");
-      router.push(`/events/${currentSlug}/${eventSlug}`);
+      const eventSlug = generateSlug(event.event_name);
+      router.push(`/events/${categorySlug}/${eventSlug}`);
     },
-    [startTransition, router, currentSlug]
+    [startTransition, router, categorySlug]
   );
 
   // Staggered entrance animation
@@ -186,7 +224,6 @@ export default function EventCards({ cards }: { cards: EventCard[] }) {
       const cards = containerRef.current?.querySelectorAll(".event-card");
       if (!cards?.length) return;
 
-      // Set initial state
       gsap.set(cards, {
         opacity: 0,
         y: 100,
@@ -194,7 +231,6 @@ export default function EventCards({ cards }: { cards: EventCard[] }) {
         scale: 0.9,
       });
 
-      // Animate cards in with stagger
       gsap.to(cards, {
         opacity: 1,
         y: 0,
@@ -214,7 +250,7 @@ export default function EventCards({ cards }: { cards: EventCard[] }) {
       });
 
       // Button pulse animation
-      const buttons = containerRef.current?.querySelectorAll(".register-btn");
+      const buttons = containerRef.current?.querySelectorAll(".register-btn:not(:disabled)");
       buttons?.forEach((btn, i) => {
         gsap.fromTo(
           btn,
@@ -230,7 +266,7 @@ export default function EventCards({ cards }: { cards: EventCard[] }) {
         );
       });
 
-      // Description text reveal inside cards
+      // Description text reveal
       const descLines = containerRef.current?.querySelectorAll(".desc-line");
       if (descLines?.length) {
         gsap.to(descLines, {
@@ -250,17 +286,17 @@ export default function EventCards({ cards }: { cards: EventCard[] }) {
     }, containerRef);
 
     return () => ctx.revert();
-  }, [cards]);
+  }, [events]);
 
   return (
     <section className="px-4 sm:px-10 lg:px-24 pb-32" ref={containerRef}>
       <div className="flex justify-center gap-x-16 lg:gap-x-20 gap-y-26 flex-wrap">
-        {cards.map((card, idx) => (
+        {events.map((event, idx) => (
           <EventCardItem
-            key={idx}
-            card={card}
+            key={event.event_id}
+            event={event}
             index={idx}
-            onRegister={() => handleRegisterClick(card.name)}
+            onRegister={() => handleRegisterClick(event)}
           />
         ))}
       </div>
