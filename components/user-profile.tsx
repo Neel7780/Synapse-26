@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback, memo } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { Loader2 } from "lucide-react";
+import { Loader2, Edit2, Save, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -67,6 +67,38 @@ const ProfileField = memo(function ProfileField({
   );
 });
 
+// Editable profile field component
+const EditableProfileField = memo(function EditableProfileField({
+  label,
+  value,
+  onChange,
+  type = "text",
+  className = "",
+  disabled = false
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+  className?: string;
+  disabled?: boolean;
+}) {
+  return (
+    <div className={`border border-white p-3 md:p-4 min-h-[72px] flex flex-col justify-center ${className}`}>
+      <p className="text-xs text-muted-foreground font-roboto uppercase tracking-wider mb-1">
+        {label}
+      </p>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        className="text-base font-semibold font-roboto bg-transparent border-none outline-none text-white w-full disabled:opacity-50 disabled:cursor-not-allowed"
+      />
+    </div>
+  );
+});
+
 // Memoized event card component
 const EventCard = memo(function EventCard({ event }: { event: RegisteredEvent }) {
   return (
@@ -110,6 +142,10 @@ export default function UserProfile() {
   const [accommodationBookings, setAccommodationBookings] = useState<AccommodationBooking[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editFormData, setEditFormData] = useState<UserDetails | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const fetchData = useCallback(async (userId: string, userEmail: string | undefined) => {
     setDataLoading(true);
@@ -223,13 +259,95 @@ export default function UserProfile() {
     }
   }, [router]);
 
+  const handleEdit = useCallback(() => {
+    if (userDetails) {
+      setEditFormData({ ...userDetails });
+      setIsEditing(true);
+      setSaveError(null);
+    }
+  }, [userDetails]);
+
+  const handleCancel = useCallback(() => {
+    setIsEditing(false);
+    setEditFormData(null);
+    setSaveError(null);
+  }, []);
+
+  const handleSave = useCallback(async () => {
+    if (!editFormData || !user) {
+      return;
+    }
+
+    setSaving(true);
+    setSaveError(null);
+
+    try {
+      const response = await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firstName: editFormData.firstName,
+          lastName: editFormData.lastName,
+          phone: editFormData.phone === "N/A" ? "" : editFormData.phone,
+          college: editFormData.university === "N/A" ? "" : editFormData.university,
+          dob: editFormData.dateOfBirth === "N/A" ? "" : editFormData.dateOfBirth,
+          gender: editFormData.gender === "N/A" ? "" : editFormData.gender,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to update profile");
+      }
+
+      // Refresh data after successful update
+      await fetchData(user.id, user.email);
+      setIsEditing(false);
+      setEditFormData(null);
+    } catch (err) {
+      console.error("Error saving profile:", err);
+      setSaveError(err instanceof Error ? err.message : "Failed to save profile");
+    } finally {
+      setSaving(false);
+    }
+  }, [editFormData, user, fetchData]);
+
+  const handleFieldChange = useCallback((field: keyof UserDetails, value: string) => {
+    if (editFormData) {
+      setEditFormData({
+        ...editFormData,
+        [field]: value,
+      });
+    }
+  }, [editFormData]);
+
+  // Helper function to format date for input (YYYY-MM-DD)
+  const formatDateForInput = useCallback((dateStr: string): string => {
+    if (!dateStr || dateStr === "N/A") return "";
+    // If it's already in YYYY-MM-DD format, return as is
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+    // Try to parse and format
+    try {
+      const date = new Date(dateStr);
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split("T")[0];
+      }
+    } catch {
+      // If parsing fails, return empty string
+    }
+    return "";
+  }, []);
+
   if (authLoading || dataLoading) {
     return <ProfileSkeleton />;
   }
 
   if (error || !userDetails) {
     return (
-      <div className="min-h-[100svh] bg-background px-4 py-6 md:px-8 md:py-12 flex flex-col items-center justify-center">
+      <div className="min-h-svh bg-background px-4 py-6 md:px-8 md:py-12 flex flex-col items-center justify-center">
         <div className="text-white mb-4">{error || "Failed to load profile."}</div>
         <button
           onClick={handleBack}
@@ -242,7 +360,7 @@ export default function UserProfile() {
   }
 
   return (
-    <div ref={ref} className="min-h-[100dvh] bg-background px-4 py-6 md:px-8 md:py-12 pt-28 md:pt-36">
+    <div ref={ref} className="min-h-dvh bg-background px-4 py-6 md:px-8 md:py-12 pt-28 md:pt-36">
       <Navbar visible={true}>
         <NavigationPanel />
       </Navbar>
@@ -255,48 +373,144 @@ export default function UserProfile() {
         <div className="animate flex flex-col gap-6">
           <div className="flex flex-row flex-wrap justify-between items-center gap-4">
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">Profile</h2>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                startTransition();
-                logout();
-                router.push("/");
-              }}
-              className="px-6 md:px-3 lg:px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-jqka uppercase transition-all whitespace-nowrap cursor-pointer shadow-lg shadow-red-900/20 hover:shadow-red-900/40 text-lg md:text-xl md:tracking-[0.15em]"
-            >
-              Logout
-            </motion.button>
+            <div className="flex gap-2">
+              {!isEditing ? (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleEdit}
+                  className="px-4 md:px-3 lg:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-jqka uppercase transition-all whitespace-nowrap cursor-pointer shadow-lg shadow-blue-900/20 hover:shadow-blue-900/40 text-sm md:text-base md:tracking-[0.15em] flex items-center gap-2"
+                >
+                  <Edit2 className="w-4 h-4" />
+                  Edit
+                </motion.button>
+              ) : (
+                <>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="px-4 md:px-3 lg:px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-600/50 text-white rounded font-jqka uppercase transition-all whitespace-nowrap cursor-pointer shadow-lg shadow-green-900/20 hover:shadow-green-900/40 text-sm md:text-base md:tracking-[0.15em] flex items-center gap-2 disabled:cursor-not-allowed"
+                  >
+                    {saving ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    {saving ? "Saving..." : "Save"}
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleCancel}
+                    disabled={saving}
+                    className="px-4 md:px-3 lg:px-4 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-600/50 text-white rounded font-jqka uppercase transition-all whitespace-nowrap cursor-pointer shadow-lg shadow-gray-900/20 hover:shadow-gray-900/40 text-sm md:text-base md:tracking-[0.15em] flex items-center gap-2 disabled:cursor-not-allowed"
+                  >
+                    <X className="w-4 h-4" />
+                    Cancel
+                  </motion.button>
+                </>
+              )}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  startTransition();
+                  logout();
+                  router.push("/");
+                }}
+                className="px-6 md:px-3 lg:px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-jqka uppercase transition-all whitespace-nowrap cursor-pointer shadow-lg shadow-red-900/20 hover:shadow-red-900/40 text-lg md:text-xl md:tracking-[0.15em]"
+              >
+                Logout
+              </motion.button>
+            </div>
           </div>
 
+          {saveError && (
+            <div className="border border-red-500/50 bg-red-500/10 p-3 rounded text-red-400 text-sm">
+              {saveError}
+            </div>
+          )}
+
           <div className="space-y-3 md:space-y-4">
-            {/* Name Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-              <ProfileField label="First Name" value={userDetails.firstName} />
-              <ProfileField label="Last Name" value={userDetails.lastName} />
-            </div>
+            {isEditing && editFormData ? (
+              <>
+                {/* Name Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                  <EditableProfileField
+                    label="First Name"
+                    value={editFormData.firstName}
+                    onChange={(value) => handleFieldChange("firstName", value)}
+                  />
+                  <EditableProfileField
+                    label="Last Name"
+                    value={editFormData.lastName}
+                    onChange={(value) => handleFieldChange("lastName", value)}
+                  />
+                </div>
 
-            {/* Contact Info Stack */}
-            <ProfileField label="Phone" value={userDetails.phone} className="animate" />
-            <ProfileField label="College" value={userDetails.university} className="animate" />
-            <ProfileField label="Email Address" value={userDetails.email} className="animate" />
+                {/* Contact Info Stack */}
+                <EditableProfileField
+                  label="Phone"
+                  value={editFormData.phone === "N/A" ? "" : editFormData.phone}
+                  onChange={(value) => handleFieldChange("phone", value)}
+                  type="tel"
+                />
+                <EditableProfileField
+                  label="College"
+                  value={editFormData.university === "N/A" ? "" : editFormData.university}
+                  onChange={(value) => handleFieldChange("university", value)}
+                />
+                <ProfileField
+                  label="Email Address"
+                  value={userDetails.email}
+                  className="animate opacity-60"
+                />
 
+                {/* Demographics Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                  <EditableProfileField
+                    label="Date of Birth"
+                    value={formatDateForInput(editFormData.dateOfBirth)}
+                    onChange={(value) => handleFieldChange("dateOfBirth", value)}
+                    type="date"
+                  />
+                  <EditableProfileField
+                    label="Gender"
+                    value={editFormData.gender === "N/A" ? "" : editFormData.gender}
+                    onChange={(value) => handleFieldChange("gender", value)}
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Name Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                  <ProfileField label="First Name" value={userDetails.firstName} />
+                  <ProfileField label="Last Name" value={userDetails.lastName} />
+                </div>
 
-            {/* Demographics Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-              <ProfileField label="Date of Birth" value={userDetails.dateOfBirth} className="animate" />
-              <ProfileField label="Gender" value={userDetails.gender} className="animate" />
-            </div>
+                {/* Contact Info Stack */}
+                <ProfileField label="Phone" value={userDetails.phone} className="animate" />
+                <ProfileField label="College" value={userDetails.university} className="animate" />
+                <ProfileField label="Email Address" value={userDetails.email} className="animate" />
+
+                {/* Demographics Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                  <ProfileField label="Date of Birth" value={userDetails.dateOfBirth} className="animate" />
+                  <ProfileField label="Gender" value={userDetails.gender} className="animate" />
+                </div>
+              </>
+            )}
 
             <Link
               href="/auth?view=forgot"
               onClick={() => startTransition()}
-              className="block w-full px-6 py-3 border border-white/20 hover:bg-white/5 rounded text-base font-jqka uppercase tracking-[0.15em] transition-all whitespace-nowrap hover:border-white/40 text-center text-lg md:text-xl mt-6"
+              className="block w-full px-6 py-3 border border-white/20 hover:bg-white/5 rounded font-jqka uppercase tracking-[0.15em] transition-all whitespace-nowrap hover:border-white/40 text-center text-lg md:text-xl mt-6"
             >
               Change Password
             </Link>
-
-
           </div>
         </div>
 
