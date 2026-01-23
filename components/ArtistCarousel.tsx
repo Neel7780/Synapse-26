@@ -50,7 +50,7 @@ export default function ArtistCarousel() {
         return;
       }
 
-      if (data) {
+      if (data && data.length > 0) {
         // Sort by date
         const sortedData = data.sort((a, b) => {
           const dateA = new Date(a.concert?.concert_date || "");
@@ -84,6 +84,17 @@ export default function ArtistCarousel() {
         });
 
         setArtists(transformedData);
+      } else {
+        // Empty state - Single TBA card
+        const tbaArtist: CarouselArtist = {
+          day: "TBA",
+          tag: "COMING SOON",
+          artist: "TO BE DECLARED",
+          description: "Stay tuned for the reveal!",
+          image: "", // Empty string will signal fallback
+          hexColor: COLORS[0],
+        };
+        setArtists([tbaArtist]);
       }
       setLoading(false);
     };
@@ -240,11 +251,19 @@ const Card = ({ data, index, total, progress }: CardProps) => {
 
         {/* Central Inset Image Area - Flex-1 ensures it fills exactly the remaining space */}
         <div className="relative flex-1 min-h-0 mb-2 ml-16 md:ml-20 mr-2 md:mr-4 rounded-[16px] overflow-hidden shadow-2xl border border-white/10 bg-black/20">
-          <img
-            src={data.image}
-            alt={data.artist}
-            className="w-full h-full object-cover"
-          />
+          {data.image ? (
+            <img
+              src={data.image}
+              alt={data.artist}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-zinc-900">
+              <span className="font-joker text-white text-3xl md:text-5xl text-center opacity-50 px-4">
+                TO BE DECLARED
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

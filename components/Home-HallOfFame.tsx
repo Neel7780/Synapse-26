@@ -448,7 +448,7 @@ export default function HallOfFame() {
         ease: "power2.out",
         scrollTrigger: {
           trigger: hallContainerRef.current,
-          start: "top top+=2%",
+          start: "top top",
           end: "+=15%",
           scrub: 0.5,
         },
