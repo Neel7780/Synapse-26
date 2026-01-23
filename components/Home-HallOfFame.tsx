@@ -1,11 +1,10 @@
 "use client";
 
-import Image from "next/image";
-
 import { useRef, useCallback, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
+import Image from "next/image";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -61,13 +60,13 @@ export default function HallOfFame() {
     desktop: [],
   });
 
-  const getActiveMode = () => {
+  const getActiveMode = useCallback(() => {
     if (typeof window === "undefined") return "desktop";
     const w = window.innerWidth;
     if (w < 768) return "mobile";
     if (w < 1024) return "tablet";
     return "desktop";
-  };
+  }, []);
 
   const setMobileGridRef = useCallback(
     (index: number) => (el: HTMLDivElement | null) => {
@@ -339,7 +338,7 @@ export default function HallOfFame() {
     },
   ];
 
-  const getGridMetrics = () => {
+  const getGridMetrics = useCallback(() => {
     if (typeof window === "undefined") {
       return { cellW: 0, cellH: 0, heroCols: 2, heroRows: 2 };
     }
@@ -370,23 +369,23 @@ export default function HallOfFame() {
       heroCols: 2,
       heroRows: 2,
     };
-  };
+  }, []);
 
-  const getActiveHeroIndex = () => {
+  const getActiveHeroIndex = useCallback(() => {
     if (typeof window === "undefined") return 2;
     const w = window.innerWidth;
     if (w < 768) return 0;
     if (w < 1024) return 1;
     return 2;
-  };
+  }, []);
 
-  const isItemVisible = (image: typeof gridImages[0]) => {
+  const isItemVisible = useCallback((image: typeof gridImages[0]) => {
     if (typeof window === "undefined") return true;
     const w = window.innerWidth;
     if (w < 768) return !image.mobileHidden;
     if (w < 1024) return !image.tabletHidden;
     return true;
-  };
+  }, []);
 
   const resetGridItems = () => {
     gridImages.forEach((image, index) => {
@@ -556,7 +555,7 @@ export default function HallOfFame() {
               );
 
               // Use elastic easing for a bouncy, playful feel
-              const itemEased = gsap.parseEase("back.out(1.2)")(itemProgress);
+              const itemEased = gsap.parseEase("back.out(1)")(itemProgress);
               const opacityEased = gsap.parseEase("power2.out")(itemProgress);
 
               gsap.set(item, {

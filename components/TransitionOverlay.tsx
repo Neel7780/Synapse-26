@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useNavigationState } from "@/lib/useNavigationState";
 import { useEffect, useState, useRef, useLayoutEffect } from "react";
+import Image from "next/image";
 
 type Phase = "idle" | "delay" | "enter" | "exit";
 
@@ -44,19 +45,18 @@ export default function TransitionOverlay() {
     useLayoutEffect(() => {
         const computeScale = () => {
             const mobile = window.innerWidth < 768;
-            setIsMobile(mobile);
 
-            if (!mobile || !cellRef.current) {
+            setIsMobile(prev => {
+                if (prev !== mobile) return mobile;
+                return prev;
+            });
+
+            if (!mobile) {
                 setScaleX(1);
                 return;
             }
 
-            const { width, height } =
-                cellRef.current.getBoundingClientRect();
-
-            if (width > 0 && height > 0) {
-                setScaleX(height / width);
-            }
+            setScaleX(window.innerHeight / window.innerWidth);
         };
 
         computeScale();
@@ -118,19 +118,19 @@ export default function TransitionOverlay() {
 
             {/* BLACK BASE */}
             <div
-                className={`absolute inset-0 bg-black z-0 ${phase === "exit" || phase === "idle"
+                className={`absolute inset-0 bg-black z-0 pointer-events-none ${phase === "exit" || phase === "idle"
                     ? "opacity-0"
                     : "opacity-100"
                     }`}
             />
 
             {/* CARDS GRID */}
-            <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 z-20">
+            <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 z-20 pointer-events-none">
                 {images.map((src, i) => (
                     <motion.div
                         key={i}
                         ref={i === 0 ? cellRef : null}
-                        className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden"
+                        className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden pointer-events-none"
                         initial={entryFromCorners[i]}
                         animate={
                             phase === "enter"
@@ -153,29 +153,32 @@ export default function TransitionOverlay() {
                             ease: [0.22, 1, 0.36, 1],
                         }}
                     >
-                        <Image
-                            src={src}
-                            alt=""
-                            className="
-                                object-fill origin-center
-                                w-[50dvh] h-[50vw]
-                                md:w-full md:h-full md:rotate-0
-                            "
-                            style={
-                                isMobile
-                                    ? {
-                                        transform: `rotate(90deg) scaleX(${scaleX})`,
-                                    }
-                                    : undefined
-                            }
-                        />
+                        <div className="relative w-[50dvh] h-[50vw] md:w-full md:h-full">
+                            <Image
+                                src={src}
+                                alt=""
+                                fill
+                                priority
+                                unoptimized
+                                sizes="50vw"
+                                className="object-center object-fill rotate-0"
+                                style={
+                                    isMobile
+                                        ? {
+                                            transform: `translateZ(0) rotate(90deg) scaleX(${scaleX})`,
+                                            willChange: "transform",
+                                        }
+                                        : undefined
+                                }
+                            />
+                        </div>
                     </motion.div>
                 ))}
             </div>
 
             {/* EXIT DOORS */}
             <div
-                className={`absolute inset-0 z-10 flex ${phase === "exit" ? "block" : "hidden"
+                className={`absolute inset-0 z-10 flex pointer-events-none ${phase === "exit" ? "block" : "hidden"
                     }`}
             >
                 <motion.div

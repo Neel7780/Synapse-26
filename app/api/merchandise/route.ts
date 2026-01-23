@@ -9,7 +9,6 @@ export async function GET() {
         const { data: products, error } = await supabase
             .from("merchandise_management")
             .select("*")
-            .eq("is_available", true)
             .order("product_id", { ascending: true });
 
         if (error) {

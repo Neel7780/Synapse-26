@@ -22,51 +22,19 @@ export default function ArtistsSection() {
 
   const [artists] = useState<Artist[]>([
     {
-      name: "Sartek",
-      date: "21 Feb 2025",
+      name: "Krishna",
+      date: "1 March 2026",
       image: {
-        avif: "/images_home/DJSartek.avif",
-        fallback: "/images_home/DJSartek.jpg",
+        avif: "/images_home/Krishna.avif",
+        fallback: "/images_home/Krishna.jpg",
       },
     },
     {
-      name: "Mohit Chauhan",
-      date: "23 Feb 2025",
+      name: "Bismil",
+      date: "1 March 2026",
       image: {
-        avif: "/images_home/MohitChauhan.avif",
-        fallback: "/images_home/MohitChauhan.jpg",
-      },
-    },
-    {
-      name: "Nikhil D' Souza",
-      date: "21 Feb 2025",
-      image: {
-        avif: "/images_home/NikhilDSouza.avif",
-        fallback: "/images_home/NikhilDSouza.jpg",
-      },
-    },
-    {
-      name: "Shaan",
-      date: "22 Feb 2025",
-      image: {
-        avif: "/images_home/Shaan.avif",
-        fallback: "/images_home/Shaan.jpg",
-      },
-    },
-    {
-      name: "Teri Miko",
-      date: "22 Feb 2025",
-      image: {
-        avif: "/images_home/TeriMiko.avif",
-        fallback: "/images_home/TeriMiko.jpg",
-      },
-    },
-    {
-      name: "Ravi Gupta",
-      date: "20 Feb 2025",
-      image: {
-        avif: "/images_home/RaviGupta.avif",
-        fallback: "/images_home/RaviGupta.jpg",
+        avif: "/images_home/Bismil.avif",
+        fallback: "/images_home/Bismil.jpg",
       },
     },
     {

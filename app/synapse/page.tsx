@@ -81,7 +81,7 @@ export default function HomeSection() {
           <HallOfFame />
         </div>
         <Footer />
-      </div>
-    </main>
+      </div >
+    </main >
   );
 }

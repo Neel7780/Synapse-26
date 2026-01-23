@@ -373,8 +373,6 @@ export default function HeroSection({
         },
         0.05
       )
-      // ... existing code ...
-
 
       .to(
         "#redCard",
@@ -454,13 +452,17 @@ export default function HeroSection({
         },
         "part3Reveal+=0.4"
       )
-      .from(
+      .fromTo(
         "#part3 .scroll-hint-home",
         {
           y: -20,
           opacity: 0,
+        },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.8,
           ease: "power3.out",
-          stagger: 0.15,
         },
         "part3Reveal+=0.4"
       )
@@ -508,8 +510,8 @@ export default function HeroSection({
         {
           y: -20,
           opacity: 0,
+          duration: 0.6,
           ease: "power3.out",
-          stagger: 0.15,
         },
         "part3Hide+=0.2"
       )
@@ -745,7 +747,7 @@ export default function HeroSection({
     <div>
       <div
         id="svgContainer"
-        className="fixed inset-0 z-10 transition-opacity duration-2400"
+        className="fixed inset-0 z-10 transition-opacity duration-2400 pointer-events-none"
         ref={svgContainerRef}
       >
         <Svg />
@@ -806,12 +808,14 @@ export default function HeroSection({
                 <h1 className="title text-4xl min-[450px]:text-6xl sm:text-7xl md:text-[clamp(40px,12vw,140px)] font-joker leading-none text-center px-4" ref={titleRef}>synapse&apos; 26</h1>
               </div>
 
-              <div className="scroll-hint-home absolute bottom-[8%] left-1/2 -translate-x-1/2 text-white text-center z-40 pointer-events-none opacity-0 will-change-transform mix-blend-difference" ref={scrollHintHomeRef}>
-                <p className="font-jqka text-[14px] md:text-xl tracking-[0.2em] uppercase mb-2 whitespace-nowrap">Scroll to explore</p>
-                <ChevronDown className="w-6 h-6 md:w-8 md:h-8 mx-auto animate-bounce" />
+              <div className="scroll-hint-home absolute bottom-0 left-1/2 -translate-x-1/2 text-white text-center z-40 pointer-events-none opacity-0 mb-4" ref={scrollHintHomeRef}>
+                <ChevronDown className="stroke-[3px] w-5 h-5 md:w-8 md:h-8 translate-y-full" />
+                <ChevronDown className="stroke-[3px] w-5 h-5 md:w-8 md:h-8 translate-y-1/2" />
+                <ChevronDown className="stroke-[3px] w-5 h-5 md:w-8 md:h-8" />
+                <ChevronDown className="stroke-[3px] w-5 h-5 md:w-8 md:h-8 -translate-y-1/2" />
               </div>
 
-              <CountdownTimer targetDate={new Date("2026-02-26 00:00:00")} />
+              <CountdownTimer targetDate={new Date("2026-02-26 19:00:00")} />
             </div>
           </div>
           <div

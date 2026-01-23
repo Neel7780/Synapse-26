@@ -122,7 +122,7 @@ export const metadata: Metadata = {
   ],
   creator: "SYNAPSE'26 Team",
   publisher: "DAIICT",
-  
+
   // ==========================================================================
   // Icons & Manifest
   // ==========================================================================
@@ -137,7 +137,7 @@ export const metadata: Metadata = {
     shortcut: "/Synapse Logo.png",
   },
   manifest: "/manifest.json",
-  
+
   // ==========================================================================
   // Open Graph (Facebook, LinkedIn, etc.)
   // ==========================================================================
@@ -165,7 +165,7 @@ export const metadata: Metadata = {
       },
     ],
   },
-  
+
   // ==========================================================================
   // Twitter Card
   // ==========================================================================
@@ -177,7 +177,7 @@ export const metadata: Metadata = {
     creator: siteConfig.twitterHandle,
     images: [`${siteConfig.url}/og-image.png`],
   },
-  
+
   // ==========================================================================
   // Robots & Indexing
   // ==========================================================================
@@ -194,7 +194,7 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  
+
   // ==========================================================================
   // Verification (add your verification codes)
   // ==========================================================================
@@ -202,20 +202,20 @@ export const metadata: Metadata = {
     // google: "your-google-verification-code",
     // yandex: "your-yandex-verification-code",
   },
-  
+
   // ==========================================================================
   // App Links
   // ==========================================================================
   alternates: {
     canonical: siteConfig.url,
   },
-  
+
   // ==========================================================================
   // Additional Metadata
   // ==========================================================================
   category: "events",
   classification: "College Festival",
-  
+
   // App-specific metadata
   applicationName: siteConfig.name,
   appleWebApp: {
@@ -229,7 +229,7 @@ export const metadata: Metadata = {
     address: true,
     email: true,
   },
-  
+
   // Other metadata
   other: {
     "mobile-web-app-capable": "yes",
@@ -298,7 +298,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* DNS prefetch for Supabase */}
         <link rel="dns-prefetch" href="https://supabase.co" />
-        
+
         {/* JSON-LD Structured Data for SEO */}
         <script
           type="application/ld+json"

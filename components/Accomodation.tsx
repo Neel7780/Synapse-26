@@ -424,9 +424,9 @@ export function AccommodationComponent() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-black text-white font-jqka">
+    <div className="min-h-[100dvh] bg-black text-white font-jqka" >
       {/* Header */}
-      <div className="pb-6 md:pb-8 text-center px-4 overflow-hidden">
+      <div className="pb-6 md:pb-8 text-center px-4 md:overflow-hidden" style={{ perspective: 1000 }}>
         <motion.h1
           initial={{ opacity: 0, y: -50, rotateX: 45 }}
           whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
@@ -586,8 +586,8 @@ export function AccommodationComponent() {
                   onClick={handleProceedToPayment}
                   disabled={!selectedRange}
                   className={`w-full md:w-auto px-8 md:px-12 py-4 md:py-6 text-lg md:text-2xl font-jqka uppercase transition-all ${selectedRange
-                      ? "bg-white text-black hover:bg-white/90 cursor-pointer"
-                      : "bg-white/30 text-white/50 cursor-not-allowed"
+                    ? "bg-white text-black hover:bg-white/90 cursor-pointer"
+                    : "bg-white/30 text-white/50 cursor-not-allowed"
                     }`}
                 >
                   {isAuthenticated ? "Proceed to Payment" : "Login to Book"}
