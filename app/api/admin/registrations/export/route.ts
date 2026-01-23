@@ -1,20 +1,39 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { corsHeaders, handleCorsResponse, addCorsHeaders } from '@/lib/cors'
+
+async function checkAdmin(supabase: any) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return false;
+  return user.email === process.env.ADMIN_EMAIL;
+}
+
+export async function OPTIONS(request: Request) {
+  const origin = request.headers.get("origin");
+  return handleCorsResponse(origin);
+}
 
 export async function GET(req: NextRequest) {
   try {
+    const origin = req.headers.get("origin");
     const supabase = (await createClient()) as any;
+
+    if (!(await checkAdmin(supabase))) {
+      const response = NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+      return addCorsHeaders(response, origin);
+    }
     const { searchParams } = new URL(req.url);
 
     const search = searchParams.get("searchParams") ?? "";
     const eventFilter = searchParams.get("filter");
-    const paymentMethod = searchParams.get("paymentMethod");
     const paymentStatus = searchParams.get("paymentStatus");
 
     let query = supabase.from("event_registrations").select(
       `
-      transaction_id,
       registration_id,
+      transaction_id,
       payment_status,
       team (
         team_members ( user_id )
@@ -22,9 +41,8 @@ export async function GET(req: NextRequest) {
       users(user_name,email,college),
       event_fee(
         event(event_name,event_category(category_name)),
-        fee(participation_type,price)
-      ),
-      payment_method(method_name,gateway_charge)
+        fee(participation_type,price,qr_code)
+      )
       `
     );
 
@@ -41,10 +59,6 @@ export async function GET(req: NextRequest) {
 
     if (eventFilter) {
       query = query.eq("event_fee.event.event_name", eventFilter);
-    }
-
-    if (paymentMethod) {
-      query = query.eq("payment_method.method_name", paymentMethod);
     }
 
     if (paymentStatus) {
@@ -67,18 +81,15 @@ export async function GET(req: NextRequest) {
       "Category",
       "Participation Type",
       "Group Size",
-      "Payment Method",
       "Payment Status",
       "Gross Amount",
-      "Gateway Charge",
-      "Net Amount",
+      "QR Code",
     ];
 
     const csvRows = [
       headers.join(","),
       ...(data ?? []).map((row: any) => {
         const price = row.event_fee?.fee?.price ?? 0;
-        const gateway = row.payment_method?.gateway_charge ?? 0;
         const groupSize = row.team?.team_members?.length ?? 1;
 
         return [
@@ -91,11 +102,9 @@ export async function GET(req: NextRequest) {
           `"${row.event_fee?.event?.event_category?.category_name}"`,
           row.event_fee?.fee?.participation_type,
           groupSize,
-          row.payment_method?.method_name,
           row.payment_status,
           price,
-          gateway,
-          price - gateway,
+          row.event_fee?.fee?.qr_code,
         ].join(",");
       }),
     ];
