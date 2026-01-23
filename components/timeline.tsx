@@ -80,10 +80,10 @@ const EventRow = memo(function EventRow({
         {event.name}
       </td>
       <td className="py-3 px-2 sm:px-4 md:px-6 text-sm sm:text-base md:text-xl text-white/80 text-center break-words whitespace-normal">
-        {event.time}
+        {event.time || "TO BE DECLARED"}
       </td>
       <td className="py-3 px-2 sm:px-4 md:px-6 text-sm sm:text-base md:text-xl text-white/80 text-center break-words whitespace-normal">
-        {event.venue}
+        {event.venue || "TO BE DECLARED"}
       </td>
     </tr>
   );
@@ -365,10 +365,18 @@ export default function TimelineContent() {
         {/* Timeline */}
         <div className="space-y-20 sm:space-y-24 md:space-y-40 pb-20 md:pb-32">
           {loading ? (
-            null
+            <div className="flex h-40 md:h-80 items-center justify-center">
+              <h2 className="text-white/40 font-joker text-2xl md:text-3xl animate-pulse">Loading Schedule...</h2>
+            </div>
           ) : error ? (
             <div className="text-red-500 text-center text-xl font-mono bg-black/50 p-4 rounded">
               Error: {error}. Check console for details.
+            </div>
+          ) : schedule.length === 0 ? (
+            <div className="flex h-[40vh] items-center justify-center">
+              <h2 className="text-white/60 font-joker text-3xl sm:text-5xl md:text-7xl uppercase tracking-widest text-center shadow-lg transform -rotate-2">
+                To Be Declared
+              </h2>
             </div>
           ) : (
             schedule.map((daySchedule, index) => (

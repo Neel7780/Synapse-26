@@ -114,7 +114,7 @@ export default function InitialLoader({ onComplete, onExitStart }: { onComplete?
                     duration: isExiting ? 1 : 0.3,
                     ease: [0.22, 1, 0.36, 1]
                 }}
-                className="fixed inset-0 z-[9999] bg-black flex items-center justify-center"
+                className={`fixed inset-0 z-[9999] bg-black flex items-center justify-center ${isExiting ? "pointer-events-none" : ""}`}
             >
                 <motion.div
                     className="flex flex-col items-center gap-6"

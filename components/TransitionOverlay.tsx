@@ -118,19 +118,19 @@ export default function TransitionOverlay() {
 
             {/* BLACK BASE */}
             <div
-                className={`absolute inset-0 bg-black z-0 ${phase === "exit" || phase === "idle"
+                className={`absolute inset-0 bg-black z-0 pointer-events-none ${phase === "exit" || phase === "idle"
                     ? "opacity-0"
                     : "opacity-100"
                     }`}
             />
 
             {/* CARDS GRID */}
-            <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 z-20">
+            <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 z-20 pointer-events-none">
                 {images.map((src, i) => (
                     <motion.div
                         key={i}
                         ref={i === 0 ? cellRef : null}
-                        className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden"
+                        className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden pointer-events-none"
                         initial={entryFromCorners[i]}
                         animate={
                             phase === "enter"
@@ -178,7 +178,7 @@ export default function TransitionOverlay() {
 
             {/* EXIT DOORS */}
             <div
-                className={`absolute inset-0 z-10 flex ${phase === "exit" ? "block" : "hidden"
+                className={`absolute inset-0 z-10 flex pointer-events-none ${phase === "exit" ? "block" : "hidden"
                     }`}
             >
                 <motion.div

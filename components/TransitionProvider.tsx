@@ -101,7 +101,6 @@ export default function TransitionProvider({
             <div
                 style={{
                     opacity: isExitStarted ? 1 : 0,
-                    pointerEvents: isLoaderComplete ? 'auto' : 'none',
                     transition: 'opacity 0.5s ease-out',
                 }}
             >

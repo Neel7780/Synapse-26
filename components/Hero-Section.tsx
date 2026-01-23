@@ -747,7 +747,7 @@ export default function HeroSection({
     <div>
       <div
         id="svgContainer"
-        className="fixed inset-0 z-10 transition-opacity duration-2400"
+        className="fixed inset-0 z-10 transition-opacity duration-2400 pointer-events-none"
         ref={svgContainerRef}
       >
         <Svg />
