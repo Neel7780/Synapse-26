@@ -113,8 +113,6 @@ export async function GET(
           if (feeError) {
             console.error(`Error fetching fee for registration ${reg.registration_id}:`, feeError);
           } else if (feeRaw) {
-            console.log(`Raw fee data for fee_id ${reg.fee_id}:`, JSON.stringify(feeRaw));
-            
             // Extract participation_type from fee table
             feeData = {
               participation_type: (feeRaw as any).participation_type || "General",
@@ -122,7 +120,6 @@ export async function GET(
               max_members: (feeRaw as any).max_members || 0,
               price: (feeRaw as any).price || 0,
             };
-            console.log(`Processed fee data:`, feeData);
           }
         } else {
           console.warn(`Registration ${reg.registration_id} has no fee_id`);

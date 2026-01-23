@@ -27,12 +27,44 @@ const EVENT_COVERS: Record<string, string> = {
 const SITE_BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://synapse-daiict.co.in";
 
 function getEventCoverUrl(eventName: string): string | null {
-  const cover = EVENT_COVERS[eventName];
-  return cover ? `${SITE_BASE_URL}${cover}` : null;
+  if (!eventName) return null;
+
+  // Case-insensitive match against configured keys
+  const normalized = eventName.trim().toLowerCase();
+  let matchedCover: string | undefined;
+
+  for (const [key, value] of Object.entries(EVENT_COVERS)) {
+    if (normalized === key.toLowerCase()) {
+      matchedCover = value;
+      break;
+    }
+  }
+
+  // Fallback: simple keyword-based matching to be resilient to name variations
+  if (!matchedCover) {
+    const keywordMappings: Array<{ keyword: string; path?: string }> = [
+      { keyword: "dance", path: EVENT_COVERS["DANCE EVENT"] },
+      { keyword: "fashion", path: EVENT_COVERS["Fashion Show"] },
+      { keyword: "music", path: EVENT_COVERS["MUSIC EVENT"] },
+      { keyword: "theatre", path: EVENT_COVERS["THEATRE SHOW"] },
+      { keyword: "theater", path: EVENT_COVERS["THEATRE SHOW"] },
+      { keyword: "game", path: EVENT_COVERS["GAMING EVENT"] },
+      { keyword: "gaming", path: EVENT_COVERS["GAMING EVENT"] },
+    ].filter((m) => m.path);
+
+    for (const mapping of keywordMappings) {
+      if (normalized.includes(mapping.keyword)) {
+        matchedCover = mapping.path;
+        break;
+      }
+    }
+  }
+
+  return matchedCover ? `${SITE_BASE_URL}${matchedCover}` : null;
 }
 
 export const acceptanceEmailTemplate = (props: EmailTemplateProps) => {
-  const { participantName, eventName, participationType, registrationId, amount, eventDate, teamMembers } = props;
+  const { participantName, eventName, participationType, amount, eventDate, teamMembers } = props;
   const coverUrl = getEventCoverUrl(eventName);
 
   // Build a unified team list that always includes the leader/solo participant
@@ -167,7 +199,7 @@ Team Synapse
 };
 
 export const rejectionEmailTemplate = (props: EmailTemplateProps & { rejectionReason?: string }) => {
-  const { participantName, eventName } = props;
+  const { participantName, eventName, rejectionReason } = props;
   const coverUrl = getEventCoverUrl(eventName);
 
   return {
@@ -214,14 +246,15 @@ export const rejectionEmailTemplate = (props: EmailTemplateProps & { rejectionRe
               <div class="warning-box">
                 <div style="font-size: 15px; color: #fca5a5; font-weight: 700; margin-bottom: 8px;">⚠️ REGISTRATION STATUS</div>
                 <div style="font-size: 14px; color: #e5e7eb;">Your registration has been <strong style="color: #ef4444;">REJECTED</strong></div>
+                ${rejectionReason ? `<div style="margin-top: 8px; font-size: 13px; color: #fca5a5;">Reason: ${rejectionReason}</div>` : ''}
               </div>
-              
-<p style="margin-top: 28px; font-size: 14px; color: #d1d5db; line-height: 1.7;">
-          Unfortunately, your participation cannot be approved at this time.<br>
-          Contact the game master (event coordinator) for further details.
-        </p>
-        
-        <p style="margin-top: 40px; font-size: 16px; font-weight: 600; color: #e5e7eb;">
+
+              <p style="margin-top: 28px; font-size: 14px; color: #d1d5db; line-height: 1.7;">
+                Unfortunately, your participation cannot be approved at this time.<br>
+                Contact the game master (event coordinator) for further details.
+              </p>
+
+              <p style="margin-top: 40px; font-size: 16px; font-weight: 600; color: #e5e7eb;">
                 The game continues without you,<br>
                 <strong style="color: #dc2626;">Team Synapse</strong>
               </p>
@@ -244,6 +277,8 @@ Your registration has been REJECTED
 
 Unfortunately, your participation cannot be approved at this time.
 Contact the game master (event coordinator) for further details.
+
+${rejectionReason ? `Reason: ${rejectionReason}` : ''}
 
 The game continues without you,
 Team Synapse
