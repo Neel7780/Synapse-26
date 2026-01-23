@@ -215,6 +215,58 @@ const Card = ({ data, index, total, progress }: CardProps) => {
     : ["0px", "-60px"];
   const y = useTransform(progress, yRange, yValues);
 
+  // For single item, override animations to stay static
+  if (total === 1) {
+    return (
+      <div
+        className="absolute inset-0 w-full h-full rounded-[16px] overflow-hidden shadow-2xl"
+        style={{
+          backgroundColor: data.hexColor,
+          zIndex: 10,
+        }}
+      >
+        <div className="relative w-full h-full p-8 md:p-12 flex flex-col text-white font-mono uppercase italic-none">
+          {/* Vertical Text - Left Side */}
+          <div className="absolute left-6 md:left-8 top-10 flex flex-col justify-between h-[calc(100%-80px)] pointer-events-none">
+            <span className="[writing-mode:vertical-lr] rotate-180 font-jqka text-lg tracking-[0.2em] font-black">
+              {data.day}
+            </span>
+            <span className="[writing-mode:vertical-lr] rotate-180 font-jqka text-lg tracking-[0.3em] font-black opacity-60">
+              {data.tag}
+            </span>
+          </div>
+
+          {/* Top Info Area - Fixed height or shrink prevention ensures alignment */}
+          <div className="ml-16 md:ml-20 mb-6 shrink-0">
+            <h2 className="text-3xl md:text-5xl font-black font-jqka tracking-tighter mb-1 leading-none">
+              {data.artist}
+            </h2>
+            <p className="text-sm md:text-lg max-w-xl opacity-80 font-jqka font-bold leading-tight tracking-tight mt-4">
+              {data.description}
+            </p>
+          </div>
+
+          {/* Central Inset Image Area - Flex-1 ensures it fills exactly the remaining space */}
+          <div className="relative flex-1 min-h-0 mb-2 ml-16 md:ml-20 mr-2 md:mr-4 rounded-[16px] overflow-hidden shadow-2xl border border-white/10 bg-black/20">
+            {data.image ? (
+              <img
+                src={data.image}
+                alt={data.artist}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-zinc-900">
+                <span className="font-joker text-white text-3xl md:text-5xl text-center opacity-50 px-4">
+                  TO BE DECLARED
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <motion.div
       style={{

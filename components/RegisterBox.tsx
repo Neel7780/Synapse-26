@@ -179,36 +179,41 @@ export default function RegisterBox({ goLogin, goOtp }: RegisterBoxProps) {
               placeholder="DOB: DD/MM/YYYY"
               value={formData.dob}
               onChange={(e) => handleChange("dob", e.target.value)}
-              className={`w-full px-3 py-2 bg-transparent border border-white/30 rounded-md placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50 pr-10 text-base disabled:opacity-50 [color-scheme:dark] ${formData.dob ? "text-white" : "text-gray-500"
-                }`}
+              className={`w-full px-3 py-2 bg-transparent border border-white/30 rounded-md
+      placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50
+      pr-7 text-sm disabled:opacity-50 [color-scheme:dark]
+      ${formData.dob ? "text-white text-left" : "text-gray-500 text-left"}
+    `}
               disabled={isLoading}
             />
-            {!formData.dob && (
-              <svg
-                onClick={() => {
-                  if (dobRef.current) {
-                    dobRef.current.type = "date";
-                    dobRef.current.focus();
-                    dobRef.current.focus();
-                    if ("showPicker" in dobRef.current) {
-                      (dobRef.current as HTMLInputElement & { showPicker: () => void }).showPicker();
-                    }
+
+            {/* Calendar icon — ALWAYS visible */}
+            <svg
+              onClick={() => {
+                if (dobRef.current) {
+                  dobRef.current.type = "date";
+                  dobRef.current.focus();
+                  if ("showPicker" in dobRef.current) {
+                    (dobRef.current as HTMLInputElement & {
+                      showPicker: () => void;
+                    }).showPicker();
                   }
-                }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 cursor-pointer hover:text-white transition-colors"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-            )}
+                }
+              }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5
+      text-gray-500 cursor-pointer hover:text-white transition-colors"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
           </div>
           <select
             value={formData.gender}

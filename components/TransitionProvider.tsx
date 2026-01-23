@@ -57,11 +57,23 @@ export default function TransitionProvider({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isTransitioning]); // Don't include pathname here, we want the path AT START
 
+    // Track back/forward navigation
+    const isBackRef = useRef(false);
+
+    useEffect(() => {
+        const handlePopState = () => {
+            isBackRef.current = true;
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
+
     useEffect(() => {
         if (!isTransitioning) return;
 
         const startTime = Date.now();
-        const MIN_DURATION = 4000; // Minimum time to show loader
+        // If it's a back navigation, skip the artificial delay (0ms). Otherwise default to 1.5s.
+        const MIN_DURATION = isBackRef.current ? 0 : 4000;
         const MAX_DURATION = 90000; // Fail-safe max time
 
         // Check constantly if we can dismiss
@@ -72,6 +84,7 @@ export default function TransitionProvider({
             // If we exceeded max duration, force close
             if (elapsed > MAX_DURATION) {
                 endTransition();
+                isBackRef.current = false; // Reset
                 clearInterval(interval);
                 return;
             }
@@ -82,6 +95,7 @@ export default function TransitionProvider({
             // 3. Path has actually changed (Critical Fix)
             if (elapsed > MIN_DURATION && loadingCount === 0 && pathname !== startPathRef.current) {
                 endTransition();
+                isBackRef.current = false; // Reset
                 clearInterval(interval);
             }
         }, 100);

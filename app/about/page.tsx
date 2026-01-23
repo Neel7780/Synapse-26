@@ -205,14 +205,14 @@ export default function About() {
           {/* LEFT ART – narrow */}
           <div
             ref={imageRef}
-            className="w-full md:w-[30%] hidden md:flex items-end p-10 justify-center md:justify-start"
+            className="w-full md:w-[30%] hidden md:flex items-end pl-10 justify-center md:justify-start"
           >
             <Image
               src="/about-art.png"
               width={500}
               height={500}
               alt="Decorative cards"
-              className="h-[90%] object-cover"
+              className="h-[90%]"
             />
           </div>
 
