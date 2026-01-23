@@ -48,7 +48,7 @@ export default function HomeSection() {
 
   return (
     <main className="flex flex-col min-h-dvh overflow-x-hidden relative">
-      {/* {entered && !isMobile ? (
+      {entered && !isMobile ? (
         <div className="hidden md:block">
           <FluidCanvas />
         </div>
@@ -74,14 +74,14 @@ export default function HomeSection() {
       >
         <AboutSection />
         <JokerSection />
-        <div className="relative z-20 bg-black" style={{ isolation: "isolate" }}> */}
-      <ArtistsSection />
-      {/* </div>
+        <div className="relative z-20 bg-black" style={{ isolation: "isolate" }}>
+          <ArtistsSection />
+        </div>
         <div className="relative z-10 bg-black" style={{ isolation: "isolate" }}>
           <HallOfFame />
         </div>
         <Footer />
-      </div > */}
+      </div >
     </main >
   );
 }
