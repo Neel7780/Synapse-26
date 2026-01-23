@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate status value
-    if (status !== "verified" && status !== "pending") {
+    if (status !== "accepted" && status !== "rejected" && status !== "pending") {
       return NextResponse.json({ error: "Invalid status value" }, { status: 400 });
     }
 
