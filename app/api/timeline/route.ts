@@ -159,7 +159,7 @@ export async function GET() {
 
             const dayIndex = getDayIndex(concert.concert_date);
             if (dayIndex !== -1) {
-                const { displayTime, sortTime } = parseTime(concert.concert_date, null);
+                const { displayTime, sortTime } = parseTime(concert.concert_date, concert.timing);
                 schedule[dayIndex].events.push({
                     name: concert.concert_name,
                     time: displayTime,

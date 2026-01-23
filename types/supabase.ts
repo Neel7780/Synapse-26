@@ -167,18 +167,21 @@ export type Database = {
           concert_date: string | null;
           concert_name: string;
           id: number;
+          timing: string | null;
           venue: string | null;
         };
         Insert: {
           concert_date?: string | null;
           concert_name: string;
           id?: number;
+          timing?: string | null;
           venue?: string | null;
         };
         Update: {
           concert_date?: string | null;
           concert_name?: string;
           id?: number;
+          timing?: string | null;
           venue?: string | null;
         };
         Relationships: [];
