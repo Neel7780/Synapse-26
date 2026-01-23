@@ -1,73 +1,133 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
+import { createClient } from "@/utils/supabase/client";
 
-const artistData = [
-  {
-    day: "DAY 01",
-    tag: "HEART",
-    artist: "ADITYA GADHAVI",
-    description: "THE VOICE THAT CARRIES GUJARAT'S SOUL AND STORIES, READY TO ECHO ACROSS THE NIGHT.",
-    image: "/images_home/part3-image.png",
-    hexColor: "#FE431F",
-  },
-  {
-    day: "DAY 02",
-    tag: "SOUL",
-    artist: "MOHIT CHAUHAN",
-    description: "A LEGENDARY VOICE THAT HAS DEFINED ROMANCE AND SOUL IN INDIAN MUSIC FOR DECADES.",
-    image: "/images_home/MohitChauhan.jpg",
-    hexColor: "#317D5F",
-  },
-  {
-    day: "DAY 03",
-    tag: "VIBE",
-    artist: "SHAAN",
-    description: "THE MOST VERSATILE VOICE THAT BRINGS UNMATCHED ENERGY AND JOY TO EVERY PERFORMANCE.",
-    image: "/images_home/Shaan.jpg",
-    hexColor: "#0A7CC1",
-  },
-  {
-    day: "DAY 04",
-    tag: "BASS",
-    artist: "DJ SARTEK",
-    description: "THE MAN WHO HAS BEEN ROCKING THE DANCE FLOORS ACROSS THE GLOBE WITH HIS INFECTIOUS BEATS.",
-    image: "/images_home/DJSartek.jpg",
-    hexColor: "#DDB100",
-  },
-];
+// Fallback/Initial data type matching the transformed Supabase data
+interface CarouselArtist {
+  day: string;
+  tag: string;
+  artist: string;
+  description: string;
+  image: string;
+  hexColor: string;
+}
+
+const COLORS = ["#FE431F", "#317D5F", "#0A7CC1", "#DDB100"];
 
 export default function ArtistCarousel() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [artists, setArtists] = useState<CarouselArtist[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Initialize scroll with a default or safe ref. 
+  // We'll update layout when data loads.
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"]
   });
 
+  useEffect(() => {
+    const fetchArtists = async () => {
+      const supabase = createClient();
+
+      const { data, error } = await supabase
+        .from("artist")
+        .select(`
+          name,
+          bio,
+          genre,
+          artist_image_url,
+          concert (
+            concert_date
+          )
+        `);
+
+      if (error) {
+        console.error("Error fetching artists:", error);
+        setLoading(false);
+        return;
+      }
+
+      if (data) {
+        // Sort by date
+        const sortedData = data.sort((a, b) => {
+          const dateA = new Date(a.concert?.concert_date || "");
+          const dateB = new Date(b.concert?.concert_date || "");
+          return dateA.getTime() - dateB.getTime();
+        });
+
+        const transformedData: CarouselArtist[] = sortedData.map((item, index) => {
+          // Calculate Day X relative to Feb 26, 2026
+          let dayLabel = "TBA";
+          if (item.concert?.concert_date) {
+            const concertDate = new Date(item.concert.concert_date);
+            const baseDate = new Date("2026-02-26");
+            // Difference in milliseconds
+            const diffTime = concertDate.getTime() - baseDate.getTime();
+            // Difference in days (rounded appropriately)
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+            // 0-indexed difference, so +1 for Day 1
+            const dayNum = diffDays + 1;
+            dayLabel = `DAY ${dayNum.toString().padStart(2, '0')}`;
+          }
+
+          return {
+            day: dayLabel,
+            tag: item.genre || "MUSIC",
+            artist: item.name,
+            description: item.bio || "",
+            image: item.artist_image_url || "/images_home/placeholder.jpg",
+            hexColor: COLORS[index % COLORS.length]
+          };
+        });
+
+        setArtists(transformedData);
+      }
+      setLoading(false);
+    };
+
+    fetchArtists();
+  }, []);
+
   return (
-    <div ref={containerRef} className="relative h-[400vh] bg-black">
-      <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
-        <div className="relative w-full max-w-6xl h-[min(600px,80vh)] mx-4">
-          {artistData.map((data, index) => {
-            return (
-              <Card
-                key={index}
-                data={data}
-                index={index}
-                total={artistData.length}
-                progress={scrollYProgress}
-              />
-            );
-          })}
+    <div
+      ref={containerRef}
+      className="relative bg-black"
+      style={{ height: loading ? "100vh" : `${Math.max(artists.length * 100, 100)}vh` }}
+    >
+      {loading ? (
+        <div className="sticky top-0 h-screen w-full flex items-center justify-center text-white font-jqka text-2xl">
+          LOADING ARTISTS...
         </div>
-      </div>
+      ) : artists.length === 0 ? (
+        <div className="sticky top-0 h-screen w-full flex items-center justify-center text-white font-jqka">
+          NO ARTISTS FOUND
+        </div>
+      ) : (
+        <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
+          <div className="relative w-full max-w-6xl h-[min(600px,80vh)] mx-4">
+            {artists.map((data, index) => {
+              return (
+                <Card
+                  key={index}
+                  data={data}
+                  index={index}
+                  total={artists.length}
+                  progress={scrollYProgress}
+                />
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 interface CardProps {
-  data: typeof artistData[0];
+  data: CarouselArtist;
   index: number;
   total: number;
   progress: MotionValue<number>;
@@ -173,7 +233,7 @@ const Card = ({ data, index, total, progress }: CardProps) => {
           <h2 className="text-3xl md:text-5xl font-black font-jqka tracking-tighter mb-1 leading-none">
             {data.artist}
           </h2>
-          <p className="text-[10px] md:text-xs max-w-xl opacity-80 font-jqka font-bold leading-tight tracking-tight">
+          <p className="text-sm md:text-lg max-w-xl opacity-80 font-jqka font-bold leading-tight tracking-tight mt-4">
             {data.description}
           </p>
         </div>

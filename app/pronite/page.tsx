@@ -9,7 +9,6 @@ import ProniteGallery from "@/components/ProniteGallery";
 import Footer from "@/components/ui/Footer";
 import { Navbar } from "@/components/ui/Resizable-navbar";
 import NavigationPanel from "@/components/ui/NavigationPanel";
-import { useAuth } from "@/hooks/useAuth";
 import TextReveal from "@/components/TextReveal";
 
 if (typeof window !== "undefined") {
@@ -17,12 +16,9 @@ if (typeof window !== "undefined") {
 }
 
 export default function PronitePage() {
-  const { isAuthenticated } = useAuth();
   const ctaSectionRef = useRef<HTMLElement>(null);
   const ctaTitleRef = useRef<HTMLHeadingElement>(null);
   const ctaSubtitleRef = useRef<HTMLParagraphElement>(null);
-  const ctaButtonRef = useRef<HTMLDivElement>(null);
-
 
   useEffect(() => {
     if (!ctaSectionRef.current) return;
@@ -32,13 +28,11 @@ export default function PronitePage() {
 
     const ctx = gsap.context(() => {
       // Title dramatic reveal - split into words
-
-      // Title dramatic reveal - split into words
       if (ctaTitleRef.current) {
         const lines = ctaTitleRef.current.innerHTML.split("<br>");
         ctaTitleRef.current.innerHTML = "";
 
-        lines.forEach((line, lineIndex) => {
+        lines.forEach((line) => {
           const lineDiv = document.createElement("div");
           lineDiv.className = "overflow-hidden";
 
@@ -51,7 +45,6 @@ export default function PronitePage() {
           });
 
           ctaTitleRef.current?.appendChild(lineDiv);
-
         });
 
         gsap.fromTo(
@@ -100,41 +93,6 @@ export default function PronitePage() {
             },
           }
         );
-      }
-
-      // Button dramatic entrance with glow
-      if (ctaButtonRef.current) {
-        gsap.fromTo(
-          ctaButtonRef.current,
-          {
-            opacity: 0,
-            scale: 0.5,
-            y: 50,
-          },
-          {
-            opacity: 1,
-            scale: 1,
-            y: 0,
-            duration: 0.8,
-            ease: "back.out(1.7)",
-            delay: 0.8,
-            scrollTrigger: {
-              trigger: ctaSectionRef.current,
-              start: "top 70%",
-              once: true,
-            },
-          }
-        );
-
-        // Continuous pulse glow on button
-        gsap.to(ctaButtonRef.current, {
-          boxShadow: "0 0 60px 20px rgba(235, 0, 0, 0.4)",
-          duration: 1.5,
-          ease: "sine.inOut",
-          repeat: -1,
-          yoyo: true,
-          delay: 1.5,
-        });
       }
     }, ctaSectionRef);
 
