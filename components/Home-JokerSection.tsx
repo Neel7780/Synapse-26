@@ -614,8 +614,8 @@ export default function JokerSection() {
                     className="card-container absolute min-h[180px] min-w-[150px] cursor-pointer"
                     style={{
                       // Modified clamps for better mobile aspect ratio
-                      width: "clamp(150px, 40vw, 240px)",
-                      height: "clamp(200px, 50vw, 300px)",
+                      width: "clamp(110px, 25vw, 240px)",
+                      height: "clamp(140px, 30vw, 300px)",
                       transform: "translateY(120vh)"
                     }}
                     id={card.id}

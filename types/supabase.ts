@@ -391,8 +391,9 @@ export type Database = {
           is_available: boolean | null;
           price: number | null;
           product_id: number;
-          product_image: string | null;
+          product_image: string[] | null;
           product_name: string;
+          technical_specs: string[] | null;
         };
         Insert: {
           available_sizes?: string[] | null;
@@ -402,6 +403,7 @@ export type Database = {
           product_id?: number;
           product_image?: string | null;
           product_name: string;
+          technical_specs?: string[] | null;
         };
         Update: {
           available_sizes?: string[] | null;
@@ -411,6 +413,7 @@ export type Database = {
           product_id?: number;
           product_image?: string | null;
           product_name?: string;
+          technical_specs?: string[] | null;
         };
         Relationships: [];
       };

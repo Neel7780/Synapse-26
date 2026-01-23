@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useNavigationState } from "@/lib/useNavigationState";
 import TransitionOverlay from "@/components/TransitionOverlay";
+import InitialLoader from "@/components/InitialLoader";
 
 export default function TransitionProvider({
     children,
@@ -11,11 +12,25 @@ export default function TransitionProvider({
     children: React.ReactNode;
 }) {
     const pathname = usePathname();
-    const { endTransition, isTransitioning, loadingCount } =
+    const { endTransition, isTransitioning, loadingCount, isFirstLoad } =
         useNavigationState();
+
+    // Track if we should show initial loader (only on direct page load, not from home)
+    const [showInitialLoader, setShowInitialLoader] = useState(false);
 
     // Smart Loading Logic
     const startPathRef = useRef(pathname);
+
+    // Check if this is a direct landing (not from home page intro)
+    useEffect(() => {
+        // Show initial loader only if:
+        // 1. It's the first load
+        // 2. Not on the home page (home has its own intro)
+        // 3. Not already transitioning
+        if (isFirstLoad && pathname !== "/" && !isTransitioning) {
+            setShowInitialLoader(true);
+        }
+    }, [isFirstLoad, pathname, isTransitioning]);
 
     // Update startPath when transition starts
     useEffect(() => {
@@ -60,6 +75,7 @@ export default function TransitionProvider({
     return (
         <>
             <TransitionOverlay />
+            {showInitialLoader && <InitialLoader />}
             {children}
         </>
     );

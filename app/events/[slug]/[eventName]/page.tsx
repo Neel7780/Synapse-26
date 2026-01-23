@@ -11,10 +11,12 @@ import { Calendar, Clock, MapPin, Users, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEventBySlug } from "@/hooks/useEvents";
 import { FormattedFee } from "@/types/events";
+import { useNavigationState } from "@/lib/useNavigationState";
 
 export default function EventPage() {
     const params = useParams();
     const router = useRouter();
+    const { startTransition } = useNavigationState();
 
     // derived synchronously
     const slug = params?.slug as string;
@@ -200,7 +202,7 @@ export default function EventPage() {
                                     className="w-fit px-12 py-6 text-xl font-jqka tracking-[0.2em] uppercase bg-transparent border border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-all duration-300 rounded-none mt-4 shadow-[0_0_15px_rgba(220,38,38,0.2)] cursor-pointer"
                                     onClick={() => {
                                         if (!currentFee) return;
-                                        const queryParams = new URLSearchParams({
+                                        const params = new URLSearchParams({
                                             fee_id: String(currentFee.fee_id || 0),
                                             type: currentFee.type,
                                             price: String(currentFee.price),

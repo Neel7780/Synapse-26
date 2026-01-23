@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useNavigationState } from "@/lib/useNavigationState";
 import { useEffect, useState, useRef, useLayoutEffect } from "react";
+import Image from "next/image";
 
 type Phase = "idle" | "delay" | "enter" | "exit";
 
@@ -44,19 +45,18 @@ export default function TransitionOverlay() {
     useLayoutEffect(() => {
         const computeScale = () => {
             const mobile = window.innerWidth < 768;
-            setIsMobile(mobile);
 
-            if (!mobile || !cellRef.current) {
+            setIsMobile(prev => {
+                if (prev !== mobile) return mobile;
+                return prev;
+            });
+
+            if (!mobile) {
                 setScaleX(1);
                 return;
             }
 
-            const { width, height } =
-                cellRef.current.getBoundingClientRect();
-
-            if (width > 0 && height > 0) {
-                setScaleX(height / width);
-            }
+            setScaleX(window.innerHeight / window.innerWidth);
         };
 
         computeScale();
@@ -153,22 +153,25 @@ export default function TransitionOverlay() {
                             ease: [0.22, 1, 0.36, 1],
                         }}
                     >
-                        <Image
-                            src={src}
-                            alt=""
-                            className="
-                                object-fill origin-center
-                                w-[50dvh] h-[50vw]
-                                md:w-full md:h-full md:rotate-0
-                            "
-                            style={
-                                isMobile
-                                    ? {
-                                        transform: `rotate(90deg) scaleX(${scaleX})`,
-                                    }
-                                    : undefined
-                            }
-                        />
+                        <div className="relative w-[50dvh] h-[50vw] md:w-full md:h-full">
+                            <Image
+                                src={src}
+                                alt=""
+                                fill
+                                priority
+                                unoptimized
+                                sizes="50vw"
+                                className="object-center object-fill rotate-0"
+                                style={
+                                    isMobile
+                                        ? {
+                                            transform: `translateZ(0) rotate(90deg) scaleX(${scaleX})`,
+                                            willChange: "transform",
+                                        }
+                                        : undefined
+                                }
+                            />
+                        </div>
                     </motion.div>
                 ))}
             </div>
