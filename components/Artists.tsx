@@ -308,11 +308,11 @@ export default function ArtistsSection() {
                     style={{
                       width:
                         i === currentIndex
-                          ? "clamp(240px, 55vw, 520px)"
+                          ? "clamp(240px, 50vw, 520px)"
                           : "clamp(140px, 28vw, 260px)",
                       height:
                         i === currentIndex
-                          ? "clamp(150px, 40vw, 420px)"
+                          ? "clamp(150px, 35vw, 420px)"
                           : "clamp(110px, 28vw, 260px)",
                     }}
                     sizes="(max-width: 768px) 80vw, 520px"
