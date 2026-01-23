@@ -70,10 +70,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
     }
 
-    // Fetch full registration details for email
+    // Fetch full registration details including fee
     const { data: registrationData } = await supabase
       .from("event_registrations")
-      .select("registration_id, gross_amount, registered_by_user_id")
+      .select("registration_id, gross_amount, registered_by_user_id, fee_id")
       .eq("registration_id", registration_id)
       .single();
 
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Fetch event details
+    // Fetch event name separately
     let eventName = "Event";
     const { data: eventDetailData } = await supabase
       .from("event")
@@ -101,22 +101,25 @@ export async function POST(request: NextRequest) {
       .eq("event_id", event_id)
       .single();
 
-    if (eventDetailData) {
+    if (eventDetailData?.event_name) {
       eventName = eventDetailData.event_name;
     }
 
-    // Fetch fee details
+    // Fetch fee/participation type
     let participationType = "General";
-    if (registrationData?.registration_id) {
-      const { data: regData } = await supabase
-        .from("event_registrations")
-        .select("fee:event_fee_id(participation_type)")
-        .eq("registration_id", registration_id)
+    if (registrationData?.fee_id) {
+      const { data: feeData, error: feeError } = await supabase
+        .from("fee")
+        .select("participation_type")
+        .eq("fee_id", registrationData.fee_id)
         .single();
 
-      if (regData?.fee) {
-        const feeData = Array.isArray(regData.fee) ? regData.fee[0] : regData.fee;
-        participationType = feeData?.participation_type || "General";
+      if (feeError) {
+        console.error("Error fetching fee data:", feeError);
+      }
+
+      if (feeData && (feeData as any).participation_type) {
+        participationType = (feeData as any).participation_type;
       }
     }
 

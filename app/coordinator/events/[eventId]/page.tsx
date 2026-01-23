@@ -47,7 +47,7 @@ import {
 interface Registration {
   registration_id: number;
   event_id: number;
-  event_fee_id: number | null;
+  fee_id: number | null;
   registered_by_user_id: string;
   registration_date: string;
   payment_status: string;
@@ -447,8 +447,8 @@ export default function EventRegistrationsPage({
         open={!!selectedRegistration}
         onOpenChange={() => setSelectedRegistration(null)}
       >
-        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-4xl w-full h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 flex-shrink-0">
             <DialogTitle>Registration Details</DialogTitle>
             <DialogDescription className="text-gray-400">
               Registration ID: #{selectedRegistration?.registration_id}
@@ -456,138 +456,161 @@ export default function EventRegistrationsPage({
           </DialogHeader>
 
           {selectedRegistration && (
-            <div className="space-y-6">
-              {/* Participant Info */}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-400 mb-3">
-                  Participant Information
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-start gap-3">
-                    <User className="h-4 w-4 text-gray-500 mt-0.5" />
-                    <div>
-                      <p className="text-xs text-gray-500">Name</p>
-                      <p className="text-sm font-medium">
-                        {selectedRegistration.users.user_name || "N/A"}
-                      </p>
+            <div className="overflow-y-auto overflow-x-hidden px-6 pb-6 flex-1">
+              {/* Participant Info & Payment Details */}
+              <div className="space-y-6">
+                {/* Participant Info */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-400 mb-3">
+                    Participant Information
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-start gap-3">
+                      <User className="h-4 w-4 text-gray-500 mt-0.5" />
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-500">Name</p>
+                        <p className="text-sm font-medium break-words">
+                          {selectedRegistration.users.user_name || "N/A"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Mail className="h-4 w-4 text-gray-500 mt-0.5" />
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-500">Email</p>
+                        <p className="text-sm font-medium break-words">
+                          {selectedRegistration.users.email}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Phone className="h-4 w-4 text-gray-500 mt-0.5" />
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-500">Phone</p>
+                        <p className="text-sm font-medium break-words">
+                          {selectedRegistration.users.phone || "N/A"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Building className="h-4 w-4 text-gray-500 mt-0.5" />
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-500">College</p>
+                        <p className="text-sm font-medium break-words">
+                          {selectedRegistration.users.college || "N/A"}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <Mail className="h-4 w-4 text-gray-500 mt-0.5" />
-                    <div>
-                      <p className="text-xs text-gray-500">Email</p>
-                      <p className="text-sm font-medium">
-                        {selectedRegistration.users.email}
+                </div>
+
+                {/* Event & Payment Info */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-400 mb-3">
+                    Event & Payment Details
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-500">Participation Type</p>
+                      <p className="text-sm font-medium break-words">
+                        {selectedRegistration.fee?.participation_type || "N/A"}
                       </p>
                     </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Phone className="h-4 w-4 text-gray-500 mt-0.5" />
-                    <div>
-                      <p className="text-xs text-gray-500">Phone</p>
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-500">Amount Paid</p>
                       <p className="text-sm font-medium">
-                        {selectedRegistration.users.phone || "N/A"}
+                        ₹{selectedRegistration.gross_amount}
                       </p>
                     </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Building className="h-4 w-4 text-gray-500 mt-0.5" />
-                    <div>
-                      <p className="text-xs text-gray-500">College</p>
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-500">Payment Status</p>
+                      <div className="mt-1">
+                        {getPaymentStatusBadge(selectedRegistration.payment_status)}
+                      </div>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-500">Verification Status</p>
+                      <div className="mt-1">
+                        {getStatusBadge(selectedRegistration.coordinator_status)}
+                      </div>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-500">Transaction ID</p>
+                      <p className="text-sm font-medium break-all">
+                        {selectedRegistration.transaction_id || "N/A"}
+                      </p>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-500">Registration Date</p>
                       <p className="text-sm font-medium">
-                        {selectedRegistration.users.college || "N/A"}
+                        {new Date(
+                          selectedRegistration.registration_date
+                        ).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
                 </div>
+
+                {/* Action Buttons */}
+                {selectedRegistration.coordinator_status === "pending" || selectedRegistration.coordinator_status === null ? (
+                  <div className="pt-6 border-t border-zinc-800 space-y-2">
+                    <Button
+                      onClick={() => setConfirmAction({ registration: selectedRegistration, action: "accepted" })}
+                      disabled={verifying === selectedRegistration.registration_id}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      {verifying === selectedRegistration.registration_id ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="h-4 w-4 mr-2" />
+                          Accept Registration
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      onClick={() => setConfirmAction({ registration: selectedRegistration, action: "rejected" })}
+                      disabled={verifying === selectedRegistration.registration_id}
+                      className="w-full bg-red-600 hover:bg-red-700 text-white"
+                    >
+                      {verifying === selectedRegistration.registration_id ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <AlertCircle className="h-4 w-4 mr-2" />
+                          Reject Registration
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                ) : null}
               </div>
 
-              {/* Event & Payment Info */}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-400 mb-3">
-                  Event & Payment Details
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
+              {/* Payment Screenshot */}
+              {selectedRegistration.payment_screenshot_url && (
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-400 mb-3">
+                    Payment Proof
+                  </h3>
                   <div>
-                    <p className="text-xs text-gray-500">Participation Type</p>
-                    <p className="text-sm font-medium">
-                      {selectedRegistration.fee?.participation_type || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Amount Paid</p>
-                    <p className="text-sm font-medium">
-                      ₹{selectedRegistration.gross_amount}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Payment Status</p>
-                    <div className="mt-1">
-                      {getPaymentStatusBadge(selectedRegistration.payment_status)}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Verification Status</p>
-                    <div className="mt-1">
-                      {getStatusBadge(selectedRegistration.coordinator_status)}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Transaction ID</p>
-                    <p className="text-sm font-medium">
-                      {selectedRegistration.transaction_id || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Registration Date</p>
-                    <p className="text-sm font-medium">
-                      {new Date(
-                        selectedRegistration.registration_date
-                      ).toLocaleDateString()}
-                    </p>
+                    <p className="text-xs text-gray-500 mb-1">Screenshot URL</p>
+                    <a
+                      href={selectedRegistration.payment_screenshot_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-400 hover:text-blue-300 underline break-all block"
+                    >
+                      {selectedRegistration.payment_screenshot_url}
+                    </a>
                   </div>
                 </div>
-              </div>
-
-              {/* Action Buttons */}
-              {selectedRegistration.coordinator_status === "pending" || selectedRegistration.coordinator_status === null ? (
-                <div className="pt-4 border-t border-zinc-800 space-y-2">
-                  <Button
-                    onClick={() => setConfirmAction({ registration: selectedRegistration, action: "accepted" })}
-                    disabled={verifying === selectedRegistration.registration_id}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    {verifying === selectedRegistration.registration_id ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                        Accept Registration
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    onClick={() => setConfirmAction({ registration: selectedRegistration, action: "rejected" })}
-                    disabled={verifying === selectedRegistration.registration_id}
-                    className="w-full bg-red-600 hover:bg-red-700 text-white"
-                  >
-                    {verifying === selectedRegistration.registration_id ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle className="h-4 w-4 mr-2" />
-                        Reject Registration
-                      </>
-                    )}
-                  </Button>
-                </div>
-              ) : null}
+              )}
             </div>
           )}
         </DialogContent>

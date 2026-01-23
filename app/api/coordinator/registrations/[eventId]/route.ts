@@ -58,7 +58,7 @@ export async function GET(
       .select(`
         registration_id,
         event_id,
-        event_fee_id,
+        fee_id,
         registered_by_user_id,
         registration_date,
         payment_status,
@@ -66,27 +66,74 @@ export async function GET(
         gross_amount,
         transaction_id,
         payment_screenshot_url,
-        created_at,
-        users (
-          user_id,
-          user_name,
-          email,
-          phone,
-          college
-        ),
-        fee:event_fee_id (
-          participation_type,
-          min_members,
-          max_members,
-          price
-        )
+        created_at
       `)
       .eq("event_id", eventId)
       .order("created_at", { ascending: false });
 
     if (regError) {
+      console.error("Error fetching registrations:", regError);
       return NextResponse.json({ error: regError.message }, { status: 500 });
     }
+
+    // Debug: Log all registrations with fee_id
+    console.log("Registrations fetched:", registrations?.map(r => ({ id: r.registration_id, fee_id: r.fee_id })));
+
+    // Fetch user details and fee info for each registration
+    const enrichedRegistrations = await Promise.all(
+      (registrations || []).map(async (reg: any) => {
+        let userData = { user_id: "", user_name: null, email: "", phone: null, college: null };
+        let feeData = { participation_type: "General", min_members: 0, max_members: 0, price: 0 };
+
+        // Fetch user details
+        if (reg.registered_by_user_id) {
+          const { data: user } = await supabase
+            .from("users")
+            .select("user_id, user_name, email, phone, college")
+            .eq("user_id", reg.registered_by_user_id)
+            .single();
+
+          if (user) {
+            userData = user;
+          }
+        }
+
+        // Fetch fee details from the fee table (not event_fee)
+        if (reg.fee_id) {
+          console.log(`Attempting to fetch fee_id ${reg.fee_id} for registration ${reg.registration_id}`);
+          
+          // Fetch from the fee table which has participation_type
+          const { data: feeRaw, error: feeError } = await supabase
+            .from("fee")
+            .select("*")
+            .eq("fee_id", reg.fee_id)
+            .single();
+
+          if (feeError) {
+            console.error(`Error fetching fee for registration ${reg.registration_id}:`, feeError);
+          } else if (feeRaw) {
+            console.log(`Raw fee data for fee_id ${reg.fee_id}:`, JSON.stringify(feeRaw));
+            
+            // Extract participation_type from fee table
+            feeData = {
+              participation_type: (feeRaw as any).participation_type || "General",
+              min_members: (feeRaw as any).min_members || 0,
+              max_members: (feeRaw as any).max_members || 0,
+              price: (feeRaw as any).price || 0,
+            };
+            console.log(`Processed fee data:`, feeData);
+          }
+        } else {
+          console.warn(`Registration ${reg.registration_id} has no fee_id`);
+        }
+
+        return {
+          ...reg,
+          users: userData,
+          fee: feeData,
+        };
+      })
+    );
 
     return NextResponse.json({
       event: {
@@ -95,7 +142,7 @@ export async function GET(
         event_date: eventData.event_date,
         description: eventData.description,
       },
-      registrations: registrations || [],
+      registrations: enrichedRegistrations || [],
     });
   } catch (error) {
     console.error("Error fetching registrations:", error);
