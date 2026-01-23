@@ -1,6 +1,8 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkAdmin } from "@/lib/checkAdmin";
+import { getEmailTransporter, senderEmail } from "@/lib/email-config";
+import { accommodationAcceptanceEmailTemplate, accommodationRejectionEmailTemplate } from "@/lib/email-templates";
 
 // GET - Fetch a single accommodation booking by ID
 export async function GET(
@@ -180,6 +182,65 @@ export async function PATCH(
       : body.verification_status === "rejected"
         ? "Payment rejected. User will need to submit a new payment screenshot."
         : "Booking updated successfully.";
+
+    // Fetch user email and details for sending email
+    let userEmail = "";
+    let userName = "";
+    if (updatedBooking.user_id) {
+      const { data: userData } = await supabase
+        .from("users")
+        .select("email, user_name")
+        .eq("user_id", updatedBooking.user_id)
+        .single();
+
+      if (userData) {
+        userEmail = userData.email;
+        userName = userData.user_name || "Guest";
+      }
+    }
+
+    // Send email only if status is verified or rejected and we have user email
+    if ((body.verification_status === "verified" || body.verification_status === "rejected") && userEmail && senderEmail) {
+      try {
+        const transporter = getEmailTransporter();
+        let emailTemplate;
+
+        if (body.verification_status === "verified") {
+          emailTemplate = accommodationAcceptanceEmailTemplate({
+            participantName: userName,
+            email: userEmail,
+            checkIn: updatedBooking.check_in,
+            checkOut: updatedBooking.check_out,
+            nights: updatedBooking.nights,
+            amount: updatedBooking.amount,
+            bookingReference: `ACC-${updatedBooking.booking_id}`,
+          });
+        } else {
+          emailTemplate = accommodationRejectionEmailTemplate({
+            participantName: userName,
+            email: userEmail,
+            checkIn: updatedBooking.check_in,
+            checkOut: updatedBooking.check_out,
+            nights: updatedBooking.nights,
+            amount: updatedBooking.amount,
+            rejectionReason: body.rejection_reason,
+          });
+        }
+
+        await transporter.sendMail({
+          from: senderEmail,
+          to: userEmail,
+          subject: emailTemplate.subject,
+          html: emailTemplate.html,
+          text: emailTemplate.text,
+        });
+
+        console.log(`Accommodation email sent to ${userEmail} for booking ${updatedBooking.booking_id}`);
+      } catch (emailError) {
+        console.error("Error sending accommodation email:", emailError);
+        // Don't fail the entire request if email fails, just log it
+      }
+    }
 
     // Transform to match expected format
     const order = {
