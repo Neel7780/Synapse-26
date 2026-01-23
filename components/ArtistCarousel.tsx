@@ -217,23 +217,23 @@ const Card = ({ data, index, total, progress }: CardProps) => {
       }}
       className="absolute inset-0 w-full h-full rounded-[16px] overflow-hidden shadow-2xl"
     >
-      <div className="relative w-full h-full p-8 md:p-12 flex flex-col text-white font-mono uppercase italic-none">
+      <div className="relative w-full h-full p-8 md:p-12 flex flex-col text-white font-mono italic-none">
         {/* Vertical Text - Left Side */}
         <div className="absolute left-6 md:left-8 top-10 flex flex-col justify-between h-[calc(100%-80px)] pointer-events-none">
-          <span className="[writing-mode:vertical-lr] rotate-180 font-jqka text-lg tracking-[0.2em] font-black">
+          <span className="[writing-mode:vertical-lr] rotate-180 font-jqka text-2xl tracking-[0.2em] font-black">
             {data.day}
           </span>
-          <span className="[writing-mode:vertical-lr] rotate-180 font-jqka text-lg tracking-[0.3em] font-black opacity-60">
+          <span className="[writing-mode:vertical-lr] rotate-180 font-jqka text-2xl tracking-[0.3em] font-black opacity-60">
             {data.tag}
           </span>
         </div>
 
         {/* Top Info Area - Fixed height or shrink prevention ensures alignment */}
         <div className="ml-16 md:ml-20 mb-6 shrink-0">
-          <h2 className="text-3xl md:text-5xl font-black font-jqka tracking-tighter mb-1 leading-none">
+          <h2 className="text-3xl md:text-5xl font-normal font-jqka tracking-[0.1em] mb-1 leading-none">
             {data.artist}
           </h2>
-          <p className="text-sm md:text-lg max-w-xl opacity-80 font-jqka font-bold leading-tight tracking-tight mt-4">
+          <p className="text-sm md:text-lg max-w-xl opacity-80 font-jqka font-bold leading-tight tracking-[0.1em] mt-4">
             {data.description}
           </p>
         </div>

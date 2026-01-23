@@ -61,7 +61,7 @@ export default function ProniteGallery() {
             {col.images.map((src, idx) => (
               <div
                 key={idx}
-                className="relative w-full h-[850px] md:border-[6px] border-black shadow-2xl overflow-hidden -mb-56"
+                className="relative w-full h-[850px] border-[12px] border-black shadow-2xl overflow-hidden -mb-56"
               >
                 <Image
                   src={src}
