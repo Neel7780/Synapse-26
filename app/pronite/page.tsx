@@ -7,7 +7,7 @@ import ProniteHero from "@/components/ProniteHero";
 import ArtistCarousel from "@/components/ArtistCarousel";
 import ProniteGallery from "@/components/ProniteGallery";
 import Footer from "@/components/ui/Footer";
-import { Navbar, NavbarButton } from "@/components/ui/Resizable-navbar";
+import { Navbar } from "@/components/ui/Resizable-navbar";
 import NavigationPanel from "@/components/ui/NavigationPanel";
 import { useAuth } from "@/hooks/useAuth";
 import TextReveal from "@/components/TextReveal";
@@ -22,7 +22,7 @@ export default function PronitePage() {
   const ctaTitleRef = useRef<HTMLHeadingElement>(null);
   const ctaSubtitleRef = useRef<HTMLParagraphElement>(null);
   const ctaButtonRef = useRef<HTMLDivElement>(null);
-  const spotlightRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     if (!ctaSectionRef.current) return;
@@ -31,31 +31,7 @@ export default function PronitePage() {
     if (prefersReducedMotion) return;
 
     const ctx = gsap.context(() => {
-      // Spotlight effect that follows scroll
-      if (spotlightRef.current) {
-        gsap.set(spotlightRef.current, { opacity: 0 });
-
-        gsap.to(spotlightRef.current, {
-          opacity: 0.3,
-          duration: 1,
-          scrollTrigger: {
-            trigger: ctaSectionRef.current,
-            start: "top 60%",
-            once: true,
-          },
-        });
-
-        // Pulsing glow
-        gsap.to(spotlightRef.current, {
-          scale: 1.2,
-          opacity: 0.4,
-          duration: 2,
-          ease: "sine.inOut",
-          repeat: -1,
-          yoyo: true,
-          delay: 1,
-        });
-      }
+      // Title dramatic reveal - split into words
 
       // Title dramatic reveal - split into words
       if (ctaTitleRef.current) {
@@ -75,9 +51,7 @@ export default function PronitePage() {
           });
 
           ctaTitleRef.current?.appendChild(lineDiv);
-          if (lineIndex < lines.length - 1) {
-            ctaTitleRef.current?.appendChild(document.createElement("br"));
-          }
+
         });
 
         gsap.fromTo(
@@ -198,27 +172,8 @@ export default function PronitePage() {
         ref={ctaSectionRef}
         className="relative bg-black py-40 px-4 text-center overflow-hidden"
       >
-        {/* Spotlight effect */}
-        <div
-          ref={spotlightRef}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-red-600 blur-[150px] pointer-events-none opacity-0"
-        />
-
-        {/* Particle effect background */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-1 h-1 bg-red-500/30 rounded-full animate-pulse"
-              style={{
-                left: `${(i * 7 + 13) % 100}%`,
-                top: `${(i * 3 + 7) % 100}%`,
-                animationDelay: `${(i % 5) * 0.4}s`,
-                animationDuration: `${2 + (i % 3)}s`,
-              }}
-            />
-          ))}
-        </div>
+        {/* Constant Red Glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-red-600 blur-[150px] pointer-events-none opacity-40" />
 
         <div className="relative z-10">
           <h1
@@ -226,7 +181,7 @@ export default function PronitePage() {
             className="text-[clamp(3.5rem,15vw,10rem)] font-texgyreadventor leading-none mb-4"
             style={{ perspective: "1000px" }}
           >
-            Join the<br /> Celebration
+            Join the Celebration
           </h1>
 
           <p
@@ -237,25 +192,6 @@ export default function PronitePage() {
             you&apos;ll wish you were part of.
           </p>
 
-          {/* <div ref={ctaButtonRef} className="inline-block">
-            {!isAuthenticated ? (
-              <NavbarButton href="/auth" variant="register">
-                REGISTER
-              </NavbarButton>
-            ) : (
-              <NavbarButton
-                variant="register"
-                onClick={async () => {
-                  const { createClient } = await import("@/utils/supabase/client");
-                  const supabase = createClient();
-                  await supabase.auth.signOut();
-                  window.location.href = "/";
-                }}
-              >
-                LOGOUT
-              </NavbarButton>
-            )}
-          </div> */}
         </div>
       </section>
 

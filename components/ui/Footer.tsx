@@ -1,24 +1,15 @@
 "use client";
 
-import React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { IconBrandInstagram, IconBrandYoutube } from "@tabler/icons-react";
 
 export default function Footer() {
   return (
-    <footer id="contact" className="relative w-full bg-[linear-gradient(165deg,#990000_0%,#000000_65%)] text-white overflow-hidden pt-6 pb-6 flex flex-col justify-between min-h-screen md:min-h-0">
+    <footer id="contact" className="relative w-full bg-[linear-gradient(165deg,#990000_0%,#000000_65%)] text-white overflow-hidden pt-6 pb-6 flex flex-col justify-between h-full">
       <div className="px-6 md:px-16 w-full flex flex-col flex-grow">
         {/* Header */}
-        <div className="flex justify-between items-start mb-6 md:mb-12">
+        <div className="flex justify-center items-center mb-6 md:mb-12">
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight uppercase">Contact us</h1>
-          <Image
-            src="/Synapse Logo.png"
-            alt="Synapse Logo"
-            width={64}
-            height={64}
-            className="w-12 h-12 md:w-20 md:h-20 object-contain"
-          />
         </div>
 
         {/* Main Content Grid */}
