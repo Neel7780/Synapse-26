@@ -132,7 +132,7 @@ const EventCardItem = memo(function EventCardItem({
       )}
 
       {/* IMAGE */}
-      <div className="relative h-[320px] overflow-hidden">
+      <div className="relative aspect-[4/5] w-full overflow-hidden">
         <Image
           src={event.event_picture || "/images_events/default.png"}
           alt={event.event_name}

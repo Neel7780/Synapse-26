@@ -108,6 +108,13 @@ export default function PronitePage() {
       {/* Hero Section */}
       <ProniteHero />
 
+      {/* Artists Heading */}
+      <div className="bg-black py-24 overflow-hidden flex justify-center">
+        <h2 className="text-[clamp(80px,18vw,180px)] font-joker font-normal text-center leading-[100%] tracking-[0%] text-white selection:bg-white selection:text-black">
+          artists
+        </h2>
+      </div>
+
       {/* Stacked Carousel Section */}
       <section className="bg-black">
         <ArtistCarousel />
