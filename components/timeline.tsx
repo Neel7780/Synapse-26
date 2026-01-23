@@ -80,10 +80,10 @@ const EventRow = memo(function EventRow({
         {event.name}
       </td>
       <td className="py-3 px-2 sm:px-4 md:px-6 text-sm sm:text-base md:text-xl text-white/80 text-center break-words whitespace-normal">
-        {event.time || "TO BE DECLARED"}
+        {event.time || "To be declared"}
       </td>
       <td className="py-3 px-2 sm:px-4 md:px-6 text-sm sm:text-base md:text-xl text-white/80 text-center break-words whitespace-normal">
-        {event.venue || "TO BE DECLARED"}
+        {event.venue || "To be declared"}
       </td>
     </tr>
   );
