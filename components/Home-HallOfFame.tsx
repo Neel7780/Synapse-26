@@ -31,7 +31,7 @@ const HeroCard = ({
     }}
   >
     <Image
-      src="/images_home/HallOfFame.png"
+      src="/images_home/HallOfFame.jpeg"
       alt="Hall of Fame"
       fill
       className="object-cover"
