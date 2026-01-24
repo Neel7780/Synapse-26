@@ -320,7 +320,8 @@ export const NavbarLogo = () => {
         width={35}
         height={35}
         className="w-auto h-[35px] md:h-[45px]"
-        priority
+        priority={false}
+        loading="eager"
       />
     </Link>
   );
