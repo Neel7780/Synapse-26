@@ -99,7 +99,7 @@ type LocalEvent = {
   };
 };
 
-// Crop image to 2:3 ratio (400x600) with maximum coverage
+// Crop image to 4:5 ratio with maximum coverage
 const cropImageToMobileViewport = async (file: File): Promise<File> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -112,7 +112,7 @@ const cropImageToMobileViewport = async (file: File): Promise<File> => {
     }
 
     img.onload = () => {
-      const targetRatio = 400 / 600; // 2:3 aspect ratio
+      const targetRatio = 4 / 5; // 4:5 aspect ratio
       const imgRatio = img.width / img.height;
 
       let outputWidth: number;
@@ -142,7 +142,7 @@ const cropImageToMobileViewport = async (file: File): Promise<File> => {
         outputHeight = img.width / targetRatio;
       }
 
-      // Set canvas to the maximum dimensions that maintain 2:3 ratio
+      // Set canvas to the maximum dimensions that maintain 4:5 ratio
       canvas.width = outputWidth;
       canvas.height = outputHeight;
 
@@ -178,14 +178,8 @@ const cropImageToMobileViewport = async (file: File): Promise<File> => {
   });
 };
 
-// Image Preview Component - Shows original with crop overlay
-const ImagePreview = ({
-  originalUrl,
-  croppedUrl,
-}: {
-  originalUrl: string;
-  croppedUrl?: string;
-}) => (
+// Image Preview Component - Shows original image
+const ImagePreview = ({ originalUrl }: { originalUrl: string }) => (
   <div className="relative w-full max-w-2xl mx-auto mt-4">
     <div className="relative w-full aspect-video bg-muted/30 rounded-lg overflow-hidden border border-border/50">
       <img
@@ -193,55 +187,9 @@ const ImagePreview = ({
         alt="Event preview"
         className="w-full h-full object-contain"
       />
-      {/* Gray overlay with 400x600 cutout showing what will be saved */}
-      <div className="absolute inset-0 pointer-events-none">
-        {/* Top overlay */}
-        <div
-          className="absolute top-0 left-0 right-0 bg-gray-900/60"
-          style={{ height: "calc((100% - min(100%, 100vh * 0.6)) / 2)" }}
-        />
-        {/* Bottom overlay */}
-        <div
-          className="absolute bottom-0 left-0 right-0 bg-gray-900/60"
-          style={{ height: "calc((100% - min(100%, 100vh * 0.6)) / 2)" }}
-        />
-        {/* Left overlay */}
-        <div
-          className="absolute left-0 bg-gray-900/60"
-          style={{
-            top: "calc((100% - min(100%, 100vh * 0.6)) / 2)",
-            height: "min(100%, 100vh * 0.6)",
-            width: "calc((100% - min(100% * 0.4, 100vh * 0.4)) / 2)",
-          }}
-        />
-        {/* Right overlay */}
-        <div
-          className="absolute right-0 bg-gray-900/60"
-          style={{
-            top: "calc((100% - min(100%, 100vh * 0.6)) / 2)",
-            height: "min(100%, 100vh * 0.6)",
-            width: "calc((100% - min(100% * 0.4, 100vh * 0.4)) / 2)",
-          }}
-        />
-        {/* Label for crop area */}
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-          style={{
-            width: "400px",
-            height: "600px",
-            maxWidth: "90%",
-            maxHeight: "90%",
-          }}
-        >
-          <div className="absolute -top-7 left-0 bg-emerald-500 text-white text-xs px-2 py-1 rounded font-medium">
-            ✓ This area will be saved (400x600)
-          </div>
-        </div>
-      </div>
     </div>
     <p className="text-xs text-muted-foreground text-center mt-2">
-      Full image shown • Clear area indicates saved portion • Gray overlay shows
-      cropped areas
+      Image will be cropped to 4:5 ratio when saved
     </p>
   </div>
 );
@@ -312,11 +260,11 @@ export default function EventsPage() {
             categoryName: event.event_category?.category_name || "",
             date: event.event_date.split("T")[0],
             time: time,
-            venue: event.description || "",
+            venue: event.venue || "",
             rulebookLink: event.rulebook || "",
             description: event.description || "",
             picture: event.event_picture || "",
-            coordinatorEmail: "",
+            coordinatorEmail: event.coordinator_email || "",
             registrationOpen: event.is_registration_open,
             freeForDau: event.is_dau_free,
             participationCategories: {
@@ -372,6 +320,22 @@ export default function EventsPage() {
     editOriginalImageUrl,
   ]);
 
+  // Add passive event listeners to fix touchstart warning
+  useEffect(() => {
+    const handleTouchStart = () => {
+      // Passive listener - no preventDefault needed
+    };
+
+    // Add passive event listeners
+    document.addEventListener("touchstart", handleTouchStart, {
+      passive: true,
+    });
+
+    return () => {
+      document.removeEventListener("touchstart", handleTouchStart);
+    };
+  }, []);
+
   const categories = categoriesData?.categories || [];
 
   // Create new event
@@ -389,6 +353,7 @@ export default function EventsPage() {
       event_date: formData.date,
       event_time: formData.time || undefined,
       description: formData.description || undefined,
+      venue: formData.venue || undefined,
       rulebook: formData.rulebookLink || undefined,
       coordinator_email: formData.coordinatorEmail || undefined,
       image: formData.imageFile || undefined,
@@ -446,6 +411,8 @@ export default function EventsPage() {
       coordinator_email: event.coordinatorEmail || undefined,
       is_registration_open: !event.registrationOpen,
       is_dau_free: event.freeForDau,
+      venue: event.venue || undefined,
+      rulebook: event.rulebookLink || undefined,
       fees,
     });
 
@@ -460,6 +427,12 @@ export default function EventsPage() {
   // Edit event
   const handleEditClick = (event: LocalEvent) => {
     setEditingEvent(event);
+    // Set image preview if event has an existing image
+    if (event.picture) {
+      setEditOriginalImageUrl(event.picture);
+    } else {
+      setEditOriginalImageUrl(null);
+    }
     setIsEditOpen(true);
   };
 
@@ -491,6 +464,7 @@ export default function EventsPage() {
       description: editingEvent.description || undefined,
       rulebook: editingEvent.rulebookLink || undefined,
       coordinator_email: editingEvent.coordinatorEmail || undefined,
+      venue: editingEvent.venue || undefined,
       image: editingEvent.imageFile || undefined,
       qr_code_solo: editingEvent.participationCategories.solo.qrCodeFile,
       qr_code_duet: editingEvent.participationCategories.duet.qrCodeFile,
@@ -608,26 +582,34 @@ export default function EventsPage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Category</label>
-              <Select
-                value={formData.categoryId}
-                onValueChange={(v) =>
-                  setFormData({ ...formData, categoryId: v })
-                }
-              >
-                <SelectTrigger className="bg-muted/50 border-border/50">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  {categories.map((cat) => (
-                    <SelectItem
-                      key={cat.category_id}
-                      value={cat.category_id.toString()}
-                    >
-                      {cat.category_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {categories && categories.length > 0 ? (
+                <Select
+                  value={formData.categoryId}
+                  onValueChange={(v) =>
+                    setFormData({ ...formData, categoryId: v })
+                  }
+                >
+                  <SelectTrigger className="bg-muted/50 border-border/50">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border">
+                    {categories.map((cat) => (
+                      <SelectItem
+                        key={cat.category_id}
+                        value={cat.category_id.toString()}
+                      >
+                        {cat.category_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  value="No categories available"
+                  disabled
+                  className="bg-muted/50 border-border/50"
+                />
+              )}
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Date</label>
@@ -715,8 +697,7 @@ export default function EventsPage() {
                 className="bg-muted/50 border-border/50"
               />
               <p className="text-xs text-muted-foreground">
-                Image will be cropped to 2:3 ratio (400x600) with maximum
-                coverage
+                Image will be cropped to 4:5 ratio with maximum coverage
               </p>
             </div>
             {originalImageUrl && (
@@ -927,12 +908,15 @@ export default function EventsPage() {
         </CardContent>
       </Card>
 
-      {/* Edit Event Dialog */}
       <Dialog
         open={isEditOpen}
         onOpenChange={(open) => {
           setIsEditOpen(open);
-          if (!open) setEditingEvent(null);
+          if (!open) {
+            setEditingEvent(null);
+            setEditImagePreviewUrl(null);
+            setEditOriginalImageUrl(null);
+          }
         }}
         modal={true}
       >
@@ -1048,6 +1032,20 @@ export default function EventsPage() {
                       />
                     </div>
                     <div className="space-y-2 col-span-2">
+                      <label className="text-sm font-medium">Venue</label>
+                      <Input
+                        value={editingEvent.venue}
+                        onChange={(e) =>
+                          setEditingEvent({
+                            ...editingEvent,
+                            venue: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., Main Auditorium"
+                        className="bg-muted/50 border-border/50"
+                      />
+                    </div>
+                    <div className="space-y-2 col-span-2">
                       <label className="text-sm font-medium">Event Image</label>
                       <Input
                         type="file"
@@ -1088,14 +1086,30 @@ export default function EventsPage() {
                         className="bg-muted/50 border-border/50"
                       />
                       <p className="text-xs text-muted-foreground">
-                        Image will be cropped to 2:3 ratio (400x600) with
-                        maximum coverage
+                        Image will be cropped to 4:5 ratio with maximum coverage
                       </p>
                       {editingEvent.picture && !editingEvent.imageFile && (
                         <p className="text-xs text-muted-foreground">
                           Current image: {editingEvent.picture.split("/").pop()}
                         </p>
                       )}
+                    </div>
+
+                    <div className="space-y-2 col-span-2">
+                      <label className="text-sm font-medium">
+                        Rulebook Link
+                      </label>
+                      <Input
+                        value={editingEvent.rulebookLink}
+                        onChange={(e) =>
+                          setEditingEvent({
+                            ...editingEvent,
+                            rulebookLink: e.target.value,
+                          })
+                        }
+                        placeholder="https://..."
+                        className="bg-muted/50 border-border/50"
+                      />
                     </div>
                   </div>
                   {/* Image Preview - shown for both new uploads and existing images */}
