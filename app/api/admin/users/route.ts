@@ -79,7 +79,7 @@ export async function GET(req: NextRequest) {
     const users =
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data?.map((user: any) => {
-        let eventCount = 0;
+        const eventNames = new Set<string>();
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         user.team_members?.forEach((tm: any) => {

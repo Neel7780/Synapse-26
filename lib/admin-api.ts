@@ -64,7 +64,6 @@ export type Event = {
     venue?: string;
     is_registration_open: boolean;
     is_dau_free: boolean;
-    coordinator_email?: string;
     event_category?: { category_name: string };
     event_fee?: Array<{
         fee: {
