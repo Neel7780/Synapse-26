@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { uploadImage, editImage, deleteImage } from '@/lib/imageUtil';
+import { uploadImage, deleteImage } from '@/lib/imageUtil';
 
 // GET - Fetch single product by ID
 export async function GET(
@@ -45,7 +45,8 @@ export async function PUT(
     const available_sizes = formData.get('available_sizes') as string | null;
     const description = formData.get('description') as string | null;
     const is_available = formData.get('is_available') as string | null;
-    const imageFile = formData.get('image') as File | null;
+    const imageFiles = formData.getAll('image') as File[];
+    const existingImages = formData.get('existing_images') as string | null;
 
     // Check existence
     const { data: existing, error: fetchError } = await supabase
@@ -65,47 +66,59 @@ export async function PUT(
     if (description !== null) updateData.description = description;
     if (is_available !== null) updateData.is_available = is_available === 'true';
 
-    // Handle image update if provided
-    if (imageFile && imageFile.size > 0) {
-      let newImageUrl = null;
+    // Handle image updates
+    let finalImageUrls: string[] = [];
 
-      if (existing.product_image) {
-        // Extract old file path and replace image
+    // Add existing images that should be kept
+    if (existingImages) {
+      try {
+        const existingImagesArray = JSON.parse(existingImages);
+        finalImageUrls = [...existingImagesArray];
+      } catch (error) {
+        console.error('Failed to parse existing images:', error);
+      }
+    }
+
+    // Delete removed images from storage
+    if (existing.product_image && Array.isArray(existing.product_image)) {
+      const imagesToDelete = existing.product_image.filter(
+        (img: string) => !finalImageUrls.includes(img)
+      );
+
+      for (const imageUrl of imagesToDelete) {
         try {
-          const url = new URL(existing.product_image);
+          const url = new URL(imageUrl);
           const pathParts = url.pathname.split('/storage/v1/object/public/synapse/');
-
           if (pathParts.length > 1) {
-            const oldFilePath = pathParts[1];
-            const uploadResult = await editImage({
-              file: imageFile,
+            const filePath = pathParts[1];
+            await deleteImage({
               bucket: 'synapse',
-              oldFilePath,
-              folder: 'merchandise'
+              filePath
             });
-            newImageUrl = uploadResult.publicUrl;
           }
         } catch (error) {
-          console.error('Failed to replace image:', error);
-          // If parsing fails, just upload new image
+          console.error('Failed to delete image:', error);
+        }
+      }
+    }
+
+    // Upload new images if provided
+    if (imageFiles && imageFiles.length > 0) {
+      for (const imageFile of imageFiles) {
+        if (imageFile && imageFile.size > 0) {
           const uploadResult = await uploadImage({
             file: imageFile,
             bucket: 'synapse',
             folder: 'merchandise'
           });
-          newImageUrl = uploadResult.publicUrl;
+          finalImageUrls.push(uploadResult.publicUrl);
         }
-      } else {
-        // No existing image, just upload new one
-        const uploadResult = await uploadImage({
-          file: imageFile,
-          bucket: 'synapse',
-          folder: 'merchandise'
-        });
-        newImageUrl = uploadResult.publicUrl;
       }
+    }
 
-      updateData.product_image = newImageUrl;
+    // Update product_image only if there are changes
+    if (imageFiles.length > 0 || existingImages !== null) {
+      updateData.product_image = finalImageUrls.length > 0 ? finalImageUrls : null;
     }
 
     const { data: product, error } = await supabase
@@ -162,21 +175,27 @@ export async function DELETE(
       return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
     }
 
-    // Delete the image from storage if it exists
+    // Delete all images from storage if they exist
     if (existing.product_image) {
-      try {
-        const url = new URL(existing.product_image);
-        const pathParts = url.pathname.split('/storage/v1/object/public/synapse/');
-        if (pathParts.length > 1) {
-          const filePath = pathParts[1];
-          await deleteImage({
-            bucket: 'synapse',
-            filePath
-          });
+      const imagesToDelete = Array.isArray(existing.product_image)
+        ? existing.product_image
+        : [existing.product_image];
+
+      for (const imageUrl of imagesToDelete) {
+        try {
+          const url = new URL(imageUrl);
+          const pathParts = url.pathname.split('/storage/v1/object/public/synapse/');
+          if (pathParts.length > 1) {
+            const filePath = pathParts[1];
+            await deleteImage({
+              bucket: 'synapse',
+              filePath
+            });
+          }
+        } catch (imgError) {
+          console.error('Failed to delete product image:', imgError);
+          // Continue even if image deletion fails
         }
-      } catch (imgError) {
-        console.error('Failed to delete product image:', imgError);
-        // Continue even if image deletion fails
       }
     }
 

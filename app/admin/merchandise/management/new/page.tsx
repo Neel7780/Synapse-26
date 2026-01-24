@@ -18,12 +18,16 @@ import { ArrowLeft, Package, Loader2, Upload, X } from "lucide-react";
 const TARGET_WIDTH = 750;
 const TARGET_HEIGHT = 875;
 
+type ImageData = {
+  file: File;
+  preview: string;
+  croppedBlob: Blob;
+};
+
 export default function NewProductPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [croppedBlob, setCroppedBlob] = useState<Blob | null>(null);
+  const [images, setImages] = useState<ImageData[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
@@ -98,29 +102,39 @@ export default function NewProductPage() {
   };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    setImageFile(file);
-    const previewUrl = URL.createObjectURL(file);
-    setImagePreview(previewUrl);
+    const newImages: ImageData[] = [];
 
-    try {
-      const cropped = await cropImageToRatio(file);
-      setCroppedBlob(cropped);
-    } catch (error) {
-      console.error("Error cropping image:", error);
-      alert("Failed to process image");
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const previewUrl = URL.createObjectURL(file);
+
+      try {
+        const cropped = await cropImageToRatio(file);
+        newImages.push({
+          file,
+          preview: previewUrl,
+          croppedBlob: cropped,
+        });
+      } catch (error) {
+        console.error("Error cropping image:", error);
+        alert(`Failed to process image: ${file.name}`);
+      }
     }
-  };
 
-  const removeImage = () => {
-    setImageFile(null);
-    setImagePreview(null);
-    setCroppedBlob(null);
+    setImages([...images, ...newImages]);
+
+    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+  };
+
+  const removeImage = (index: number) => {
+    const newImages = images.filter((_, i) => i !== index);
+    setImages(newImages);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -145,10 +159,11 @@ export default function NewProductPage() {
         formDataToSend.append("available_sizes", JSON.stringify(sizesArray));
       }
 
-      if (croppedBlob) {
+      // Append all images
+      for (const imageData of images) {
         const croppedFile = new File(
-          [croppedBlob],
-          imageFile?.name || "product.jpg",
+          [imageData.croppedBlob],
+          imageData.file.name,
           {
             type: "image/jpeg",
           },
@@ -250,67 +265,73 @@ export default function NewProductPage() {
 
             {/* Image Upload Section */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Product Image</label>
+              <label className="text-sm font-medium">Product Images</label>
               <div className="space-y-3">
-                {!imagePreview ? (
-                  <div className="border-2 border-dashed border-border/50 rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="hidden"
-                      id="image-upload"
-                    />
-                    <label htmlFor="image-upload" className="cursor-pointer">
-                      <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground mb-1">
-                        Click to upload product image
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Image will be cropped to 750×875 (6:7 ratio)
-                      </p>
-                    </label>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="relative inline-block">
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="max-w-full h-auto max-h-96 rounded-lg"
-                        style={{
-                          boxShadow: "0 0 0 3px rgba(var(--primary), 0.3)",
-                        }}
-                      />
-                      <div
-                        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border-4 border-primary pointer-events-none"
-                        style={{
-                          width: "300px",
-                          height: "350px",
-                          boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.5)",
-                        }}
-                      >
-                        <div className="absolute -top-6 left-0 right-0 text-center">
-                          <span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs font-medium">
-                            750×875 Crop Area
-                          </span>
-                        </div>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        className="absolute top-2 right-2"
-                        onClick={removeImage}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Highlighted area shows the portion that will be saved
-                      (750×875 pixels)
+                {/* Upload Button */}
+                <div className="border-2 border-dashed border-border/50 rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                    id="image-upload"
+                    multiple
+                  />
+                  <label htmlFor="image-upload" className="cursor-pointer">
+                    <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground mb-1">
+                      Click to upload product images
                     </p>
+                    <p className="text-xs text-muted-foreground">
+                      Hold Ctrl (Cmd on Mac) to select multiple images at once
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Images will be cropped to 750×875 (6:7 ratio)
+                    </p>
+                  </label>
+                </div>
+
+                {/* Image Previews */}
+                {images.length > 0 && (
+                  <div className="grid grid-cols-2 gap-4">
+                    {images.map((imageData, index) => (
+                      <div key={index} className="space-y-2">
+                        <div className="relative inline-block w-full">
+                          <img
+                            src={imageData.preview}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-auto rounded-lg border-2 border-primary/30"
+                          />
+                          {/* Crop area indicator - no dark overlay */}
+                          <div
+                            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border-4 border-dashed border-primary pointer-events-none"
+                            style={{
+                              width: "150px",
+                              height: "175px",
+                            }}
+                          >
+                            <div className="absolute -top-8 left-0 right-0 text-center">
+                              <span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs font-medium shadow-lg">
+                                750×875 Crop Area
+                              </span>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="absolute top-2 right-2 z-10"
+                            onClick={() => removeImage(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground text-center">
+                          Image {index + 1} - Will be cropped to 750×875
+                        </p>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
