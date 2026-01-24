@@ -103,7 +103,7 @@ export const acceptanceEmailTemplate = (props: EmailTemplateProps) => {
             .banner { width: 100%; display: block; background: linear-gradient(135deg, #14b8a6 0%, #0ea5e9 100%); }
             .banner img { width: 100%; height: auto; display: block; }
             .hero { padding: 32px 24px; text-align: center; background: linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(34,197,94,0.15) 100%); border-bottom: 1px solid #1f2937; }
-            .hero .game-cleared { font-size: 32px; color: #10b981; font-weight: 900; letter-spacing: 2px; margin: 0 0 12px 0; }
+            .hero .game-entered { font-size: 32px; color: #10b981; font-weight: 900; letter-spacing: 2px; margin: 0 0 12px 0; }
             .hero .subtitle { font-size: 16px; color: #d1fae5; font-weight: 600; margin: 0; }
             .content { padding: 24px; }
             .badge { display: inline-block; background: #10b981; color: #052e2b; padding: 8px 16px; border-radius: 999px; font-weight: 700; margin-bottom: 16px; font-size: 14px; letter-spacing: 0.5px; }
@@ -124,7 +124,7 @@ export const acceptanceEmailTemplate = (props: EmailTemplateProps) => {
             </div>
             <div class="banner">${coverUrl ? `<img src="${coverUrl}" alt="${eventName} Banner"/>` : ""}</div>
             <div class="hero">
-              <div class="game-cleared">🎴 GAME CLEARED</div>
+              <div class="game-entered">🎴 GAME ENTERED</div>
               <p class="subtitle">Your visa has been approved for ${eventName}</p>
             </div>
             <div class="content">
@@ -166,7 +166,7 @@ export const acceptanceEmailTemplate = (props: EmailTemplateProps) => {
       </html>
     `,
     text: `
-🎴 GAME CLEARED — ${eventName} Registration Verified
+🎴 GAME ENTERED — ${eventName} Registration Verified
 
 Dear ${participantName},
 
@@ -184,7 +184,7 @@ ${eventDate ? `- 📅 Event Date: ${eventDate}` : ''}
 🎴 TEAM MEMBERS:
 ${allMembers.map((member, index) => `
 Member ${index + 1}: ${member.user_name}
-${member.email ? `Email: ${member.email}\n` : ''}${member.phone ? `Phone: ${member.phone}\n` : ''}${member.college ? `College: ${member.college}\n` : ''}` ).join('')}
+${member.email ? `Email: ${member.email}\n` : ''}${member.phone ? `Phone: ${member.phone}\n` : ''}${member.college ? `College: ${member.college}\n` : ''}`).join('')}
 ⚠️ Rules of the Game:
 • Arrive on time with a valid ID
 • Keep this email for reference

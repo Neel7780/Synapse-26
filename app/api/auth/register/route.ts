@@ -42,7 +42,12 @@ export async function POST(request: Request) {
     });
 
     if (error) {
-      return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 400 });
+      console.error("Supabase auth error:", JSON.stringify(error, null, 2));
+      return NextResponse.json({
+        error: error.message || "Internal server error",
+        code: error.code,
+        details: error.status
+      }, { status: 400 });
     }
 
     return NextResponse.json({
