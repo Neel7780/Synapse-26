@@ -1,18 +1,55 @@
 "use client";
 
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
+import Image from "next/image";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
+// Hero card component - moved outside to avoid creating during render
+const HeroCard = ({
+  refIndex: _refIndex,
+  gridStyle,
+  titleSize,
+  refSetter
+}: {
+  refIndex: number;
+  gridStyle: React.CSSProperties;
+  titleSize: string;
+  refSetter: (el: HTMLDivElement | null) => void;
+}) => (
+  <div
+    ref={refSetter}
+    className="overflow-hidden relative will-change-transform shadow-2xl z-10 rounded-xl"
+    style={{
+      ...gridStyle,
+      transformOrigin: "center center",
+    }}
+  >
+    <Image
+      src="/images_home/HallOfFame.png"
+      alt="Hall of Fame"
+      fill
+      className="object-cover"
+      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+    />
+    <div className="hof-title absolute inset-0 flex items-end justify-center pb-6 md:pb-8">
+      <span className={`${titleSize} text-center font-white font-joker text-white drop-shadow-lg tracking-wider`}>
+        hall of fame
+      </span>
+    </div>
+    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
+  </div>
+);
+
 export default function HallOfFame() {
   const hallContainerRef = useRef<HTMLDivElement>(null);
   const hallRef = useRef<Array<HTMLDivElement | null>>([]);
-  const scrollIndicatorRef = useRef(null);
+  const scrollIndicatorRef = useRef<HTMLDivElement>(null);
   const gridItemsRef = useRef<{
     mobile: (HTMLDivElement | null)[];
     tablet: (HTMLDivElement | null)[];
@@ -22,13 +59,14 @@ export default function HallOfFame() {
     tablet: [],
     desktop: [],
   });
-  const getActiveMode = () => {
+
+  const getActiveMode = useCallback(() => {
     if (typeof window === "undefined") return "desktop";
     const w = window.innerWidth;
     if (w < 768) return "mobile";
     if (w < 1024) return "tablet";
     return "desktop";
-  };
+  }, []);
 
   const setMobileGridRef = useCallback(
     (index: number) => (el: HTMLDivElement | null) => {
@@ -61,7 +99,8 @@ export default function HallOfFame() {
       rowSpan: 1,
       startX: -500,
       startY: -400,
-      delay: 0.05,
+      startRotation: -15,
+      delay: 0.08,
       mobileCol: 0,
       mobileRow: 0,
       mobileColSpan: 2,
@@ -77,7 +116,8 @@ export default function HallOfFame() {
       rowSpan: 1,
       startX: 0,
       startY: -450,
-      delay: 0.07,
+      startRotation: 8,
+      delay: 0.12,
       mobileHidden: true,
       tabletCol: 2,
       tabletRow: 0,
@@ -90,7 +130,8 @@ export default function HallOfFame() {
       rowSpan: 1,
       startX: 100,
       startY: -450,
-      delay: 0.09,
+      startRotation: -10,
+      delay: 0.15,
       mobileHidden: true,
       tabletCol: 3,
       tabletRow: 0,
@@ -103,7 +144,8 @@ export default function HallOfFame() {
       rowSpan: 1,
       startX: 200,
       startY: -400,
-      delay: 0.1,
+      startRotation: 12,
+      delay: 0.18,
       mobileCol: 2,
       mobileRow: 0,
       mobileColSpan: 1,
@@ -118,7 +160,8 @@ export default function HallOfFame() {
       rowSpan: 1,
       startX: 600,
       startY: -400,
-      delay: 0.11,
+      startRotation: -8,
+      delay: 0.2,
       mobileHidden: true,
       tabletHidden: true,
     },
@@ -132,7 +175,8 @@ export default function HallOfFame() {
       rowSpan: 1,
       startX: -600,
       startY: -50,
-      delay: 0.12,
+      startRotation: 15,
+      delay: 0.22,
       mobileCol: 0,
       mobileRow: 1,
       mobileColSpan: 1,
@@ -147,7 +191,8 @@ export default function HallOfFame() {
       rowSpan: 2,
       startX: 600,
       startY: 0,
-      delay: 0.14,
+      startRotation: -12,
+      delay: 0.25,
       mobileCol: 2,
       mobileRow: 1,
       mobileColSpan: 1,
@@ -164,7 +209,8 @@ export default function HallOfFame() {
       colSpan: 1,
       startX: -600,
       startY: 50,
-      delay: 0.16,
+      startRotation: -10,
+      delay: 0.28,
       mobileCol: 0,
       mobileRow: 2,
       mobileColSpan: 1,
@@ -180,7 +226,8 @@ export default function HallOfFame() {
       rowSpan: 2,
       startX: -400,
       startY: 100,
-      delay: 0.17,
+      startRotation: 8,
+      delay: 0.3,
       mobileHidden: true,
       tabletCol: 1,
       tabletRow: 2,
@@ -194,7 +241,8 @@ export default function HallOfFame() {
       rowSpan: 2,
       startX: 400,
       startY: 100,
-      delay: 0.18,
+      startRotation: -15,
+      delay: 0.32,
       mobileHidden: true,
       tabletCol: 3,
       tabletRow: 1,
@@ -210,7 +258,8 @@ export default function HallOfFame() {
       rowSpan: 1,
       startX: -600,
       startY: 400,
-      delay: 0.19,
+      startRotation: 10,
+      delay: 0.35,
       mobileHidden: true,
       tabletHidden: true,
     },
@@ -222,7 +271,8 @@ export default function HallOfFame() {
       rowSpan: 1,
       startX: -400,
       startY: 400,
-      delay: 0.2,
+      startRotation: -8,
+      delay: 0.38,
       mobileCol: 1,
       mobileRow: 2,
       mobileColSpan: 1,
@@ -237,7 +287,8 @@ export default function HallOfFame() {
       rowSpan: 1,
       startX: -200,
       startY: 450,
-      delay: 0.22,
+      startRotation: 12,
+      delay: 0.4,
       mobileHidden: true,
       tabletCol: 2,
       tabletRow: 3,
@@ -250,7 +301,8 @@ export default function HallOfFame() {
       rowSpan: 1,
       startX: 200,
       startY: 450,
-      delay: 0.24,
+      startRotation: -10,
+      delay: 0.42,
       mobileHidden: true,
       tabletCol: 3,
       tabletRow: 3,
@@ -263,7 +315,8 @@ export default function HallOfFame() {
       rowSpan: 1,
       startX: 400,
       startY: 400,
-      delay: 0.25,
+      startRotation: 8,
+      delay: 0.45,
       mobileHidden: true,
       tabletCol: 4,
       tabletRow: 3,
@@ -276,7 +329,8 @@ export default function HallOfFame() {
       rowSpan: 1,
       startX: 600,
       startY: 400,
-      delay: 0.26,
+      startRotation: -12,
+      delay: 0.48,
       mobileCol: 2,
       mobileRow: 2,
       mobileColSpan: 1,
@@ -284,7 +338,7 @@ export default function HallOfFame() {
     },
   ];
 
-  const getGridMetrics = () => {
+  const getGridMetrics = useCallback(() => {
     if (typeof window === "undefined") {
       return { cellW: 0, cellH: 0, heroCols: 2, heroRows: 2 };
     }
@@ -315,22 +369,24 @@ export default function HallOfFame() {
       heroCols: 2,
       heroRows: 2,
     };
-  };
-  const getActiveHeroIndex = () => {
+  }, []);
+
+  const getActiveHeroIndex = useCallback(() => {
     if (typeof window === "undefined") return 2;
     const w = window.innerWidth;
     if (w < 768) return 0;
     if (w < 1024) return 1;
     return 2;
-  };
+  }, []);
 
-  const isItemVisible = (image: any) => {
+  const isItemVisible = useCallback((image: typeof gridImages[0]) => {
     if (typeof window === "undefined") return true;
     const w = window.innerWidth;
     if (w < 768) return !image.mobileHidden;
     if (w < 1024) return !image.tabletHidden;
     return true;
-  };
+  }, []);
+
   const resetGridItems = () => {
     gridImages.forEach((image, index) => {
       const mode = getActiveMode();
@@ -346,11 +402,29 @@ export default function HallOfFame() {
       gsap.set(item, {
         x: image.startX,
         y: image.startY,
+        rotation: image.startRotation || 0,
         opacity: 0,
-        scale: 0.4,
+        scale: 0.3,
+        filter: "blur(10px)",
       });
     });
   };
+
+  // Scroll indicator bounce animation
+  useEffect(() => {
+    if (!scrollIndicatorRef.current) return;
+
+    const arrow = scrollIndicatorRef.current.querySelector('.scroll-arrow');
+    if (arrow) {
+      gsap.to(arrow, {
+        y: 8,
+        duration: 0.8,
+        repeat: -1,
+        yoyo: true,
+        ease: "power1.inOut",
+      });
+    }
+  }, []);
 
   useGSAP(
     () => {
@@ -365,24 +439,32 @@ export default function HallOfFame() {
         hero = hallRef.current[index] ?? null;
         return hero;
       };
+
+      // Fade out scroll indicator smoothly
       gsap.to(scrollIndicatorRef.current, {
         opacity: 0,
+        y: -20,
         pointerEvents: "none",
+        ease: "power2.out",
         scrollTrigger: {
           trigger: hallContainerRef.current,
           start: "top top",
-          end: "+=20%",
-          scrub: true,
+          end: "+=15%",
+          scrub: 0.5,
         },
       });
 
+      // Fade out title with elegant animation
       gsap.to(".hof-title", {
         opacity: 0,
+        y: 30,
+        scale: 0.95,
+        ease: "power2.out",
         scrollTrigger: {
           trigger: hallContainerRef.current,
-          start: "top top",
-          end: "+=70%",
-          scrub: true,
+          start: "top top+=5%",
+          end: "+=50%",
+          scrub: 0.8,
         },
       });
 
@@ -400,6 +482,7 @@ export default function HallOfFame() {
           scaleY: startScaleY,
           borderRadius: 0,
           transformOrigin: "center center",
+          filter: "brightness(1)",
         });
 
         resetGridItems();
@@ -414,71 +497,74 @@ export default function HallOfFame() {
 
         ScrollTrigger.create({
           trigger: hallContainerRef.current!,
-          start: "top top",
-          end: "+=200%",
-          scrub: 1,
+          start: "top top-=5%",
+          end: "bottom top",
+          scrub: 1.2, // Smoother scrubbing
           pin: true,
           anticipatePin: 1,
-          invalidateOnRefresh: true,
           onRefreshInit: calculateStartScale,
 
           onUpdate: (self) => {
             if (!hero) return;
 
-            const eased = gsap.parseEase("power3.out")(
-              Math.min(self.progress / 0.6, 1)
-            );
+            // Use a custom easing for the hero zoom-out
+            const heroProgress = Math.min(self.progress / 0.5, 1);
+            const heroEased = gsap.parseEase("power3.out")(heroProgress);
 
-            // HERO - Smoother scaling with enhanced easing
-            gsap.to(hero, {
-              scaleX: gsap.utils.interpolate(startScaleX, 1, eased),
-              scaleY: gsap.utils.interpolate(startScaleY, 1, eased),
-              borderRadius: `${gsap.utils.interpolate(0, 16, self.progress)}px`,
-              duration: 0.3,
-              ease: "power3.out",
-              overwrite: "auto",
-              force3D: true,
+            // Hero zoom-out animation with enhanced effects
+            const currentScaleX = gsap.utils.interpolate(startScaleX, 1, heroEased);
+            const currentScaleY = gsap.utils.interpolate(startScaleY, 1, heroEased);
+            const currentRadius = gsap.utils.interpolate(0, 20, heroEased);
+            const currentBrightness = gsap.utils.interpolate(1, 0.95, heroEased);
+
+            gsap.set(hero, {
+              scaleX: currentScaleX,
+              scaleY: currentScaleY,
+              borderRadius: `${currentRadius}px`,
+              filter: `brightness(${currentBrightness})`,
             });
 
-            // GRID - Enhanced entrance animations with back.out easing
+            // Grid items animation with staggered reveal
             const mode = getActiveMode();
 
             gridImages.forEach((image, index) => {
               const item = gridItemsRef.current[mode][index];
               if (!item || !isItemVisible(image)) return;
 
-              if (self.progress < image.delay) {
-                gsap.to(item, {
+              const itemDelay = image.delay;
+              const itemDuration = 0.4; // Duration of each item's animation
+
+              if (self.progress < itemDelay) {
+                // Item hasn't started animating yet
+                gsap.set(item, {
                   x: image.startX,
                   y: image.startY,
+                  rotation: image.startRotation || 0,
                   opacity: 0,
-                  scale: 0.4,
-                  duration: 0.2,
-                  ease: "power2.in",
-                  overwrite: "auto",
-                  force3D: true,
+                  scale: 0.3,
+                  filter: "blur(10px)",
                 });
                 return;
               }
 
-              const p = gsap.utils.clamp(
+              // Calculate item's individual progress
+              const itemProgress = gsap.utils.clamp(
                 0,
                 1,
-                (self.progress - image.delay) / 0.55
+                (self.progress - itemDelay) / itemDuration
               );
 
-              // Apply back.out easing for slight overshoot effect
-              const backEased = gsap.parseEase("back.out(1.7)")(p);
+              // Use elastic easing for a bouncy, playful feel
+              const itemEased = gsap.parseEase("back.out(1)")(itemProgress);
+              const opacityEased = gsap.parseEase("power2.out")(itemProgress);
 
-              gsap.to(item, {
-                x: gsap.utils.interpolate(image.startX, 0, p),
-                y: gsap.utils.interpolate(image.startY, 0, p),
-                opacity: gsap.utils.interpolate(0, 1, p),
-                scale: gsap.utils.interpolate(0.4, 1, backEased),
-                duration: 0.4,
-                ease: "power2.out",
-                overwrite: "auto",
-                force3D: true,
+              gsap.set(item, {
+                x: gsap.utils.interpolate(image.startX, 0, itemEased),
+                y: gsap.utils.interpolate(image.startY, 0, itemEased),
+                rotation: gsap.utils.interpolate(image.startRotation || 0, 0, itemEased),
+                opacity: gsap.utils.interpolate(0, 1, opacityEased),
+                scale: gsap.utils.interpolate(0.3, 1, itemEased),
+                filter: `blur(${gsap.utils.interpolate(10, 0, opacityEased)}px)`,
               });
             });
           },
@@ -496,14 +582,55 @@ export default function HallOfFame() {
     { scope: hallContainerRef }
   );
 
+  // Image card component for cleaner code
+  const ImageCard = ({
+    image,
+    index,
+    refSetter,
+    gridStyle
+  }: {
+    image: typeof gridImages[0];
+    index: number;
+    refSetter: (el: HTMLDivElement | null) => void;
+    gridStyle: React.CSSProperties;
+  }) => (
+    <div
+      key={index}
+      ref={refSetter}
+      className="rounded-xl overflow-hidden shadow-2xl will-change-transform group"
+      style={gridStyle}
+    >
+      <div className="relative w-full h-full overflow-hidden">
+        <Image
+          src={image.src}
+          alt={image.alt}
+          fill
+          className="object-cover transition-transform duration-700 group-hover:scale-110"
+          loading="lazy"
+          sizes="(max-width: 768px) 33vw, (max-width: 1024px) 20vw, 16vw"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      </div>
+    </div>
+  );
+
+  // Ref setter for hero cards
+  const setHeroRef = useCallback(
+    (index: number) => (el: HTMLDivElement | null) => {
+      hallRef.current[index] = el;
+    },
+    []
+  );
+
   return (
     <div className="relative overflow-hidden w-full bg-black">
       <div ref={hallContainerRef} className="relative">
-        <div className="h-[100dvh] w-full bg-black">
+        <div className="h-[100svh] w-full bg-black">
+
           {/* Mobile Grid (3x3) */}
           <div className="md:hidden absolute inset-0 flex items-center justify-center p-2">
             <div
-              className="relative w-full h-full grid gap-1"
+              className="relative w-full h-full grid gap-1.5"
               style={{
                 gridTemplateColumns: 'repeat(3, 1fr)',
                 gridTemplateRows: 'repeat(3, 1fr)',
@@ -513,49 +640,28 @@ export default function HallOfFame() {
                 if (image.mobileHidden) return null;
 
                 return (
-                  <div
+                  <ImageCard
                     key={`mobile-${index}`}
-                    ref={setMobileGridRef(index)}
-                    className="rounded-lg overflow-hidden shadow-2xl transition-transform duration-300 hover:scale-105 hover:z-20 cursor-pointer"
-                    style={{
-                      gridColumn: `${(image.mobileCol ?? image.gridPosition.col) + 1
-                        } / span ${image.mobileColSpan ?? 1}`,
-                      gridRow: `${(image.mobileRow ?? image.gridPosition.row) + 1
-                        } / span 1`,
+                    image={image}
+                    index={index}
+                    refSetter={setMobileGridRef(index)}
+                    gridStyle={{
+                      gridColumn: `${(image.mobileCol ?? image.gridPosition.col) + 1} / span ${image.mobileColSpan ?? 1}`,
+                      gridRow: `${(image.mobileRow ?? image.gridPosition.row) + 1} / span 1`,
                     }}
-                  >
-                    <img
-                      src={image.src}
-                      alt={image.alt}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+                  />
                 );
               })}
 
-              {/* Mobile Hero */}
-              <div
-                ref={(el) => {
-                  hallRef.current[0] = el;
-                }}
-                className="overflow-hidden will-change-transform shadow-2xl z-10 rounded-lg"
-                style={{
+              <HeroCard
+                refIndex={0}
+                gridStyle={{
                   gridColumn: "2 / 3",
                   gridRow: "2 / 3",
-                  transformOrigin: "center center",
-                  willChange: "transform",
                 }}
-              >
-                <img
-                  src="/images_home/HallOfFame.png"
-                  alt="Hall of Fame"
-                  className="w-full h-full object-cover"
-                />
-                <span className="hof-title absolute bottom-5 text-xl text-center w-full z-5 font-white font-joker">
-                  hall of fame
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-              </div>
+                titleSize="text-lg"
+                refSetter={setHeroRef(0)}
+              />
             </div>
           </div>
 
@@ -572,49 +678,28 @@ export default function HallOfFame() {
                 if (image.tabletHidden) return null;
 
                 return (
-                  <div
+                  <ImageCard
                     key={`tablet-${index}`}
-                    ref={setTabletGridRef(index)}
-                    className="rounded-xl overflow-hidden shadow-2xl transition-transform duration-300 hover:scale-105 hover:z-20 cursor-pointer"
-                    style={{
-                      gridColumn: `${(image.tabletCol ?? image.gridPosition.col) + 1
-                        } / span ${image.tabletColSpan ?? image.colSpan ?? 1}`,
-                      gridRow: `${(image.tabletRow ?? image.gridPosition.row) + 1
-                        } / span ${image.tabletRowSpan ?? image.rowSpan ?? 1}`,
+                    image={image}
+                    index={index}
+                    refSetter={setTabletGridRef(index)}
+                    gridStyle={{
+                      gridColumn: `${(image.tabletCol ?? image.gridPosition.col) + 1} / span ${image.tabletColSpan ?? image.colSpan ?? 1}`,
+                      gridRow: `${(image.tabletRow ?? image.gridPosition.row) + 1} / span ${image.tabletRowSpan ?? image.rowSpan ?? 1}`,
                     }}
-                  >
-                    <img
-                      src={image.src}
-                      alt={image.alt}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+                  />
                 );
               })}
 
-              {/* Tablet Hero - Spans 2x2 center */}
-              <div
-                ref={(el) => {
-                  hallRef.current[1] = el;
-                }}
-                className="overflow-hidden will-change-transform shadow-2xl z-10 rounded-xl"
-                style={{
+              <HeroCard
+                refIndex={1}
+                gridStyle={{
                   gridColumn: "2 / 5",
                   gridRow: "2 / 4",
-                  transformOrigin: "center center",
-                  willChange: "transform",
                 }}
-              >
-                <img
-                  src="/images_home/HallOfFame.png"
-                  alt="Hall of Fame"
-                  className="w-full h-full object-cover"
-                />
-                <span className="hof-title absolute bottom-5 text-5xl text-center w-full z-5 font-white font-joker">
-                  hall of fame
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-              </div>
+                titleSize="text-4xl"
+                refSetter={setHeroRef(1)}
+              />
             </div>
           </div>
 
@@ -627,71 +712,73 @@ export default function HallOfFame() {
                 gridTemplateRows: "repeat(4, 1fr)",
               }}
             >
-              {gridImages.map((image, index) => {
-                return (
-                  <div
-                    key={`desktop-${index}`}
-                    ref={setDesktopGridRef(index)}
-                    className="rounded-xl overflow-hidden shadow-2xl transition-transform duration-300 hover:scale-105 hover:z-20 cursor-pointer"
-                    style={{
-                      gridColumn: `${image.gridPosition.col + 1} / span ${image.colSpan ?? 1
-                        }`,
-                      gridRow: `${image.gridPosition.row + 1} / span ${image.rowSpan ?? 1
-                        }`,
-                    }}
-                  >
-                    <img
-                      src={image.src}
-                      alt={image.alt}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                );
-              })}
+              {gridImages.map((image, index) => (
+                <ImageCard
+                  key={`desktop-${index}`}
+                  image={image}
+                  index={index}
+                  refSetter={setDesktopGridRef(index)}
+                  gridStyle={{
+                    gridColumn: `${image.gridPosition.col + 1} / span ${image.colSpan ?? 1}`,
+                    gridRow: `${image.gridPosition.row + 1} / span ${image.rowSpan ?? 1}`,
+                  }}
+                />
+              ))}
 
-              {/* Desktop Hero - Spans 2x2 center */}
-              <div
-                ref={(el) => {
-                  hallRef.current[2] = el;
-                }}
-                className="overflow-hidden relative will-change-transform shadow-2xl z-10 rounded-xl"
-                style={{
+              <HeroCard
+                refIndex={2}
+                gridStyle={{
                   gridColumn: "3 / 5",
                   gridRow: "2 / 4",
-                  transformOrigin: "center center",
-                  willChange: "transform",
                 }}
-              >
-                <img
-                  src="/images_home/HallOfFame.png"
-                  alt="Hall of Fame"
-                  className="w-full h-full object-cover"
-                />
-                <span className="hof-title absolute bottom-5 text-5xl text-center w-full z-5 font-white font-joker">
-                  hall of fame
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-              </div>
+                titleSize="text-5xl"
+                refSetter={setHeroRef(2)}
+              />
             </div>
           </div>
 
-          {/* Scroll indicator */}
+          {/* Scroll indicator - Enhanced */}
           <div
             ref={scrollIndicatorRef}
-            className="absolute top-30 right-2 sm:right-10 flex flex-col items-center gap-2 text-white z-20"
+            className="absolute top-24 md:top-28 right-4 sm:right-8 flex flex-col items-center gap-3 text-white z-20"
           >
-            <span className="text-xl md:text-3xl tracking-widest uppercase font-jqka">Scroll to explore</span>
+            <span className="text-sm md:text-lg tracking-[0.3em] uppercase font-jqka opacity-80">
+              Scroll
+            </span>
+            <div className="scroll-arrow flex flex-col items-center gap-1">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                className="opacity-60"
+              >
+                <path
+                  d="M12 4L12 20M12 20L6 14M12 20L18 14"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
           </div>
         </div>
       </div>
-      <div className="relative w-full overflow-hidden py-5 mb-5 bg-black">
+
+      {/* Marquee Section - Enhanced */}
+      <div className="relative w-full overflow-hidden py-6 bg-black border-t border-white/10">
         <div className="flex w-max animate-marquee">
-          <span className="font-jqka uppercase text-3xl lg:text-5xl whitespace-nowrap">
-            Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26 #joker's realm •
-          </span>
-          <span className="font-jqka uppercase text-3xl lg:text-5xl whitespace-nowrap">
-            Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26 #joker's realm • Synapse' 26 #joker's realm •
-          </span>
+          {[...Array(2)].map((_, i) => (
+            <span key={i} className="font-jqka uppercase text-2xl md:text-4xl lg:text-5xl whitespace-nowrap text-white/90 tracking-wider">
+              Synapse&apos; 26 #joker&apos;s realm&nbsp;&nbsp;•&nbsp;&nbsp;
+              Synapse&apos; 26 #joker&apos;s realm&nbsp;&nbsp;•&nbsp;&nbsp;
+              Synapse&apos; 26 #joker&apos;s realm&nbsp;&nbsp;•&nbsp;&nbsp;
+              Synapse&apos; 26 #joker&apos;s realm&nbsp;&nbsp;•&nbsp;&nbsp;
+              Synapse&apos; 26 #joker&apos;s realm&nbsp;&nbsp;•&nbsp;&nbsp;
+              Synapse&apos; 26 #joker&apos;s realm&nbsp;&nbsp;•&nbsp;&nbsp;
+            </span>
+          ))}
         </div>
       </div>
     </div>

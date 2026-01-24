@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Navbar } from "@/components/ui/Resizable-navbar";
 import NavigationPanel from "@/components/ui/NavigationPanel";
 import Footer from "@/components/ui/Footer";
-import Link from "next/link";
 
 const TERMS_CONTENT = [
   {
@@ -38,7 +37,7 @@ const TERMS_CONTENT = [
   {
     title: "Payment Policy",
     points: [
-      "All payments for Synapse'26 events will be processed through the Razorpay payment gateway.",
+      "All payments for Synapse&apos;26 events will be processed through the Razorpay payment gateway.",
       "Payments can be made using UPI, Debit Card, Credit Card, or Internet Banking.",
     ],
   },
@@ -51,18 +50,96 @@ const TERMS_CONTENT = [
 ];
 
 const styles = {
-  h3: "text-base sm:text-lg lg:text-[25px] mt-10 mb-8 font-medium",
+  h3: "text-base sm:text-lg lg:text-[25px] mt-10 mb-8 font-medium term-title opacity-0",
   ul: "max-w-[1000px] ml-4 sm:ml-5 mb-4 list-disc list-inside",
-  li: "text-sm sm:text-base lg:text-[25px] leading-relaxed text-[#dddddd] mb-2",
+  li: "text-sm sm:text-base lg:text-[25px] leading-relaxed text-[#dddddd] mb-2 term-point opacity-0",
 };
 
-export default function Terms() {
+import { useNavigationState } from "@/lib/useNavigationState";
+import { useEffect, useRef } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-    return (
-        <div className="relative w-screen min-h-[100dvh] overflow-x-hidden  text-white">
-            <Navbar visible={true}>
-                <NavigationPanel />
-            </Navbar>
+export default function Terms() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    gsap.registerPlugin(ScrollTrigger);
+
+    if (!containerRef.current) return;
+
+    const ctx = gsap.context(() => {
+      // Animate Title
+      if (titleRef.current) {
+        gsap.fromTo(titleRef.current,
+          { opacity: 0, y: 50 },
+          { opacity: 1, y: 0, duration: 1, ease: "power3.out" }
+        );
+      }
+
+      // Animate Intro Text
+      gsap.fromTo(".intro-text",
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.8, delay: 0.3, ease: "power2.out" }
+      );
+
+      // Animate Sections
+      const sections = document.querySelectorAll(".term-section");
+      sections.forEach((section, i) => {
+        const title = section.querySelector(".term-title");
+        const points = section.querySelectorAll(".term-point");
+
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: section,
+            start: "top 85%",
+            toggleActions: "play none none reverse",
+          }
+        });
+
+        if (title) {
+          tl.fromTo(title,
+            { opacity: 0, x: -30 },
+            { opacity: 1, x: 0, duration: 0.6, ease: "power2.out" }
+          );
+        }
+
+        if (points.length) {
+          tl.fromTo(points,
+            { opacity: 0, x: 20 },
+            { opacity: 1, x: 0, duration: 0.5, stagger: 0.1, ease: "power2.out" },
+            "-=0.4"
+          );
+        }
+      });
+
+      // Footer text
+      gsap.fromTo(".footer-text",
+        { opacity: 0, y: 30 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: ".footer-text",
+            start: "top 90%",
+            toggleActions: "play none none reverse",
+          }
+        }
+      );
+
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative w-screen min-h-[100dvh] overflow-x-hidden  text-white">
+      <Navbar visible={true}>
+        <NavigationPanel />
+      </Navbar>
 
       <div
         className="fixed left-0 right-0 bottom-0 top-24 z-0
@@ -72,18 +149,18 @@ export default function Terms() {
       <div className="fixed inset-0 z-0 bg-black/60" />
 
       <div className="relative z-10 mx-auto w-full max-w-[1400px] px-4 pt-28 pb-20 sm:px-6 lg:px-[120px] lg:pt-36">
-        <h1 className="mb-12 sm:mb-16 lg:mb-20 text-3xl sm:text-5xl lg:text-[90px] text-center tracking-wide font-joker lowercase">
+        <h1 ref={titleRef} className="mb-12 sm:mb-16 lg:mb-20 text-3xl sm:text-5xl lg:text-[90px] text-center tracking-wide font-joker lowercase opacity-0">
           Terms & Conditions
         </h1>
 
-        <p className="mb-10 sm:mb-14 lg:mb-16 max-w-[1000px] text-sm sm:text-base lg:text-[26px] leading-relaxed text-[#e6e6e6] font-poppins">
+        <p className="intro-text mb-10 sm:mb-14 lg:mb-16 max-w-[1000px] text-sm sm:text-base lg:text-[26px] leading-relaxed text-[#e6e6e6] font-poppins opacity-0">
           Welcome to Synapse’26! To ensure an enjoyable and hassle-free
           experience for all attendees, please carefully read and adhere to the
           following terms and conditions:
         </p>
 
         {TERMS_CONTENT.map((section, index) => (
-          <div key={index}>
+          <div key={index} className="term-section">
             <h3 className={styles.h3}>
               {index + 1}. {section.title}
             </h3>
@@ -98,11 +175,11 @@ export default function Terms() {
           </div>
         ))}
 
-        <p className="mb-10 mt-10 sm:mb-14 lg:mb-16 sm:mt-14 lg:mt-16 max-w-[1000px] text-sm sm:text-base lg:text-[25px] leading-relaxed text-[#e6e6e6]">
-          By attending Synapse'26, you agree to abide by these terms and
+        <p className="footer-text mb-10 mt-10 sm:mb-14 lg:mb-16 sm:mt-14 lg:mt-16 max-w-[1000px] text-sm sm:text-base lg:text-[25px] leading-relaxed text-[#e6e6e6] opacity-0">
+          By attending Synapse&apos;26, you agree to abide by these terms and
           conditions. Failure to comply may result in removal from the festival
           premises without any refund. We appreciate your cooperation in making
-          Synapse'26 a memorable and magical experience for everyone!
+          Synapse&apos;26 a memorable and magical experience for everyone!
         </p>
       </div>
       <Footer />

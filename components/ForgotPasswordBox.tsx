@@ -5,13 +5,12 @@ import { useState } from "react";
 interface ForgotPasswordBoxProps {
   goLogin: () => void;
   goRegister: () => void;
-  goOtp: (email: string) => void;
+  goOtp?: (email: string) => void;
 }
 
 export default function ForgotPasswordBox({
   goLogin,
   goRegister,
-  goOtp,
 }: ForgotPasswordBoxProps) {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -46,8 +45,12 @@ export default function ForgotPasswordBox({
       }
 
       setSuccess("Password reset email sent! Please check your inbox.");
-    } catch (err: any) {
-      setError(err.message || "An error occurred");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An error occurred");
+      }
     } finally {
       setIsLoading(false);
     }

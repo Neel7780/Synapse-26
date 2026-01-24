@@ -9,11 +9,10 @@ export async function GET() {
         const { data: products, error } = await supabase
             .from("merchandise_management")
             .select("*")
-            .eq("is_available", true)
             .order("product_id", { ascending: true });
 
         if (error) {
-            return NextResponse.json({ error: error.message }, { status: 500 });
+            return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
         }
 
         return NextResponse.json({ products: products || [] }, { status: 200 });

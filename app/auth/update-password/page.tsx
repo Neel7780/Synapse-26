@@ -92,8 +92,12 @@ function UpdatePasswordForm() {
       setTimeout(() => {
         router.push("/auth");
       }, 2000);
-    } catch (err: any) {
-      setError(err.message || "Failed to update password");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || "Failed to update password");
+      } else {
+        setError("Failed to update password");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -338,14 +342,17 @@ function UpdatePasswordForm() {
   );
 }
 
+import { useNavigationState } from "@/lib/useNavigationState";
+
 export default function UpdatePasswordPage() {
+  const { startTransition } = useNavigationState();
   return (
     <div className="flex min-h-screen">
       {/* Left Side - Joker Card Image */}
       <div className="fixed hidden md:flex md:w-1/2 h-full bg-[#1a1a1a]">
         <div className="absolute top-8 left-8 z-10">
           <div className="relative w-16 h-16">
-            <Link href="/">
+            <Link href="/" onClick={() => startTransition()}>
               <Image
                 src="/Synapse Logo.png"
                 alt="Synapse Logo"

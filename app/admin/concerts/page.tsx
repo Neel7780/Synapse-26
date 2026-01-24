@@ -1,8 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { AdminPageHeader } from "@/components/admin/ui/AdminSidebar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
@@ -39,14 +45,18 @@ type Concert = {
   concert_name: string;
   concert_date: string;
   venue?: string;
-  timing?: string;
 };
 
 export default function ConcertsPage() {
   const [concerts, setConcerts] = useState<Concert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ concert_name: "", concert_date: "", venue: "", timing: "" });
+  const [formData, setFormData] = useState({
+    concert_name: "",
+    concert_date: "",
+    concert_time: "",
+    venue: "",
+  });
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingConcert, setEditingConcert] = useState<Concert | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -59,8 +69,10 @@ export default function ConcertsPage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setConcerts(data || []);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown error occurred";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -78,24 +90,50 @@ export default function ConcertsPage() {
     }
     setSubmitting(true);
     try {
+      // Combine date and time into timestamp
+      let concert_date = formData.concert_date;
+      if (formData.concert_time) {
+        concert_date = `${formData.concert_date}T${formData.concert_time}:00`;
+      }
+
       const res = await fetch("/api/admin/concerts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          concert_name: formData.concert_name,
+          concert_date,
+          venue: formData.venue,
+        }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       await fetchConcerts();
-      setFormData({ concert_name: "", concert_date: "", venue: "", timing: "" });
-    } catch (err: any) {
-      alert("Failed to create: " + err.message);
+      setFormData({
+        concert_name: "",
+        concert_date: "",
+        concert_time: "",
+        venue: "",
+      });
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown error occurred";
+      alert("Failed to create: " + errorMessage);
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleEditClick = (concert: Concert) => {
-    setEditingConcert(concert);
+    // Extract time from concert_date if it exists
+    const dateObj = new Date(concert.concert_date);
+    const timeString = concert.concert_date.includes("T")
+      ? dateObj.toTimeString().slice(0, 5)
+      : "";
+
+    setEditingConcert({
+      ...concert,
+      concert_time: timeString,
+    } as Concert & { concert_time: string });
     setIsEditOpen(true);
   };
 
@@ -103,18 +141,33 @@ export default function ConcertsPage() {
     if (!editingConcert) return;
     setSubmitting(true);
     try {
+      // Combine date and time into timestamp
+      const editConcert = editingConcert as Concert & { concert_time?: string };
+      let concert_date = editConcert.concert_date?.split("T")[0];
+
+      if (editConcert.concert_time) {
+        concert_date = `${concert_date}T${editConcert.concert_time}:00`;
+      }
+
       const res = await fetch("/api/admin/concerts", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editingConcert),
+        body: JSON.stringify({
+          id: editConcert.id,
+          concert_name: editConcert.concert_name,
+          concert_date,
+          venue: editConcert.venue,
+        }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       await fetchConcerts();
       setIsEditOpen(false);
       setEditingConcert(null);
-    } catch (err: any) {
-      alert("Failed to update: " + err.message);
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown error occurred";
+      alert("Failed to update: " + errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -136,8 +189,10 @@ export default function ConcertsPage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       await fetchConcerts();
-    } catch (err: any) {
-      alert("Failed to delete: " + err.message);
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown error occurred";
+      alert("Failed to delete: " + errorMessage);
     } finally {
       setDeleteDialogOpen(false);
       setDeletingId(null);
@@ -157,7 +212,16 @@ export default function ConcertsPage() {
       <div className="flex flex-col items-center justify-center h-96 gap-4">
         <AlertCircle className="h-12 w-12 text-red-500" />
         <p className="text-lg text-muted-foreground">Error: {error}</p>
-        <Button onClick={() => { setError(null); setLoading(true); fetchConcerts(); }} variant="outline">Retry</Button>
+        <Button
+          onClick={() => {
+            setError(null);
+            setLoading(true);
+            fetchConcerts();
+          }}
+          variant="outline"
+        >
+          Retry
+        </Button>
       </div>
     );
   }
@@ -167,7 +231,11 @@ export default function ConcertsPage() {
       <AdminPageHeader
         title="Concerts"
         subtitle="Management"
-        badge={<Badge className="bg-primary/10 text-primary border-0">{concerts.length} concerts</Badge>}
+        badge={
+          <Badge className="bg-primary/10 text-primary border-0">
+            {concerts.length} concerts
+          </Badge>
+        }
       />
 
       {/* Add Concert Form */}
@@ -179,17 +247,24 @@ export default function ConcertsPage() {
             </div>
             <div>
               <CardTitle>Add New Concert</CardTitle>
-              <CardDescription>Create a new concert for Synapse</CardDescription>
+              <CardDescription>
+                Create a new concert for Synapse
+              </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent className="pt-6">
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <form
+            onSubmit={handleSubmit}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          >
             <div className="space-y-2">
               <label className="text-sm font-medium">Concert Name *</label>
               <Input
                 value={formData.concert_name}
-                onChange={(e) => setFormData({ ...formData, concert_name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, concert_name: e.target.value })
+                }
                 placeholder="e.g., Main Stage Night"
                 required
                 className="bg-muted/50 border-border/50"
@@ -200,8 +275,22 @@ export default function ConcertsPage() {
               <Input
                 type="date"
                 value={formData.concert_date}
-                onChange={(e) => setFormData({ ...formData, concert_date: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, concert_date: e.target.value })
+                }
                 required
+                className="bg-muted/50 border-border/50"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Time</label>
+              <Input
+                type="time"
+                value={formData.concert_time}
+                onChange={(e) =>
+                  setFormData({ ...formData, concert_time: e.target.value })
+                }
+                placeholder="Select time"
                 className="bg-muted/50 border-border/50"
               />
             </div>
@@ -209,23 +298,24 @@ export default function ConcertsPage() {
               <label className="text-sm font-medium">Venue</label>
               <Input
                 value={formData.venue}
-                onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, venue: e.target.value })
+                }
                 placeholder="e.g., Main Stage"
                 className="bg-muted/50 border-border/50"
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Timing</label>
-              <Input
-                value={formData.timing}
-                onChange={(e) => setFormData({ ...formData, timing: e.target.value })}
-                placeholder="e.g., 7:00 PM"
-                className="bg-muted/50 border-border/50"
-              />
-            </div>
-            <div className="md:col-span-2 lg:col-span-4 flex justify-end">
-              <Button type="submit" disabled={submitting} className="bg-primary hover:bg-primary/90">
-                {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+            <div className="md:col-span-2 lg:col-span-3 flex justify-end">
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="bg-primary hover:bg-primary/90"
+              >
+                {submitting ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="mr-2 h-4 w-4" />
+                )}
                 Add Concert
               </Button>
             </div>
@@ -251,35 +341,60 @@ export default function ConcertsPage() {
             <TableHeader>
               <TableRow className="border-border/50 hover:bg-muted/50">
                 <TableHead className="text-muted-foreground">Concert</TableHead>
-                <TableHead className="text-muted-foreground">Date</TableHead>
+                <TableHead className="text-muted-foreground">
+                  Date & Time
+                </TableHead>
                 <TableHead className="text-muted-foreground">Venue</TableHead>
-                <TableHead className="text-muted-foreground">Timing</TableHead>
-                <TableHead className="text-right text-muted-foreground">Actions</TableHead>
+                <TableHead className="text-right text-muted-foreground">
+                  Actions
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {concerts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableCell
+                    colSpan={4}
+                    className="text-center py-8 text-muted-foreground"
+                  >
                     No concerts created yet.
                   </TableCell>
                 </TableRow>
               ) : (
                 concerts.map((concert) => (
-                  <TableRow key={concert.id} className="border-border/50 hover:bg-muted/50">
+                  <TableRow
+                    key={concert.id}
+                    className="border-border/50 hover:bg-muted/50"
+                  >
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
                           <Music className="h-5 w-5 text-primary" />
                         </div>
-                        <span className="font-medium">{concert.concert_name}</span>
+                        <span className="font-medium">
+                          {concert.concert_name}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary" className="bg-muted/50 border-border/50">
-                        <Calendar className="mr-1 h-3 w-3" />
-                        {concert.concert_date?.split("T")[0]}
-                      </Badge>
+                      <div className="flex flex-col gap-1">
+                        <Badge
+                          variant="secondary"
+                          className="bg-muted/50 border-border/50 w-fit"
+                        >
+                          <Calendar className="mr-1 h-3 w-3" />
+                          {new Date(concert.concert_date).toLocaleDateString()}
+                        </Badge>
+                        {concert.concert_date.includes("T") && (
+                          <span className="flex items-center gap-1 text-muted-foreground text-sm">
+                            <Clock className="h-3 w-3" />
+                            {new Date(concert.concert_date).toLocaleTimeString(
+                              [],
+                              { hour: "2-digit", minute: "2-digit" },
+                            )}
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       {concert.venue && (
@@ -289,17 +404,14 @@ export default function ConcertsPage() {
                         </span>
                       )}
                     </TableCell>
-                    <TableCell>
-                      {concert.timing && (
-                        <span className="flex items-center gap-1 text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          {concert.timing}
-                        </span>
-                      )}
-                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button size="sm" variant="outline" onClick={() => handleEditClick(concert)} className="border-border/50">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEditClick(concert)}
+                          className="border-border/50"
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
@@ -321,7 +433,13 @@ export default function ConcertsPage() {
       </Card>
 
       {/* Edit Dialog */}
-      <Dialog open={isEditOpen} onOpenChange={(open) => { setIsEditOpen(open); if (!open) setEditingConcert(null); }}>
+      <Dialog
+        open={isEditOpen}
+        onOpenChange={(open) => {
+          setIsEditOpen(open);
+          if (!open) setEditingConcert(null);
+        }}
+      >
         <DialogContent className="sm:max-w-[500px] bg-card border-border">
           <DialogHeader>
             <DialogTitle>Edit Concert</DialogTitle>
@@ -333,7 +451,12 @@ export default function ConcertsPage() {
                 <label className="text-sm font-medium">Concert Name</label>
                 <Input
                   value={editingConcert.concert_name}
-                  onChange={(e) => setEditingConcert({ ...editingConcert, concert_name: e.target.value })}
+                  onChange={(e) =>
+                    setEditingConcert({
+                      ...editingConcert,
+                      concert_name: e.target.value,
+                    })
+                  }
                   className="bg-muted/50 border-border/50"
                 />
               </div>
@@ -342,7 +465,30 @@ export default function ConcertsPage() {
                 <Input
                   type="date"
                   value={editingConcert.concert_date?.split("T")[0]}
-                  onChange={(e) => setEditingConcert({ ...editingConcert, concert_date: e.target.value })}
+                  onChange={(e) =>
+                    setEditingConcert({
+                      ...editingConcert,
+                      concert_date: e.target.value,
+                    })
+                  }
+                  className="bg-muted/50 border-border/50"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Time</label>
+                <Input
+                  type="time"
+                  value={
+                    (editingConcert as Concert & { concert_time?: string })
+                      .concert_time || ""
+                  }
+                  onChange={(e) =>
+                    setEditingConcert({
+                      ...editingConcert,
+                      concert_time: e.target.value,
+                    } as Concert & { concert_time: string })
+                  }
+                  placeholder="Select time"
                   className="bg-muted/50 border-border/50"
                 />
               </div>
@@ -350,24 +496,38 @@ export default function ConcertsPage() {
                 <label className="text-sm font-medium">Venue</label>
                 <Input
                   value={editingConcert.venue || ""}
-                  onChange={(e) => setEditingConcert({ ...editingConcert, venue: e.target.value })}
-                  className="bg-muted/50 border-border/50"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Timing</label>
-                <Input
-                  value={editingConcert.timing || ""}
-                  onChange={(e) => setEditingConcert({ ...editingConcert, timing: e.target.value })}
+                  onChange={(e) =>
+                    setEditingConcert({
+                      ...editingConcert,
+                      venue: e.target.value,
+                    })
+                  }
                   className="bg-muted/50 border-border/50"
                 />
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditOpen(false)} className="border-border/50">Cancel</Button>
-            <Button onClick={handleEditSave} disabled={submitting} className="bg-primary hover:bg-primary/90">
-              {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : "Save Changes"}
+            <Button
+              variant="outline"
+              onClick={() => setIsEditOpen(false)}
+              className="border-border/50"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleEditSave}
+              disabled={submitting}
+              className="bg-primary hover:bg-primary/90"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -378,11 +538,21 @@ export default function ConcertsPage() {
         <DialogContent className="sm:max-w-[400px] bg-card border-border">
           <DialogHeader>
             <DialogTitle>Delete Concert</DialogTitle>
-            <DialogDescription>Are you sure? This action cannot be undone.</DialogDescription>
+            <DialogDescription>
+              Are you sure? This action cannot be undone.
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} className="border-border/50">Cancel</Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm}>Delete</Button>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              className="border-border/50"
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteConfirm}>
+              Delete
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

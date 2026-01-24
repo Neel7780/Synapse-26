@@ -7,7 +7,11 @@ import { Navbar } from "@/components/ui/Resizable-navbar";
 import NavigationPanel from "@/components/ui/NavigationPanel";
 import Image from "next/image";
 
-export default function page() {
+
+export default function AccomodationPage() {
+  // Manual transition end moved to global TransitionProvider
+  // const { endTransition } = useNavigationState();
+  // useEffect(() => { endTransition(); }, []);
   return (
     <div>
       <Navbar visible={true}>

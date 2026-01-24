@@ -1,119 +1,97 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import { IconBrandInstagram, IconBrandYoutube } from "@tabler/icons-react";
 
-const ContactFooter: React.FC = () => {
+export default function Footer() {
   return (
-    <footer
-      id="contact"
-      className="relative w-full h-full bg-black text-white font-sans overflow-hidden"
-    >
-      <style jsx>{`
-        @media (max-width: 968px) {
-          html,
-          body {
-            overflow: auto !important;
-          }
-        }
-      `}</style>
+    <footer id="contact" className="relative w-full bg-[linear-gradient(165deg,#990000_0%,#000000_65%)] text-white overflow-hidden pt-6 pb-6 flex flex-col justify-between h-full">
+      <div className="px-6 md:px-16 w-full flex flex-col flex-grow">
+        {/* Header */}
+        <div className="flex justify-center items-center mb-6 md:mb-12">
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight uppercase">Contact us</h1>
+        </div>
 
-            <Image
-                src="/FooterFirework.png"
-                alt="Firework animation"
-                width={426}
-                height={240}
-                priority={true}
-                fetchPriority='high'
-                className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-            />
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 w-full mb-8 md:mb-14">
+          {/* Left Column: Contacts */}
+          <div className="flex flex-col gap-6 md:gap-8">
+            <h2 className="text-2xl md:text-4xl font-semibold tracking-wide text-gray-200 uppercase">Reach Us Out At</h2>
 
-      <div className="absolute inset-0 bg-black/20 z-10" aria-hidden="true" />
+            <div className="flex flex-col gap-4 md:gap-6 text-lg md:text-xl">
+              <div className="flex flex-col">
+                <p className="font-medium text-white">
+                  Heet Shah: <Link href="tel:+919512101868" className="hover:text-blue-400 transition-colors">+91 95121 01868</Link>
+                </p>
+                <p className="text-gray-400 text-sm md:text-base mt-1">(Public Relation Head)</p>
+              </div>
 
-            <div className="relative z-20 w-full min-h-[cal(100dvh - 40px)] flex flex-col">
-                <div className="w-full">
-                    <Image
-                        src="/subtract.svg"
-                        alt="Synapse Logo"
-                        width={1920}
-                        height={400}
-                        className="w-full top-0 h-auto object-contain"
-                    />
-                </div>
-
-        <div className="px-4 md:px-[20px] pt-6 pb-4 md:pt-5 md:pb-2.5 flex flex-col flex-1">
-          <div className="flex sm:flex-row items-center justify-between mb-4 md:mb-10 md:mt-14">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-0">
-              Contact us
-            </h1>
-            <Image
-              src="/Synapse Logo.png"
-              alt="Synapse Header Logo"
-              width={50}
-              height={50}
-              className="w-10 h-10 sm:w-12 sm:h-12"
-            />
+              <div className="flex flex-col">
+                <p className="font-medium text-white">
+                  Ved Dhanani: <Link href="tel:+917435921242" className="hover:text-blue-400 transition-colors">+91 74359 21242</Link>
+                </p>
+                <p className="text-gray-400 text-sm md:text-base mt-1">(Events Head)</p>
+              </div>
+            </div>
           </div>
 
-                    <p className="sm:text-lg md:text-xl lg:text-2xl mb-6 md:mb-4">Reach Us Out At</p>
+          {/* Right Column: Address & Socials */}
+          <div className="flex flex-col gap-6 md:gap-8 md:text-right items-start md:items-end justify-end">
+            <div className="text-lg md:text-xl leading-relaxed md:max-w-xl text-gray-300">
+              <p>DAU-campus (formerly DA-IICT), near Reliance Cross Rd,</p>
+              <p>Gandhinagar, Gujarat 382007, India</p>
+            </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start mb-8 md:mb-7 text-sm sm:text-base md:text-lg">
-                        <div className="leading-relaxed sm:leading-loose">
-                            <div>
-                                <span className="font-semibold">Namra Sanandiya:</span>
-                                <Link href="tel:+918799048240" className="ml-1 hover:text-indigo-300 transition-colors duration-200">
-                                    +91 87990 48240
-                                </Link><br />
-                                <pre>(Public Relation Head)</pre>
-                            </div>
-                            <div>
-                                <span className="font-semibold">Rujal Jiyani:</span>
-                                <Link href="tel:+919499549977" className="ml-1 hover:text-indigo-300 transition-colors duration-200">
-                                    +91 94995 49977
-                                </Link><br />
-                                <pre>(Events Head)</pre>
-                            </div>
+            <div className="flex flex-col gap-1 md:items-end">
+              <span className="text-lg md:text-xl text-gray-400">Email:</span>
+              <Link
+                href="mailto:synapse.thefest@dau.ac.in"
+                className="text-lg md:text-xl hover:text-blue-400 transition-colors text-white"
+              >
+                synapse.thefest@dau.ac.in
+              </Link>
+            </div>
 
-                        </div>
-
-                        <div className="text-left lg:text-right lg:pl-6 xl:pl-10 leading-relaxed sm:leading-loose">
-                            <div>DAU-campus (formerly DA-IICT), near Reliance Cross Rd,</div>
-                            <div>Gandhinagar, Gujarat 382007, India</div>
-                            <div className="flex flex-row lg:justify-self-end gap-[10px] mt-4 md:mt-2.5">
-                                <span>Email:</span>
-                                <Link
-                                    href="mailto:synapse.thefest@gmail.com"
-                                    className="block hover:text-indigo-300 transition-colors duration-200"
-                                >
-                                    synapse.thefest@dau.ac.in
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
-
-          <nav className="flex flex-wrap justify-center bottom-0 gap-4 sm:gap-6 md:gap-8 lg:gap-10 mt-auto pb-6 sm:pb-4 md:pb-2.5">
-            <Link
-              href="https://www.instagram.com/synapsedaiict?igsh=MXUwYzc5ZGE4N2NhZA=="
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white no-underline text-sm sm:text-base md:text-lg font-bold tracking-widest hover:text-[#667eea] hover:-translate-y-0.5 transition-all duration-300 ease-in-out px-2 py-1"
-            >
-              INSTAGRAM
-            </Link>
-            <Link
-              href="http://www.youtube.com/@SynapseDAIICT"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white no-underline text-sm sm:text-base md:text-lg font-bold tracking-widest hover:text-[#667eea] hover:-translate-y-0.5 transition-all duration-300 ease-in-out px-2 py-1"
-            >
-              YOUTUBE
-            </Link>
-          </nav>
+            <div className="flex gap-6 mt-2">
+              <Link
+                href="https://www.instagram.com/synapsedaiict?igsh=MXUwYzc5ZGE4N2NhZA=="
+                target="_blank"
+                className="hover:scale-110 transition-transform duration-200"
+              >
+                <IconBrandInstagram size={32} strokeWidth={2} />
+              </Link>
+              <Link
+                href="http://www.youtube.com/@SynapseDAIICT"
+                target="_blank"
+                className="hover:scale-110 transition-transform duration-200"
+              >
+                <IconBrandYoutube size={32} strokeWidth={2} />
+              </Link>
+            </div>
+          </div>
         </div>
+      </div>
+
+      {/* Footer Text */}
+      <div className="w-full flex justify-center mt-auto leading-none overflow-hidden px-4 md:px-10">
+        <h1
+          className="font-jqka w-full flex justify-between items-end select-none leading-[0.75] translate-y-[2%]"
+          style={{
+            fontSize: '22vw',
+            backgroundImage: "url('/footer.png')",
+            backgroundSize: '100% auto', // Make sure it covers horizontally but respects aspect vertically
+            backgroundPosition: 'center 85%', // Move image up/down to catch the "meat" of it in the text
+            WebkitBackgroundClip: 'text',
+            backgroundClip: 'text',
+            color: 'transparent',
+            WebkitTextStroke: '2px #ff0000',
+          }}
+        >
+          {"SYNAPSE".split("").map((char, index) => (
+            <span key={index}>{char}</span>
+          ))}
+        </h1>
       </div>
     </footer>
   );
-};
-
-export default ContactFooter;
+}

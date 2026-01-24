@@ -1,9 +1,29 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { corsHeaders, handleCorsResponse, addCorsHeaders } from '@/lib/cors'
+
+async function checkAdmin(supabase: any) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return false;
+  return user.email === process.env.ADMIN_EMAIL;
+}
+
+export async function OPTIONS(request: Request) {
+  const origin = request.headers.get("origin");
+  return handleCorsResponse(origin);
+}
 
 export async function GET(req: NextRequest) {
   try {
+    const origin = req.headers.get("origin");
     const supabase = (await createClient()) as any;
+
+    if (!(await checkAdmin(supabase))) {
+      const response = NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+      return addCorsHeaders(response, origin);
+    }
     const { searchParams } = new URL(req.url);
 
     const search = searchParams.get("searchParams") ?? "";
@@ -44,7 +64,7 @@ export async function GET(req: NextRequest) {
     const { data, error } = await query;
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
     }
 
     const headers = [
@@ -55,18 +75,30 @@ export async function GET(req: NextRequest) {
       "College",
       "Registration Date",
       "Event Count",
+      "Events",
     ];
 
     const csvRows = [
       headers.join(","),
       ...(data ?? []).map((user: any) => {
-        let eventCount = 0;
+        const eventNames = new Set<string>();
 
         user.team_members?.forEach((tm: any) => {
-          if (tm.team?.event_registrations) {
-            eventCount += 1;
+          const registrations = tm.team?.event_registrations;
+
+          if (Array.isArray(registrations)) {
+            registrations.forEach((er: any) => {
+              const eventName = er?.event_fee?.event?.event_name;
+              if (eventName) eventNames.add(eventName);
+            });
+          } else {
+            const eventName = registrations?.event_fee?.event?.event_name;
+            if (eventName) eventNames.add(eventName);
           }
         });
+
+        const eventsList = Array.from(eventNames);
+        const eventCount = eventsList.length;
 
         return [
           user.user_id,
@@ -76,6 +108,7 @@ export async function GET(req: NextRequest) {
           `"${user.college}"`,
           user.registration_date,
           eventCount,
+          `"${eventsList.join("; ")}"`,
         ].join(",");
       }),
     ];
@@ -89,8 +122,8 @@ export async function GET(req: NextRequest) {
         "Content-Disposition": `attachment; filename="users.csv"`,
       },
     });
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error(error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

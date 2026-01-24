@@ -1,16 +1,13 @@
 "use client";
 import { cn } from "@/lib/utils";
 import { IconMenu3, IconX } from "@tabler/icons-react";
-import {
-  motion,
-  AnimatePresence,
-  useScroll,
-  useMotionValueEvent,
-} from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { useNavigationState } from "@/lib/useNavigationState";
+import { usePathname } from "next/navigation";
 
-import React, { useRef, useState, forwardRef } from "react";
+import React, { useState, forwardRef, memo } from "react";
 
 interface NavbarProps {
   children: React.ReactNode;
@@ -63,14 +60,14 @@ export const Navbar = ({
 }: NavbarProps & { visible?: boolean }) => {
   return (
     <motion.div
-      className={cn("fixed inset-x-0 top-0 z-40 w-full", className)}
+      className={cn("fixed z-9990 inset-x-0 top-0 z-40 w-full", className)}
       initial={false}
       animate={{
         opacity: visible ? 1 : 0,
         y: visible ? 0 : -80,
-        pointerEvents: visible ? "auto" : "none",
+        pointerEvents: "none",
       }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
+      transition={{ duration: 0.7, ease: "easeOut" }}
     >
       {children}
     </motion.div>
@@ -97,7 +94,7 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
         minWidth: "800px",
       }}
       className={cn(
-        "relative z-[150] mx-auto hidden w-full max-w-[95vw] flex-row items-center justify-between self-start rounded-full bg-black/40 px-6 py-3 lg:flex border border-white/10",
+        "relative z-[150] mx-auto hidden w-full max-w-[95vw] flex-row items-center justify-between self-start rounded-full bg-black/40 px-6 py-3 lg:flex border border-white/10 pointer-events-auto",
         visible && "bg-black/80",
         className
       )}
@@ -107,25 +104,33 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
   );
 };
 
-export const NavItems = ({ items, className, onItemClick }: NavItemsProps) => {
+export const NavItems = memo(function NavItems({ items, className, onItemClick }: NavItemsProps) {
   const [hovered, setHovered] = useState<number | null>(null);
+  const { startTransition } = useNavigationState();
 
   return (
     <motion.div
       onMouseLeave={() => setHovered(null)}
       className={cn(
-        "absolute inset-0 hidden flex-1 flex-row items-center justify-center space-x-2 text-sm font-medium text-white/90 transition duration-200 lg:flex lg:space-x-2",
+        "absolute inset-0 hidden flex-1 flex-row items-center justify-center space-x-2 text-sm font-medium text-white/90 transition duration-200 lg:flex lg:space-x-2 pointer-events-auto",
         className
       )}
     >
       {items.map((item, idx) => (
         <Link
           onMouseEnter={() => setHovered(idx)}
-          onClick={onItemClick}
+          onClick={() => {
+            // Only for internal links
+            if (item.link.startsWith("/")) {
+              startTransition();
+            }
+            onItemClick?.();
+          }}
           className="relative px-4 py-2 text-white/80 hover:text-white transition-colors duration-200"
           key={`link-${idx}`}
           href={item.link}
           scroll={false}
+          prefetch={false}
         >
           {hovered === idx && (
             <motion.div
@@ -140,7 +145,7 @@ export const NavItems = ({ items, className, onItemClick }: NavItemsProps) => {
       ))}
     </motion.div>
   );
-};
+});
 
 export const MobileNav = ({ children, className, visible }: MobileNavProps) => {
   return (
@@ -153,6 +158,7 @@ export const MobileNav = ({ children, className, visible }: MobileNavProps) => {
         paddingRight: visible ? "12px" : "0px",
         paddingLeft: visible ? "12px" : "0px",
         y: visible ? 20 : 0,
+        pointerEvents: "none",
       }}
       transition={{
         type: "spring",
@@ -160,7 +166,7 @@ export const MobileNav = ({ children, className, visible }: MobileNavProps) => {
         damping: 50,
       }}
       className={cn(
-        "relative z-50 mx-auto flex w-full flex-col items-center justify-between px-4",
+        "relative z-50 z-9990 mx-auto flex w-full flex-col items-center justify-between px-4",
         visible,
         className
       )}
@@ -176,22 +182,21 @@ export const MobileAnimatedMenuItem = ({
   onClick,
 }: AnimatedMenuItemProps) => {
   const movedRef = React.useRef(false);
+
   return (
     <Link
       href={link}
-      className="group w-full grid grid-cols-[1fr_auto] items-center cursor-pointer select-none text-white font-joker"
+      onClickCapture={(e) => {
+        if (movedRef.current) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }}
       onTouchStart={() => {
         movedRef.current = false;
       }}
       onTouchMove={() => {
         movedRef.current = true;
-      }}
-      onTouchEnd={(e) => {
-        if (movedRef.current) {
-          e.preventDefault();
-          e.stopPropagation();
-          return;
-        }
       }}
       onClick={(e) => {
         if (movedRef.current) {
@@ -201,57 +206,28 @@ export const MobileAnimatedMenuItem = ({
         }
         onClick?.(e);
       }}
+      className="group w-full grid grid-cols-[1fr_auto] items-center cursor-pointer select-none text-white font-joker hover:text-red-600"
     >
       {/* TEXT */}
-      <div className="relative overflow-hidden h-[clamp(32px,7vw,64px)]">
-        {/* DEFAULT */}
-        <span
-          className="
-            absolute inset-0
-            translate-y-0
-            transition-transform duration-500 ease-out
-            group-hover:-translate-y-full
-            text-[clamp(18px,4.5vw,42px)]
-            leading-[clamp(32px,7vw,64px)]
-            group-hover:text-[#EB0000]
-            font-joker
-          "
-        >
+      <div className="relative overflow-hidden h-[clamp(28px,6vw,54px)]">
+        <span className="absolute inset-0 transition-transform duration-500 ease-out group-hover:-translate-y-full text-[clamp(18px,4.5vw,36px)] leading-[clamp(28px,6vw,54px)] font-joker">
           {name}
         </span>
-
-        {/* HOVER */}
-        <span
-          className="
-            absolute inset-0
-            translate-y-full
-            transition-transform duration-500 ease-out
-            group-hover:translate-y-0
-            text-[clamp(18px,4.5vw,42px)]
-            leading-[clamp(32px,7vw,64px)]
-            group-hover:text-[#EB0000]
-            font-joker
-          "
-        >
+        <span className="absolute inset-0 translate-y-full transition-transform duration-500 ease-out group-hover:translate-y-0 text-[clamp(18px,4.5vw,36px)] leading-[clamp(28px,6vw,54px)] font-joker">
           {name}
         </span>
       </div>
 
-      {/* ARROW */}
       <span
-        className="
-          ml-[clamp(8px,1.5vw,16px)]
-          text-[clamp(20px,5vw,48px)]
-          transition-all duration-300 ease-out
-          group-hover:translate-x-1.5
-          group-hover:text-[#EB0000]
-        "
+        className="ml-[clamp(10px,2vw,20px)] text-[clamp(20px,4.5vw,36px)] transition-all duration-300 ease-out group-hover:translate-x-1.5"
+        style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' }}
       >
         ↗
       </span>
     </Link>
   );
 };
+
 
 export const MobileNavHeader = ({
   children,
@@ -260,7 +236,7 @@ export const MobileNavHeader = ({
   return (
     <div
       className={cn(
-        "flex w-full z-9999 px-4 py-4 flex-row items-center justify-between",
+        "flex w-full z-9990 px-4 py-4 flex-row items-center justify-between pointer-events-none",
         className,
       )}
     >
@@ -275,7 +251,7 @@ export const MobileNavMenu = forwardRef<
     onClose: () => void;
   }
 >(function MobileNavMenu(
-  { children, className, isOpen, onClose },
+  { children, className, isOpen },
   ref
 ) {
   return (
@@ -286,9 +262,9 @@ export const MobileNavMenu = forwardRef<
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
           className={cn(
-            "fixed inset-x-0 top-2 z-[999] mx-auto w-[calc(100%-16px)] rounded-xl bg-black/95 border border-white/10 shadow-[0_4px_30px_rgba(235,0,0,0.15)]",
+            "fixed inset-x-0 top-2 mx-auto w-[calc(100%-16px)] rounded-xl bg-black/95 border border-white/10 shadow-[0_4px_30px_rgba(235,0,0,0.15)] pointer-events-auto",
             className
           )}
           onWheel={(e) => e.stopPropagation()}
@@ -298,7 +274,7 @@ export const MobileNavMenu = forwardRef<
           </div>
 
           {/* MENU ITEMS */}
-          <div className="flex flex-col gap-6 px-8 pb-6 max-h-[70dvh] overflow-y-auto overscroll-contain">
+          <div className="flex flex-col gap-2 px-8 pb-6 lg:gap-0.5 max-h-[75dvh] overflow-y-auto overscroll-contain">
             {children}
           </div>
         </motion.div>
@@ -315,17 +291,28 @@ export const MobileNavToggle = ({
   onClick: () => void;
 }) => {
   return isOpen ? (
-    <IconX size={35} className=" z-9999 text-white cursor-pointer hover:text-[#EB0000] transition-colors" onClick={onClick} />
+    <IconX size={35} className=" z-9999 text-white cursor-pointer hover:text-[#EB0000] transition-colors pointer-events-auto" onClick={onClick} />
   ) : (
-    <IconMenu3 size={35} className=" text-white scale-[0.9] md:scale-[1] cursor-pointer hover:text-[#EB0000] transition-colors" onClick={onClick} />
+    <IconMenu3 size={35} className="z-9999 text-white scale-[0.9] md:scale-[1] cursor-pointer hover:text-[#EB0000] transition-colors pointer-events-auto" onClick={onClick} />
   );
 };
 
 export const NavbarLogo = () => {
+  const { startTransition } = useNavigationState();
+  const pathname = usePathname();
+
   return (
     <Link
       href="/"
-      className="relative mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-black dark:text-white"
+      onClick={(e) => {
+        if (pathname === "/") {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          return;
+        }
+        startTransition();
+      }}
+      className="relative mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-black dark:text-white pointer-events-auto"
     >
       <Image
         src="/Synapse Logo.png"
@@ -368,7 +355,7 @@ export const NavbarButton: React.FC<NavbarButtonProps> = ({
       "bg-transparent text-white border-2 border-white shadow-[6px_6px_0px_#EB0000] hover:bg-[#EB0000] hover:text-black hover:border-black hover:shadow-[6px_6px_0px_rgba(255,255,255,0.7)] hover:-translate-y-0.5 hover:scale-105",
 
     register:
-      "max-[450px]:-translate-x-1/2 max-[450px]:translate-y-1/2 text-[clamp(1.25rem,4vw,1.875rem)] border-[5px] border-white rounded-[10px] bg-black text-white shadow-[10px_10px_0px_#EB0000] hover:bg-[#EB0000] hover:text-black hover:border-black hover:scale-105 hover:shadow-[10px_10px_0px_rgba(255,255,255,0.7)] font-normal font-jqka",
+      "text-[clamp(1.25rem,4vw,1.875rem)] border-[5px] border-white rounded-[10px] bg-black text-white shadow-[10px_10px_0px_#EB0000] hover:bg-[#EB0000] hover:text-black hover:border-black hover:scale-105 hover:shadow-[10px_10px_0px_rgba(255,255,255,0.7)] font-normal font-jqka",
   };
 
   const button = (
@@ -380,10 +367,20 @@ export const NavbarButton: React.FC<NavbarButtonProps> = ({
     </button>
   );
 
+  const { startTransition } = useNavigationState();
+
   if (!href) return button;
 
   return (
-    <Link href={href} prefetch>
+    <Link
+      href={href}
+      prefetch
+      onClick={() => {
+        if (href.startsWith("/")) {
+          startTransition();
+        }
+      }}
+    >
       {button}
     </Link>
   );

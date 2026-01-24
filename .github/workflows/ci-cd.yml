@@ -1,17 +1,31 @@
-name: CI / CD
+name: CI/CD
 
 on:
   push:
     branches:
       - main
   pull_request:
-    branches:
-      - main
+    # Run on all pull requests (to any branch)
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
 
 jobs:
-  ci:
-    name: Continuous Integration
+  # ===========================================================================
+  # Build & Lint - Core validation
+  # ===========================================================================
+  build:
+    name: Build & Lint
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -19,29 +33,43 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run linter
+      - name: Lint
+        run: npm run lint || true
         continue-on-error: true
-        run: |
-          npm run lint || true
 
-      - name: Build (typecheck + compile)
+      - name: Type Check
+        run: npx tsc --noEmit
+        continue-on-error: false
+
+      - name: Build
         run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+          # Provide empty values for build-time env vars if not available
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || '' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || '' }}
 
+  # ===========================================================================
+  # Deploy to Vercel (main branch only)
+  # ===========================================================================
   deploy:
-    name: Deploy to Vercel
-    needs: ci
+    name: Deploy
+    needs: build
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    
+    permissions:
+      contents: read
+    
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
 
     steps:
       - name: Checkout code
@@ -50,20 +78,20 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
 
-      - name: Install dependencies
-        run: npm ci
-
       - name: Install Vercel CLI
-        run: npm install -g vercel
-
-      - name: Pull Vercel Environment
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Build Project (prebuilt)
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: npm install -g vercel@latest
 
       - name: Deploy to Vercel
-        run: vercel deploy --prebuilt --prod --archive=tgz --token=${{ secrets.VERCEL_TOKEN }}
+        id: deploy
+        run: |
+          vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+          vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+          url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$url" >> $GITHUB_OUTPUT
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        continue-on-error: true

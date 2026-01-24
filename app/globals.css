@@ -53,6 +53,7 @@
   --font-card: "CardCharacter", sans-serif;
   --font-joker: "Joker", sans-serif;
   --font-jqka: "jqka", sans-serif;
+  --font-texgyreadventor: "Texgyreadventor", sans-serif;
   --font-poppins: "Poppins", system-ui, sans-serif;
   --font-roboto: "Roboto", sans-serif;
   --color-background: var(--background);
@@ -103,6 +104,16 @@
   }
 }
 
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  display: none;
+}
+
+input[type="date"]::-webkit-inner-spin-button,
+input[type="date"]::-webkit-clear-button {
+  display: none;
+}
+
 /* Brand Color Palette */
 :root {
   --brand-purple: #a855f7;
@@ -114,17 +125,13 @@
   --brand-gray-light: #6b7280;
 
   /* Gradient shortcuts */
-  --gradient-primary: linear-gradient(
-    135deg,
-    var(--brand-purple) 0%,
-    var(--brand-pink) 50%,
-    var(--brand-red) 100%
-  );
-  --gradient-accent: linear-gradient(
-    135deg,
-    var(--brand-yellow) 0%,
-    #fbbf24 100%
-  );
+  --gradient-primary: linear-gradient(135deg,
+      var(--brand-purple) 0%,
+      var(--brand-pink) 50%,
+      var(--brand-red) 100%);
+  --gradient-accent: linear-gradient(135deg,
+      var(--brand-yellow) 0%,
+      #fbbf24 100%);
 }
 
 ::-webkit-scrollbar {
@@ -134,6 +141,7 @@
 
 * {
   scrollbar-width: none;
+  box-sizing: border-box;
 }
 
 * {
@@ -172,6 +180,15 @@ html.lenis body {
   font-style: normal;
   font-display: swap;
 }
+
+@font-face {
+  font-family: "Texgyreadventor";
+  src: url("/fonts/texgyreadventor-regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 
 @font-face {
   font-family: "jqka";
@@ -221,4 +238,175 @@ html.lenis body {
 
 .animate-marquee {
   animation: marquee 18s linear infinite;
+}
+
+/* Shimmer animation for skeleton loaders */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Custom thin scrollbar for overflow elements */
+.thin-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Performance optimizations */
+.will-change-transform {
+  will-change: transform;
+}
+
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* SVG Animation Performance Optimizations */
+.svg-container {
+  contain: layout style paint;
+  content-visibility: auto;
+}
+
+.svg-container svg {
+  /* Force GPU compositing for the entire SVG */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  /* Prevent layout recalculations */
+  contain: strict;
+}
+
+.svg-container svg path {
+  /* GPU acceleration for stroke animations */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  /* Optimize paint operations */
+  shape-rendering: optimizeSpeed;
+  /* Reduce memory usage on mobile */
+  vector-effect: non-scaling-stroke;
+}
+
+/* Mobile-specific SVG optimizations */
+@media (max-width: 768px) {
+  .svg-container svg {
+    /* Reduce quality for better performance on mobile */
+    image-rendering: optimizeSpeed;
+  }
+
+  .svg-container svg path {
+    /* Simpler rendering on mobile */
+    shape-rendering: crispEdges;
+    /* Remove will-change after animation to free memory */
+    will-change: auto;
+  }
+
+  /* Reduce animation complexity on mobile */
+  .svg-container.animating svg path {
+    will-change: stroke-dashoffset;
+    /* Batch paint operations */
+    contain: layout paint;
+  }
+}
+
+/* Animation complete state - remove will-change to free GPU memory */
+.svg-container.animation-complete svg path {
+  will-change: auto;
+  transform: none;
+}
+
+/* Custom cursor styles */
+.cursor-hidden {
+  cursor: none !important;
+}
+
+/* Hide cursor on interactive elements when custom cursor is active */
+@media (hover: hover) and (pointer: fine) {
+
+  body.custom-cursor-active,
+  body.custom-cursor-active * {
+    cursor: none !important;
+  }
+}
+
+/* Cursor magnetic effect target */
+[data-cursor="magnetic"] {
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Cursor text labels for specific elements */
+[data-cursor-text]::before {
+  content: attr(data-cursor-text);
+}
+
+/* Cursor blend mode adjustments for different backgrounds */
+.cursor-invert {
+  mix-blend-mode: difference;
+}
+
+/* Pulse animation for cursor ring on special elements */
+@keyframes cursor-pulse {
+
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0.7;
+  }
+}
+
+.cursor-pulse {
+  animation: cursor-pulse 1.5s ease-in-out infinite;
+}
+
+/* Cursor trail fade */
+@keyframes cursor-trail-fade {
+  0% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Disable custom cursor for reduced motion */
+  body.custom-cursor-active,
+  body.custom-cursor-active * {
+    cursor: auto !important;
+  }
 }

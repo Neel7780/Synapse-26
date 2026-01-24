@@ -7,12 +7,18 @@ import { Navbar } from "@/components/ui/Resizable-navbar";
 import NavigationPanel from "@/components/ui/NavigationPanel";
 import Footer from "@/components/ui/Footer";
 
+import { useNavigationState } from "@/lib/useNavigationState";
+
 const PRODUCTS = [
   {
     slug: "synapse-tee-1",
     name: "Synapse’26 Exclusive Tee",
     price: 400,
-    image: "/images_merch/Tshirt.jpeg",
+    image: "/images_merch/Tshirt2.jpeg",
+    images: [
+      "/images_merch/Tshirt2.jpeg",
+      "/images_merch/Tshirt.jpeg",
+    ],
     sizes: ["S", "M", "L", "XL", "2XL"],
     note: "* Merch should be collected from the help desk on the day of fest.",
     features: [
@@ -29,12 +35,13 @@ export default function ProductPage() {
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const { startTransition } = useNavigationState();
 
   const product = PRODUCTS.find((p) => p.slug === slug);
   if (!product) return null;
 
-  // placeholder thumbnails (same image for now)
-  const images = [product.image, product.image, product.image];
+  // Use real images from data
+  const images = product.images;
 
   return (
     <div className="w-full bg-black text-white min-h-[100dvh] pt-20">
@@ -46,6 +53,7 @@ export default function ProductPage() {
         <Link
           href="/"
           className="text-white/60 hover:text-red-500 transition-colors font-Inter"
+          onClick={() => startTransition()}
         >
           Home
         </Link>
@@ -53,6 +61,7 @@ export default function ProductPage() {
         <Link
           href="/merchandise"
           className="text-white/60 hover:text-red-500 transition-colors font-Inter"
+          onClick={() => startTransition()}
         >
           Merchandise
         </Link>

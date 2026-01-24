@@ -10,7 +10,8 @@ export default function ProniteHero() {
         className="absolute inset-0 z-0 opacity-60"
         style={{
           backgroundImage:
-            'linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.8)), url("/pronitemain.png")',
+            'url("/pronitemain.png")',
+          // 'linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.8)), url("/pronitemain.png")',
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}

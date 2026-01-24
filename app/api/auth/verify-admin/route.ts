@@ -5,16 +5,18 @@ export async function GET() {
     const supabase = await createClient();
 
     try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Use getUser() instead of deprecated getSession() for better security
+        // getUser() validates the JWT on the server side
+        const { data: { user }, error } = await supabase.auth.getUser();
 
-        if (error || !session) {
+        if (error || !user) {
             return NextResponse.json(
                 { isAdmin: false, error: "Not authenticated" },
                 { status: 401 }
             );
         }
 
-        const userEmail = session.user.email;
+        const userEmail = user.email;
         const adminEmail = process.env.ADMIN_EMAIL;
 
         const isAdmin = userEmail === adminEmail;
@@ -23,9 +25,10 @@ export async function GET() {
             isAdmin,
             email: userEmail,
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
         return NextResponse.json(
-            { isAdmin: false, error: error.message },
+            { isAdmin: false, error: errorMessage },
             { status: 500 }
         );
     }

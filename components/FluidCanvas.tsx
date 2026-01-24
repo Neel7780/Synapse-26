@@ -6,7 +6,7 @@ import { Fluid } from "@whatisjery/react-fluid-distortion";
 import type { FC } from "react";
 
 interface FluidCanvasProps {
-  className?: string;
+    className?: string;
 }
 
 const FluidCanvas: FC<FluidCanvasProps> = ({ className }) => {
@@ -17,28 +17,28 @@ const FluidCanvas: FC<FluidCanvasProps> = ({ className }) => {
                 position: "fixed",
                 inset: 0,
                 width: "100vw",
-                height: "100dvh",
+                height: "100vh",
 
-        zIndex: 9999,
-        mixBlendMode: "lighten",
-        pointerEvents: "none",
-      }}
-      dpr={[1, 2]}
-    >
-      <EffectComposer>
-        <Fluid
-          rainbow={false}
-          fluidColor="#D2042D" // joker pink-red
-          intensity={8}
-          force={2}
-          distortion={1.8}
-          radius={0.2}
-          //   velocityDissipation={0.985}
-          //   densityDissipation={0.92}
-        />
-      </EffectComposer>
-    </Canvas>
-  );
+                zIndex: 9990,
+                mixBlendMode: "lighten",
+                pointerEvents: "none",
+            }}
+            dpr={[1, 2]}
+        >
+            <EffectComposer>
+                <Fluid
+                    rainbow={false}
+                    fluidColor="#D2042D" // joker pink-red
+                    intensity={8}
+                    force={2}
+                    distortion={1}
+                    radius={0.08}
+                //   velocityDissipation={0.985}
+                //   densityDissipation={0.92}
+                />
+            </EffectComposer>
+        </Canvas>
+    );
 };
 
 export default FluidCanvas;

@@ -1,35 +1,78 @@
 "use client";
 
-import React from "react";
+import React, { useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
+import Image from "next/image";
 
 const galleryImages = [
-  "/images_home/MohitChauhan.jpg",
-  "/images_home/Shaan.jpg",
-  "/images_home/NikhilDSouza.jpg",
-  "/images_home/DJSartek.jpg",
-  "/images_home/TeriMiko.jpg",
-  "/images_home/RaviGupta.jpg",
-  "/images_home/part3-image.png",
-  "/images_home/RedHand2.jpeg",
-  "/images_home/redcard4.png",
+  "/images_halloffame/15.jpeg",
+  "/images_halloffame/2.jpeg",
+  "/images_halloffame/3.jpeg",
+  "/images_halloffame/4.jpeg",
+  "/images_halloffame/5.jpeg",
+  "/images_halloffame/6.jpeg",
+  "/images_halloffame/1.jpeg",
+  "/images_halloffame/8.jpeg",
+  "/images_halloffame/7.jpeg",
+  "/images_halloffame/12.jpeg",
+  "/images_halloffame/11.jpeg",
+  "/images_halloffame/16.jpeg",
+  "/images_halloffame/13.jpeg",
+  "/images_halloffame/14.jpeg",
+  "/images_halloffame/10.jpeg",
 ];
 
 export default function ProniteGallery() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start end", "end start"],
+  });
+
+  // Create slow, alternating scroll offsets for different columns
+  const y1 = useTransform(scrollYProgress, [0, 1], [0, 400]);
+  const y2 = useTransform(scrollYProgress, [0, 1], [0, 200]);
+  const y3 = useTransform(scrollYProgress, [0, 1], [0, 200]);
+  const y4 = useTransform(scrollYProgress, [0, 1], [0, 800]);
+  const y5 = useTransform(scrollYProgress, [0, 1], [0, 1200]);
+  const y6 = useTransform(scrollYProgress, [0, 1], [0, 1600]);
+
+  // Distribute images into columns
+  const columns = [
+    { images: [galleryImages[0], galleryImages[5], galleryImages[10], galleryImages[1]], y: y1 },
+    { images: [galleryImages[2], galleryImages[7], galleryImages[12], galleryImages[3]], y: y2 },
+    { images: [galleryImages[4], galleryImages[9], galleryImages[14], galleryImages[5]], y: y3 },
+    { images: [galleryImages[6], galleryImages[11], galleryImages[0], galleryImages[7]], y: y4 },
+    { images: [galleryImages[8], galleryImages[13], galleryImages[1], galleryImages[9]], y: y5 },
+    { images: [galleryImages[10], galleryImages[14], galleryImages[2], galleryImages[6]], y: y6 },
+    { images: [galleryImages[3], galleryImages[0], galleryImages[5], galleryImages[11]], y: y1 },
+  ];
+
   return (
-    <section className="relative w-full h-[120dvh] bg-black overflow-hidden flex items-center justify-center">
+    <section ref={containerRef} className="relative w-full h-[140svh] bg-black overflow-hidden flex items-center justify-center">
       {/* Tilted Grid Container */}
-      <div className="absolute inset-0 w-[150%] h-[130%] -left-[25%] -top-[25%] rotate-[-16deg] flex flex-wrap gap-x-4 gap-y-0 p-8 opacity-90">
-        {galleryImages.map((src, i) => (
-          <div
+      <div className="absolute inset-0 w-[280%] h-[300%] -left-[90%] -top-[80%] rotate-[-26deg] flex justify-start md:justify-center gap-x-4 md:gap-x-6 p-8 opacity-100 md:opacity-90">
+        {columns.map((col, i) => (
+          <motion.div
             key={i}
-            className="relative w-[30%] h-[400px] border-[2px] border-black shadow-1xl overflow-hidden -mb-24"
+            style={{ y: col.y }}
+            className="flex flex-col gap-y-0 w-[18%] md:w-[9%] shrink-0"
           >
-            <img
-              src={src}
-              className="w-full h-full object-cover grayscale-[0.8] hover:grayscale-0 transition-all duration-500"
-              alt="Festival Moment"
-            />
-          </div>
+            {col.images.map((src, idx) => (
+              <div
+                key={idx}
+                className="relative w-full h-[850px] border-[12px] border-black shadow-2xl overflow-hidden -mb-56"
+              >
+                <Image
+                  src={src}
+                  className="w-full h-full object-cover grayscale-0 md:grayscale-[0.8] md:hover:grayscale-0 transition-all duration-500"
+                  alt="Festival Moment"
+                  fill
+                  sizes="(max-width: 768px) 50vw, 20vw"
+                />
+              </div>
+            ))}
+          </motion.div>
         ))}
       </div>
 
@@ -51,7 +94,7 @@ export default function ProniteGallery() {
       </div>
 
       {/* Vignette Overlay for Depth */}
-      <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_150px_rgba(0,0,0,0.8)]"></div>
+      <div className="absolute inset-0 hidden opacity-100 md:block pointer-events-none shadow-[inset_0_0_150px_rgba(0,0,0,0.8)]"></div>
     </section>
   );
 }

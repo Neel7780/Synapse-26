@@ -20,7 +20,6 @@ export default function RegistrationExportPage() {
   const [filters, setFilters] = useState({
     searchParams: "",
     filter: "",
-    paymentMethod: "",
     paymentStatus: "",
   });
 
@@ -98,21 +97,6 @@ export default function RegistrationExportPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Payment Method</label>
-              <Select value={filters.paymentMethod} onValueChange={(v) => setFilters({ ...filters, paymentMethod: v === "all" ? "" : v })}>
-                <SelectTrigger className="bg-muted/50 border-border/50">
-                  <SelectValue placeholder="All methods" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  <SelectItem value="all">All Methods</SelectItem>
-                  <SelectItem value="UPI">UPI</SelectItem>
-                  <SelectItem value="Credit Card">Credit Card</SelectItem>
-                  <SelectItem value="Debit Card">Debit Card</SelectItem>
-                  <SelectItem value="Net Banking">Net Banking</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Payment Status</label>
               <Select value={filters.paymentStatus} onValueChange={(v) => setFilters({ ...filters, paymentStatus: v === "all" ? "" : v })}>

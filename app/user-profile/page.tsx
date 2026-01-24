@@ -11,7 +11,6 @@ const normalizeScroll = () => {
     allowNestedScroll: true,
   });
 };
-
 export default function UserProfilePage() {
   useEffect(() => {
     normalizeScroll();

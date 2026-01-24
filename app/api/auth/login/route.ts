@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 401 });
+      return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 401 });
     }
 
     const isAdmin = email === process.env.ADMIN_EMAIL;
@@ -31,7 +31,8 @@ export async function POST(request: Request) {
       user: data.user,
       isAdmin: isAdmin,
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "An unknown error occurred";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

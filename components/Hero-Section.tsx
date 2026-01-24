@@ -14,6 +14,7 @@ import { NavbarButton } from "@/components/ui/Resizable-navbar";
 import Svg from "@/components/Svg";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import Image from "next/image";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -43,7 +44,6 @@ export default function HeroSection({
 
   const [showEnter, setShowEnter] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
-  const [part3Active, setPart3Active] = useState(false);
   const { isAuthenticated } = useAuth();
 
   const hasRunMaskRef = useRef(false);
@@ -83,10 +83,12 @@ export default function HeroSection({
     pending: new Set<string>(),
     resolved: new Set<string>(),
   });
-  const masterTLRef = useRef<any>(null);
-  const progressTriggerRef = useRef<any>(null);
-  const scrollHintIdleRef = useRef<any>(null);
-  const scrollHintHomeIdleRef = useRef<any>(null);
+
+  // Disabling explicit-any for GSAP refs temporarily due to complex types
+  const masterTLRef = useRef<gsap.core.Timeline | null>(null);
+  const progressTriggerRef = useRef<ScrollTrigger | null>(null);
+  const scrollHintIdleRef = useRef<gsap.core.Tween | null>(null);
+  const scrollHintHomeIdleRef = useRef<gsap.core.Tween | null>(null);
   const rafIdRef = useRef<number | null>(null);
 
   const updateProgressText = useCallback((progress: number) => {
@@ -134,7 +136,7 @@ export default function HeroSection({
         const len = p.getTotalLength();
         p.style.strokeDasharray = `${len}`;
         p.style.strokeDashoffset = `${len}`;
-        (p as any).dataset.len = len;
+        (p as SVGPathElement & { dataset: { len: string } }).dataset.len = String(len);
         p.style.opacity = "1";
       });
     }
@@ -149,7 +151,7 @@ export default function HeroSection({
     if (enterBtnRef.current) {
       setShowEnter(true);
     }
-  }, []);
+  }, [updateProgressText]);
 
   const FINISH_THRESHOLD = 0.99;
   const observeBrowserLoading = (
@@ -217,7 +219,7 @@ export default function HeroSection({
       (target - assetsRef.current.strokeProgress) * ease;
 
     assetsRef.current.paths.forEach((p) => {
-      p.style.strokeDashoffset = `${Number((p as any).dataset.len) * (1 - assetsRef.current.strokeProgress)
+      p.style.strokeDashoffset = `${Number((p as SVGPathElement & { dataset: { len: string } }).dataset.len) * (1 - assetsRef.current.strokeProgress)
         }`;
     });
 
@@ -350,15 +352,12 @@ export default function HeroSection({
         pin: true,
         pinSpacing: false,
         anticipatePin: 1.2,
-        onUpdate: (self) => {
-          if (self.progress > 0.35 && self.progress < 0.5) {
-            setPart3Active(true);
-          } else {
-            setPart3Active(false);
-          }
+        onUpdate: (_self) => {
+          // Logic for part3Active removed as we use pointer-events-auto on button directly
         },
       },
     });
+
     masterTLRef.current = masterTL;
 
     masterTL.set("#part3_2", {
@@ -453,13 +452,17 @@ export default function HeroSection({
         },
         "part3Reveal+=0.4"
       )
-      .from(
+      .fromTo(
         "#part3 .scroll-hint-home",
         {
           y: -20,
           opacity: 0,
+        },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.8,
           ease: "power3.out",
-          stagger: 0.15,
         },
         "part3Reveal+=0.4"
       )
@@ -507,8 +510,8 @@ export default function HeroSection({
         {
           y: -20,
           opacity: 0,
+          duration: 0.6,
           ease: "power3.out",
-          stagger: 0.15,
         },
         "part3Hide+=0.2"
       )
@@ -528,7 +531,7 @@ export default function HeroSection({
         {
           rotationZ: 185,
           duration: 1.5,
-          scale: isMobile ? 0.5 : 0.25,
+          scale: isMobile ? 0.65 : 0.25,
           ease: "none",
         },
         "together"
@@ -549,13 +552,13 @@ export default function HeroSection({
         {
           rotationZ: 420,
           duration: 2,
-          scale: isMobile ? 0.4 : 0.15,
+          scale: isMobile ? 0.55 : 0.15,
           ease: "none",
         },
         "together2"
-      )
-      .to(".screen-container", { duration: 1, ease: "none" });
-  }, []);
+      ).to({}, { duration: 5, ease: "none" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setShowNavbar]);
 
   const initScrollProgress = useCallback(() => {
     const trigger = ScrollTrigger.create({
@@ -600,14 +603,20 @@ export default function HeroSection({
         gsap.getById("scrollHintIdle")?.kill();
       }
     };
-  }, [isLoading]);
+  }, [isLoading, lockScroll]);
 
   useEffect(() => {
     const clearIntroOnReload = () => {
       sessionStorage.removeItem(INTRO_KEY);
     };
 
+
+    const handleResize = () => {
+      ScrollTrigger.refresh();
+    };
+
     window.addEventListener("beforeunload", clearIntroOnReload);
+    window.addEventListener("resize", handleResize);
 
     requestAnimationFrame(() => {
       startBrowserPreloadTracking();
@@ -619,8 +628,10 @@ export default function HeroSection({
 
     return () => {
       window.removeEventListener("beforeunload", clearIntroOnReload);
+      window.removeEventListener("resize", handleResize);
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enterSilently, isLoading, startBrowserPreloadTracking]);
 
   useLayoutEffect(() => {
     if (isLoading) return;
@@ -649,6 +660,11 @@ export default function HeroSection({
         });
       },
       onComplete: () => {
+        gsap.set(maskLayerRef.current, {
+          webkitMaskImage: "none",
+          maskImage: "none",
+        });
+
         if (svgContainerRef.current) {
           svgContainerRef.current.style.display = "none";
         }
@@ -662,7 +678,7 @@ export default function HeroSection({
         check = false;
       },
     });
-  }, [isLoading, initScrollAnimations, unlockScroll]);
+  }, [isLoading, initScrollAnimations, unlockScroll, initScrollProgress]);
   useEffect(() => {
     // subtle breathing animation (idle)
     if (scrollHintHomeRef.current) {
@@ -687,6 +703,11 @@ export default function HeroSection({
 
   // Cleanup GSAP and RAF on unmount to avoid lingering transitions and memory leaks
   useEffect(() => {
+    // Capture refs at start of effect to ensure we have the correct elements during cleanup
+    const maskLayer = maskLayerRef.current;
+    const scrollHint = scrollHintRef.current;
+    const scrollHintHome = scrollHintHomeRef.current;
+
     return () => {
       try {
         // cancel any running RAF
@@ -709,14 +730,14 @@ export default function HeroSection({
 
         // kill all ScrollTriggers
         if (typeof ScrollTrigger !== "undefined" && ScrollTrigger.getAll) {
-          ScrollTrigger.getAll().forEach((st: any) => st.kill());
+          ScrollTrigger.getAll().forEach((st: ScrollTrigger) => st.kill());
         }
 
         // kill all tweens on important refs
-        gsap.killTweensOf(maskLayerRef.current);
-        gsap.killTweensOf(scrollHintRef.current);
-        gsap.killTweensOf(scrollHintHomeRef.current);
-      } catch (e) {
+        gsap.killTweensOf(maskLayer);
+        gsap.killTweensOf(scrollHint);
+        gsap.killTweensOf(scrollHintHome);
+      } catch {
         // swallow errors during cleanup
         // console.warn("Error cleaning up animations:", e);
       }
@@ -726,7 +747,7 @@ export default function HeroSection({
     <div>
       <div
         id="svgContainer"
-        className="fixed inset-0 z-10 transition-opacity duration-2400"
+        className="fixed inset-0 z-10 transition-opacity duration-2400 pointer-events-none"
         ref={svgContainerRef}
       >
         <Svg />
@@ -745,76 +766,71 @@ export default function HeroSection({
         </>
       ) : <></>
       }
-      <>
+      <div className="hero relative inset-0 h-[100dvh] z-25" ref={heroRef}>
+        <div id="maskLayer" className="absolute inset-0 opacity-100 " ref={maskLayerRef} style={{
+          WebkitMaskImage: 'url("/images_home/inkReveal2.gif")',
+          WebkitMaskRepeat: 'no-repeat',
+          WebkitMaskPosition: 'center',
+          WebkitMaskSize: '0% 0%',
+          maskImage: 'url("/images_home/inkReveal2.gif")',
+          maskRepeat: 'no-repeat',
+          maskPosition: 'center',
+          maskSize: '0% 0%',
+        }}>
+          <Image id="coloredImage" src="/images_home/RedHand2.jpeg" alt="Red Hand" fill className="absolute inset-0 h-full w-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none max-[600px]:scale-250" priority ref={coloredImageRef} />
 
+          <div id="flipCard" className="absolute inset-0 transform-3d will-change-transform" ref={flipCardRef}>
+            <Image id="redCard" className="absolute inset-0 w-full h-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none backface-hidden max-[600px]:scale-250" src="/images_home/redcard4.png" alt="Red Card" fill priority ref={cardRef} />
 
-        <div className="hero relative inset-0 h-[100dvh] z-25" ref={heroRef}>
-          <div id="maskLayer" className="absolute inset-0 opacity-100 " ref={maskLayerRef} style={{
-            WebkitMaskImage: 'url("/images_home/inkReveal2.gif")',
-            WebkitMaskRepeat: 'no-repeat',
-            WebkitMaskPosition: 'center',
-            WebkitMaskSize: '0% 0%',
-            maskImage: 'url("/images_home/inkReveal2.gif")',
-            maskRepeat: 'no-repeat',
-            maskPosition: 'center',
-            maskSize: '0% 0%',
-          }}>
-            <img id="coloredImage" src="/images_home/RedHand2.jpeg" alt="Red Hand" ref={coloredImageRef} className="absolute inset-0 h-full w-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none max-[600px]:scale-250" />
-
-            <div id="flipCard" className="absolute inset-0 transform-3d" ref={flipCardRef}>
-              <img id="redCard" className="absolute inset-0 w-full h-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none backface-hidden max-[600px]:scale-250" src="/images_home/redcard4.png" alt="Red Card" ref={cardRef} />
-
-              <div id="part3_2" ref={part3_2Ref} style={{
-                backgroundImage:
-                  "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.15) 35%, rgba(0,0,0,0.45) 65%, rgba(0,0,0,0.75) 85%, #000 100%), url(/images_home/image_part3_2.png)",
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }} className=" absolute inset-0 flex flex-col items-center justify-center opacity-100 will-change-transform backface-hidden transform-[rotateY(180deg)]">
-                <div className="screen-container relative w-screen h-[100dvh] flex items-center justify-center perspective-[1000px] transform-3d" ref={screenContainerRef}>
-                  <div ref={frontScreenRef} className="screen-front absolute inset-0 bg-black bg-[url('/images_home/part3-image.png')] bg-no-repeat bg-center bg-contain z-2 backface-hidden border-4 border-solid rounded " style={{ borderColor: "rgba(250,235,215,0)" }}></div>
-                  <div className="center-joker-container absolute inset-0 flex items-center justify-center transform-[rotateY(180deg)] backface-hidden z-1">
-                    <img src="/images_home/card_center.png" className="center-joker w-full h-auto rotate-[-64deg] object-contain" alt="Joker Card" />
-                  </div>
+            <div id="part3_2" ref={part3_2Ref} style={{
+              backgroundImage:
+                "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.15) 35%, rgba(0,0,0,0.45) 65%, rgba(0,0,0,0.75) 85%, #000 100%), url(/images_home/image_part3_2.png)",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }} className=" absolute inset-0 flex flex-col items-center justify-center opacity-100 will-change-transform backface-hidden transform-[rotateY(180deg)]">
+              <div className="screen-container relative w-screen h-full flex items-center justify-center perspective-[1000px] transform-3d" ref={screenContainerRef}>
+                <div ref={frontScreenRef} className="screen-front absolute inset-0 bg-black bg-[url('/images_home/part3-image.png')] bg-no-repeat bg-center bg-contain z-2 backface-hidden border-4 border-solid rounded " style={{ borderColor: "rgba(250,235,215,0)" }}></div>
+                <div className="center-joker-container absolute inset-0 flex items-center justify-center transform-[rotateY(180deg)] backface-hidden z-1">
+                  <Image src="/images_home/card_center.png" className="center-joker w-full h-auto rotate-[-64deg] object-contain" alt="Joker Card" width={500} height={500} />
                 </div>
               </div>
-
-              <div id="part3" ref={part3Ref} className={`absolute inset-0 w-full h-[100dvh] transform-[rotateY(180deg)] backface-hidden ${part3Active ? "pointer-events-auto" : "pointer-events-none"}`}>
-                <div className="register-btn absolute bottom-2/5  max-[450px]:left-1/2 min-[450px]:bottom-[40px] min-[450px]:right-[40px] md:bottom-[60px] md:right-[60px]">
-                  <NavbarButton href="/auth" variant="register">
+            </div>
+            <div id="part3" ref={part3Ref} className="absolute inset-0 w-full h-full transform-[rotateY(180deg)] backface-hidden pointer-events-none">
+              <div className="register-btn absolute bottom-2/5 max-[450px]:left-1/2 max-[450px]:-translate-x-1/2 min-[450px]:bottom-[40px] min-[450px]:right-[40px] md:bottom-[60px] md:right-[60px] z-50 scale-125 md:scale-100 origin-bottom-right pointer-events-auto">
+                {!isAuthenticated && (
+                  <NavbarButton href="/auth?next=/" variant="register">
                     Register
                   </NavbarButton>
-                </div>
-
-                <div className="title-wrapper flex justify-center pt-[80px] sm:pt-[60px] md:pt-[120px] h-[calc(100dvh-120px)] md:h-[calc(100dvh-200px)]">
-                  <h1 className="title text-4xl min-[450px]:text-6xl sm:text-7xl md:text-[clamp(40px,12vw,140px)] font-joker leading-none text-center px-4" ref={titleRef}>synapse' 26</h1>
-                </div>
-                <div
-                  ref={scrollHintHomeRef}
-                  className="scroll-hint-home fixed bottom-0 left-1/2 -translate-x-1/2 z-50
-               text-white select-none pointer-events-none"
-                >
-                  <ChevronDown className="stroke-[3px] h-4 w-5 sm:w-8 sm:h-8 translate-y-full" />
-                  <ChevronDown className="stroke-[3px] h-4 w-5 sm:w-8 sm:h-8 translate-y-1/2" />
-                  <ChevronDown className="stroke-[3px] h-4 w-5 sm:w-8 sm:h-8" />
-                  <ChevronDown className="stroke-[3px] h-4 w-5 sm:w-8 sm:h-8 -translate-y-1/2" />
-                </div>
-
-                <CountdownTimer targetDate={new Date("2026-02-26 00:00:00")} />
+                )}
               </div>
-            </div>
-            <div
-              ref={scrollHintRef}
-              className=" absolute left-1/2 -translate-x-1/2  bottom-5 md:bottom-[30px] z-[100] flex flex-col items-center justify-center gap-1 w-[50px] h-[100px]  md:w-[70px] md:h-[120px] font-jqka text-amber-50 text-[10px] md:text-xs  leading-tight tracking-wide uppercase border border-amber-50  rounded-full backdrop-blur-[2px]"
-            >
-              <span className="text-center">
-                Scroll <br /> To <br /> Explore
-              </span>
 
-              <p className="text-xl md:text-3xl mt-1">↓</p>
+              <div className="title-wrapper flex justify-center pt-[80px] sm:pt-[60px] md:pt-[120px] h-[calc(100dvh-120px)] md:h-[calc(100dvh-200px)] pointer-events-none">
+                <h1 className="title text-4xl min-[450px]:text-6xl sm:text-7xl md:text-[clamp(40px,12vw,140px)] font-joker leading-none text-center px-4" ref={titleRef}>synapse&apos; 26</h1>
+              </div>
+
+              <div className="scroll-hint-home absolute bottom-0 left-1/2 -translate-x-1/2 text-white text-center z-40 pointer-events-none opacity-0 mb-4" ref={scrollHintHomeRef}>
+                <ChevronDown className="stroke-[3px] w-5 h-5 md:w-8 md:h-8 translate-y-full" />
+                <ChevronDown className="stroke-[3px] w-5 h-5 md:w-8 md:h-8 translate-y-1/2" />
+                <ChevronDown className="stroke-[3px] w-5 h-5 md:w-8 md:h-8" />
+                <ChevronDown className="stroke-[3px] w-5 h-5 md:w-8 md:h-8 -translate-y-1/2" />
+              </div>
+
+              <CountdownTimer targetDate={new Date("2026-02-26 19:00:00")} />
             </div>
           </div>
+          <div
+            ref={scrollHintRef}
+            className=" absolute left-1/2 -translate-x-1/2  bottom-5 md:bottom-[30px] z-[100] flex flex-col items-center justify-center gap-1 w-[70px] h-[130px] md:w-[70px] md:h-[120px] font-jqka text-amber-50 text-xs md:text-xs leading-tight tracking-wide uppercase border border-amber-50 rounded-full backdrop-blur-[2px]"
+          >
+            <span className="text-center text-[17px] md:text-[14px]">
+              Scroll <br /> To <br /> Explore
+            </span>
+
+            <p className="text-xl md:text-3xl mt-1">↓</p>
+          </div>
         </div>
-      </>
+      </div>
+
       <audio
         ref={audioRef}
         id="bgMusic"
@@ -824,19 +840,24 @@ export default function HeroSection({
 
       <div
         ref={scrollTrackRef}
-        className="fixed right-[24px] top-1/2 -translate-y-1/2 z-[9999]
-               h-[300px] w-[10px] rounded-full border border-solid border-gray-700
-               bg-gray-200 pointer-events-none transition duration-500"
+        className="
+    fixed right-[12px] md:right-[24px]
+    top-1/2 -translate-y-1/2 z-[999]
+    h-[180px] md:h-[300px]
+    w-[5px] md:w-[10px]
+    rounded-full border border-solid border-gray-700
+    bg-gray-200 pointer-events-none transition duration-500
+  "
         style={{
           opacity: showNavbar ? 1 : 0,
         }}
       >
         <div
           ref={scrollFillRef}
-          className="absolute top-0 left-0 w-full h-0 z-[9999]
+          className="absolute top-0 left-0 w-full h-0 z-[9990]
                    bg-red-600 rounded-full"
         />
       </div>
-    </div>
+    </div >
   );
 }

@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/ui/AdminSidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
-import { ArrowLeft, Ticket, User, Calendar, DollarSign, CreditCard, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Ticket, User, DollarSign, CreditCard, Loader2, AlertCircle } from "lucide-react";
 
 type Registration = {
   user: {
@@ -24,7 +24,6 @@ type Registration = {
     registration_date: string;
   };
   payment: {
-    method: string;
     status: string;
   };
   financials: {
@@ -49,8 +48,8 @@ export default function RegistrationDetailPage() {
         const data = await res.json();
         if (data.error) throw new Error(data.error);
         setRegistration(data);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
         setLoading(false);
       }
@@ -170,10 +169,6 @@ export default function RegistrationDetailPage() {
             </div>
           </CardHeader>
           <CardContent className="pt-6 space-y-4">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Method</span>
-              <span className="font-medium">{registration.payment.method}</span>
-            </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Status</span>
               <Badge className={registration.payment.status === "done" ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" : "bg-amber-500/20 text-amber-300 border-amber-500/30"}>

@@ -3,7 +3,13 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/ui/AdminSidebar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
 import {
@@ -27,7 +33,7 @@ import {
   Trash2,
   Music,
   Calendar,
-  Eye,
+  Pencil,
   Loader2,
   AlertCircle,
 } from "lucide-react";
@@ -58,8 +64,8 @@ export default function ArtistsPage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setArtists(data || []);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to fetch artists");
     } finally {
       setLoading(false);
     }
@@ -85,8 +91,10 @@ export default function ArtistsPage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       await fetchArtists();
-    } catch (err: any) {
-      alert("Failed to delete: " + err.message);
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown error occurred";
+      alert("Failed to delete: " + errorMessage);
     } finally {
       setDeleteDialogOpen(false);
       setDeletingId(null);
@@ -106,7 +114,16 @@ export default function ArtistsPage() {
       <div className="flex flex-col items-center justify-center h-96 gap-4">
         <AlertCircle className="h-12 w-12 text-red-500" />
         <p className="text-lg text-muted-foreground">Error: {error}</p>
-        <Button onClick={() => { setError(null); setLoading(true); fetchArtists(); }} variant="outline">Retry</Button>
+        <Button
+          onClick={() => {
+            setError(null);
+            setLoading(true);
+            fetchArtists();
+          }}
+          variant="outline"
+        >
+          Retry
+        </Button>
       </div>
     );
   }
@@ -116,7 +133,11 @@ export default function ArtistsPage() {
       <AdminPageHeader
         title="Artists"
         subtitle="Concert Performers"
-        badge={<Badge className="bg-primary/10 text-primary border-0">{artists.length} artists</Badge>}
+        badge={
+          <Badge className="bg-primary/10 text-primary border-0">
+            {artists.length} artists
+          </Badge>
+        }
         actions={
           <Link href="/admin/artists/new">
             <Button className="bg-primary hover:bg-primary/90">
@@ -146,24 +167,38 @@ export default function ArtistsPage() {
                 <TableHead className="text-muted-foreground">Artist</TableHead>
                 <TableHead className="text-muted-foreground">Concert</TableHead>
                 <TableHead className="text-muted-foreground">Genre</TableHead>
-                <TableHead className="text-muted-foreground">Reveal Date</TableHead>
-                <TableHead className="text-right text-muted-foreground">Actions</TableHead>
+                <TableHead className="text-muted-foreground">
+                  Reveal Date
+                </TableHead>
+                <TableHead className="text-right text-muted-foreground">
+                  Actions
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {artists.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center py-8 text-muted-foreground"
+                  >
                     No artists added yet.
                   </TableCell>
                 </TableRow>
               ) : (
                 artists.map((artist) => (
-                  <TableRow key={artist.id} className="border-border/50 hover:bg-muted/50">
+                  <TableRow
+                    key={artist.id}
+                    className="border-border/50 hover:bg-muted/50"
+                  >
                     <TableCell>
                       <div className="flex items-center gap-3">
                         {artist.artist_image_url ? (
-                          <img src={artist.artist_image_url} alt={artist.name} className="h-10 w-10 rounded-full object-cover" />
+                          <img
+                            src={artist.artist_image_url}
+                            alt={artist.name}
+                            className="h-10 w-10 rounded-full object-cover"
+                          />
                         ) : (
                           <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                             <Music className="h-5 w-5 text-primary" />
@@ -173,11 +208,18 @@ export default function ArtistsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className="bg-primary/10 text-primary border-0">{artist.concert?.concert_name || "—"}</Badge>
+                      <Badge className="bg-primary/10 text-primary border-0">
+                        {artist.concert?.concert_name || "—"}
+                      </Badge>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{artist.genre || "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {artist.genre || "—"}
+                    </TableCell>
                     <TableCell>
-                      <Badge variant="secondary" className="bg-muted/50 border-border/50">
+                      <Badge
+                        variant="secondary"
+                        className="bg-muted/50 border-border/50"
+                      >
                         <Calendar className="mr-1 h-3 w-3" />
                         {artist.reveal_date?.split("T")[0]}
                       </Badge>
@@ -185,8 +227,12 @@ export default function ArtistsPage() {
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Link href={`/admin/artists/${artist.id}`}>
-                          <Button size="sm" variant="outline" className="border-border/50">
-                            <Eye className="h-4 w-4" />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-border/50"
+                          >
+                            <Pencil className="h-4 w-4" />
                           </Button>
                         </Link>
                         <Button
@@ -211,11 +257,21 @@ export default function ArtistsPage() {
         <DialogContent className="sm:max-w-[400px] bg-card border-border">
           <DialogHeader>
             <DialogTitle>Delete Artist</DialogTitle>
-            <DialogDescription>Are you sure? This action cannot be undone.</DialogDescription>
+            <DialogDescription>
+              Are you sure? This action cannot be undone.
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} className="border-border/50">Cancel</Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm}>Delete</Button>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              className="border-border/50"
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteConfirm}>
+              Delete
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

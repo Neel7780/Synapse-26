@@ -3,7 +3,9 @@ import {
   getTokenFromRequest,
 } from "@/utils/supabase/apiClient";
 
-export async function checkAdmin(supabase: any) {
+import { SupabaseClient } from "@supabase/supabase-js";
+
+export async function checkAdmin(supabase: SupabaseClient) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -19,7 +21,7 @@ export async function checkAdmin(supabase: any) {
 
 export async function checkAdminFromRequest(
   request: Request
-): Promise<{ isAdmin: boolean; supabase: any }> {
+): Promise<{ isAdmin: boolean; supabase: SupabaseClient | null }> {
   const token = getTokenFromRequest(request);
 
   if (!token) {

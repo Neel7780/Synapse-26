@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
 import {
-  Navbar,
   MobileNav,
   MobileNavHeader,
   MobileNavMenu,
@@ -9,13 +8,17 @@ import {
   NavbarLogo,
   MobileAnimatedMenuItem,
 } from "@/components/ui/Resizable-navbar";
+import { useNavigationState } from "@/lib/useNavigationState";
 import { useAuth } from "@/hooks/useAuth";
+import { usePathname } from "next/navigation";
 
 export default function NavigationPanel() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const toggleRef = React.useRef<HTMLDivElement>(null);
   const { isAuthenticated } = useAuth();
+  const { startTransition } = useNavigationState();
+  const pathname = usePathname();
 
   // Dynamic nav items based on auth state
   const navItems = useMemo(() => {
@@ -26,6 +29,7 @@ export default function NavigationPanel() {
       { name: "pronite", link: "/pronite" },
       { name: "timeline", link: "/timeline" },
       { name: "accomodation", link: "/accomodation" },
+      { name: "teams", link: "/teams" },
       { name: "merchandise", link: "/merchandise" },
       { name: "sponsors", link: "/sponsors" },
       { name: "terms and conditions", link: "/terms-and-conditions" },
@@ -34,15 +38,19 @@ export default function NavigationPanel() {
 
     // Add "My Profile" or "Register" based on auth state
     if (isAuthenticated) {
-      baseItems.push({ name: "my profile", link: "/user-profile" });
+      baseItems.unshift({ name: "my profile", link: "/user-profile" });
     } else {
-      baseItems.push({ name: "register", link: "/auth" });
+      const nextPath = pathname.startsWith("/auth") ? "/" : pathname;
+      baseItems.unshift({
+        name: "register",
+        link: `/auth?next=${encodeURIComponent(nextPath)}`,
+      });
     }
 
-    return baseItems;
-  }, [isAuthenticated]);
+    return baseItems.filter((item) => item.link !== pathname);
+  }, [isAuthenticated, pathname]);
 
-  const handleContactClick = (e: any) => {
+  const handleContactClick = (e: React.MouseEvent) => {
     e.preventDefault();
     setMobileMenuOpen(false);
 
@@ -123,6 +131,10 @@ export default function NavigationPanel() {
                 if (item.isContact) {
                   handleContactClick(e);
                 } else {
+                  // Trigger transition if it's an internal link
+                  if (item.link.startsWith("/")) {
+                    startTransition();
+                  }
                   setMobileMenuOpen(false);
                 }
               }}

@@ -3,7 +3,8 @@
 import type React from "react";
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useNavigationState } from "@/lib/useNavigationState";
 
 interface LoginBoxProps {
   goRegister: () => void;
@@ -12,6 +13,8 @@ interface LoginBoxProps {
 
 export default function LoginBox({ goRegister, goForgot }: LoginBoxProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { startTransition } = useNavigationState();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,14 +44,20 @@ export default function LoginBox({ goRegister, goForgot }: LoginBoxProps) {
       }
 
       // Redirect based on admin status
+      startTransition();
       if (data.isAdmin) {
         router.push("/admin");
       } else {
-        router.push("/");
+        const next = searchParams.get("next");
+        router.push(next || "/");
       }
       router.refresh();
-    } catch (err: any) {
-      setError(err.message || "An error occurred during login");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An error occurred during login");
+      }
     } finally {
       setIsLoading(false);
     }

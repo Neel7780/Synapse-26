@@ -1,7 +1,9 @@
-import { createClient } from "@/utils/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { createClient } from '@/utils/supabase/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { uploadImage } from '@/lib/imageUtil';
+import { checkAdmin } from '@/lib/checkAdmin';
 
-// GET - Fetch all sponsors
+// GET - Fetch all sponsors with category information
 export async function GET() {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -9,11 +11,18 @@ export async function GET() {
 
     const { data: sponsors, error } = await supabase
       .from("sponsors")
-      .select("*")
-      .order("sponsor_id", { ascending: true });
+      .select(`
+        *,
+        category:sponsor_category(
+          sponsor_category_id,
+          tier,
+          rank
+        )
+      `)
+      .order("name", { ascending: true });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
     }
 
     return NextResponse.json(
@@ -32,39 +41,68 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const supabase = (await createClient()) as any;
-    const body = await request.json();
+    const supabase = await createClient() as any;
+
+    // Check admin authentication
+    const isAdmin = await checkAdmin(supabase);
+    if (!isAdmin) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
+    const formData = await request.formData();
+
+    const name = formData.get('name') as string;
+    const category_id = formData.get('category_id') as string;
+    const website_url = formData.get('website_url') as string | null;
+    const imageFile = formData.get('image') as File | null;
 
     // Validate required fields
-    if (!body.name || !body.tier) {
+    if (!name || !category_id) {
       return NextResponse.json(
-        { error: "Name and tier are required fields" },
+        { error: "Name and category are required fields" },
         { status: 400 }
       );
     }
 
-    // Validate tier is not empty string
-    if (body.tier.trim() === "") {
+    // Validate category exists
+    const { data: category, error: categoryError } = await supabase
+      .from("sponsor_category")
+      .select("sponsor_category_id")
+      .eq("sponsor_category_id", parseInt(category_id, 10))
+      .single();
+
+    if (categoryError || !category) {
       return NextResponse.json(
-        { error: "Tier cannot be empty" },
+        { error: "Invalid category selected" },
         { status: 400 }
       );
+    }
+
+    let logo_url = null;
+
+    // Upload image if provided
+    if (imageFile && imageFile.size > 0) {
+      const uploadResult = await uploadImage({
+        file: imageFile,
+        bucket: 'synapse',
+        folder: 'sponsors'
+      });
+      logo_url = uploadResult.publicUrl;
     }
 
     const { data: sponsor, error } = await supabase
       .from("sponsors")
       .insert({
-        name: body.name,
-        tier: body.tier,
-        website_url: body.website_url || null,
-        logo_url: body.logo_url || null,
-        description: body.description || null,
+        name,
+        category_id: parseInt(category_id, 10),
+        website_url: website_url || null,
+        logo_url,
       })
       .select()
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
     }
 
     return NextResponse.json(

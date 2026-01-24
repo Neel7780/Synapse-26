@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 interface RegisterBoxProps {
   goLogin: () => void;
@@ -25,6 +25,8 @@ export default function RegisterBox({ goLogin, goOtp }: RegisterBoxProps) {
     password: "",
     confirmPassword: "",
   });
+
+  const dobRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -81,8 +83,12 @@ export default function RegisterBox({ goLogin, goOtp }: RegisterBoxProps) {
 
       // Move to OTP verification screen
       goOtp(formData.email);
-    } catch (err: any) {
-      setError(err.message || "An error occurred during registration");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An error occurred during registration");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -140,13 +146,13 @@ export default function RegisterBox({ goLogin, goOtp }: RegisterBoxProps) {
             className="w-24 px-2 py-2 bg-transparent border border-white/30 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-white/50 text-base disabled:opacity-50"
             disabled={isLoading}
           >
-            <option value="91" className="bg-black">
+            <option value="91" className="bg-black text-white">
               +91
             </option>
-            <option value="1" className="bg-black">
+            <option value="1" className="bg-black text-white">
               +1
             </option>
-            <option value="44" className="bg-black">
+            <option value="44" className="bg-black text-white">
               +44
             </option>
           </select>
@@ -164,30 +170,68 @@ export default function RegisterBox({ goLogin, goOtp }: RegisterBoxProps) {
         <div className="grid grid-cols-2 gap-3">
           <div className="relative">
             <input
-              type="date"
+              ref={dobRef}
+              type={formData.dob ? "date" : "text"}
+              onFocus={(e) => (e.target.type = "date")}
+              onBlur={(e) => {
+                if (!e.target.value) e.target.type = "text";
+              }}
               placeholder="DOB: DD/MM/YYYY"
               value={formData.dob}
               onChange={(e) => handleChange("dob", e.target.value)}
-              className="w-full px-3 py-2 bg-transparent border border-white/30 rounded-md text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50 pr-8 text-base disabled:opacity-50 [color-scheme:dark]"
+              className={`w-full px-3 py-2 bg-transparent border border-white/30 rounded-md
+      placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50
+      pr-7 text-sm disabled:opacity-50 [color-scheme:dark]
+      ${formData.dob ? "text-white text-left" : "text-gray-500 text-left"}
+    `}
               disabled={isLoading}
             />
+
+            {/* Calendar icon — ALWAYS visible */}
+            <svg
+              onClick={() => {
+                if (dobRef.current) {
+                  dobRef.current.type = "date";
+                  dobRef.current.focus();
+                  if ("showPicker" in dobRef.current) {
+                    (dobRef.current as HTMLInputElement & {
+                      showPicker: () => void;
+                    }).showPicker();
+                  }
+                }
+              }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5
+      text-gray-500 cursor-pointer hover:text-white transition-colors"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
           </div>
           <select
             value={formData.gender}
             onChange={(e) => handleChange("gender", e.target.value)}
-            className="w-full px-3 py-2 bg-transparent border border-white/30 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-white/50 text-base disabled:opacity-50"
+            className={`w-full px-3 py-2 bg-transparent border border-white/30 rounded-md focus:outline-none focus:ring-2 focus:ring-white/50 text-base disabled:opacity-50 ${formData.gender ? "text-white" : "text-gray-500"
+              }`}
             disabled={isLoading}
           >
-            <option value="" className="bg-black">
+            <option value="" className="bg-black text-gray-500">
               Gender
             </option>
-            <option value="male" className="bg-black">
+            <option value="male" className="bg-black text-white">
               Male
             </option>
-            <option value="female" className="bg-black">
+            <option value="female" className="bg-black text-white">
               Female
             </option>
-            <option value="other" className="bg-black">
+            <option value="other" className="bg-black text-white">
               Other
             </option>
           </select>

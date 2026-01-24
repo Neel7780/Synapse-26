@@ -1,0 +1,214 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/utils/supabase/server";
+import { getEmailTransporter, senderEmail } from "@/lib/email-config";
+import { acceptanceEmailTemplate, rejectionEmailTemplate } from "@/lib/email-templates";
+
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Get coordinator email
+    const { data: userData } = await supabase
+      .from("users")
+      .select("email")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!userData?.email) {
+      return NextResponse.json({ error: "User email not found" }, { status: 400 });
+    }
+
+    const body = await request.json();
+    const { registration_id, event_id, status } = body;
+
+    if (!registration_id || !event_id || !status) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    // Validate status value
+    if (status !== "accepted" && status !== "rejected" && status !== "pending") {
+      return NextResponse.json({ error: "Invalid status value" }, { status: 400 });
+    }
+
+    // Verify that the coordinator owns this event
+    const { data: eventData } = await supabase
+      .from("event")
+      .select("coordinator_email")
+      .eq("event_id", event_id)
+      .single();
+
+    if (!eventData) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
+    // Case-insensitive email comparison
+    const coordinatorEmail = userData.email.toLowerCase();
+    const eventCoordinatorEmail = eventData.coordinator_email?.toLowerCase();
+
+    if (eventCoordinatorEmail !== coordinatorEmail) {
+      return NextResponse.json({ error: "Access denied to this event" }, { status: 403 });
+    }
+
+    // Update the coordinator_status
+    const { data, error } = await supabase
+      .from("event_registrations")
+      .update({ coordinator_status: status })
+      .eq("registration_id", registration_id)
+      .eq("event_id", event_id)
+      .select();
+
+    if (error) {
+      return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
+    }
+
+    // Fetch full registration details including fee
+    const { data: registrationData } = await supabase
+      .from("event_registrations")
+      .select("registration_id, gross_amount, registered_by_user_id, fee_id")
+      .eq("registration_id", registration_id)
+      .single();
+
+    // Fetch user details
+    let participantEmail = "";
+    let participantName = "";
+    if (registrationData?.registered_by_user_id) {
+      const { data: userData } = await supabase
+        .from("users")
+        .select("email, user_name")
+        .eq("user_id", registrationData.registered_by_user_id)
+        .single();
+
+      if (userData) {
+        participantEmail = userData.email;
+        participantName = userData.user_name || "Participant";
+      }
+    }
+
+    // Fetch event name separately
+    let eventName = "Event";
+    const { data: eventDetailData } = await supabase
+      .from("event")
+      .select("event_name")
+      .eq("event_id", event_id)
+      .single();
+
+    if (eventDetailData?.event_name) {
+      eventName = eventDetailData.event_name;
+    }
+
+    // Fetch fee/participation type
+    let participationType = "General";
+    if (registrationData?.fee_id) {
+      const { data: feeData, error: feeError } = await supabase
+        .from("fee")
+        .select("participation_type")
+        .eq("fee_id", registrationData.fee_id)
+        .single();
+
+      if (feeError) {
+        console.error("Error fetching fee data:", feeError);
+      }
+
+      if (feeData && (feeData as any).participation_type) {
+        participationType = (feeData as any).participation_type;
+      }
+    }
+
+    // Fetch team members if it's a team registration
+    const teamMembers: Array<{ user_name: string; email: string; phone?: string; college?: string }> = [];
+    if (registrationData?.registration_id) {
+      // First, get the team_id from the team table
+      const { data: teamData } = await supabase
+        .from("team")
+        .select("team_id")
+        .eq("registration_id", registrationData.registration_id)
+        .maybeSingle();
+
+      if (teamData?.team_id) {
+        // Then get all team members
+        const { data: membersData } = await supabase
+          .from("team_members")
+          .select("user_id")
+          .eq("team_id", teamData.team_id);
+
+        if (membersData && membersData.length > 0) {
+          // Fetch user details for each team member
+          for (const member of membersData) {
+            const { data: memberUserData } = await supabase
+              .from("users")
+              .select("user_name, email, phone, college")
+              .eq("user_id", member.user_id)
+              .single();
+
+            if (memberUserData) {
+              teamMembers.push({
+                user_name: memberUserData.user_name || "Team Member",
+                email: memberUserData.email,
+                phone: memberUserData.phone || undefined,
+                college: memberUserData.college || undefined,
+              });
+            }
+          }
+        }
+      }
+    }
+
+    // Send email only if status is accepted or rejected (not pending)
+    if ((status === "accepted" || status === "rejected") && participantEmail && senderEmail) {
+      try {
+        const transporter = getEmailTransporter();
+        const amount = registrationData?.gross_amount || 0;
+
+        let emailTemplate;
+
+        if (status === "accepted") {
+          emailTemplate = acceptanceEmailTemplate({
+            participantName,
+            email: participantEmail,
+            eventName,
+            participationType,
+            registrationId: registration_id,
+            amount,
+            teamMembers: teamMembers.length > 0 ? teamMembers : undefined,
+          });
+        } else {
+          emailTemplate = rejectionEmailTemplate({
+            participantName,
+            email: participantEmail,
+            eventName,
+            participationType,
+            registrationId: registration_id,
+            amount,
+          });
+        }
+
+        await transporter.sendMail({
+          from: senderEmail,
+          to: participantEmail,
+          subject: emailTemplate.subject,
+          html: emailTemplate.html,
+          text: emailTemplate.text,
+        });
+
+        console.log(`Email sent to ${participantEmail} for registration ${registration_id}`);
+      } catch (emailError) {
+        console.error("Error sending email:", emailError);
+        // Don't fail the entire request if email fails, just log it
+      }
+    }
+
+    return NextResponse.json({ success: true, data });
+  } catch (error) {
+    console.error("Error verifying registration:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

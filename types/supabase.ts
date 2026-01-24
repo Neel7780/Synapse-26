@@ -14,6 +14,86 @@ export type Database = {
   };
   public: {
     Tables: {
+      accommodation_bookings: {
+        Row: {
+          booking_id: number;
+          user_id: string | null;
+          check_in: string | null;
+          check_out: string | null;
+          nights: number;
+          amount: number;
+          payment_status: string | null;
+          payment_screenshot_url: string | null;
+          verification_status: "pending" | "verified" | "rejected" | null;
+          transaction_reference: string | null;
+          admin_notes: string | null;
+          rejection_reason: string | null;
+          verified_at: string | null;
+          verified_by: string | null;
+          created_at: string | null;
+        };
+        Insert: {
+          booking_id?: number;
+          user_id?: string | null;
+          check_in?: string | null;
+          check_out?: string | null;
+          nights: number;
+          amount: number;
+          payment_status?: string | null;
+          payment_screenshot_url?: string | null;
+          verification_status?: "pending" | "verified" | "rejected" | null;
+          transaction_reference?: string | null;
+          admin_notes?: string | null;
+          rejection_reason?: string | null;
+          verified_at?: string | null;
+          verified_by?: string | null;
+          created_at?: string | null;
+        };
+        Update: {
+          booking_id?: number;
+          user_id?: string | null;
+          check_in?: string | null;
+          check_out?: string | null;
+          nights?: number;
+          amount?: number;
+          payment_status?: string | null;
+          payment_screenshot_url?: string | null;
+          verification_status?: "pending" | "verified" | "rejected" | null;
+          transaction_reference?: string | null;
+          admin_notes?: string | null;
+          rejection_reason?: string | null;
+          verified_at?: string | null;
+          verified_by?: string | null;
+          created_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "accommodation_bookings_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      },
+      app_settings: {
+        Row: {
+          key: string;
+          value: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          key: string;
+          value?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          key?: string;
+          value?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
       accommodation_type: {
         Row: {
           description: string | null;
@@ -109,6 +189,8 @@ export type Database = {
       event: {
         Row: {
           category_id: number | null;
+          coordinator_id: string | null;
+          coordinator_email: string | null;
           description: string | null;
           event_date: string;
           event_id: number;
@@ -120,6 +202,8 @@ export type Database = {
         };
         Insert: {
           category_id?: number | null;
+          coordinator_id?: string | null;
+          coordinator_email?: string | null;
           description?: string | null;
           event_date: string;
           event_id?: number;
@@ -131,6 +215,8 @@ export type Database = {
         };
         Update: {
           category_id?: number | null;
+          coordinator_id?: string | null;
+          coordinator_email?: string | null;
           description?: string | null;
           event_date?: string;
           event_id?: number;
@@ -175,14 +261,17 @@ export type Database = {
         Row: {
           event_id: number;
           fee_id: number;
+          payment_qr_url: string | null;
         };
         Insert: {
           event_id: number;
           fee_id: number;
+          payment_qr_url?: string | null;
         };
         Update: {
           event_id?: number;
           fee_id?: number;
+          payment_qr_url?: string | null;
         };
         Relationships: [
           {
@@ -203,11 +292,13 @@ export type Database = {
       };
       event_registrations: {
         Row: {
+          coordinator_status: "pending" | "accepted" | "rejected" | null;
           created_at: string | null;
           event_id: number | null;
           fee_id: number | null;
           gross_amount: number | null;
           payment_method_id: number | null;
+          payment_screenshot_url: string | null;
           payment_status: Database["public"]["Enums"]["payment_status"] | null;
           registered_by_user_id: string | null;
           registration_date: string | null;
@@ -215,11 +306,13 @@ export type Database = {
           transaction_id: string | null;
         };
         Insert: {
+          coordinator_status?: "pending" | "accepted" | "rejected" | null;
           created_at?: string | null;
           event_id?: number | null;
           fee_id?: number | null;
           gross_amount?: number | null;
           payment_method_id?: number | null;
+          payment_screenshot_url?: string | null;
           payment_status?: Database["public"]["Enums"]["payment_status"] | null;
           registered_by_user_id?: string | null;
           registration_date?: string | null;
@@ -227,11 +320,13 @@ export type Database = {
           transaction_id?: string | null;
         };
         Update: {
+          coordinator_status?: "pending" | "accepted" | "rejected" | null;
           created_at?: string | null;
           event_id?: number | null;
           fee_id?: number | null;
           gross_amount?: number | null;
           payment_method_id?: number | null;
+          payment_screenshot_url?: string | null;
           payment_status?: Database["public"]["Enums"]["payment_status"] | null;
           registered_by_user_id?: string | null;
           registration_date?: string | null;
@@ -269,6 +364,7 @@ export type Database = {
           min_members: number;
           participation_type: Database["public"]["Enums"]["participation_type_enum"];
           price: number;
+          qr_code: string | null;
         };
         Insert: {
           fee_id?: number;
@@ -276,6 +372,7 @@ export type Database = {
           min_members?: number;
           participation_type: Database["public"]["Enums"]["participation_type_enum"];
           price: number;
+          qr_code?: string | null;
         };
         Update: {
           fee_id?: number;
@@ -283,6 +380,7 @@ export type Database = {
           min_members?: number;
           participation_type?: Database["public"]["Enums"]["participation_type_enum"];
           price?: number;
+          qr_code?: string | null;
         };
         Relationships: [];
       };
@@ -293,8 +391,9 @@ export type Database = {
           is_available: boolean | null;
           price: number | null;
           product_id: number;
-          product_image: string | null;
+          product_image: string[] | null;
           product_name: string;
+          technical_specs: string[] | null;
         };
         Insert: {
           available_sizes?: string[] | null;
@@ -304,6 +403,7 @@ export type Database = {
           product_id?: number;
           product_image?: string | null;
           product_name: string;
+          technical_specs?: string[] | null;
         };
         Update: {
           available_sizes?: string[] | null;
@@ -313,6 +413,7 @@ export type Database = {
           product_id?: number;
           product_image?: string | null;
           product_name?: string;
+          technical_specs?: string[] | null;
         };
         Relationships: [];
       };
@@ -455,6 +556,7 @@ export type Database = {
       users: {
         Row: {
           college: string | null;
+          coordinator_status: boolean | null;
           dob: string | null;
           email: string;
           gender: string | null;
@@ -465,6 +567,7 @@ export type Database = {
         };
         Insert: {
           college?: string | null;
+          coordinator_status?: boolean | null;
           dob?: string | null;
           email: string;
           gender?: string | null;
@@ -475,6 +578,7 @@ export type Database = {
         };
         Update: {
           college?: string | null;
+          coordinator_status?: boolean | null;
           dob?: string | null;
           email?: string;
           gender?: string | null;

@@ -7,7 +7,7 @@ import { AdminPageHeader } from "@/components/admin/ui/AdminSidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
-import { ArrowLeft, User, Mail, Phone, GraduationCap, Calendar, Tag, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Mail, Phone, GraduationCap, Calendar, Tag, Loader2, AlertCircle } from "lucide-react";
 
 type UserDetail = {
   user_name: string;
@@ -33,8 +33,8 @@ export default function UserDetailPage() {
         const data = await res.json();
         if (data.error) throw new Error(data.error);
         setUser(data);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
         setLoading(false);
       }

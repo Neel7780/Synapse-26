@@ -2,7 +2,7 @@
 
 The official codebase for the Synapse 2026 Website.
 
-## DA Ka Tyohaar
+## DA Ka Tyohaar 
 
 ### Getting Started
 
@@ -84,13 +84,6 @@ This repository follows a conventional Next.js layout with App Router routing an
 
 ### Environment Variables
 
-The app integrates with Supabase and third-party services. Do not commit secrets. Example variables (names may vary in your deployment):
-
-- `NEXT_PUBLIC_SUPABASE_URL` — your Supabase project URL (public)
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase anon public key (public)
-- `SUPABASE_SERVICE_ROLE_KEY` — Supabase service role key (server-only, secret)
-- `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` — payment integration credentials (if used)
-
 Place environment variables in a `.env.local` file for local development. Example `.env.local` (never commit this file):
 
 ```text
@@ -143,7 +136,7 @@ npm start
 
 ### Maintainers & Contact
 
-- Project maintainers and event leads typically manage this repo. For questions about deployment or admin access, contact the Synapse web team (contact details not stored in repo).
+- Project maintainers and event leads typically manage this repo. For questions about deployment or admin access, contact the Synapse Commitee (contact details not stored in repo).
 
 ### License
 
@@ -155,12 +148,4 @@ npm start
 - `app/page.tsx` — public home page entry
 - `app/admin/layout.tsx` — admin-specific layout and middleware
 - `utils/supabase/` — Supabase client and server helpers
-
-### More Information
-
-If you need a walkthrough of any specific area (auth flow, payments, admin tables, or component patterns), open an issue or request a guided code tour.
-
 ---
-
-This README was updated to reflect the repository layout and provide actionable setup and development guidance.
-

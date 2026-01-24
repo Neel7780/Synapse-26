@@ -3,7 +3,13 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/ui/AdminSidebar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
 import {
@@ -40,7 +46,7 @@ type Product = {
   product_name: string;
   price: number;
   available_sizes: string[] | null;
-  product_image: string | null;
+  product_image: string[] | null;
   description: string | null;
   is_available: boolean;
 };
@@ -58,8 +64,8 @@ export default function MerchandiseManagementPage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setProducts(data.products || []);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -77,19 +83,25 @@ export default function MerchandiseManagementPage() {
   const handleDeleteConfirm = async () => {
     if (deletingId === null) return;
     try {
-      const res = await fetch(`/api/admin/merchandise/management/${deletingId}`, { method: "DELETE" });
+      const res = await fetch(
+        `/api/admin/merchandise/management/${deletingId}`,
+        { method: "DELETE" },
+      );
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       await fetchProducts();
-    } catch (err: any) {
-      alert("Failed to delete: " + err.message);
+    } catch (err: unknown) {
+      alert(
+        "Failed to delete: " +
+          (err instanceof Error ? err.message : String(err)),
+      );
     } finally {
       setDeleteDialogOpen(false);
       setDeletingId(null);
     }
   };
 
-  const availableCount = products.filter(p => p.is_available).length;
+  const availableCount = products.filter((p) => p.is_available).length;
   const totalValue = products.reduce((sum, p) => sum + p.price, 0);
 
   if (loading) {
@@ -105,7 +117,16 @@ export default function MerchandiseManagementPage() {
       <div className="flex flex-col items-center justify-center h-96 gap-4">
         <AlertCircle className="h-12 w-12 text-red-500" />
         <p className="text-lg text-muted-foreground">Error: {error}</p>
-        <Button onClick={() => { setError(null); setLoading(true); fetchProducts(); }} variant="outline">Retry</Button>
+        <Button
+          onClick={() => {
+            setError(null);
+            setLoading(true);
+            fetchProducts();
+          }}
+          variant="outline"
+        >
+          Retry
+        </Button>
       </div>
     );
   }
@@ -115,7 +136,11 @@ export default function MerchandiseManagementPage() {
       <AdminPageHeader
         title="Merchandise"
         subtitle="Product Management"
-        badge={<Badge className="bg-primary/10 text-primary border-0">{products.length} products</Badge>}
+        badge={
+          <Badge className="bg-primary/10 text-primary border-0">
+            {products.length} products
+          </Badge>
+        }
         actions={
           <Link href="/admin/merchandise/management/new">
             <Button className="bg-primary hover:bg-primary/90">
@@ -184,23 +209,36 @@ export default function MerchandiseManagementPage() {
                 <TableHead className="text-muted-foreground">Price</TableHead>
                 <TableHead className="text-muted-foreground">Sizes</TableHead>
                 <TableHead className="text-muted-foreground">Status</TableHead>
-                <TableHead className="text-right text-muted-foreground">Actions</TableHead>
+                <TableHead className="text-right text-muted-foreground">
+                  Actions
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {products.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center py-8 text-muted-foreground"
+                  >
                     No products added yet.
                   </TableCell>
                 </TableRow>
               ) : (
                 products.map((product) => (
-                  <TableRow key={product.product_id} className="border-border/50 hover:bg-muted/50">
+                  <TableRow
+                    key={product.product_id}
+                    className="border-border/50 hover:bg-muted/50"
+                  >
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        {product.product_image ? (
-                          <img src={product.product_image} alt={product.product_name} className="h-10 w-10 rounded-lg object-cover" />
+                        {product.product_image &&
+                        product.product_image.length > 0 ? (
+                          <img
+                            src={product.product_image[0]}
+                            alt={product.product_name}
+                            className="h-10 w-10 rounded-lg object-cover"
+                          />
                         ) : (
                           <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
                             <Package className="h-5 w-5 text-primary" />
@@ -208,16 +246,28 @@ export default function MerchandiseManagementPage() {
                         )}
                         <div>
                           <p className="font-medium">{product.product_name}</p>
-                          {product.description && <p className="text-xs text-muted-foreground truncate max-w-[200px]">{product.description}</p>}
+                          {product.description && (
+                            <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                              {product.description}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="font-medium">₹{product.price}</TableCell>
+                    <TableCell className="font-medium">
+                      ₹{product.price}
+                    </TableCell>
                     <TableCell>
                       {product.available_sizes?.length ? (
                         <div className="flex gap-1 flex-wrap">
                           {product.available_sizes.map((size) => (
-                            <Badge key={size} variant="secondary" className="text-xs">{size}</Badge>
+                            <Badge
+                              key={size}
+                              variant="secondary"
+                              className="text-xs"
+                            >
+                              {size}
+                            </Badge>
                           ))}
                         </div>
                       ) : (
@@ -225,14 +275,36 @@ export default function MerchandiseManagementPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge className={product.is_available ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" : "bg-red-500/20 text-red-300 border-red-500/30"}>
-                        {product.is_available ? <><Check className="mr-1 h-3 w-3" />Available</> : <><X className="mr-1 h-3 w-3" />Unavailable</>}
+                      <Badge
+                        className={
+                          product.is_available
+                            ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                            : "bg-red-500/20 text-red-300 border-red-500/30"
+                        }
+                      >
+                        {product.is_available ? (
+                          <>
+                            <Check className="mr-1 h-3 w-3" />
+                            Available
+                          </>
+                        ) : (
+                          <>
+                            <X className="mr-1 h-3 w-3" />
+                            Unavailable
+                          </>
+                        )}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Link href={`/admin/merchandise/management/${product.product_id}`}>
-                          <Button size="sm" variant="outline" className="border-border/50">
+                        <Link
+                          href={`/admin/merchandise/management/${product.product_id}`}
+                        >
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-border/50"
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
                         </Link>
@@ -259,11 +331,21 @@ export default function MerchandiseManagementPage() {
         <DialogContent className="sm:max-w-[400px] bg-card border-border">
           <DialogHeader>
             <DialogTitle>Delete Product</DialogTitle>
-            <DialogDescription>Are you sure? This action cannot be undone.</DialogDescription>
+            <DialogDescription>
+              Are you sure? This action cannot be undone.
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} className="border-border/50">Cancel</Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm}>Delete</Button>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              className="border-border/50"
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteConfirm}>
+              Delete
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

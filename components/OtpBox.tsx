@@ -7,7 +7,7 @@ import {
   type KeyboardEvent,
   type ClipboardEvent,
 } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface OtpBoxProps {
   email: string;
@@ -21,6 +21,7 @@ export default function OtpBox({
   goLogin,
 }: OtpBoxProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
@@ -104,11 +105,16 @@ export default function OtpBox({
           router.push("/auth/update-password");
         } else {
           // For signup verification, redirect to user profile (user stays logged in)
-          router.push("/user-profile");
+          const next = searchParams.get("next");
+          router.push(next || "/user-profile");
         }
       }, 1500);
-    } catch (err: any) {
-      setError(err.message || "An error occurred during verification");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An error occurred during verification");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -140,8 +146,12 @@ export default function OtpBox({
       setSuccess("Verification code resent successfully!");
       setOtp(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
-    } catch (err: any) {
-      setError(err.message || "Failed to resend verification code");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Failed to resend verification code");
+      }
     } finally {
       setIsResending(false);
     }

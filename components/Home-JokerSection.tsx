@@ -1,23 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ChevronDown } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useNavigationState } from "@/lib/useNavigationState";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-type JokerSectionProps = {
-  setShowNavbar: React.Dispatch<React.SetStateAction<boolean>>;
-  showNavbar: boolean;
-};
-
-export default function JokerSection({
-  setShowNavbar,
-  showNavbar,
-}: JokerSectionProps) {
+export default function JokerSection() {
+  const router = useRouter();
+  const { startTransition } = useNavigationState();
   const jokerSectionRef = useRef<HTMLDivElement>(null);
   const jokerSvgRef = useRef<SVGSVGElement>(null);
   const jokerPathRef = useRef<SVGPathElement>(null);
@@ -55,84 +51,109 @@ export default function JokerSection({
     }
   }, [generateViewportPath]);
 
+  const handleScrollEnd = useCallback(() => {
+    if (!document.body.classList.contains("is-scrolling-joker")) return;
+
+    document.body.classList.remove("is-scrolling-joker");
+    const containers = document.querySelectorAll(".card-container");
+    containers.forEach(el => {
+      const card = el as HTMLElement;
+      card.style.pointerEvents = "auto";
+
+      // Manually check if mouse is over the card when scroll stops
+      if (card.matches(":hover")) {
+        const inner = card.querySelector(".card-inner");
+        const wrapper = card.querySelector(".card-scroll-wrapper");
+        let targetRotation = 180;
+
+        if (wrapper) {
+          const wrapperRotation = gsap.getProperty(wrapper, "rotateY") as number;
+          targetRotation = 180 - wrapperRotation;
+        }
+
+        if (inner) {
+          gsap.to(inner, {
+            rotateY: targetRotation,
+            duration: 0.2, // Reduced as requested
+            ease: "power2.out",
+            overwrite: "auto",
+          });
+        }
+      }
+    });
+  }, []);
+
   const setupCardHoverAnimations = useCallback(() => {
     const cards = document.querySelectorAll(".card-container");
-    const cardState = new WeakMap();
 
+    // Simplifed Hover Logic
     cards.forEach((card) => {
       const inner = card.querySelector(".card-inner") as HTMLElement;
       if (!inner) return;
 
-      let hoverDidFlip = false;
-      let preHoverRotation = 0;
-      let hoverLockedUntilLeave = false;
-
       card.addEventListener("mouseenter", () => {
-        if (hoverLockedUntilLeave) return;
+        // If scrolling, do nothing (pointer-events will handle this mostly, but safety check)
+        if (document.body.classList.contains("is-scrolling-joker")) return;
 
-        const currentRotation = gsap.getProperty(inner, "rotateY") as number;
-        const normalized = ((currentRotation % 360) + 360) % 360;
-        const isFullyBack = Math.abs(normalized - 180) < 5;
+        // Calculate target rotation for Inner so that Total (Inner + Wrapper) = 180
+        const wrapper = card.querySelector(".card-scroll-wrapper");
+        let targetRotation = 180;
 
-        if (isFullyBack) {
-          hoverDidFlip = false;
-          return;
+        if (wrapper) {
+          const wrapperRotation = gsap.getProperty(wrapper, "rotateY") as number;
+          // Target = 180 - Wrapper. 
+          // Example: Wrapper is 90. Inner goes to 90. Total = 180.
+          // Example: Wrapper is 0. Inner goes to 180. Total = 180.
+          targetRotation = 180 - wrapperRotation;
         }
 
-        hoverDidFlip = true;
-        preHoverRotation = currentRotation;
-
         gsap.to(inner, {
-          rotateY: 180,
-          duration: 0.3,
-          ease: "power2.inOut",
+          rotateY: targetRotation,
+          duration: 0.2, // Reduced as requested
+          ease: "power2.out",
           overwrite: "auto",
         });
       });
 
       card.addEventListener("mouseleave", () => {
-        hoverLockedUntilLeave = false;
-
-        if (!hoverDidFlip) return;
-
-        gsap.to(inner, {
-          rotateY: preHoverRotation,
-          duration: 0.5,
-          ease: "power2.out",
-          overwrite: "auto",
-        });
-
-        hoverDidFlip = false;
-      });
-
-      ScrollTrigger.addEventListener("scrollStart", () => {
-        if (!hoverDidFlip) return;
-
-        hoverLockedUntilLeave = true;
-        hoverDidFlip = false;
+        // If scrolling, let the scrollStart handler handle the reset
+        if (document.body.classList.contains("is-scrolling-joker")) return;
 
         gsap.to(inner, {
-          rotateY: preHoverRotation,
-          duration: 0.4,
+          rotateY: 0,
+          duration: 0.2,
           ease: "power2.out",
           overwrite: "auto",
         });
       });
-
-      cardState.set(inner, {
-        hovering: false,
-        lastScrollRotation: 0,
-      });
     });
 
-    ScrollTrigger.addEventListener("scrollEnd", () => {
-      document.querySelectorAll(".card-inner").forEach((inner) => {
-        const state = cardState.get(inner);
-        if (!state || !state.hovering) return;
-        state.lastScrollRotation = gsap.getProperty(inner, "rotateY") as number;
+    // Global Scroll Listeners
+    const onScrollStart = () => {
+      document.body.classList.add("is-scrolling-joker");
+      const containers = document.querySelectorAll(".card-container");
+      containers.forEach(el => (el as HTMLElement).style.pointerEvents = "none");
+
+      // Smoothly un-flip the INNER card (Hover layer).
+      // If user was hovering (Inner=180), this goes 180->0.
+      // Simultaneously, the Wrapper (Scroll layer) goes 0->180.
+      // This additive effect keeps the card visually "Back" without snapping.
+      gsap.to(".card-inner", {
+        rotateY: 0,
+        duration: 0.2,
+        ease: "power2.out",
+        overwrite: "auto"
       });
-    });
-  }, []);
+    };
+
+    ScrollTrigger.addEventListener("scrollStart", onScrollStart);
+    ScrollTrigger.addEventListener("scrollEnd", handleScrollEnd);
+
+    return () => {
+      ScrollTrigger.removeEventListener("scrollStart", onScrollStart);
+      ScrollTrigger.removeEventListener("scrollEnd", handleScrollEnd);
+    }
+  }, [handleScrollEnd]);
 
   useEffect(() => {
     if (
@@ -168,12 +189,12 @@ export default function JokerSection({
           anticipatePin: 1.2,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
-            const progress = self.progress;
-            if (progress > 0.3) {
-              setShowNavbar(true);
-            } else if (progress <= 0.3) {
-              setShowNavbar(false);
+            // Eagerly unlock if velocity is very low
+            if (Math.abs(self.getVelocity()) < 5) {
+              handleScrollEnd();
             }
+
+            const progress = self.progress;
             const point = jokerPath.getPointAtLength(
               jokerPathLength * progress
             );
@@ -189,7 +210,6 @@ export default function JokerSection({
             jokerDot.style.opacity = "1";
             const artistDot = document.getElementById("artistPathDot");
             if (artistDot) artistDot.style.opacity = "0";
-            setShowNavbar(false);
           },
           onLeave: () => {
             jokerDot.style.opacity = "0";
@@ -259,7 +279,7 @@ export default function JokerSection({
         opacity: 0,
         y: 80,
         scale: 1.1,
-        color: "#9ca3af", // gray-400
+        color: "#9ca3af",
       });
       jokerTl.to(
         exploreTitleRef.current,
@@ -275,7 +295,7 @@ export default function JokerSection({
       jokerTl.to(
         exploreTitleRef.current,
         {
-          y: -window.innerHeight * 0.25,
+          y: -window.innerHeight * 0.03,
           scale: 1,
           color: "#ffffff",
           duration: 2.5,
@@ -286,7 +306,7 @@ export default function JokerSection({
       jokerTl.to(
         exploreTitleRef.current,
         {
-          top: "5%",
+          top: "2%",
           y: -10,
           duration: 1.8,
           ease: "power2.inOut",
@@ -294,7 +314,6 @@ export default function JokerSection({
         ">"
       );
 
-      // --- REVISED CARD POSITIONING LOGIC ---
       const getCardX = (i: number) => {
         const vw = window.innerWidth;
         const isMobile = vw < 426;
@@ -302,12 +321,10 @@ export default function JokerSection({
         const isother = vw < 1000;
 
         if (isMobile) {
-          // Reduce spread significantly for mobile ("Inward")
-          // Use a tighter clustering
-          const spread = Math.min(vw * 0.4, 140);
-          // Divide spread by a larger number to compress horizontal space
-          return (i - 1.5) * (spread / 2.5);
-        } else if (isTablet) {
+          const offset = Math.min(vw * 0.15, 240);
+          return i % 2 === 0 ? -offset : offset;
+        }
+        else if (isTablet) {
           const spread = Math.min(vw * 0.4, 290);
 
           return (i - 1.5) * (spread / 2.5);
@@ -317,7 +334,6 @@ export default function JokerSection({
           return (i - 1.5) * (spread / 2.3);
         }
 
-        // Desktop logic
         const spread = Math.min(vw * 0.35, 420);
         return (i - 1.5) * (spread / 1.5);
       };
@@ -329,17 +345,16 @@ export default function JokerSection({
         const isother = window.innerWidth < 1000;
 
         if (isMobile) {
-          const mobileStagger = [-0.15, 0.08, -0.12, 0.18];
-          return mobileStagger[i] * vh;
+          const step = vh * 0.15;
+          return i * step - vh * 0.18;
         } else if (isTablet) {
-          const TabletStagger = [0.09, -0.15, 0.1, -0.1];
+          const TabletStagger = [0.07, -0.1, 0.07, -0.07];
           return TabletStagger[i] * vh;
         } else if (isother) {
           const TabletStagger = [0.12, -0.09, 0.15, -0.1];
           return TabletStagger[i] * vh;
         }
 
-        // Desktop logic (Existing)
         return [0.1, -0.08, 0.11, -0.02][i] * vh;
       };
 
@@ -348,13 +363,12 @@ export default function JokerSection({
         const isTablet = window.innerWidth < 769;
 
         if (isMobile) {
-          return [-5, -15, 15, 15][i];
+          return i % 2 === 0 ? -6 : 6;
         }
         if (isTablet) {
           return [-15, 10, 5, 15][i];
         }
 
-        // Slightly steeper rotation on edges for visual flair
         return [-15, 5, -5, 15][i];
       };
 
@@ -366,54 +380,56 @@ export default function JokerSection({
           x: (i: number) => getCardX(i),
           y: (i: number) => getCardY(i),
           rotation: (i: number) => getCardR(i),
+          rotateY: 0, // Enforce Timeline control of Y-rotation
           duration: 2,
           ease: "expo.out",
         },
         ">+0.5"
       );
 
-      const cardInners = gsap.utils.toArray(".card-inner");
-      const shuffledCards = cardInners.sort(() => Math.random() - 0.5);
+      const cardWrappers = gsap.utils.toArray(".card-scroll-wrapper");
+      const shuffledWrappers = cardWrappers.sort(() => Math.random() - 0.5);
 
       jokerTl
         .to(
-          shuffledCards,
+          shuffledWrappers,
           {
             rotateY: 180,
             duration: 1,
-            stagger: 2,
+            stagger: 1,
             ease: "power1.inOut",
-          },
-          "+=0.5"
+          }
         )
-        .to(shuffledCards, {
+        .to(shuffledWrappers, {
           duration: 1,
           ease: "none",
         });
 
-      setupCardHoverAnimations();
+      const cleanupHover = setupCardHoverAnimations();
 
       const handleResize = () => {
         const newPath = generateViewportPath();
         jokerPath.setAttribute("d", newPath);
 
-        // Re-calculate positions on resize so mobile/desktop switch works dynamically
         jokerTl.scrollTrigger?.refresh();
       };
 
       window.addEventListener("resize", handleResize);
 
+      // Store ref value before cleanup to avoid stale ref
+      const sectionRef = jokerSectionRef.current;
       return () => {
         window.removeEventListener("resize", handleResize);
         jokerTl.scrollTrigger?.kill();
+        cleanupHover?.();
         ScrollTrigger.getAll().forEach((trigger) => {
-          if (trigger.trigger === jokerSectionRef.current) {
+          if (trigger.trigger === sectionRef) {
             trigger.kill();
           }
         });
       };
     }
-  }, [generateViewportPath, setupCardHoverAnimations, setShowNavbar]);
+  }, [generateViewportPath, setupCardHoverAnimations, setupPaths, handleScrollEnd]);
 
   useEffect(() => {
     setupPaths();
@@ -488,12 +504,12 @@ export default function JokerSection({
 
             {/* LEFT DOOR */}
             <div
-              className="door door-left absolute top-0 w-1/2 h-full bg-white z-[100]"
+              className="door door-left absolute top-0 w-1/2 h-full bg-white z-[100] bg-cover md:bg-contain bg-no-repeat"
               id="leftDoor"
               ref={leftDoorRef}
               style={{
                 background: "white url('/images_home/left.png') no-repeat right center",
-                backgroundSize: 'contain'
+                backgroundSize: "min(200%, 100vh)",
               }}
             >
               <div
@@ -517,13 +533,12 @@ export default function JokerSection({
 
             {/* RIGHT DOOR */}
             <div
-              className="door door-right absolute top-0 right-0 w-1/2 h-full bg-white z-100 object-cover"
+              className="door door-right absolute top-0 right-0 w-1/2 h-full bg-white z-100 object-cover bg-cover md:bg-contain bg-no-repeat"
               id="rightDoor"
               ref={rightDoorRef}
               style={{
-                background:
-                  "white url('/images_home/right.png') no-repeat left center",
-                backgroundSize: "contain",
+                background: "white url('/images_home/right.png') no-repeat left center",
+                backgroundSize: "min(200%, 100vh)",
               }}
             >
               <div
@@ -560,10 +575,13 @@ export default function JokerSection({
                             will-change-transform
                             origin-center"
               >
-                explore events
+                explore
+                <br className="block sm:hidden" />
+                <span className="hidden sm:inline"> </span>
+                events
               </h1>
 
-              <svg
+              {<svg
                 id="jokerPath"
                 width="100%"
                 height="100%"
@@ -580,7 +598,7 @@ export default function JokerSection({
                   fill="none"
                   ref={jokerPathRef}
                 />
-              </svg>
+              </svg>}
 
               <div
                 id="jokerPathDot"
@@ -589,61 +607,71 @@ export default function JokerSection({
               ></div>
 
               {/* CARD BURST ZONE */}
-              <div className="burst-zone relative w-full h-[60dvh] md:h-[70dvh] pointer-events-auto flex justify-center items-center z-10">
+              <div className="burst-zone relative w-full h-[60vh] md:h-[70vh] pointer-events-auto flex justify-center items-center z-10">
                 {cards.map((card, index) => (
                   <div
                     key={card.id}
-                    className="card-container absolute min-h[180px] min-w-[150px]"
+                    className="card-container absolute min-h[180px] min-w-[150px] cursor-pointer"
                     style={{
                       // Modified clamps for better mobile aspect ratio
-                      width: "clamp(90px, 20vw, 240px)",
-                      height: "clamp(120px, 25vw, 300px)",
-                      transform: "translateY(120dvh)",
+                      width: "clamp(110px, 25vw, 240px)",
+                      height: "clamp(140px, 30vw, 300px)",
+                      transform: "translateY(120vh)"
                     }}
                     id={card.id}
                     ref={(el) => {
                       cardRefs.current[index] = el;
                     }}
+                    onClick={() => {
+                      startTransition();
+                      const dayNum = index + 1;
+                      router.push(`/timeline#day-${dayNum}`);
+                    }}
                   >
                     <div
-                      className="card-inner w-full h-full transform-style-preserve-3d transition-transform duration-100 ease-in-out"
+                      className="card-scroll-wrapper w-full h-full transform-style-preserve-3d "
                       style={{ transformStyle: "preserve-3d" }}
                     >
-                      {/* Card Front */}
                       <div
-                        className="card-front absolute inset-0 backface-hidden lowercase font-joker"
-                        style={{
-                          backgroundImage: `image-set(url(${card.image.avif}) type("image/avif"),url(${card.image.png}) type("image/png"))`,
-                          backgroundRepeat: "no-repeat",
-                          backgroundPosition: "center",
-                          backgroundSize: "contain",
-                          backfaceVisibility: "hidden",
-                        }}
-                      ></div>
-
-                      {/* Card Back */}
-                      <div
-                        className="card-back absolute inset-0 backface-hidden lowercase font-joker flex flex-col gap-2 md:gap-4 items-center justify-center p-4 md:p-8 text-center"
-                        style={{
-                          background:
-                            "url('/images_home/card_back.avif') no-repeat center center",
-                          backgroundSize: "contain",
-                          backfaceVisibility: "hidden",
-                          transform: "rotateY(180deg)",
-                        }}
+                        className="card-inner w-full h-full transform-style-preserve-3d transition-transform duration-100 ease-in-out "
+                        style={{ transformStyle: "preserve-3d" }}
                       >
-                        <h2 className="text-black text-sm md:text-xl lg:text-3xl font-bold">
-                          {card.day}
-                        </h2>
-                        <h2
-                          className={
-                            card.isRed
-                              ? "text-[#cf0000] font-jqka max-w-[70%] md:max-w-full text-base md:text-xl lg:text-4xl font-bold "
-                              : "text-black max-w-[70%] md:max-w-full text-base md:text-xl lg:text-4xl font-jqka font-bold"
-                          }
+                        {/* Card Front */}
+                        <div
+                          className="card-front absolute inset-0 backface-hidden lowercase font-joker"
+                          style={{
+                            backgroundImage: `image-set(url(${card.image.avif}) type("image/avif"),url(${card.image.png}) type("image/png"))`,
+                            backgroundRepeat: "no-repeat",
+                            backgroundPosition: "center",
+                            backgroundSize: "contain",
+                            backfaceVisibility: "hidden",
+                          }}
+                        ></div>
+
+                        {/* Card Back */}
+                        <div
+                          className="card-back absolute inset-0 backface-hidden lowercase font-joker flex flex-col gap-2 md:gap-4 items-center justify-center p-4 md:p-8 text-center"
+                          style={{
+                            background:
+                              "url('/images_home/card_back.avif') no-repeat center center",
+                            backgroundSize: "contain",
+                            backfaceVisibility: "hidden",
+                            transform: "rotateY(180deg)",
+                          }}
                         >
-                          {card.name}
-                        </h2>
+                          <h2 className="text-black text-sm md:text-xl lg:text-3xl font-bold">
+                            {card.day}
+                          </h2>
+                          <h2
+                            className={
+                              card.isRed
+                                ? "text-[#cf0000] font-jqka max-w-[70%] md:max-w-full text-base md:text-xl lg:text-4xl font-bold "
+                                : "text-black max-w-[70%] md:max-w-full text-base md:text-xl lg:text-4xl font-jqka font-bold"
+                            }
+                          >
+                            {card.name}
+                          </h2>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -658,17 +686,15 @@ export default function JokerSection({
             className="scroll-hint opacity-0 fixed bottom-4 md:bottom-0 left-1/2 -translate-x-1/2 z-50
        text-black select-none pointer-events-none"
           >
-            <ChevronDown className="stroke-[3px] w-6 h-6 md:w-8 md:h-8 translate-y-full" />
-            <ChevronDown className="stroke-[3px] w-6 h-6 md:w-8 md:h-8 translate-y-1/2" />
-            <ChevronDown className="stroke-[3px] w-6 h-6 md:w-8 md:h-8" />
-            <ChevronDown className="stroke-[3px] w-6 h-6 md:w-8 md:h-8 -translate-y-1/2" />
+            <ChevronDown className="stroke-[3px] w-5 h-5 md:w-8 md:h-8 translate-y-full" />
+            <ChevronDown className="stroke-[3px] w-5 h-5 md:w-8 md:h-8 translate-y-1/2" />
+            <ChevronDown className="stroke-[3px] w-5 h-5 md:w-8 md:h-8" />
+            <ChevronDown className="stroke-[3px] w-5 h-5 md:w-8 md:h-8 -translate-y-1/2" />
           </div>
         </div>
       </div>
 
-      <div className='h-[100dvh]' />
-      <div className='h-[100dvh]' />
-      <div className='h-[100dvh]' />
+      <div className='h-[300vh]' />
     </div>
   );
 }

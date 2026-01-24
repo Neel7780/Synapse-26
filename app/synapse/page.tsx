@@ -9,21 +9,40 @@ import JokerSection from "@/components/Home-JokerSection";
 import ArtistsSection from "@/components/Artists";
 import HallOfFame from "@/components/Home-HallOfFame";
 import Footer from "@/components/ui/Footer";
+import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import NavigationPanel from "@/components/ui/NavigationPanel";
 import { Navbar } from "@/components/ui/Resizable-navbar";
+import FluidCanvas from "@/components/FluidCanvas";
 
-// Dynamic import with SSR disabled to prevent "window is not defined" error
-// from @react-three/fiber which accesses window at import time
-// const FluidCanvas = dynamic(() => import("@/components/FluidCanvas"), {
-//   ssr: false,
-// });
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
+
+// Dynamic import for custom cursor (client-only)
+const CustomCursor = dynamic(() => import("@/components/CustomCursor"), {
+  ssr: false,
+});
 
 export default function HomeSection() {
-  const [entered, setEntered] = useState(false);
+  const [entered, setEntered] = useState(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("synapse_has_entered") === "true";
+    }
+    return false;
+  });
   const [showNavbar, setShowNavbar] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Refresh GSAP after .end mounts
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   useEffect(() => {
     if (entered) {
       requestAnimationFrame(() => {
@@ -32,38 +51,42 @@ export default function HomeSection() {
     }
   }, [entered]);
 
-
   return (
-    <main className="flex flex-col min-h-screen relative">
-      {/* {entered ? <FluidCanvas /> : ""} */}
-      {entered ? "" : ""}
+    <main className="flex flex-col min-h-dvh overflow-x-hidden relative">
+      {entered && !isMobile ? (
+        <div className="hidden md:block">
+          <FluidCanvas />
+        </div>
+      ) : ""}
       <Navbar visible={showNavbar}>
         <NavigationPanel />
       </Navbar>
+
       <HeroSection
         onEnter={() => setEntered(true)}
         setShowNavbar={setShowNavbar}
         showNavbar={showNavbar}
       />
+
       <div
         className={`
-            end
-            overflow-x-hidden
+            mt-[200vh]
             w-full
             flex-col
             z-30
-            mt-[300dvh]
-            transition-opacity
-            duration-700
-            ${entered ? "flex opacity-100" : "hidden opacity-0"}
+            ${entered ? "flex" : "hidden"}
           `}
       >
         <AboutSection />
-        <JokerSection setShowNavbar={setShowNavbar} showNavbar={showNavbar} />
-        <ArtistsSection />
-        <HallOfFame />
+        <JokerSection />
+        <div className="relative z-20 bg-black" style={{ isolation: "isolate" }}>
+          <ArtistsSection />
+        </div>
+        <div className="relative z-10 bg-black" style={{ isolation: "isolate" }}>
+          <HallOfFame />
+        </div>
         <Footer />
-      </div>
-    </main>
+      </div >
+    </main >
   );
 }

@@ -1,9 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AdminPageHeader } from "@/components/admin/ui/AdminSidebar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import {
@@ -16,37 +22,85 @@ import {
 import { ArrowLeft, Building2, Loader2 } from "lucide-react";
 import Link from "next/link";
 
+type Category = {
+  sponsor_category_id: number;
+  tier: string;
+  rank: number | null;
+};
+
 export default function NewSponsorPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [formData, setFormData] = useState({
     name: "",
-    tier: "",
+    category_id: "",
     website_url: "",
-    logo_url: "",
-    description: "",
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch("/api/admin/sponsor-categories");
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        setCategories(data.categories || []);
+      } catch (err) {
+        console.error("Failed to fetch categories:", err);
+        alert("Failed to load categories");
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.tier) {
-      alert("Name and Tier are required");
+
+    if (!formData.name || !formData.category_id) {
+      alert("Name and Category are required");
       return;
     }
 
     setLoading(true);
     try {
+      const submitData = new FormData();
+      submitData.append("name", formData.name);
+      submitData.append("category_id", formData.category_id);
+      if (formData.website_url) {
+        submitData.append("website_url", formData.website_url);
+      }
+      if (imageFile) {
+        submitData.append("image", imageFile);
+      }
+
       const res = await fetch("/api/admin/sponsors", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: submitData,
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       alert("Sponsor created successfully!");
       router.push("/admin/sponsors");
-    } catch (err: any) {
-      alert("Failed to create sponsor: " + err.message);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      alert("Failed to create sponsor: " + errorMessage);
     } finally {
       setLoading(false);
     }
@@ -86,23 +140,39 @@ export default function NewSponsorPage() {
                 <label className="text-sm font-medium">Sponsor Name *</label>
                 <Input
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   placeholder="e.g., Tech Corp"
                   required
                   className="bg-muted/50 border-border/50"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Tier *</label>
-                <Select value={formData.tier} onValueChange={(v) => setFormData({ ...formData, tier: v })}>
+                <label className="text-sm font-medium">Category *</label>
+                <Select
+                  value={formData.category_id}
+                  onValueChange={(v) =>
+                    setFormData({ ...formData, category_id: v })
+                  }
+                  disabled={categoriesLoading}
+                >
                   <SelectTrigger className="bg-muted/50 border-border/50">
-                    <SelectValue placeholder="Select tier" />
+                    <SelectValue
+                      placeholder={
+                        categoriesLoading ? "Loading..." : "Select category"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border">
-                    <SelectItem value="Platinum">💎 Platinum</SelectItem>
-                    <SelectItem value="Gold">🥇 Gold</SelectItem>
-                    <SelectItem value="Silver">🥈 Silver</SelectItem>
-                    <SelectItem value="Bronze">🥉 Bronze</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem
+                        key={category.sponsor_category_id}
+                        value={String(category.sponsor_category_id)}
+                      >
+                        {category.tier}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -112,39 +182,58 @@ export default function NewSponsorPage() {
               <label className="text-sm font-medium">Website URL</label>
               <Input
                 value={formData.website_url}
-                onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, website_url: e.target.value })
+                }
                 placeholder="https://example.com"
                 className="bg-muted/50 border-border/50"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Logo URL</label>
-              <Input
-                value={formData.logo_url}
-                onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
-                placeholder="https://example.com/logo.png"
-                className="bg-muted/50 border-border/50"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Description</label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full rounded-md border border-border/50 bg-muted/50 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                rows={3}
-                placeholder="Brief description of the sponsor"
-              />
+              <label className="text-sm font-medium">Logo Upload</label>
+              <div className="flex items-center gap-4">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="bg-muted/50 border-border/50"
+                />
+                {imagePreview && (
+                  <div className="relative h-20 w-20 rounded-lg border border-border/50 overflow-hidden">
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex gap-3 pt-4">
-              <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90">
-                {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating...</> : "Create Sponsor"}
+              <Button
+                type="submit"
+                disabled={loading}
+                className="bg-primary hover:bg-primary/90"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  "Create Sponsor"
+                )}
               </Button>
               <Link href="/admin/sponsors">
-                <Button type="button" variant="outline" className="border-border/50">Cancel</Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-border/50"
+                >
+                  Cancel
+                </Button>
               </Link>
             </div>
           </form>
