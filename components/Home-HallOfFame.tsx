@@ -462,7 +462,7 @@ export default function HallOfFame() {
         ease: "power2.out",
         scrollTrigger: {
           trigger: hallContainerRef.current,
-          start: "top top-=5%",
+          start: "top top",
           end: "+=20%",
           scrub: 0.8,
         },
@@ -625,7 +625,7 @@ export default function HallOfFame() {
   return (
     <div className="relative overflow-hidden w-full bg-black">
       <div ref={hallContainerRef} className="relative">
-        <div className="h-[100svh] w-full bg-black">
+        <div className="h-[100svh] z-15 w-full bg-black">
 
           {/* Mobile Grid (3x3) */}
           <div className="md:hidden absolute inset-0 flex items-center justify-center p-2">
