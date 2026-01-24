@@ -452,17 +452,13 @@ export default function HeroSection({
         },
         "part3Reveal+=0.4"
       )
-      .fromTo(
+      .from(
         "#part3 .scroll-hint-home",
         {
           y: -20,
           opacity: 0,
-        },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 0.8,
           ease: "power3.out",
+          stagger: 0.15,
         },
         "part3Reveal+=0.4"
       )
@@ -622,16 +618,18 @@ export default function HeroSection({
       startBrowserPreloadTracking();
     });
 
-    if (!isLoading) {
-      enterSilently();
-    }
-
     return () => {
       window.removeEventListener("beforeunload", clearIntroOnReload);
       window.removeEventListener("resize", handleResize);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enterSilently, isLoading, startBrowserPreloadTracking]);
+  }, [startBrowserPreloadTracking]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      enterSilently();
+    }
+  }, [isLoading, enterSilently]);
 
   useLayoutEffect(() => {
     if (isLoading) return;
