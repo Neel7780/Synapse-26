@@ -120,22 +120,29 @@ export default function TeamPage() {
     { name: "Kashish Khubchandani", position: "Mentor", image: "/images_teams/Kashish_img.jpg", instagram: "https://www.instagram.com/_cutest_stranger/", linkedin: "http://www.linkedin.com/in/kashish-khubchandani-281b97235" },
   ]
 
+
   const webTeam: TeamMember[] = [
-    { name: "Chirayu Dodiya", position: "Backend Dev", image: "/images_teams/chirayu_ws.jpg", instagram: "https://www.instagram.com/chirayu_dodiya/", linkedin: "https://www.linkedin.com/in/chirayu-dodiya-3a025a2aa/" },
     { name: "Aditya Vaish", position: "Backend Dev", image: "/images_teams/aditya_ws.jpg", instagram: "https://www.instagram.com/_avaish_08?igsh=MWRmOTV4b2ZiNDRuMw==", linkedin: "https://www.linkedin.com/in/aditya-vaish-370494243/" },
     { name: "Neel Khatri", position: "Backend Dev", image: "/images_teams/neel_ws.jpg", instagram: "https://www.instagram.com/neel212006", linkedin: "https://www.linkedin.com/in/neel-khatri-aa1618242" },
-    { name: "Saumya Shah", position: "Backend Dev", image: "/images_teams/saumya_ws.jpeg", instagram: "https://www.instagram.com/saumyashah05/", linkedin: "https://www.linkedin.com/in/saumya-shah-5bb8602b4/" },
     { name: "Dhruvil Patel", position: "Backend Dev", image: "/images_teams/dhruvil_ws.jpeg", instagram: "https://www.instagram.com/dp_0205", linkedin: "https://www.linkedin.com/in/dhruvil05patel?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" },
+    { name: "Chirayu Dodiya", position: "Backend Dev", image: "/images_teams/chirayu_ws.jpg", instagram: "https://www.instagram.com/chirayu_dodiya/", linkedin: "https://www.linkedin.com/in/chirayu-dodiya-3a025a2aa/" },
     { name: "Siddh Shah", position: "Frontend Dev", image: "/images_teams/siddh_ws.jpg", instagram: "https://www.instagram.com/siddhshah22?igsh=MWc4aTJkbWFxYWV4eg==", linkedin: "https://www.linkedin.com/in/siddh-shah-b03432321?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" },
-    { name: "Heer Mehta", position: "Frontend Dev", image: "/images_teams/heer_ws.jpg", instagram: "https://www.instagram.com/heermehta0919/", linkedin: "https://www.linkedin.com/in/heer-mehta-14833928b/" },
-    { name: "Yash Gangwani", position: "Frontend Dev", image: "/images_teams/yash_ws.png", instagram: "https://www.instagram.com/gudda_786_?igsh=M2EwYWx3MWg4Mm53", linkedin: "https://www.linkedin.com/in/yash-gangwani" },
     { name: "Chirag Katkoriya", position: "Frontend Dev", image: "/images_teams/chirag_ws.jpg", instagram: "https://www.instagram.com/katkoriyachirag/", linkedin: "https://www.linkedin.com/in/chirag-katkoriya/" },
-    { name: "Shlok Diwan", position: "Frontend Dev", image: "/images_teams/shlok_ws.jpg", instagram: "https://www.instagram.com/shlokk_51?igsh=cXU5aXhkanRrbnlq&utm_source=qr", linkedin: "https://www.linkedin.com/in/shlok-diwan-32a71435b?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" },
     { name: "Pushkar Patel", position: "Frontend Dev", image: "/images_teams/pushkar_ws.jpeg", instagram: "https://www.instagram.com/synapsedaiict?igsh=MTM4Mzk2NHNya3N1dA==", linkedin: "https://www.linkedin.com/in/pushkar-patel-409196295/?originalSubdomain=sg" },
+    { name: "Chirayu Dodiya", position: "Backend Dev", image: "/chirayu_ws.jpg", instagram: "https://www.instagram.com/chirayu_dodiya/", linkedin: "https://www.linkedin.com/in/chirayu-dodiya-3a025a2aa/" },
+    { name: "Priyanshi Chauhan", position: "Design and UX/UI", image: "/priyanshi_ws.png", instagram: "https://www.instagram.com/priyaanshii.5?igsh=MWIxbzNiM3Fxb3d4cg==", linkedin: "https://www.linkedin.com/in/priyanshichauhan01" },
+    { name: "Yash Gangwani", position: "Frontend Dev", image: "/yash_ws.png", instagram: "https://www.instagram.com/gudda_786_?igsh=M2EwYWx3MWg4Mm53", linkedin: "https://www.linkedin.com/in/yash-gangwani" },
+    { name: "Heer Mehta", position: "Frontend Dev", image: "/heer_ws.jpg", instagram: "https://www.instagram.com/heermehta0919/", linkedin: "https://www.linkedin.com/in/heer-mehta-14833928b/" },
+
   ]
 
-  const mainTeamTop = mainTeamMembers.slice(0, 2); 
-  const mainTeamBottom = mainTeamMembers.slice(2); 
+  const navSections = [
+    { id: "leadership", label: "Leadership" },
+    { id: "heads", label: "Heads" },
+    { id: "core", label: "Core Team" },
+    { id: "mentors", label: "Mentors" },
+    { id: "web", label: "Web Dev" },
+  ]
 
   return (
     <main className="w-full bg-black min-h-screen">
@@ -156,50 +163,36 @@ export default function TeamPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/40 to-black" />
       </div>
 
-      {/* TEAM GRID */}
-      <section className="w-full py-16 px-4 md:px-8 flex flex-col items-center">
-        <h2 className="font-joker text-white text-5xl md:text-7xl px-6 py-3 mb-12 text-center">
-          team
-        </h2>
-
-        {/* Main Team - Split Layout */}
-        <div className="flex flex-col gap-8 md:gap-12 w-full max-w-6xl items-center">
-
-          {/* Top 2 Members - Strict 2 Columns */}
-          <div className="grid grid-cols-2 gap-6 md:gap-12 justify-center place-items-center w-full sm:w-2/3 md:w-1/2">
-             {mainTeamTop.map((member, idx) => (
-                <div key={`main-top-${idx}`}>
-                   <TeamMemberCard member={member} />
-                </div>
-             ))}
-          </div>
-
-          {/* Bottom 4 Members - 2 Columns on Mobile, 4 on Desktop */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-12 justify-center w-full place-items-center">
-             {mainTeamBottom.map((member, idx) => (
-                <div key={`main-bottom-${idx}`}>
-                   <TeamMemberCard member={member} />
-                </div>
-             ))}
-          </div>
-        </div>
-        <br/>
-
-        {/* Core Team - Flexbox for Auto-Centering Last Row */}
-        <div className="mt-8 md:mt-12 w-full max-w-6xl">
-          <div className="flex flex-wrap justify-center gap-6 md:gap-12">
-            {coreTeam.map((member, idx) => (
-               <div key={`core-${idx}`} className="w-[calc(50%-12px)] sm:w-[calc(50%-24px)] md:w-[calc(25%-36px)] flex justify-center">
-                 <TeamMemberCard member={member} />
-               </div>
+      {/* Leadership Section - Convenor & Deputy */}
+      <section id="leadership" className="w-full py-16 md:py-24 px-4 md:px-8 lg:px-16 bg-gradient-to-b from-black via-gray-950 to-black">
+        <div className="max-w-5xl mx-auto">
+          <SectionTitle 
+            title="leadership" 
+            subtitle="Guiding Synapse' 26 to new heights"
+          />
+          <div className="flex flex-wrap justify-center gap-12 md:gap-20">
+            {leadershipTeam.map((member, idx) => (
+              <div key={`leader-${idx}`} className="transform md:scale-110">
+                <TeamMemberCard member={member} index={idx} />
+              </div>
             ))}
           </div>
         </div>
 
       </section>
 
-      <TeamSection title="design team" members={designTeam} />
-      <TeamSection title="web development team" members={webTeam} />
+      {/* Separator */}
+      <div className="w-full h-px bg-gradient-to-r from-transparent via-red-900/50 to-transparent" />
+
+      {/* Web Development Team Section */}
+      <section id="web" className="w-full bg-gradient-to-b from-black to-gray-950">
+        <TeamSection 
+          title="web development team" 
+          members={webTeam}
+          subtitle="Building the digital experience"
+          layout="default"
+        />
+      </section>
 
       <div className="h-20" />
       <Footer />
