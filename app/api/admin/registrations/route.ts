@@ -1,9 +1,30 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { corsHeaders, handleCorsResponse, addCorsHeaders } from '@/lib/cors'
+
+async function checkAdmin(supabase: any) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return false;
+  return user.email === process.env.ADMIN_EMAIL;
+}
+
+export async function OPTIONS(request: Request) {
+  const origin = request.headers.get("origin");
+  return handleCorsResponse(origin);
+}
 
 export async function GET(req: NextRequest) {
   try {
+    const origin = req.headers.get("origin");
     const supabase = (await createClient()) as any;
+
+    if (!(await checkAdmin(supabase))) {
+      const response = NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+      return addCorsHeaders(response, origin);
+    }
+
     const { searchParams } = new URL(req.url);
 
     const page = Number(searchParams.get("page") ?? 1);
@@ -15,11 +36,11 @@ export async function GET(req: NextRequest) {
     const eventFilter = searchParams.get("filter");
     const paymentStatus = searchParams.get("paymentStatus");
 
-        const buildQueryUsers = () => {
-            let q = supabase
-                .from("event_registrations")
-                .select(
-                    `
+    const buildQueryUsers = () => {
+      let q = supabase
+        .from("event_registrations")
+        .select(
+          `
       transaction_id,
       registration_id,
       payment_status,
@@ -34,27 +55,27 @@ export async function GET(req: NextRequest) {
         fee(participation_type)
       )
       `,
-                    { count: "exact" }
-                );
+          { count: "exact" }
+        );
 
-            if (search.trim() !== "") {
-                q = q.or(
-                    `user_name.ilike.%${search}%,email.ilike.%${search}%,college.ilike.%${search}%`,
-                    { foreignTable: "users" }
-                );
-            }
+      if (search.trim() !== "") {
+        q = q.or(
+          `user_name.ilike.%${search}%,email.ilike.%${search}%,college.ilike.%${search}%`,
+          { foreignTable: "users" }
+        );
+      }
 
-            if (eventFilter) q = q.eq("event_fee.event.event_name", eventFilter);
-            if (paymentStatus) q = q.eq("payment_status", paymentStatus);
+      if (eventFilter) q = q.eq("event_fee.event.event_name", eventFilter);
+      if (paymentStatus) q = q.eq("payment_status", paymentStatus);
 
-            return q;
-        };
+      return q;
+    };
 
-        const buildQueryTxn = () => {
-            let q = supabase
-                .from("event_registrations")
-                .select(
-                    `
+    const buildQueryTxn = () => {
+      let q = supabase
+        .from("event_registrations")
+        .select(
+          `
       transaction_id,
       registration_id,
       payment_status,
@@ -69,36 +90,35 @@ export async function GET(req: NextRequest) {
         fee(participation_type)
       )
       `,
-                    { count: "exact" }
-                );
+          { count: "exact" }
+        );
 
-            if (search.trim() !== "") {
-                q = q.ilike("transaction_id", `%${search}%`);
-            }
+      if (search.trim() !== "") {
+        q = q.ilike("transaction_id", `%${search}%`);
+      }
 
-            if (eventFilter) q = q.eq("event_fee.event.event_name", eventFilter);
-            if (paymentStatus) q = q.eq("payment_status", paymentStatus);
+      if (eventFilter) q = q.eq("event_fee.event.event_name", eventFilter);
+      if (paymentStatus) q = q.eq("payment_status", paymentStatus);
 
       return q;
     };
 
-        const { data: d1 } = await buildQueryUsers().range(from, to);
-        const { data: d2 } = await buildQueryTxn().range(from, to);
+    const { data: d1 } = await buildQueryUsers().range(from, to);
+    const { data: d2 } = await buildQueryTxn().range(from, to);
 
-        const merged = [...(d1 ?? []), ...(d2 ?? [])];
+    const merged = [...(d1 ?? []), ...(d2 ?? [])];
 
-        const filtered = merged.filter((row: any) => {
-          if (eventFilter && row.event_fee?.event?.event_name !== eventFilter) return false;
-          return true;
-        });
+    const filtered = merged.filter((row: any) => {
+      if (eventFilter && row.event_fee?.event?.event_name !== eventFilter) return false;
+      return true;
+    });
 
-        const uniqueMap = new Map();
-        filtered.forEach((row: any) => {
-            uniqueMap.set(row.registration_id, row);
-        });
+    const uniqueMap = new Map();
+    filtered.forEach((row: any) => {
+      uniqueMap.set(row.registration_id, row);
+    });
 
-        const uniqueData = Array.from(uniqueMap.values());
-
+    const uniqueData = Array.from(uniqueMap.values());
 
         const totalRegistrations = uniqueData?.length ?? 0;
         let paid = 0;
@@ -106,9 +126,9 @@ export async function GET(req: NextRequest) {
         let gatewayCharges = 0;
         let netRevenue = 0;
 
-        uniqueData?.forEach((row: any) => {
-            const price = row.gross_amount ?? 0;
-            const gateway = row.payment_method?.gateway_charge ?? 0;
+    uniqueData?.forEach((row: any) => {
+      const price = row.gross_amount ?? 0;
+      const gateway = row.payment_method?.gateway_charge ?? 0;
 
       if (row.payment_status === "done") {
         paid += 1;
@@ -118,11 +138,11 @@ export async function GET(req: NextRequest) {
       }
     });
 
-        const rows =
-            uniqueData?.map((row: any) => {
-                const price = row.gross_amount ?? 0;
-                const gateway = row.payment_method?.gateway_charge ?? 0;
-                const groupSize = row.team?.team_members?.length ?? 1;
+    const rows =
+      uniqueData?.map((row: any) => {
+        const price = row.gross_amount ?? 0;
+        const gateway = row.payment_method?.gateway_charge ?? 0;
+        const groupSize = row.team?.team_members?.length ?? 1;
 
         return {
           registration_id: row?.registration_id,
@@ -142,24 +162,24 @@ export async function GET(req: NextRequest) {
         };
       }) ?? [];
 
-        return NextResponse.json({
-            page,
-            limit,
-            total: totalRegistrations,
-            summary: {
-                total_registrations: totalRegistrations,
-                paid,
-                gross_revenue: grossRevenue,
-                gateway_charges: gatewayCharges,
-                net_revenue: netRevenue,
-            },
-            data: rows,
-        });
-    } catch (error) {
-        console.error(error);
-        return NextResponse.json(
-            { error: "Internal Server Error" },
-            { status: 500 }
-        );
-    }
+    return NextResponse.json({
+      page,
+      limit,
+      total: totalRegistrations,
+      summary: {
+        total_registrations: totalRegistrations,
+        paid,
+        gross_revenue: grossRevenue,
+        gateway_charges: gatewayCharges,
+        net_revenue: netRevenue,
+      },
+      data: rows,
+    });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
 }

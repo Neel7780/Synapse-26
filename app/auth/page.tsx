@@ -65,7 +65,7 @@ function AuthContent() {
       </div>
 
       {/* Right Side - Flip Container */}
-      <div className="flex max-h-[100dvh] w-full md:w-1/2 md:ml-auto items-center justify-center bg-[#050505] px-6 py-12">
+      <div className="flex w-full md:w-1/2 md:ml-auto items-center justify-center bg-[#050505] px-6 py-12 overflow-y-auto">
         <div className="w-full max-w-[582px] [perspective:1200px] flex items-center justify-center min-h-[600px]">
           <div
             className={`

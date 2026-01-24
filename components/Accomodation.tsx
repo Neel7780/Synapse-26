@@ -431,7 +431,7 @@ export function AccommodationComponent() {
           initial={{ opacity: 0, y: -50, rotateX: 45 }}
           whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
           transition={{ duration: 1.2, ease: [0.34, 1.56, 0.64, 1] }}
-          viewport={{ once: false }}
+          viewport={{ once: false, margin: "800px 0px 0px 0px" }}
           className="pt-5 text-3xl md:text-6xl lg:text-8xl font-joker mb-2"
         >
           accommodation
@@ -475,7 +475,7 @@ export function AccommodationComponent() {
                 initial={{ opacity: 0, x: -30 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
-                viewport={{ once: false }}
+                viewport={{ once: false, margin: "800px 0px 0px 0px" }}
               >
                 <h2 className="text-xl md:text-2xl lg:text-3xl uppercase mb-4 md:mb-6">
                   Choose your accommodation
@@ -490,7 +490,7 @@ export function AccommodationComponent() {
                 variants={containerVariants}
                 initial="hidden"
                 whileInView="visible"
-                viewport={{ once: false }}
+                viewport={{ once: false, margin: "800px 0px 0px 0px" }}
               >
                 {[2, 3, 4].map((nights) => (
                   <motion.button
@@ -601,7 +601,7 @@ export function AccommodationComponent() {
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              viewport={{ once: false }}
+              viewport={{ once: false, margin: "800px 0px 0px 0px" }}
             >
               <h3 className="text-2xl text-center underline md:text-3xl mb-4 md:mb-6 ">
                 Guidelines
@@ -611,7 +611,7 @@ export function AccommodationComponent() {
                 variants={containerVariants}
                 initial="hidden"
                 whileInView="visible"
-                viewport={{ once: false }}
+                viewport={{ once: false, margin: "800px 0px 0px 0px" }}
               >
                 {[
                   "Accommodation passes are strictly non-refundable under any circumstances.",

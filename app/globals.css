@@ -104,6 +104,16 @@
   }
 }
 
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  display: none;
+}
+
+input[type="date"]::-webkit-inner-spin-button,
+input[type="date"]::-webkit-clear-button {
+  display: none;
+}
+
 /* Brand Color Palette */
 :root {
   --brand-purple: #a855f7;
@@ -299,14 +309,14 @@ html.lenis body {
     /* Reduce quality for better performance on mobile */
     image-rendering: optimizeSpeed;
   }
-  
+
   .svg-container svg path {
     /* Simpler rendering on mobile */
     shape-rendering: crispEdges;
     /* Remove will-change after animation to free memory */
     will-change: auto;
   }
-  
+
   /* Reduce animation complexity on mobile */
   .svg-container.animating svg path {
     will-change: stroke-dashoffset;

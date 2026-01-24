@@ -93,7 +93,7 @@ const EditableProfileField = memo(function EditableProfileField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className="text-base font-semibold font-roboto bg-transparent border-none outline-none text-white w-full disabled:opacity-50 disabled:cursor-not-allowed"
+        className={`text-base font-semibold font-roboto bg-transparent border-none outline-none text-white disabled:opacity-50 disabled:cursor-not-allowed ${type === 'date' ? 'max-w-[150px] md:max-w-full' : 'w-full'}`}
       />
     </div>
   );

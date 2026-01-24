@@ -86,8 +86,11 @@ export async function POST(request: Request) {
     const event_name = formData.get('event_name') as string
     const category_id = formData.get('category_id') as string
     const event_date = formData.get('event_date') as string
+    const event_time = formData.get('event_time') as string | null
     const rulebook = formData.get('rulebook') as string | null
     const description = formData.get('description') as string | null
+    const coordinator_email = formData.get('coordinator_email') as string | null
+    const venue = formData.get('venue') as string | null
     const is_registration_open = formData.get('is_registration_open') === 'true'
     const is_dau_free = formData.get('is_dau_free') === 'true'
     const imageFile = formData.get('image') as File | null
@@ -95,6 +98,13 @@ export async function POST(request: Request) {
     const qrCodeSolo = formData.get('qr_code_solo') as File | null
     const qrCodeDuet = formData.get('qr_code_duet') as File | null
     const qrCodeGroup = formData.get('qr_code_group') as File | null
+
+    // Combine event_date and event_time into a timestamp
+    let eventTimestamp = event_date;
+    if (event_date && event_time) {
+      // Assuming event_date is in format YYYY-MM-DD and event_time is in format HH:MM
+      eventTimestamp = `${event_date}T${event_time}:00.000Z`;
+    }
 
     let event_picture = null
 
@@ -114,10 +124,12 @@ export async function POST(request: Request) {
       .insert({
         event_name,
         category_id: Number(category_id),
-        event_date,
+        event_date: eventTimestamp,
         event_picture,
         rulebook: rulebook || null,
         description: description || null,
+        coordinator_email: coordinator_email || null,
+        venue: venue || null,
         is_registration_open,
         is_dau_free
       })
@@ -231,6 +243,7 @@ export async function PUT(request: Request) {
     const is_registration_open = formData.get('is_registration_open') === 'true';
     const is_dau_free = formData.get('is_dau_free') === 'true';
     const coordinator_email = formData.get('coordinator_email') as string | null;
+    const venue = formData.get('venue') as string | null;
     const imageFile = formData.get('image') as File | null;
     const feesJson = formData.get('fees') as string | null;
     const qrCodeSolo = formData.get('qr_code_solo') as File | null;
@@ -316,6 +329,7 @@ export async function PUT(request: Request) {
     if (rulebook) updates.rulebook = rulebook;
     if (description) updates.description = description;
     if (coordinator_email) updates.coordinator_email = coordinator_email;
+    if (venue) updates.venue = venue;
 
     // Update the event
     const { data: eventData, error: eventError } = await supabase

@@ -298,6 +298,21 @@ export default function TimelineContent() {
   }, []);
 
   useEffect(() => {
+    if (!loading && schedule.length > 0) {
+      const hash = window.location.hash;
+      if (hash) {
+        // slight delay to ensure DOM is ready
+        setTimeout(() => {
+          const element = document.querySelector(hash);
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 100);
+      }
+    }
+  }, [loading, schedule]);
+
+  useEffect(() => {
     if (loading || schedule.length === 0 || !containerRef.current) return;
 
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
