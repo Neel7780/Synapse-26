@@ -42,7 +42,7 @@ export default function SponsorsPage() {
           // If no sponsors, show "To be Announced"
           const displaySponsors = category.sponsors.length > 0
             ? category.sponsors
-            : [{ name: "To be Announced", logo_url: null, website_url: null }];
+            : [{ name: "To be Revealed", logo_url: null, website_url: null }];
 
           return (
             <SponsorTier

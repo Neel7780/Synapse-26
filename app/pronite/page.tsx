@@ -33,12 +33,12 @@ export default function PronitePage() {
 
         lines.forEach((line) => {
           const lineDiv = document.createElement("div");
-          lineDiv.className = "overflow-hidden";
+          lineDiv.classList.add("overflow-hidden");
 
           const words = line.trim().split(/\s+/);
           words.forEach((word) => {
             const span = document.createElement("span");
-            span.className = "inline-block mr-[0.2em] cta-word";
+            span.classList.add("inline-block", "mr-[0.2em]", "cta-word");
             span.textContent = word;
             lineDiv.appendChild(span);
           });

@@ -1,5 +1,6 @@
 "use client"
 
+import TeamNavigation from "@/components/TeamNavigation"
 import Image from "next/image"
 import Footer from "@/components/ui/Footer"
 import { Linkedin, Instagram } from "lucide-react"
@@ -343,6 +344,7 @@ export default function TeamPage() {
 
   return (
     <main className="w-full bg-black min-h-screen overflow-x-hidden">
+      <TeamNavigation />
 
       {/* HEADER IMAGE */}
       <motion.div

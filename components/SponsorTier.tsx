@@ -50,7 +50,11 @@ export default function SponsorTier({
 }: SponsorTierProps) {
 
   // Check if this is a "To be Announced" case
-  const isTBA = sponsors.length === 1 && sponsors[0].name === "To be declared";
+  const isTBA = sponsors.length === 1 && (
+    sponsors[0].name === "To be declared" ||
+    sponsors[0].name === "To be Announced" ||
+    sponsors[0].name === "To be Revealed"
+  );
 
   return (
     <section
@@ -98,7 +102,7 @@ export default function SponsorTier({
       >
         {isTBA ? (
           <motion.div variants={fadeInUp} className="text-gray-400 text-lg italic tracking-wider">
-            To be Announced
+            {sponsors[0].name}
           </motion.div>
         ) : (
           sponsors.map((s, i) => (
@@ -133,39 +137,35 @@ function SponsorBox({
       whileHover={{ y: -5, scale: 1.02 }}
       className="flex flex-col items-center group"
     >
-      {/* Sponsor image box */}
-      <div
-        style={{ width, height }}
-        className="
-          bg-white/5 
-          backdrop-blur-sm
-          border border-white/10
-          rounded-xl
-          shadow-lg
-          flex items-center justify-center
-          overflow-hidden
-          transition-all
-          duration-300
-          group-hover:border-white/30
-          group-hover:bg-white/10
-          group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.3)]
-          p-6
-        "
-      >
-        {logo_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
+      {/* Sponsor image box - ONLY render if logo exists */}
+      {logo_url && (
+        <div
+          style={{ width, height }}
+          className="
+            bg-white/5 
+            backdrop-blur-sm
+            border border-white/10
+            rounded-xl
+            shadow-lg
+            flex items-center justify-center
+            overflow-hidden
+            transition-all
+            duration-300
+            group-hover:border-white/30
+            group-hover:bg-white/10
+            group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.3)]
+            p-6
+          "
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={logo_url}
             alt={name}
             className="w-full h-full object-contain filter grayscale group-hover:grayscale-0 transition-all duration-300"
             loading="lazy"
           />
-        ) : (
-          <span className="text-gray-400 font-bold text-xl opacity-40 group-hover:opacity-80 transition-opacity">
-            {name.charAt(0)}
-          </span>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Name plate */}
       <div className="mt-5 text-center px-2">
