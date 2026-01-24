@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { uploadImage } from '@/lib/imageUtil';
 import { checkAdmin } from '@/lib/checkAdmin';
 
-// GET - Fetch all sponsors
+// GET - Fetch all sponsors with category information
 export async function GET() {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -11,8 +11,14 @@ export async function GET() {
 
     const { data: sponsors, error } = await supabase
       .from("sponsors")
-      .select("*")
-      .order("rank", { ascending: true, nullsFirst: false })
+      .select(`
+        *,
+        category:sponsor_category(
+          sponsor_category_id,
+          tier,
+          rank
+        )
+      `)
       .order("name", { ascending: true });
 
     if (error) {
@@ -46,32 +52,28 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
 
     const name = formData.get('name') as string;
-    const tier = formData.get('tier') as string;
+    const category_id = formData.get('category_id') as string;
     const website_url = formData.get('website_url') as string | null;
-    const rankStr = formData.get('rank') as string | null;
     const imageFile = formData.get('image') as File | null;
 
-    // Parse rank if provided
-    let rank: number | null = null;
-    if (rankStr && rankStr.trim() !== '') {
-      const parsedRank = parseInt(rankStr, 10);
-      if (!isNaN(parsedRank) && parsedRank > 0) {
-        rank = parsedRank;
-      }
-    }
-
     // Validate required fields
-    if (!name || !tier) {
+    if (!name || !category_id) {
       return NextResponse.json(
-        { error: "Name and tier are required fields" },
+        { error: "Name and category are required fields" },
         { status: 400 }
       );
     }
 
-    // Validate tier is not empty string
-    if (tier.trim() === '') {
+    // Validate category exists
+    const { data: category, error: categoryError } = await supabase
+      .from("sponsor_category")
+      .select("sponsor_category_id")
+      .eq("sponsor_category_id", parseInt(category_id, 10))
+      .single();
+
+    if (categoryError || !category) {
       return NextResponse.json(
-        { error: "Tier cannot be empty" },
+        { error: "Invalid category selected" },
         { status: 400 }
       );
     }
@@ -92,10 +94,9 @@ export async function POST(request: NextRequest) {
       .from("sponsors")
       .insert({
         name,
-        tier,
+        category_id: parseInt(category_id, 10),
         website_url: website_url || null,
         logo_url,
-        rank,
       })
       .select()
       .single();

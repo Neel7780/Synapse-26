@@ -2,7 +2,7 @@ import { createClient } from '@/utils/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { uploadImage, editImage, deleteImage } from '@/lib/imageUtil';
 
-// GET - Fetch single sponsor by ID
+// GET - Fetch single sponsor by ID with category information
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -14,7 +14,14 @@ export async function GET(
 
     const { data: sponsor, error } = await supabase
       .from("sponsors")
-      .select("*")
+      .select(`
+        *,
+        category:sponsor_category(
+          sponsor_category_id,
+          tier,
+          rank
+        )
+      `)
       .eq("sponsor_id", id)
       .single();
 
@@ -43,9 +50,8 @@ export async function PUT(
     const formData = await request.formData();
 
     const name = formData.get('name') as string | null;
-    const tier = formData.get('tier') as string | null;
+    const category_id = formData.get('category_id') as string | null;
     const website_url = formData.get('website_url') as string | null;
-    const rankStr = formData.get('rank') as string | null;
     const imageFile = formData.get('image') as File | null;
 
     // First, check if sponsor exists
@@ -59,31 +65,27 @@ export async function PUT(
       return NextResponse.json({ error: "Sponsor not found" }, { status: 404 });
     }
 
-    // Validate tier is not empty if provided
-    if (tier !== null && tier.trim() === '') {
-      return NextResponse.json(
-        { error: "Tier cannot be empty" },
-        { status: 400 }
-      );
-    }
-
     // Build update object - only include fields that are provided
     const updateData: any = {};
 
     if (name !== null) updateData.name = name;
-    if (tier !== null) updateData.tier = tier;
     if (website_url !== null) updateData.website_url = website_url;
 
-    // Handle rank update
-    if (rankStr !== null) {
-      if (rankStr.trim() === '') {
-        updateData.rank = null;
-      } else {
-        const parsedRank = parseInt(rankStr, 10);
-        if (!isNaN(parsedRank) && parsedRank > 0) {
-          updateData.rank = parsedRank;
-        }
+    // Validate category if provided
+    if (category_id !== null) {
+      const { data: category, error: categoryError } = await supabase
+        .from("sponsor_category")
+        .select("sponsor_category_id")
+        .eq("sponsor_category_id", parseInt(category_id, 10))
+        .single();
+
+      if (categoryError || !category) {
+        return NextResponse.json(
+          { error: "Invalid category selected" },
+          { status: 400 }
+        );
       }
+      updateData.category_id = parseInt(category_id, 10);
     }
 
     // Handle image update if provided

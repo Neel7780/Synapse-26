@@ -22,7 +22,11 @@ import {
 import { ArrowLeft, Building2, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
-const PREDEFINED_TIERS = ["Title", "Co-Title", "Platinum", "Associate"];
+type Category = {
+  sponsor_category_id: number;
+  tier: string;
+  rank: number | null;
+};
 
 export default function EditSponsorPage() {
   const router = useRouter();
@@ -32,16 +36,32 @@ export default function EditSponsorPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [formData, setFormData] = useState({
     name: "",
-    tier: "",
-    customTier: "",
+    category_id: "",
     website_url: "",
     logo_url: "",
-    rank: "",
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch("/api/admin/sponsor-categories");
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        setCategories(data.categories || []);
+      } catch (err) {
+        console.error("Failed to fetch categories:", err);
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const fetchSponsor = async () => {
@@ -50,16 +70,13 @@ export default function EditSponsorPage() {
         const data = await res.json();
         if (data.error) throw new Error(data.error);
 
-        const sponsorTier = data.sponsor.tier || "";
-        const isCustomTier = !PREDEFINED_TIERS.includes(sponsorTier);
-
         setFormData({
           name: data.sponsor.name || "",
-          tier: isCustomTier ? "Other" : sponsorTier,
-          customTier: isCustomTier ? sponsorTier : "",
+          category_id: data.sponsor.category_id
+            ? String(data.sponsor.category_id)
+            : "",
           website_url: data.sponsor.website_url || "",
           logo_url: data.sponsor.logo_url || "",
-          rank: data.sponsor.rank ? String(data.sponsor.rank) : "",
         });
 
         if (data.sponsor.logo_url) {
@@ -89,11 +106,8 @@ export default function EditSponsorPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const finalTier =
-      formData.tier === "Other" ? formData.customTier : formData.tier;
-
-    if (!formData.name || !finalTier) {
-      alert("Name and Tier are required");
+    if (!formData.name || !formData.category_id) {
+      alert("Name and Category are required");
       return;
     }
 
@@ -101,12 +115,9 @@ export default function EditSponsorPage() {
     try {
       const submitData = new FormData();
       submitData.append("name", formData.name);
-      submitData.append("tier", finalTier);
+      submitData.append("category_id", formData.category_id);
       if (formData.website_url) {
         submitData.append("website_url", formData.website_url);
-      }
-      if (formData.rank) {
-        submitData.append("rank", formData.rank);
       }
       if (imageFile) {
         submitData.append("image", imageFile);
@@ -191,41 +202,34 @@ export default function EditSponsorPage() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Tier *</label>
+                <label className="text-sm font-medium">Category *</label>
                 <Select
-                  value={formData.tier}
-                  onValueChange={(v) => setFormData({ ...formData, tier: v })}
+                  value={formData.category_id}
+                  onValueChange={(v) =>
+                    setFormData({ ...formData, category_id: v })
+                  }
+                  disabled={categoriesLoading}
                 >
                   <SelectTrigger className="bg-muted/50 border-border/50">
-                    <SelectValue placeholder="Select tier" />
+                    <SelectValue
+                      placeholder={
+                        categoriesLoading ? "Loading..." : "Select category"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border">
-                    <SelectItem value="Title">🏆 Title</SelectItem>
-                    <SelectItem value="Co-Title">🤝 Co-Title</SelectItem>
-                    <SelectItem value="Platinum">💎 Platinum</SelectItem>
-                    <SelectItem value="Associate">🔗 Associate</SelectItem>
-                    <SelectItem value="Other">✏️ Other (Specify)</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem
+                        key={category.sponsor_category_id}
+                        value={String(category.sponsor_category_id)}
+                      >
+                        {category.tier}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
-
-            {formData.tier === "Other" && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Custom Tier Name *
-                </label>
-                <Input
-                  value={formData.customTier}
-                  onChange={(e) =>
-                    setFormData({ ...formData, customTier: e.target.value })
-                  }
-                  placeholder="Enter custom tier name"
-                  required
-                  className="bg-muted/50 border-border/50"
-                />
-              </div>
-            )}
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Website URL</label>
@@ -237,23 +241,6 @@ export default function EditSponsorPage() {
                 placeholder="https://example.com"
                 className="bg-muted/50 border-border/50"
               />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Rank (Optional)</label>
-              <Input
-                type="number"
-                min="1"
-                value={formData.rank}
-                onChange={(e) =>
-                  setFormData({ ...formData, rank: e.target.value })
-                }
-                placeholder="Enter rank number"
-                className="bg-muted/50 border-border/50"
-              />
-              <p className="text-xs text-muted-foreground">
-                Lower numbers appear first. Leave empty to unset rank.
-              </p>
             </div>
 
             <div className="space-y-2">
