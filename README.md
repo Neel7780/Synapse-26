@@ -149,6 +149,3 @@ npm start
 - `app/admin/layout.tsx` — admin-specific layout and middleware
 - `utils/supabase/` — Supabase client and server helpers
 ---
-
-This README was updated to reflect the repository layout and provide actionable setup and development guidance.
-

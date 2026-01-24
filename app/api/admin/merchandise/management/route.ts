@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     const available_sizes = formData.get('available_sizes') as string | null;
     const description = formData.get('description') as string | null;
     const is_available = formData.get('is_available') as string | null;
-    const imageFile = formData.get('image') as File | null;
+    const imageFiles = formData.getAll('image') as File[];
 
     if (!product_name || price === null) {
       return NextResponse.json(
@@ -61,16 +61,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let product_image = null;
+    const product_images: string[] = [];
 
-    // Upload image if provided
-    if (imageFile && imageFile.size > 0) {
-      const uploadResult = await uploadImage({
-        file: imageFile,
-        bucket: 'synapse',
-        folder: 'merchandise'
-      });
-      product_image = uploadResult.publicUrl;
+    // Upload all images if provided
+    if (imageFiles && imageFiles.length > 0) {
+      for (const imageFile of imageFiles) {
+        if (imageFile && imageFile.size > 0) {
+          const uploadResult = await uploadImage({
+            file: imageFile,
+            bucket: 'synapse',
+            folder: 'merchandise'
+          });
+          product_images.push(uploadResult.publicUrl);
+        }
+      }
     }
 
     const { data: product, error } = await supabase
@@ -79,7 +83,7 @@ export async function POST(request: NextRequest) {
         product_name,
         price: Number(price),
         available_sizes: available_sizes ? JSON.parse(available_sizes) : null,
-        product_image,
+        product_image: product_images.length > 0 ? product_images : null,
         description: description || null,
         is_available: is_available !== null ? is_available === 'true' : true,
       })
