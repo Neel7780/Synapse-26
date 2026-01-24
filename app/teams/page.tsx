@@ -16,7 +16,7 @@ type TeamMember = {
 
 const TeamMemberCard = ({ member }: { member: TeamMember }) => (
   <div className="flex flex-col items-center">
-    {/* 👇 UPDATE: Increased size to w-36 (mobile) and w-52 (desktop) */}
+    {/* UPDATE: Increased size to w-36 (mobile) and w-52 (desktop) */}
     <div className="w-36 h-36 md:w-52 md:h-52 bg-white rounded-sm mb-3 md:mb-4 overflow-hidden">
       <Image
         src={member.image || "/Synapse Logo.png"}
