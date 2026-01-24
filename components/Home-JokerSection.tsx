@@ -23,7 +23,7 @@ export default function JokerSection() {
   const leftTitleRef = useRef<HTMLDivElement>(null);
   const rightTitleRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const scrollHintRef = useRef<HTMLDivElement>(null);
+  const scrollhintjokerRef = useRef<HTMLDivElement>(null);
   const exploreTitleRef = useRef<HTMLHeadingElement>(null);
 
   const generateViewportPath = useCallback(() => {
@@ -223,10 +223,10 @@ export default function JokerSection() {
           },
         },
       });
-      jokerTl.set(scrollHintRef.current, { opacity: 1 });
+      jokerTl.set(scrollhintjokerRef.current, { opacity: 1 });
       jokerTl.to({}, { duration: 2 });
       jokerTl.to(
-        scrollHintRef.current,
+        scrollhintjokerRef.current,
         {
           opacity: 0,
           duration: 1,
@@ -436,9 +436,9 @@ export default function JokerSection() {
   }, [setupPaths]);
 
   useEffect(() => {
-    if (scrollHintRef.current) {
+    if (scrollhintjokerRef.current) {
       gsap.fromTo(
-        scrollHintRef.current,
+        scrollhintjokerRef.current,
         { y: 0 },
         {
           y: 10,
@@ -682,7 +682,7 @@ export default function JokerSection() {
 
           {/* SCROLL HINT */}
           <div
-            ref={scrollHintRef}
+            ref={scrollhintjokerRef}
             className="scroll-hint opacity-0 fixed bottom-4 md:bottom-0 left-1/2 -translate-x-1/2 z-50
        text-black select-none pointer-events-none"
           >

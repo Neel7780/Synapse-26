@@ -89,7 +89,7 @@ export default function ArtistCarousel() {
         const tbaArtist: CarouselArtist = {
           day: "TBA",
           tag: "COMING SOON",
-          artist: "TO BE DECLARED",
+          artist: "To be announced",
           description: "Stay tuned for the reveal!",
           image: "", // Empty string will signal fallback
           hexColor: COLORS[0],
@@ -257,7 +257,7 @@ const Card = ({ data, index, total, progress }: CardProps) => {
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-zinc-900">
                 <span className="font-joker text-white text-3xl md:text-5xl text-center opacity-50 px-4">
-                  TO BE DECLARED
+                  To be announced
                 </span>
               </div>
             )}
@@ -312,7 +312,7 @@ const Card = ({ data, index, total, progress }: CardProps) => {
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-zinc-900">
               <span className="font-joker text-white text-3xl md:text-5xl text-center opacity-50 px-4">
-                TO BE DECLARED
+                To be announced
               </span>
             </div>
           )}

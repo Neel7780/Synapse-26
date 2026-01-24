@@ -64,8 +64,8 @@ export default function ArtistsSection() {
         // Empty state
         loadedArtists = [
           {
-            name: "TO BE DECLARED",
-            date: "COMING SOON",
+            name: "TO BE ANNOUNCED",
+            date: "",
             image: "", // Empty image string triggers fallback UI
           },
         ];
@@ -355,7 +355,7 @@ export default function ArtistsSection() {
                     }}
                   >
                     <span className="font-joker text-white text-3xl md:text-5xl text-center opacity-50 px-4">
-                      TO BE DECLARED
+                      TO BE ANNOUNCED
                     </span>
                   </div>
                 )}

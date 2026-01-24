@@ -556,7 +556,7 @@ export default function HeroSection({
           ease: "none",
         },
         "together2"
-      ).to({}, { duration: 5, ease: "none" });
+      ).to({}, { duration: 6, ease: "none" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setShowNavbar]);
 
@@ -808,7 +808,7 @@ export default function HeroSection({
                 <h1 className="title text-4xl min-[450px]:text-6xl sm:text-7xl md:text-[clamp(40px,12vw,140px)] font-joker leading-none text-center px-4" ref={titleRef}>synapse&apos; 26</h1>
               </div>
 
-              <div className="scroll-hint-home absolute bottom-0 left-1/2 -translate-x-1/2 text-white text-center z-40 pointer-events-none opacity-0 mb-4" ref={scrollHintHomeRef}>
+              <div className="scroll-hint-home absolute bottom-0 left-1/2 -translate-x-1/2 text-white text-center z-10 pointer-events-none opacity-0" ref={scrollHintHomeRef}>
                 <ChevronDown className="stroke-[3px] w-5 h-5 md:w-8 md:h-8 translate-y-full" />
                 <ChevronDown className="stroke-[3px] w-5 h-5 md:w-8 md:h-8 translate-y-1/2" />
                 <ChevronDown className="stroke-[3px] w-5 h-5 md:w-8 md:h-8" />

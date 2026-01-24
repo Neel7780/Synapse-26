@@ -37,12 +37,12 @@ const HeroCard = ({
       className="object-cover"
       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
     />
+    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
     <div className="hof-title absolute inset-0 flex items-end justify-center pb-6 md:pb-8">
-      <span className={`${titleSize} text-center font-white font-joker text-white drop-shadow-lg tracking-wider`}>
+      <span className={`${titleSize} text-center font-white font-joker text-white tracking-wider opacity-100 z-150`}>
         hall of fame
       </span>
     </div>
-    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
   </div>
 );
 
@@ -454,20 +454,6 @@ export default function HallOfFame() {
         },
       });
 
-      // Fade out title with elegant animation
-      gsap.to(".hof-title", {
-        opacity: 0,
-        y: 30,
-        scale: 0.95,
-        ease: "power2.out",
-        scrollTrigger: {
-          trigger: hallContainerRef.current,
-          start: "top top+=5%",
-          end: "+=50%",
-          scrub: 0.8,
-        },
-      });
-
       const calculateStartScale = () => {
         hero = resolveHero();
         if (!hero) return false;
@@ -484,6 +470,24 @@ export default function HallOfFame() {
           transformOrigin: "center center",
           filter: "brightness(1)",
         });
+
+        // Initialize title state (counter-scaled and visible)
+        const titleContainer = hero.querySelector('.hof-title');
+        const titleText = hero.querySelector('.hof-title span');
+
+        if (titleContainer && titleText) {
+          gsap.set(titleText, {
+            scaleX: startScaleY / startScaleX,
+            scaleY: 1,
+            force3D: true,
+          });
+          gsap.set(titleContainer, {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            force3D: true,
+          });
+        }
 
         resetGridItems();
         return true;
@@ -523,6 +527,33 @@ export default function HallOfFame() {
               borderRadius: `${currentRadius}px`,
               filter: `brightness(${currentBrightness})`,
             });
+
+            // Handle Title: Counter-scale and Opacity
+            const titleContainer = hero.querySelector('.hof-title');
+            const titleText = hero.querySelector('.hof-title span');
+
+            if (titleContainer && titleText) {
+              // Counter-scale text to prevent distortion
+              gsap.set(titleText, {
+                scaleX: currentScaleY / currentScaleX,
+                scaleY: 1,
+              });
+
+              // Opacity animation with explicit delay
+              // Stay fully visible until progress 0.05, then fade out
+              const opacityProgress = gsap.utils.clamp(0, 1, (self.progress - 0.05) / 0.45);
+              const currentOpacity = 1 - opacityProgress;
+
+              // Optional: slight movement up as it fades
+              const currentY = gsap.utils.interpolate(0, 30, opacityProgress);
+              const currentScale = gsap.utils.interpolate(1, 0.95, opacityProgress);
+
+              gsap.set(titleContainer, {
+                opacity: currentOpacity,
+                y: currentY,
+                scale: currentScale,
+              });
+            }
 
             // Grid items animation with staggered reveal
             const mode = getActiveMode();
