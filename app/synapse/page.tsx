@@ -25,7 +25,12 @@ const CustomCursor = dynamic(() => import("@/components/CustomCursor"), {
 });
 
 export default function HomeSection() {
-  const [entered, setEntered] = useState(false);
+  const [entered, setEntered] = useState(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("synapse_has_entered") === "true";
+    }
+    return false;
+  });
   const [showNavbar, setShowNavbar] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 

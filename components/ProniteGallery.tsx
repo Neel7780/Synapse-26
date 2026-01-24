@@ -51,7 +51,7 @@ export default function ProniteGallery() {
   return (
     <section ref={containerRef} className="relative w-full h-[140svh] bg-black overflow-hidden flex items-center justify-center">
       {/* Tilted Grid Container */}
-      <div className="absolute inset-0 w-[280%] h-[300%] -left-[90%] -top-[80%] rotate-[-26deg] flex justify-start md:justify-center gap-x-4 md:gap-x-8 p-8 opacity-100 md:opacity-90">
+      <div className="absolute inset-0 w-[280%] h-[300%] -left-[90%] -top-[80%] rotate-[-26deg] flex justify-start md:justify-center gap-x-4 md:gap-x-6 p-8 opacity-100 md:opacity-90">
         {columns.map((col, i) => (
           <motion.div
             key={i}
