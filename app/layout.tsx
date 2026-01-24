@@ -12,6 +12,7 @@ import { SmoothScroller } from "@/components/ui/SmoothScroller";
 import "./globals.css";
 import TransitionProvider from "@/components/TransitionProvider";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import PageViewTracker from "@/components/PageViewTracker";
 
 // Optimize font loading with display: swap for better performance
 const geistSans = Geist({
@@ -66,7 +67,7 @@ const siteConfig = {
   twitterHandle: "@synaboriii",
   locale: "en_IN",
   college: "Dhirubhai Ambani Institute of Information and Communication Technology",
-  dates: "February 26-28, 2026",
+  dates: "February 26th-1st March, 2026",
   location: "DAIICT, Gandhinagar, Gujarat, India",
 };
 
@@ -315,6 +316,7 @@ export default function RootLayout({
             </TransitionProvider>
           </SmoothScroller>
         </ErrorBoundary>
+        <PageViewTracker />
         <Analytics />
       </body>
     </html>

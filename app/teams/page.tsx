@@ -354,28 +354,19 @@ export default function TeamPage() {
     { name: "Kashish Khubchandani", position: "Mentor", image: "/Kashish_img.jpg", instagram: "https://www.instagram.com/_cutest_stranger/", linkedin: "http://www.linkedin.com/in/kashish-khubchandani-281b97235" },
   ]
 
-  const designTeam: TeamMember[] = [
-    { 
-      name: "Priyanshi Chauhan", 
-      position: "Design and UX/UI Lead", 
-      image: "/priyanshi_ws.png",
-      instagram: "https://www.instagram.com/priyaanshii.5?igsh=MWIxbzNiM3Fxb3d4cg==",
-      linkedin: "https://www.linkedin.com/in/priyanshichauhan01"
-    },
-  ]
 
   const webTeam: TeamMember[] = [
     { name: "Aditya Vaish", position: "Full Stack Dev", image: "/aditya_ws.jpg", instagram: "https://www.instagram.com/_avaish_08?igsh=MWRmOTV4b2ZiNDRuMw==", linkedin: "https://www.linkedin.com/in/aditya-vaish-370494243/" },
     { name: "Neel Khatri", position: "Full Stack Dev", image: "/neel_ws.jpg", instagram: "https://www.instagram.com/neel212006", linkedin: "https://www.linkedin.com/in/neel-khatri-aa1618242" },
     { name: "Dhruvil Patel", position: "Backend Dev", image: "/dhruvil_ws.jpeg", instagram: "https://www.instagram.com/dp_0205", linkedin: "https://www.linkedin.com/in/dhruvil05patel?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" },
     { name: "Chirayu Dodiya", position: "Backend Dev", image: "/chirayu_ws.jpg", instagram: "https://www.instagram.com/chirayu_dodiya/", linkedin: "https://www.linkedin.com/in/chirayu-dodiya-3a025a2aa/" },
-    { name: "Saumya Shah", position: "Backend Dev", image: "/saumya_ws.jpeg", instagram: "https://www.instagram.com/saumyashah05/", linkedin: "https://www.linkedin.com/in/saumya-shah-5bb8602b4/" },
     { name: "Siddh Shah", position: "Frontend Dev", image: "/siddh_ws.jpg", instagram: "https://www.instagram.com/siddhshah22?igsh=MWc4aTJkbWFxYWV4eg==", linkedin: "https://www.linkedin.com/in/siddh-shah-b03432321?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" },
-    { name: "Pushkar Patel", position: "Frontend Dev", image: "/pushkar_ws.jpeg", instagram: "https://www.instagram.com/synapsedaiict?igsh=MTM4Mzk2NHNya3N1dA==", linkedin: "https://www.linkedin.com/in/pushkar-patel-409196295/?originalSubdomain=sg" },
-    { name: "Heer Mehta", position: "Frontend Dev", image: "/heer_ws.jpg", instagram: "https://www.instagram.com/heermehta0919/", linkedin: "https://www.linkedin.com/in/heer-mehta-14833928b/" },
-    { name: "Yash Gangwani", position: "Frontend Dev", image: "/yash_ws.png", instagram: "https://www.instagram.com/gudda_786_?igsh=M2EwYWx3MWg4Mm53", linkedin: "https://www.linkedin.com/in/yash-gangwani" },
     { name: "Chirag Katkoriya", position: "Frontend Dev", image: "/chirag_ws.jpg", instagram: "https://www.instagram.com/katkoriyachirag/", linkedin: "https://www.linkedin.com/in/chirag-katkoriya/" },
-    { name: "Shlok Diwan", position: "Frontend Dev", image: "/shlok_ws.jpg", instagram: "https://www.instagram.com/shlokk_51?igsh=cXU5aXhkanRrbnlq&utm_source=qr", linkedin: "https://www.linkedin.com/in/shlok-diwan-32a71435b?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" },
+    { name: "Pushkar Patel", position: "Frontend Dev", image: "/pushkar_ws.jpeg", instagram: "https://www.instagram.com/synapsedaiict?igsh=MTM4Mzk2NHNya3N1dA==", linkedin: "https://www.linkedin.com/in/pushkar-patel-409196295/?originalSubdomain=sg" },
+    { name: "Priyanshi Chauhan", position: "Design and UX/UI", image: "/priyanshi_ws.png", instagram: "https://www.instagram.com/priyaanshii.5?igsh=MWIxbzNiM3Fxb3d4cg==", linkedin: "https://www.linkedin.com/in/priyanshichauhan01" },
+    { name: "Yash Gangwani", position: "Frontend Dev", image: "/yash_ws.png", instagram: "https://www.instagram.com/gudda_786_?igsh=M2EwYWx3MWg4Mm53", linkedin: "https://www.linkedin.com/in/yash-gangwani" },
+    { name: "Heer Mehta", position: "Frontend Dev", image: "/heer_ws.jpg", instagram: "https://www.instagram.com/heermehta0919/", linkedin: "https://www.linkedin.com/in/heer-mehta-14833928b/" },
+
   ]
 
   const navSections = [
@@ -383,7 +374,6 @@ export default function TeamPage() {
     { id: "heads", label: "Heads" },
     { id: "core", label: "Core Team" },
     { id: "mentors", label: "Mentors" },
-    { id: "design", label: "Design" },
     { id: "web", label: "Web Dev" },
   ]
 
@@ -432,8 +422,7 @@ export default function TeamPage() {
       </div>
 
       {/* Leadership Section - Convenor & Deputy */}
-      <section id="leadership" className="w-full py-16 md:py-24 px-4 md:px-8 lg:px-16 
-                                          bg-gradient-to-b from-black via-gray-950 to-black">
+      <section id="leadership" className="w-full py-16 md:py-24 px-4 md:px-8 lg:px-16 bg-gradient-to-b from-black via-gray-950 to-black">
         <div className="max-w-5xl mx-auto">
           <SectionTitle 
             title="leadership" 
@@ -484,15 +473,6 @@ export default function TeamPage() {
 
       {/* Separator */}
       <div className="w-full h-px bg-gradient-to-r from-transparent via-red-900/50 to-transparent" />
-
-      {/* Design Team Section */}
-      <section id="design" className="w-full bg-black">
-        <TeamSection 
-          title="design team" 
-          members={designTeam}
-          subtitle="Crafting the visual identity of Synapse"
-        />
-      </section>
 
       {/* Web Development Team Section */}
       <section id="web" className="w-full bg-gradient-to-b from-black to-gray-950">
