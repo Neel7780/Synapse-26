@@ -1,9 +1,30 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { corsHeaders, handleCorsResponse, addCorsHeaders } from '@/lib/cors'
+
+async function checkAdmin(supabase: any) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return false;
+  return user.email === process.env.ADMIN_EMAIL;
+}
+
+export async function OPTIONS(request: Request) {
+  const origin = request.headers.get("origin");
+  return handleCorsResponse(origin);
+}
 
 export async function GET(req: NextRequest) {
   try {
+    const origin = req.headers.get("origin");
     const supabase = (await createClient()) as any;
+
+    if (!(await checkAdmin(supabase))) {
+      const response = NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+      return addCorsHeaders(response, origin);
+    }
+
     const { searchParams } = new URL(req.url);
 
     const page = Number(searchParams.get("page") ?? 1);
@@ -84,6 +105,8 @@ export async function GET(req: NextRequest) {
 
     const { data: d1 } = await buildQueryUsers().range(from, to);
     const { data: d2 } = await buildQueryTxn().range(from, to);
+    const { data: d1 } = await buildQueryUsers().range(from, to);
+    const { data: d2 } = await buildQueryTxn().range(from, to);
 
     const merged = [...(d1 ?? []), ...(d2 ?? [])];
 
@@ -98,6 +121,7 @@ export async function GET(req: NextRequest) {
     });
 
     const uniqueData = Array.from(uniqueMap.values());
+    const uniqueData = Array.from(uniqueMap.values());
 
 
     const totalRegistrations = uniqueData?.length ?? 0;
@@ -105,7 +129,15 @@ export async function GET(req: NextRequest) {
     let grossRevenue = 0;
     let gatewayCharges = 0;
     let netRevenue = 0;
+    const totalRegistrations = uniqueData?.length ?? 0;
+    let paid = 0;
+    let grossRevenue = 0;
+    let gatewayCharges = 0;
+    let netRevenue = 0;
 
+    uniqueData?.forEach((row: any) => {
+      const price = row.gross_amount ?? 0;
+      const gateway = row.payment_method?.gateway_charge ?? 0;
     uniqueData?.forEach((row: any) => {
       const price = row.gross_amount ?? 0;
       const gateway = row.payment_method?.gateway_charge ?? 0;

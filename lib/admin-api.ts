@@ -60,6 +60,8 @@ export type Event = {
     event_picture?: string;
     rulebook?: string;
     description?: string;
+    coordinator_email?: string;
+    venue?: string;
     is_registration_open: boolean;
     is_dau_free: boolean;
     coordinator_email?: string;
@@ -88,6 +90,7 @@ export type CreateEventPayload = {
     is_registration_open?: boolean;
     is_dau_free?: boolean;
     coordinator_email?: string;
+    venue?: string;
     image?: File;
     qr_code_solo?: File;
     qr_code_duet?: File;
@@ -112,7 +115,7 @@ function buildEventFormData(payload: Partial<CreateEventPayload> & { event_id?: 
     if (payload.rulebook) formData.append('rulebook', payload.rulebook);
     if (payload.description) formData.append('description', payload.description);
     if (payload.coordinator_email) formData.append('coordinator_email', payload.coordinator_email);
-
+    if (payload.venue) formData.append('venue', payload.venue);
     // Boolean fields
     if (payload.is_registration_open !== undefined) {
         formData.append('is_registration_open', payload.is_registration_open ? 'true' : 'false');
