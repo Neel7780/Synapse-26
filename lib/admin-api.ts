@@ -306,15 +306,6 @@ export const registrationsApi = {
             `/api/admin/registrations/export?${params.toString()}`
         );
     },
-
-    getGatewaySettings: () =>
-        apiFetch<{ gateways: unknown[] }>("/api/admin/registrations/gateway"),
-
-    updateGatewaySettings: (payload: unknown) =>
-        apiFetch("/api/admin/registrations/gateway", {
-            method: "PUT",
-            body: JSON.stringify(payload),
-        }),
 };
 
 // ============================================================================
