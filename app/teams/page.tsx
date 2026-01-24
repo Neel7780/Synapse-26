@@ -330,6 +330,17 @@ export default function TeamPage() {
     { name: "Namra Sanandiya", position: "PR Head", image: "/namra_3r.jpeg", instagram: "https://www.instagram.com/oyy_namra?igsh=MXRrM3N6bWhxM2VrNA==", linkedin: "https://www.linkedin.com/in/namra-sanandiya-146673284?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" },
     { name: "Kosha Dalsaniya", position: "Events Head", image: "/kosha_3r.jpeg", instagram: "https://www.instagram.com/_kd1123_?igsh=dzl6bnhlcWNhcGZu&utm_source=qr", linkedin: "https://www.linkedin.com/in/kosha-dalsaniya-1478702b5?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" },
   ]
+  const coreTeam: TeamMember[] = [
+    { name: "Krish Paghadar", position: "Hospitality", image: "/krish_2n.jpg", instagram: "https://www.instagram.com/the_real_krrish?igsh=MXY4MWQ0ejBzbHVibQ==", linkedin: "https://www.linkedin.com/in/krish-paghadar-33b3a0326?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" },
+    { name: "Ved Dhanani", position: "Events", image: "/ved_2n.jpg", instagram: "https://www.instagram.com/ved_dhananii?igsh=NmRoMDdkZ3N0cHdj&utm_source=qr", linkedin: "https://www.linkedin.com/in/ved-dhanani-18612631a?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" },
+    { name: "Heet Shah", position: "Public Relations & Website", image: "/heet_2n.jpg", instagram: "https://www.instagram.com/heet._.shahh?igsh=MXh5MWtxMmh4b3F4Zg==", linkedin: "https://www.linkedin.com/in/heet-shah-468b60331?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" },
+    { name: "Utsav Darji", position: "Hospitality", image: "/utsav_2n.jpg", instagram: "https://www.instagram.com/utsav_d06?igsh=MTk3bzhyMTUzdTBtZw%3D%3D&utm_source=qr", linkedin: "https://www.linkedin.com/in/utsav-darji-50a68b33a?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" },
+    { name: "Kevin Rank", position: "Public Relations", image: "/kevin_2n.jpg", instagram: "https://www.instagram.com/kevinn.r97?igsh=MXdiM2ZxMXNzZTFoZQ==", linkedin: "https://www.linkedin.com/in/kevin-rank-ab9384330?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" },
+    { name: "Dev Sanghani", position: "Event Production", image: "/dev_s_2n.jpg", instagram: "https://www.instagram.com/devvvv__2?igsh=MW9ibnFoOGV2cjk5Zg%3D%3D&utm_source=qr", linkedin: "https://www.linkedin.com/in/dev-sanghani-58b951321/" },
+    { name: "Keval Shah", position: "Events", image: "/keval_2n.jpg", instagram: "https://www.instagram.com/kevalshah159?igsh=aHpjd2htdXZmNXZu", linkedin: "https://www.linkedin.com/in/keval-shah-899a7a321?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" },
+    { name: "Jay Trivedi", position: "Events & CD", image: "/jay_2n.jpeg", instagram: "https://www.instagram.com/_jaytrivedi_18/", linkedin: "https://www.linkedin.com/in/jaytrivedi18/" },
+    { name: "Dev Thakkar", position: "Production", image: "/dev_t_2n.jpeg", instagram: "https://www.instagram.com/devvv.0103?igsh=MXd2YTcyaDlrOHM4eA%3D%3D&utm_source=qr", linkedin: "https://www.linkedin.com/in/dev-thakkar-5a73572aa?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" },
+  ]
 
   const mentorsTeam: TeamMember[] = [
     { name: "Rishabh Jain", position: "Mentor", image: "/Rishabh_img.jpg", instagram: "https://www.instagram.com/rishabhjain_149/", linkedin: "https://in.linkedin.com/in/jainrishabh04" },
@@ -341,18 +352,6 @@ export default function TeamPage() {
     { name: "Adhiraj Roy Chowdhury", position: "Mentor", image: "/Adhiraj_img.jpg", instagram: "https://www.instagram.com/adhirajrc?igsh=MWUyNDIxNTdic3Zmbg==", linkedin: "https://www.linkedin.com/in/adhiraj-roy-chowdhury" },    { name: "Dev Wadhvani", position: "Mentor", image: "/Dev_img.jpeg", instagram: "https://www.instagram.com/devwadhvani/", linkedin: "https://in.linkedin.com/in/devwadhvani" },
     { name: "Sujal Manavadariya", position: "Mentor", image: "/Sujal_img.png", instagram: "https://www.instagram.com/_sujalmanavadariya_/", linkedin: "https://in.linkedin.com/in/sujal-manavadariya-499992252" },
     { name: "Kashish Khubchandani", position: "Mentor", image: "/Kashish_img.jpg", instagram: "https://www.instagram.com/_cutest_stranger/", linkedin: "http://www.linkedin.com/in/kashish-khubchandani-281b97235" },
-  ]
-
-  const coreTeam: TeamMember[] = [
-    { name: "Krish Paghadar", position: "Hospitality", image: "/krish_2n.jpg", instagram: "https://www.instagram.com/the_real_krrish?igsh=MXY4MWQ0ejBzbHVibQ==", linkedin: "https://www.linkedin.com/in/krish-paghadar-33b3a0326?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" },
-    { name: "Ved Dhanani", position: "Events", image: "/ved_2n.jpg", instagram: "https://www.instagram.com/ved_dhananii?igsh=NmRoMDdkZ3N0cHdj&utm_source=qr", linkedin: "https://www.linkedin.com/in/ved-dhanani-18612631a?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" },
-    { name: "Heet Shah", position: "Public Relations & Website", image: "/heet_2n.jpg", instagram: "https://www.instagram.com/heet._.shahh?igsh=MXh5MWtxMmh4b3F4Zg==", linkedin: "https://www.linkedin.com/in/heet-shah-468b60331?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" },
-    { name: "Utsav Darji", position: "Hospitality", image: "/utsav_2n.jpg", instagram: "https://www.instagram.com/utsav_d06?igsh=MTk3bzhyMTUzdTBtZw%3D%3D&utm_source=qr", linkedin: "https://www.linkedin.com/in/utsav-darji-50a68b33a?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" },
-    { name: "Kevin Rank", position: "Public Relations", image: "/kevin_2n.jpg", instagram: "https://www.instagram.com/kevinn.r97?igsh=MXdiM2ZxMXNzZTFoZQ==", linkedin: "https://www.linkedin.com/in/kevin-rank-ab9384330?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" },
-    { name: "Dev Sanghani", position: "Event Production", image: "/dev_s_2n.jpg", instagram: "https://www.instagram.com/devvvv__2?igsh=MW9ibnFoOGV2cjk5Zg%3D%3D&utm_source=qr", linkedin: "https://www.linkedin.com/in/dev-sanghani-58b951321/" },
-    { name: "Keval Shah", position: "Events", image: "/keval_2n.jpg", instagram: "https://www.instagram.com/kevalshah159?igsh=aHpjd2htdXZmNXZu", linkedin: "https://www.linkedin.com/in/keval-shah-899a7a321?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" },
-    { name: "Jay Trivedi", position: "Events & CD", image: "/jay_2n.jpeg", instagram: "https://www.instagram.com/_jaytrivedi_18/", linkedin: "https://www.linkedin.com/in/jaytrivedi18/" },
-    { name: "Dev Thakkar", position: "Production", image: "/dev_t_2n.jpeg", instagram: "https://www.instagram.com/devvv.0103?igsh=MXd2YTcyaDlrOHM4eA%3D%3D&utm_source=qr", linkedin: "https://www.linkedin.com/in/dev-thakkar-5a73572aa?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" },
   ]
 
   const designTeam: TeamMember[] = [
@@ -382,8 +381,8 @@ export default function TeamPage() {
   const navSections = [
     { id: "leadership", label: "Leadership" },
     { id: "heads", label: "Heads" },
-    { id: "mentors", label: "Mentors" },
     { id: "core", label: "Core Team" },
+    { id: "mentors", label: "Mentors" },
     { id: "design", label: "Design" },
     { id: "web", label: "Web Dev" },
   ]
@@ -463,22 +462,22 @@ export default function TeamPage() {
       {/* Separator */}
       <div className="w-full h-px bg-gradient-to-r from-transparent via-gray-800 to-transparent" />
 
-      {/* Mentors Section */}
-      <section id="mentors" className="w-full bg-gradient-to-b from-black to-gray-950">
-        <TeamSection 
-          title="mentors" 
-          members={mentorsTeam}
-          subtitle="Experience guiding excellence"
-          layout="default"
-        />
-      </section>
-
       {/* Core Team Section */}
-      <section id="core" className="w-full bg-gradient-to-b from-gray-950 to-black">
+      <section id="core" className="w-full bg-gradient-to-b from-black to-gray-950">
         <TeamSection 
           title="core team" 
           members={coreTeam}
           subtitle="The backbone of every event"
+          layout="default"
+        />
+      </section>
+
+      {/* Mentors Section */}
+      <section id="mentors" className="w-full bg-gradient-to-b from-gray-950 to-black">
+        <TeamSection 
+          title="mentors" 
+          members={mentorsTeam}
+          subtitle="Experience guiding excellence"
           layout="default"
         />
       </section>
