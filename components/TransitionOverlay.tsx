@@ -158,7 +158,8 @@ export default function TransitionOverlay() {
                                 src={src}
                                 alt=""
                                 fill
-                                priority
+                                priority={false}
+                                loading="eager"
                                 unoptimized
                                 sizes="50vw"
                                 className="object-center object-fill rotate-0"

@@ -31,13 +31,13 @@ const HeroCard = ({
     }}
   >
     <Image
-      src="/images_home/HallOfFame.png"
+      src="/images_home/HallOfFame.jpeg"
       alt="Hall of Fame"
       fill
       className="object-cover"
       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
     />
-    <div className="hof-title absolute inset-0 flex items-end justify-center pb-6 md:pb-8">
+    <div className="hof-title absolute inset-0 z-10 flex items-end justify-center pb-6 md:pb-8">
       <span className={`${titleSize} text-center font-white font-joker text-white drop-shadow-lg tracking-wider`}>
         hall of fame
       </span>
@@ -462,8 +462,8 @@ export default function HallOfFame() {
         ease: "power2.out",
         scrollTrigger: {
           trigger: hallContainerRef.current,
-          start: "top top+=5%",
-          end: "+=50%",
+          start: "top top-=5%",
+          end: "+=20%",
           scrub: 0.8,
         },
       });
