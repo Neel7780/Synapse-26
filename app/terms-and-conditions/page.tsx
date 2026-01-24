@@ -1,9 +1,8 @@
 "use client";
 
 import React from "react";
-import { Navbar } from "@/components/ui/Resizable-navbar";
-import NavigationPanel from "@/components/ui/NavigationPanel";
 import Footer from "@/components/ui/Footer";
+import Image from "next/image";
 
 const TERMS_CONTENT = [
   {
@@ -137,15 +136,18 @@ export default function Terms() {
 
   return (
     <div ref={containerRef} className="relative w-screen min-h-[100dvh] overflow-x-hidden  text-white">
-      <Navbar visible={true}>
-        <NavigationPanel />
-      </Navbar>
 
-      <div
-        className="fixed left-0 right-0 bottom-0 top-24 z-0
-             bg-center bg-contain bg-no-repeat"
-        style={{ backgroundImage: "url('/termsbg.png')" }}
-      />
+
+      <div className="fixed inset-0 z-0">
+        <Image
+          src="/termsbg.png"
+          alt="Background"
+          fill
+          priority={false}
+          loading="eager"
+          className="object-contain object-center"
+        />
+      </div>
       <div className="fixed inset-0 z-0 bg-black/60" />
 
       <div className="relative z-10 mx-auto w-full max-w-[1400px] px-4 pt-28 pb-20 sm:px-6 lg:px-[120px] lg:pt-36">

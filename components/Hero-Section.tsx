@@ -22,19 +22,18 @@ if (typeof window !== "undefined") {
 
 const FIRST_PHASE_TIME = 4000;
 
+// Imports...
+import { useNavigationState } from "@/lib/useNavigationState";
+
 type HeroSectionProps = {
   onEnter: () => void;
-  showNavbar: boolean;
-  setShowNavbar: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 let check = false;
 
 export default function HeroSection({
   onEnter,
-  setShowNavbar,
-  showNavbar,
-}: HeroSectionProps) {
+}: { onEnter: () => void }) {
   const INTRO_KEY = "synapse_has_entered";
 
   const [isLoading, setIsLoading] = useState(() => {
@@ -45,6 +44,7 @@ export default function HeroSection({
   const [showEnter, setShowEnter] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const { isAuthenticated } = useAuth();
+  const { setNavbarVisible, isNavbarVisible } = useNavigationState();
 
   const hasRunMaskRef = useRef(false);
   const enterTriggeredRef = useRef(false);
@@ -477,11 +477,11 @@ export default function HeroSection({
         "part3Reveal+=0.2"
       )
       .add(() => {
-        setShowNavbar(true);
+        setNavbarVisible(true);
       }, "part3Reveal")
       .to(".screen-container", { duration: 0.5, ease: "power2.inOut" })
       .add(() => {
-        setShowNavbar(false);
+        setNavbarVisible(false);
       }, "part3Reveal-=0.01")
       .to(".screen-container", { duration: 0.5, ease: "power2.inOut" })
       .addLabel("part3Hide")
@@ -558,7 +558,7 @@ export default function HeroSection({
         "together2"
       ).to({}, { duration: 6, ease: "none" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setShowNavbar]);
+  }, [setNavbarVisible]);
 
   const initScrollProgress = useCallback(() => {
     const trigger = ScrollTrigger.create({
@@ -577,9 +577,13 @@ export default function HeroSection({
 
   useEffect(() => {
     if (isLoading) {
+      setNavbarVisible(false);
       lockScroll();
       return;
     }
+    // Ensure it stays hidden during the mask reveal phase until the GSAP timeline takes over
+    setNavbarVisible(false);
+
     if (!scrollHintRef.current) return;
 
     scrollHintIdleRef.current = gsap.fromTo(
@@ -603,7 +607,7 @@ export default function HeroSection({
         gsap.getById("scrollHintIdle")?.kill();
       }
     };
-  }, [isLoading, lockScroll]);
+  }, [isLoading, lockScroll, setNavbarVisible]);
 
   useEffect(() => {
     const clearIntroOnReload = () => {
@@ -779,10 +783,10 @@ export default function HeroSection({
           maskPosition: 'center',
           maskSize: '0% 0%',
         }}>
-          <Image id="coloredImage" src="/images_home/RedHand2.jpeg" alt="Red Hand" fill className="absolute inset-0 h-full w-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none max-[600px]:scale-250" priority ref={coloredImageRef} />
+          <Image id="coloredImage" src="/images_home/RedHand2.jpeg" alt="Red Hand" fill className="absolute inset-0 h-full w-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none max-[600px]:scale-250" priority={false} loading="eager" ref={coloredImageRef} />
 
           <div id="flipCard" className="absolute inset-0 transform-3d will-change-transform" ref={flipCardRef}>
-            <Image id="redCard" className="absolute inset-0 w-full h-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none backface-hidden max-[600px]:scale-250" src="/images_home/redcard4.png" alt="Red Card" fill priority ref={cardRef} />
+            <Image id="redCard" className="absolute inset-0 w-full h-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none backface-hidden max-[600px]:scale-250" src="/images_home/redcard4.png" alt="Red Card" fill priority={false} loading="eager" ref={cardRef} />
 
             <div id="part3_2" ref={part3_2Ref} style={{
               backgroundImage:
@@ -851,7 +855,7 @@ export default function HeroSection({
     bg-gray-200 pointer-events-none transition duration-500
   "
         style={{
-          opacity: showNavbar ? 1 : 0,
+          opacity: isNavbarVisible ? 1 : 0,
         }}
       >
         <div

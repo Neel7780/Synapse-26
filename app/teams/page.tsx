@@ -4,8 +4,6 @@ import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import Footer from "@/components/ui/Footer"
 import { Linkedin, Instagram, ChevronDown } from "lucide-react"
-import NavigationPanel from "@/components/ui/NavigationPanel"
-import { Navbar } from "@/components/ui/Resizable-navbar"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 
@@ -13,7 +11,7 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
 }
 
-type TeamMember = { 
+type TeamMember = {
   name: string
   position: string
   image: string
@@ -24,18 +22,18 @@ type TeamMember = {
 // Enhanced Team Member Card with hover effects and animations
 const TeamMemberCard = ({ member, index = 0 }: { member: TeamMember; index?: number }) => {
   const cardRef = useRef<HTMLDivElement>(null)
-  
+
   useEffect(() => {
     if (!cardRef.current) return
-    
+
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
     if (prefersReducedMotion) return
 
     const ctx = gsap.context(() => {
       gsap.fromTo(
         cardRef.current,
-        { 
-          opacity: 0, 
+        {
+          opacity: 0,
           y: 60,
           scale: 0.9
         },
@@ -60,12 +58,12 @@ const TeamMemberCard = ({ member, index = 0 }: { member: TeamMember; index?: num
   }, [index])
 
   return (
-    <div 
+    <div
       ref={cardRef}
       className="group flex flex-col items-center opacity-0"
     >
       {/* Image Container with enhanced styling */}
-      <div 
+      <div
         className="relative w-32 h-32 md:w-44 md:h-44 lg:w-48 lg:h-48 mb-4 md:mb-5 overflow-hidden rounded-lg
                    border-2 border-transparent 
                    group-hover:border-red-500/50 
@@ -75,7 +73,7 @@ const TeamMemberCard = ({ member, index = 0 }: { member: TeamMember; index?: num
         {/* Gradient overlay on hover */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent 
                         opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" />
-        
+
         <Image
           src={member.image || "/Synapse Logo.png"}
           alt={member.name}
@@ -90,9 +88,9 @@ const TeamMemberCard = ({ member, index = 0 }: { member: TeamMember; index?: num
                         opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0
                         transition-all duration-300 ease-out">
           {member.instagram && (
-            <a 
-              href={member.instagram} 
-              target="_blank" 
+            <a
+              href={member.instagram}
+              target="_blank"
               rel="noopener noreferrer"
               className="w-9 h-9 rounded-full bg-black/70 backdrop-blur-sm flex items-center justify-center
                          text-white hover:bg-gradient-to-br hover:from-purple-500 hover:via-pink-500 hover:to-orange-500
@@ -103,9 +101,9 @@ const TeamMemberCard = ({ member, index = 0 }: { member: TeamMember; index?: num
             </a>
           )}
           {member.linkedin && (
-            <a 
-              href={member.linkedin} 
-              target="_blank" 
+            <a
+              href={member.linkedin}
+              target="_blank"
               rel="noopener noreferrer"
               className="w-9 h-9 rounded-full bg-black/70 backdrop-blur-sm flex items-center justify-center
                          text-white hover:bg-[#0077B5]
@@ -140,7 +138,7 @@ const SectionTitle = ({ title, subtitle }: { title: string; subtitle?: string })
 
   useEffect(() => {
     if (!titleRef.current) return
-    
+
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
     if (prefersReducedMotion) return
 
@@ -183,12 +181,12 @@ const SectionTitle = ({ title, subtitle }: { title: string; subtitle?: string })
 }
 
 // Enhanced Team Section with better layout
-const TeamSection = ({ 
-  title, 
-  members, 
+const TeamSection = ({
+  title,
+  members,
   subtitle,
-  layout = "default" 
-}: { 
+  layout = "default"
+}: {
   title: string
   members: TeamMember[]
   subtitle?: string
@@ -241,7 +239,7 @@ const TeamSection = ({
 // Quick navigation for jumping to sections
 const QuickNav = ({ sections }: { sections: { id: string; label: string }[] }) => {
   const [isVisible, setIsVisible] = useState(false)
-  
+
   useEffect(() => {
     const handleScroll = () => {
       setIsVisible(window.scrollY > 500)
@@ -261,7 +259,7 @@ const QuickNav = ({ sections }: { sections: { id: string; label: string }[] }) =
   }
 
   return (
-    <nav 
+    <nav
       className={`fixed right-4 top-1/2 -translate-y-1/2 z-40 hidden lg:flex flex-col gap-2
                   transition-all duration-300 ${isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-8"}`}
     >
@@ -349,15 +347,15 @@ export default function TeamPage() {
     { name: "Siddhant Gupta", position: "Mentor", image: "/Siddhant_img.jpeg", instagram: "https://www.instagram.com/siddhant_g86/", linkedin: "https://in.linkedin.com/in/siddhant-gupta-6327b4253" },
     { name: "Bhavya Shah", position: "Mentor", image: "/Bhavya_img.jpg", instagram: "https://www.instagram.com/bhavya_1918?igsh=b29ieW1oMTBtamhi&utm_source=qr", linkedin: "https://www.linkedin.com/in/bhavya3604?utm_source=share_via&utm_content=profile&utm_medium=member_ios" },
     { name: "Harshali Dharmik", position: "Mentor", image: "/Harshali_img.jpg", instagram: "https://www.instagram.com/harshali__2074/", linkedin: "https://in.linkedin.com/in/harshali-dharmik-a640b3284" },
-    { name: "Adhiraj Roy Chowdhury", position: "Mentor", image: "/Adhiraj_img.jpg", instagram: "https://www.instagram.com/adhirajrc?igsh=MWUyNDIxNTdic3Zmbg==", linkedin: "https://www.linkedin.com/in/adhiraj-roy-chowdhury" },    { name: "Dev Wadhvani", position: "Mentor", image: "/Dev_img.jpeg", instagram: "https://www.instagram.com/devwadhvani/", linkedin: "https://in.linkedin.com/in/devwadhvani" },
+    { name: "Adhiraj Roy Chowdhury", position: "Mentor", image: "/Adhiraj_img.jpg", instagram: "https://www.instagram.com/adhirajrc?igsh=MWUyNDIxNTdic3Zmbg==", linkedin: "https://www.linkedin.com/in/adhiraj-roy-chowdhury" }, { name: "Dev Wadhvani", position: "Mentor", image: "/Dev_img.jpeg", instagram: "https://www.instagram.com/devwadhvani/", linkedin: "https://in.linkedin.com/in/devwadhvani" },
     { name: "Sujal Manavadariya", position: "Mentor", image: "/Sujal_img.png", instagram: "https://www.instagram.com/_sujalmanavadariya_/", linkedin: "https://in.linkedin.com/in/sujal-manavadariya-499992252" },
     { name: "Kashish Khubchandani", position: "Mentor", image: "/Kashish_img.jpg", instagram: "https://www.instagram.com/_cutest_stranger/", linkedin: "http://www.linkedin.com/in/kashish-khubchandani-281b97235" },
   ]
 
   const designTeam: TeamMember[] = [
-    { 
-      name: "Priyanshi Chauhan", 
-      position: "Design and UX/UI Lead", 
+    {
+      name: "Priyanshi Chauhan",
+      position: "Design and UX/UI Lead",
       image: "/priyanshi_ws.png",
       instagram: "https://www.instagram.com/priyaanshii.5?igsh=MWIxbzNiM3Fxb3d4cg==",
       linkedin: "https://www.linkedin.com/in/priyanshichauhan01"
@@ -389,9 +387,7 @@ export default function TeamPage() {
 
   return (
     <main className="w-full bg-black min-h-screen overflow-x-hidden">
-      <Navbar visible={true}>
-        <NavigationPanel />
-      </Navbar>
+
 
       {/* Quick Navigation */}
       <QuickNav sections={navSections} />
@@ -402,19 +398,20 @@ export default function TeamPage() {
           src="/teams_header.png"
           alt="Teams Header"
           fill
-          priority
+          priority={false}
+          loading="eager"
           className="object-cover object-center scale-110"
           sizes="100vw"
         />
         {/* Multi-layer gradient overlay for depth */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/30 to-black" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/30" />
-        
+
         {/* Hero content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <h1 className="font-joker text-white text-6xl md:text-8xl lg:text-9xl tracking-wider
                          drop-shadow-[0_4px_30px_rgba(0,0,0,0.8)]">
-            Our Team 
+            Our Team
           </h1>
           <p className="mt-4 text-gray-300 font-roboto text-sm md:text-base tracking-widest uppercase">
             The people behind the magic
@@ -422,7 +419,7 @@ export default function TeamPage() {
         </div>
 
         {/* Scroll indicator */}
-        <div 
+        <div
           ref={scrollIndicatorRef}
           className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-white/60"
         >
@@ -435,8 +432,8 @@ export default function TeamPage() {
       <section id="leadership" className="w-full py-16 md:py-24 px-4 md:px-8 lg:px-16 
                                           bg-gradient-to-b from-black via-gray-950 to-black">
         <div className="max-w-5xl mx-auto">
-          <SectionTitle 
-            title="leadership" 
+          <SectionTitle
+            title="leadership"
             subtitle="Guiding Synapse' 26 to new heights"
           />
           <div className="flex flex-wrap justify-center gap-12 md:gap-20">
@@ -451,8 +448,8 @@ export default function TeamPage() {
 
       {/* Heads Section */}
       <section id="heads" className="w-full bg-black">
-        <TeamSection 
-          title="department heads" 
+        <TeamSection
+          title="department heads"
           members={headsTeam}
           subtitle="Leading their teams with vision and dedication"
           layout="featured"
@@ -464,8 +461,8 @@ export default function TeamPage() {
 
       {/* Core Team Section */}
       <section id="core" className="w-full bg-gradient-to-b from-black to-gray-950">
-        <TeamSection 
-          title="core team" 
+        <TeamSection
+          title="core team"
           members={coreTeam}
           subtitle="The backbone of every event"
           layout="default"
@@ -474,8 +471,8 @@ export default function TeamPage() {
 
       {/* Mentors Section */}
       <section id="mentors" className="w-full bg-gradient-to-b from-gray-950 to-black">
-        <TeamSection 
-          title="mentors" 
+        <TeamSection
+          title="mentors"
           members={mentorsTeam}
           subtitle="Experience guiding excellence"
           layout="default"
@@ -487,8 +484,8 @@ export default function TeamPage() {
 
       {/* Design Team Section */}
       <section id="design" className="w-full bg-black">
-        <TeamSection 
-          title="design team" 
+        <TeamSection
+          title="design team"
           members={designTeam}
           subtitle="Crafting the visual identity of Synapse"
         />
@@ -496,8 +493,8 @@ export default function TeamPage() {
 
       {/* Web Development Team Section */}
       <section id="web" className="w-full bg-gradient-to-b from-black to-gray-950">
-        <TeamSection 
-          title="web development team" 
+        <TeamSection
+          title="web development team"
           members={webTeam}
           subtitle="Building the digital experience"
           layout="default"
@@ -506,7 +503,7 @@ export default function TeamPage() {
 
       {/* Bottom spacing with subtle pattern */}
       <div className="h-16 md:h-24 bg-gradient-to-b from-gray-950 to-black" />
-      
+
       <Footer />
     </main>
   )

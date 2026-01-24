@@ -6,10 +6,8 @@ import { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
-import { Navbar } from "@/components/ui/Resizable-navbar";
 import Footer from "@/components/ui/Footer";
 import EventCards from "./EventCards";
-import NavigationPanel from "@/components/ui/NavigationPanel";
 import { useEventsByCategorySlug } from "@/hooks/useEvents";
 
 if (typeof window !== "undefined") {
@@ -144,9 +142,7 @@ export default function CategoryEventsPage() {
 
   return (
     <main ref={containerRef} className="bg-black text-white min-h-[100dvh] overflow-x-hidden">
-      <Navbar visible={true}>
-        <NavigationPanel />
-      </Navbar>
+
 
       {/* TRIANGLE HEADER */}
       <header className="relative w-full h-[55dvh] min-h-[520px]">
@@ -156,7 +152,8 @@ export default function CategoryEventsPage() {
             alt=""
             width={360}
             height={260}
-            priority
+            priority={false}
+            loading="eager"
             className="w-full h-auto"
           />
         </div>
@@ -166,7 +163,8 @@ export default function CategoryEventsPage() {
             alt=""
             width={360}
             height={260}
-            priority
+            priority={false}
+            loading="eager"
             className="w-full h-auto"
           />
         </div>
@@ -176,7 +174,8 @@ export default function CategoryEventsPage() {
             alt=""
             width={360}
             height={260}
-            priority
+            priority={false}
+            loading="eager"
             className="w-full h-auto"
           />
         </div>

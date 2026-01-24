@@ -7,8 +7,7 @@ import ProniteHero from "@/components/ProniteHero";
 import ArtistCarousel from "@/components/ArtistCarousel";
 import ProniteGallery from "@/components/ProniteGallery";
 import Footer from "@/components/ui/Footer";
-import { Navbar } from "@/components/ui/Resizable-navbar";
-import NavigationPanel from "@/components/ui/NavigationPanel";
+
 import TextReveal from "@/components/TextReveal";
 
 if (typeof window !== "undefined") {
@@ -101,9 +100,7 @@ export default function PronitePage() {
 
   return (
     <main className="bg-black text-white selection:bg-red-600 selection:text-white">
-      <Navbar visible={true}>
-        <NavigationPanel />
-      </Navbar>
+
 
       {/* Hero Section */}
       <ProniteHero />

@@ -2,9 +2,8 @@
 
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
-import { Navbar } from "@/components/ui/Resizable-navbar";
-import NavigationPanel from "@/components/ui/NavigationPanel";
 import Footer from "@/components/ui/Footer";
 
 import { useNavigationState } from "@/lib/useNavigationState";
@@ -45,9 +44,7 @@ export default function ProductPage() {
 
   return (
     <div className="w-full bg-black text-white min-h-[100dvh] pt-20">
-      <Navbar visible={true}>
-        <NavigationPanel />
-      </Navbar>
+
       {/* BREADCRUMB */}
       <div className="text-sm px-4 md:px-6 mb-4 flex items-center gap-2 flex-wrap">
         <Link
@@ -107,9 +104,11 @@ export default function ProductPage() {
                     }
                     `}
                 >
-                  <img
+                  <Image
                     src={img}
-                    className="w-full h-full object-cover"
+                    fill
+                    sizes="64px"
+                    className="object-cover"
                     alt={`Thumbnail ${i + 1}`}
                   />
                 </button>
@@ -126,9 +125,13 @@ export default function ProductPage() {
             - aspect-[4/5]: consistent merchandise shape
         */}
             <div className="relative w-full max-w-[350px] md:max-w-[450px] aspect-[4/5] bg-white/5 rounded-lg overflow-hidden border border-white/10 shadow-2xl mx-auto">
-              <img
+              <Image
                 src={images[activeImage]}
-                className="w-full h-full object-cover"
+                fill
+                priority={false}
+                loading="eager"
+                sizes="(max-width: 768px) 100vw, 450px"
+                className="object-cover"
                 alt="Main Product"
               />
             </div>
