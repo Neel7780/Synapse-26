@@ -324,10 +324,10 @@ export default function TeamPage() {
     { name: "Neel Khatri", position: "Full Stack Dev", image: "/images_teams/neel_ws.jpg", instagram: "https://www.instagram.com/neel212006", linkedin: "https://www.linkedin.com/in/neel-khatri-aa1618242" },
     { name: "Dhruvil Patel", position: "Backend Dev", image: "/images_teams/dhruvil_ws.jpeg", instagram: "https://www.instagram.com/dp_0205", linkedin: "https://www.linkedin.com/in/dhruvil05patel?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" },
     { name: "Chirayu Dodiya", position: "Backend Dev", image: "/images_teams/chirayu_ws.jpg", instagram: "https://www.instagram.com/chirayu_dodiya/", linkedin: "https://www.linkedin.com/in/chirayu-dodiya-3a025a2aa/" },
+    { name: "Priyanshi Chauhan", position: "UI/UX Designer", image: "/images_teams/priyanshi_ws.png", instagram: "https://www.instagram.com/priyaanshii.5?igsh=MWIxbzNiM3Fxb3d4cg==", linkedin: "https://www.linkedin.com/in/priyanshichauhan01" },
     { name: "Siddh Shah", position: "Frontend Dev", image: "/images_teams/siddh_ws.jpg", instagram: "https://www.instagram.com/siddhshah22?igsh=MWc4aTJkbWFxYWV4eg==", linkedin: "https://www.linkedin.com/in/siddh-shah-b03432321?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" },
     { name: "Chirag Katkoriya", position: "Frontend Dev", image: "/images_teams/chirag_ws.jpg", instagram: "https://www.instagram.com/katkoriyachirag/", linkedin: "https://www.linkedin.com/in/chirag-katkoriya/" },
     { name: "Pushkar Patel", position: "Frontend Dev", image: "/images_teams/pushkar_ws.jpeg", instagram: "https://www.instagram.com/synapsedaiict?igsh=MTM4Mzk2NHNya3N1dA==", linkedin: "https://www.linkedin.com/in/pushkar-patel-409196295/?originalSubdomain=sg" },
-    { name: "Priyanshi Chauhan", position: "UI/UX Designer", image: "/images_teams/priyanshi_ws.png", instagram: "https://www.instagram.com/priyaanshii.5?igsh=MWIxbzNiM3Fxb3d4cg==", linkedin: "https://www.linkedin.com/in/priyanshichauhan01" },
     { name: "Yash Gangwani", position: "Frontend Dev", image: "/images_teams/yash_ws.png", instagram: "https://www.instagram.com/gudda_786_?igsh=M2EwYWx3MWg4Mm53", linkedin: "https://www.linkedin.com/in/yash-gangwani" },
     { name: "Heer Mehta", position: "Frontend Dev", image: "/images_teams/heer_ws.jpg", instagram: "https://www.instagram.com/heermehta0919/", linkedin: "https://www.linkedin.com/in/heer-mehta-14833928b/" },
   ]
@@ -470,7 +470,7 @@ export default function TeamPage() {
 
       {/* Web Development Team Section */}
       <section id="web" className="w-full bg-black">
-        <TeamSection title="web development team" members={webTeam} subtitle="Building the digital experience" />
+        <TeamSection title="website team" members={webTeam} subtitle="Building the digital experience" />
       </section>
 
       <div className="h-16 bg-black" />
