@@ -130,13 +130,12 @@ export const metadata: Metadata = {
   // ==========================================================================
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/Synapse Logo.png", type: "image/png" },
+      { url: "/logo.png", type: "image/png" },
     ],
     apple: [
-      { url: "/Synapse Logo.png", sizes: "180x180", type: "image/png" },
+      { url: "/logo.png", sizes: "180x180", type: "image/png" },
     ],
-    shortcut: "/Synapse Logo.png",
+    shortcut: "/logo.png",
   },
   manifest: "/manifest.json",
 
@@ -159,7 +158,7 @@ export const metadata: Metadata = {
         type: "image/png",
       },
       {
-        url: `${siteConfig.url}/Synapse Logo.png`,
+        url: `${siteConfig.url}/logo.png`,
         width: 512,
         height: 512,
         alt: `${siteConfig.name} Logo`,
@@ -266,7 +265,7 @@ const jsonLd = {
       addressCountry: "IN",
     },
   },
-  image: [`${siteConfig.url}/og-image.png`, `${siteConfig.url}/Synapse Logo.png`],
+  image: [`${siteConfig.url}/og-image.png`, `${siteConfig.url}/logo.png`],
   organizer: {
     "@type": "Organization",
     name: siteConfig.college,
