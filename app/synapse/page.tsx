@@ -11,8 +11,7 @@ import HallOfFame from "@/components/Home-HallOfFame";
 import Footer from "@/components/ui/Footer";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import NavigationPanel from "@/components/ui/NavigationPanel";
-import { Navbar } from "@/components/ui/Resizable-navbar";
+
 import FluidCanvas from "@/components/FluidCanvas";
 
 if (typeof window !== "undefined") {
@@ -31,7 +30,7 @@ export default function HomeSection() {
     }
     return false;
   });
-  const [showNavbar, setShowNavbar] = useState(false);
+
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -58,14 +57,9 @@ export default function HomeSection() {
           <FluidCanvas />
         </div>
       ) : ""}
-      <Navbar visible={showNavbar}>
-        <NavigationPanel />
-      </Navbar>
 
       <HeroSection
         onEnter={() => setEntered(true)}
-        setShowNavbar={setShowNavbar}
-        showNavbar={showNavbar}
       />
 
       <div

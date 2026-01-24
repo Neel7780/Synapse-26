@@ -3,8 +3,6 @@
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
-import { Navbar } from "@/components/ui/Resizable-navbar";
-import NavigationPanel from "@/components/ui/NavigationPanel";
 import Footer from "@/components/ui/Footer";
 import { Button } from "@/components/ui/Button";
 import { Calendar, Clock, MapPin, Users, AlertCircle } from "lucide-react";
@@ -79,9 +77,7 @@ export default function EventPage() {
 
     return (
         <main className="bg-black text-white min-h-screen overflow-x-hidden font-roboto">
-            <Navbar visible={true}>
-                <NavigationPanel />
-            </Navbar>
+
 
             {/* HERO SECTION */}
             <div className="relative w-full pb-10 flex flex-col items-center group">
@@ -97,7 +93,8 @@ export default function EventPage() {
                         alt={event.event_name}
                         fill
                         className="object-cover object-top"
-                        priority
+                        priority={false}
+                        loading="eager"
                     />
                     <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black to-transparent" />
                 </motion.div>

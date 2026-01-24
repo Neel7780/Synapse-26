@@ -473,8 +473,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      sponsor_category: {
+        Row: {
+          sponsor_category_id: number;
+          tier: string;
+          rank: number | null;
+        };
+        Insert: {
+          sponsor_category_id?: number;
+          tier: string;
+          rank?: number | null;
+        };
+        Update: {
+          sponsor_category_id?: number;
+          tier?: string;
+          rank?: number | null;
+        };
+        Relationships: [];
+      };
       sponsors: {
         Row: {
+          category_id: number | null;
           description: string | null;
           logo_url: string | null;
           name: string;
@@ -483,6 +502,7 @@ export type Database = {
           website_url: string | null;
         };
         Insert: {
+          category_id?: number | null;
           description?: string | null;
           logo_url?: string | null;
           name: string;
@@ -491,6 +511,7 @@ export type Database = {
           website_url?: string | null;
         };
         Update: {
+          category_id?: number | null;
           description?: string | null;
           logo_url?: string | null;
           name?: string;
@@ -498,7 +519,15 @@ export type Database = {
           tier?: string | null;
           website_url?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "sponsors_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "sponsor_category";
+            referencedColumns: ["sponsor_category_id"];
+          }
+        ];
       };
       team: {
         Row: {

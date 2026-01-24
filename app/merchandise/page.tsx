@@ -2,8 +2,7 @@
 
 import Image from "next/image";
 import Footer from "@/components/ui/Footer";
-import { Navbar } from "@/components/ui/Resizable-navbar";
-import NavigationPanel from "@/components/ui/NavigationPanel";
+
 import { useState, useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -116,10 +115,14 @@ const ProductSection = ({ product }: { product: Product }) => {
             onTouchEnd={handleTouchEnd}
           >
             {product.images[activeIdx] && (
-              <img
+              <Image
                 key={product.images[activeIdx]}
                 src={product.images[activeIdx]}
                 alt={`${product.name} view ${activeIdx + 1}`}
+                fill
+                priority={false} // Lazy load products typically, unless it's LCP (first product). But since there are many, default lazy is safer, or eager if user wants improvement. Let's stick to eager for main image if it's the active one.
+                loading="eager" // Wait, if we use fill we need sizes.
+                sizes="(max-width: 1024px) 100vw, 50vw"
                 className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${product.isAvailable ? 'hover:scale-105' : 'grayscale'}`}
               />
             )}
@@ -161,7 +164,13 @@ const ProductSection = ({ product }: { product: Product }) => {
                   onClick={() => setActiveIdx(i)}
                   className={`relative w-16 sm:w-20 aspect-[4/5] rounded-lg overflow-hidden border-2 transition-all duration-300 ${activeIdx === i ? 'border-red-600 scale-105 shadow-[0_0_12px_rgba(220,38,38,0.4)]' : 'border-transparent opacity-40 hover:opacity-100 hover:border-white/20'}`}
                 >
-                  <img src={img} alt={`${product.name} thumbnail ${i + 1}`} className="absolute inset-0 w-full h-full object-cover" />
+                  <Image
+                    src={img}
+                    alt={`${product.name} thumbnail ${i + 1}`}
+                    fill
+                    sizes="100px"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
                 </button>
               ))}
             </div>
@@ -283,16 +292,15 @@ export default function MerchPage() {
     <div ref={containerRef} className="w-full bg-black text-white min-h-[100dvh] overflow-x-hidden">
       {/* HERO SECTION */}
       <div className="relative w-full h-[clamp(320px,50dvh,480px)] overflow-hidden">
-        <Navbar visible={true}>
-          <NavigationPanel />
-        </Navbar>
+
 
         <Image
           src="/images_merch/merch-her.png"
           alt="Merchandise collection"
           fill
           sizes="100vw"
-          priority
+          priority={false}
+          loading="eager"
           className="object-cover"
         />
 
@@ -305,7 +313,8 @@ export default function MerchPage() {
             width={520}
             height={200}
             className="w-full h-auto"
-            priority
+            priority={false}
+            loading="eager"
           />
         </div>
       </div>

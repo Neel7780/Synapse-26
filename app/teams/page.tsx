@@ -1,16 +1,16 @@
 "use client"
 
+import TeamNavigation from "@/components/TeamNavigation"
 import Image from "next/image"
 import Footer from "@/components/ui/Footer"
 import { Linkedin, Instagram } from "lucide-react"
-import NavigationPanel from "@/components/ui/NavigationPanel"
-import { Navbar } from "@/components/ui/Resizable-navbar"
 import { motion, type Variants, useMotionValue, useTransform, useSpring } from "framer-motion"
 import { useCallback, useMemo } from "react"
+import { useDynamicImageSize } from "@/hooks/useDynamicImageSize"
 
-type TeamMember = { 
-  name: string; 
-  position: string; 
+type TeamMember = {
+  name: string;
+  position: string;
   image: string;
   instagram?: string;
   linkedin?: string;
@@ -19,8 +19,8 @@ type TeamMember = {
 // Clean animation variants
 const fadeInUp: Variants = {
   hidden: { opacity: 0, y: 30 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
     transition: { duration: 0.6, ease: "easeOut" }
   }
@@ -39,11 +39,11 @@ const staggerContainer: Variants = {
 
 const cardVariants: Variants = {
   hidden: { opacity: 0, y: 40 },
-  visible: (index: number) => ({ 
-    opacity: 1, 
+  visible: (index: number) => ({
+    opacity: 1,
     y: 0,
-    transition: { 
-      duration: 0.5, 
+    transition: {
+      duration: 0.5,
       delay: index * 0.06,
       ease: "easeOut"
     }
@@ -51,11 +51,11 @@ const cardVariants: Variants = {
 }
 
 const glowVariants: Variants = {
-  rest: { 
+  rest: {
     boxShadow: "0 4px 15px rgba(0, 0, 0, 0.2)",
     scale: 1
   },
-  hover: { 
+  hover: {
     boxShadow: "0 12px 35px rgba(0, 0, 0, 0.3)",
     scale: 1.02,
     transition: { duration: 0.3, ease: "easeOut" }
@@ -64,7 +64,7 @@ const glowVariants: Variants = {
 
 const imageHoverVariants: Variants = {
   rest: { scale: 1 },
-  hover: { 
+  hover: {
     scale: 1.05,
     transition: { duration: 0.4, ease: "easeOut" }
   }
@@ -72,8 +72,8 @@ const imageHoverVariants: Variants = {
 
 const socialIconVariants: Variants = {
   rest: { scale: 1, y: 0 },
-  hover: { 
-    scale: 1.15, 
+  hover: {
+    scale: 1.15,
     y: -2,
     transition: { duration: 0.2, ease: "easeOut" }
   },
@@ -84,11 +84,14 @@ const socialIconVariants: Variants = {
 const TeamMemberCard = ({ member, index }: { member: TeamMember; index: number }) => {
   const x = useMotionValue(0)
   const y = useMotionValue(0)
-  
+
+  // Dynamic size hook
+  const { width, height } = useDynamicImageSize('team');
+
   // Subtle rotation
   const rotateX = useTransform(y, [-100, 100], [5, -5])
   const rotateY = useTransform(x, [-100, 100], [-5, 5])
-  
+
   // Smooth spring physics
   const springConfig = useMemo(() => ({ stiffness: 150, damping: 20 }), [])
   const rotateXSpring = useSpring(rotateX, springConfig)
@@ -107,8 +110,11 @@ const TeamMemberCard = ({ member, index }: { member: TeamMember; index: number }
     y.set(0)
   }, [x, y])
 
+  // Prevent hydration styling mismatch or layout shift if needed, or just let it render
+  if (width === 0) return null;
+
   return (
-    <motion.div 
+    <motion.div
       className="flex flex-col items-center"
       style={{ perspective: 800 }}
       variants={cardVariants}
@@ -130,15 +136,16 @@ const TeamMemberCard = ({ member, index }: { member: TeamMember; index: number }
         initial="rest"
         whileHover="hover"
       >
-        <motion.div 
-          className="w-36 h-36 md:w-52 md:h-52 bg-gray-900 rounded-lg mb-3 md:mb-4 overflow-hidden relative"
+        <motion.div
+          className="bg-gray-900 rounded-lg mb-3 md:mb-4 overflow-hidden relative"
+          style={{ width, height }}
           variants={imageHoverVariants}
         >
           {/* Subtle gradient overlay */}
-          <div 
+          <div
             className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-black/30 to-transparent"
           />
-          
+
           <Image
             src={member.image || "/Synapse Logo.png"}
             alt={member.name}
@@ -149,8 +156,8 @@ const TeamMemberCard = ({ member, index }: { member: TeamMember; index: number }
           />
         </motion.div>
       </motion.div>
-      
-      <motion.div 
+
+      <motion.div
         className="text-center w-full px-1"
         initial={{ opacity: 0, y: 10 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -164,16 +171,16 @@ const TeamMemberCard = ({ member, index }: { member: TeamMember; index: number }
           {member.position}
         </p>
 
-        <motion.div 
+        <motion.div
           className="flex gap-4 justify-center mt-3"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.2 + index * 0.03, duration: 0.3 }}
         >
-          <motion.a 
-            href={member.instagram || "#"} 
-            target="_blank" 
+          <motion.a
+            href={member.instagram || "#"}
+            target="_blank"
             rel="noopener noreferrer"
             className="text-white/60 hover:text-pink-400 transition-colors"
             variants={socialIconVariants}
@@ -184,9 +191,9 @@ const TeamMemberCard = ({ member, index }: { member: TeamMember; index: number }
             <Instagram className="w-4 h-4 md:w-5 md:h-5" />
           </motion.a>
 
-          <motion.a 
-            href={member.linkedin || "#"} 
-            target="_blank" 
+          <motion.a
+            href={member.linkedin || "#"}
+            target="_blank"
             rel="noopener noreferrer"
             className="text-white/60 hover:text-blue-400 transition-colors"
             variants={socialIconVariants}
@@ -213,9 +220,9 @@ const SectionTitle = ({ title, subtitle }: { title: string; subtitle?: string })
     <h2 className="font-joker text-white text-3xl md:text-4xl border border-gray-600/50 px-8 py-4 text-center">
       {title}
     </h2>
-    
+
     {subtitle && (
-      <motion.p 
+      <motion.p
         className="text-gray-400 text-center mt-4 text-sm md:text-base"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
@@ -233,7 +240,7 @@ const TeamSection = ({ title, members, subtitle }: { title: string; members: Tea
     <SectionTitle title={title} subtitle={subtitle} />
 
     {members.length === 1 ? (
-      <motion.div 
+      <motion.div
         className="flex justify-center w-full"
         variants={fadeInUp}
         initial="hidden"
@@ -251,8 +258,8 @@ const TeamSection = ({ title, members, subtitle }: { title: string; members: Tea
         viewport={{ once: true, amount: 0.15 }}
       >
         {members.map((member, idx) => (
-          <motion.div 
-            key={`${member.name}-${idx}`} 
+          <motion.div
+            key={`${member.name}-${idx}`}
             className="w-[calc(50%-16px)] sm:w-[calc(50%-20px)] md:w-[calc(33.33%-28px)] lg:w-[calc(25%-42px)] flex justify-center"
             variants={cardVariants}
             custom={idx}
@@ -268,7 +275,7 @@ const TeamSection = ({ title, members, subtitle }: { title: string; members: Tea
 // Simple animated separator
 const AnimatedSeparator = () => (
   <div className="relative w-full py-6 flex items-center justify-center">
-    <motion.div 
+    <motion.div
       className="w-full max-w-md h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"
       initial={{ scaleX: 0, opacity: 0 }}
       whileInView={{ scaleX: 1, opacity: 1 }}
@@ -298,7 +305,7 @@ export default function TeamPage() {
     { name: "Keval Shah", position: "Events", image: "/images_teams/keval_2n.jpg", instagram: "https://www.instagram.com/kevalshah159?igsh=aHpjd2htdXZmNXZu", linkedin: "https://www.linkedin.com/in/keval-shah-899a7a321?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" },
     { name: "Jay Trivedi", position: "Event, CD", image: "/images_teams/jay_2n.jpeg", instagram: "https://www.instagram.com/_jaytrivedi_18/", linkedin: "https://www.linkedin.com/in/jaytrivedi18/" },
     { name: "Dev Thakkar", position: "Production ", image: "/images_teams/dev_t_2n.jpeg", instagram: "https://www.instagram.com/devvv.0103?igsh=MXd2YTcyaDlrOHM4eA%3D%3D&utm_source=qr", linkedin: "https://www.linkedin.com/in/dev-thakkar-5a73572aa?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" },
-    
+
     { name: "Rishabh Jain", position: "Mentor", image: "/images_teams/Rishabh_img.jpg", instagram: "https://www.instagram.com/rishabhjain_149/", linkedin: "https://in.linkedin.com/in/jainrishabh04" },
     { name: "Devamm Patel", position: "Mentor", image: "/images_teams/Devamm.png", instagram: "https://www.instagram.com/_devamm_12/", linkedin: "https://in.linkedin.com/in/devamm-patel-197891265" },
     { name: "Vivek Chaudhari", position: "Mentor", image: "/images_teams/Vivek_img.jpeg", instagram: "https://www.instagram.com/vivek.chaudhari_30/", linkedin: "https://in.linkedin.com/in/vivek-kirankumar-chaudhari" },
@@ -327,22 +334,20 @@ export default function TeamPage() {
 
   // Leadership team (Convenor & Deputy)
   const leadershipTeam: TeamMember[] = mainTeamMembers.slice(0, 2)
-  
+
   // Heads team
   const headsTeam: TeamMember[] = mainTeamMembers.slice(2)
-  
+
   // Separate mentors from core team
   const mentorsTeam: TeamMember[] = coreTeam.filter(member => member.position === "Mentor")
   const coreTeamFiltered: TeamMember[] = coreTeam.filter(member => member.position !== "Mentor")
 
   return (
     <main className="w-full bg-black min-h-screen overflow-x-hidden">
-      <Navbar visible={true}>
-        <NavigationPanel />
-      </Navbar>
+      <TeamNavigation />
 
       {/* HEADER IMAGE */}
-      <motion.div 
+      <motion.div
         className="relative w-full h-[65vh] min-h-[450px] overflow-hidden z-0"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -364,18 +369,18 @@ export default function TeamPage() {
             sizes="100vw"
           />
         </motion.div>
-        
+
         {/* Gradient overlay */}
-        <div 
+        <div
           className="absolute inset-0"
           style={{
             background: "linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.95) 100%)"
           }}
         />
-        
+
         {/* Title overlay */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <motion.h1 
+          <motion.h1
             className="font-joker text-white text-5xl md:text-7xl lg:text-8xl text-center"
             initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -384,7 +389,7 @@ export default function TeamPage() {
           >
             our team
           </motion.h1>
-          
+
           <motion.p
             className="text-gray-300 text-lg md:text-xl mt-4 text-center"
             initial={{ opacity: 0 }}
@@ -393,9 +398,9 @@ export default function TeamPage() {
           >
             The people behind Synapse&apos; 26
           </motion.p>
-          
+
           {/* Scroll indicator */}
-          <motion.div 
+          <motion.div
             className="absolute bottom-10"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -418,8 +423,8 @@ export default function TeamPage() {
       <section id="leadership" className="w-full py-16 md:py-24 px-4 md:px-8 lg:px-16 bg-black">
         <div className="max-w-5xl mx-auto">
           <SectionTitle title="leadership" subtitle="Guiding Synapse' 26 to new heights" />
-          
-          <motion.div 
+
+          <motion.div
             className="flex flex-wrap justify-center gap-12 md:gap-20"
             variants={staggerContainer}
             initial="hidden"
@@ -427,8 +432,8 @@ export default function TeamPage() {
             viewport={{ once: true, amount: 0.2 }}
           >
             {leadershipTeam.map((member, idx) => (
-              <motion.div 
-                key={`leader-${idx}`} 
+              <motion.div
+                key={`leader-${idx}`}
                 className="md:scale-110"
                 variants={cardVariants}
                 custom={idx}

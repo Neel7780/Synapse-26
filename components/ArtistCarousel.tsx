@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect, useState } from "react";
 import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
+import Image from "next/image";
 import { createClient } from "@/utils/supabase/client";
 
 // Fallback/Initial data type matching the transformed Supabase data
@@ -249,10 +250,13 @@ const Card = ({ data, index, total, progress }: CardProps) => {
           {/* Central Inset Image Area - Flex-1 ensures it fills exactly the remaining space */}
           <div className="relative flex-1 min-h-0 mb-2 ml-16 md:ml-20 mr-2 md:mr-4 rounded-[16px] overflow-hidden shadow-2xl border border-white/10 bg-black/20">
             {data.image ? (
-              <img
+              <Image
                 src={data.image}
                 alt={data.artist}
-                className="w-full h-full object-cover"
+                fill
+                priority={false}
+                loading="eager"
+                className="object-cover"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-zinc-900">
@@ -304,10 +308,13 @@ const Card = ({ data, index, total, progress }: CardProps) => {
         {/* Central Inset Image Area - Flex-1 ensures it fills exactly the remaining space */}
         <div className="relative flex-1 min-h-0 mb-2 ml-16 md:ml-20 mr-2 md:mr-4 rounded-[16px] overflow-hidden shadow-2xl border border-white/10 bg-black/20">
           {data.image ? (
-            <img
+            <Image
               src={data.image}
               alt={data.artist}
-              className="w-full h-full object-cover"
+              fill
+              priority={false}
+              loading="eager"
+              className="object-cover"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-zinc-900">

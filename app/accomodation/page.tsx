@@ -3,8 +3,7 @@
 import React from "react";
 import { AccommodationComponent } from "@/components/Accomodation";
 import Footer from "@/components/ui/Footer";
-import { Navbar } from "@/components/ui/Resizable-navbar";
-import NavigationPanel from "@/components/ui/NavigationPanel";
+
 import Image from "next/image";
 
 
@@ -14,9 +13,7 @@ export default function AccomodationPage() {
   // useEffect(() => { endTransition(); }, []);
   return (
     <div>
-      <Navbar visible={true}>
-        <NavigationPanel />
-      </Navbar>
+
 
       <header className="relative flex flex-row items-center justify-between w-full overflow-x-clip overflow-y-visible mb-20 px-2">
         {/* LEFT IMAGE */}

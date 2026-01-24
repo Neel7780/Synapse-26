@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import Image from "next/image";
 import { createClient } from "@/utils/supabase/client";
 
 if (typeof window !== "undefined") {
@@ -324,11 +325,8 @@ export default function ArtistsSection() {
                 }}
               >
                 {artist.image ? (
-                  <img
-                    src={artist.image}
-                    alt={artist.name}
-                    loading="lazy"
-                    className="block object-cover z-10 transition-transform duration-300 md:hover:scale-110 cursor-pointer max-[550px]:scale-120"
+                  <div
+                    className="relative z-10 transition-transform duration-300 md:hover:scale-110 cursor-pointer max-[550px]:scale-120"
                     style={{
                       width:
                         i === currentIndex
@@ -339,7 +337,16 @@ export default function ArtistsSection() {
                           ? "clamp(150px, 35vw, 420px)"
                           : "clamp(110px, 28vw, 260px)",
                     }}
-                  />
+                  >
+                    <Image
+                      src={artist.image}
+                      alt={artist.name}
+                      fill
+                      priority={false}
+                      loading="eager"
+                      className="object-cover"
+                    />
+                  </div>
                 ) : (
                   <div
                     className="flex items-center justify-center bg-zinc-900 border border-white/20 z-10 transition-transform duration-300 cursor-default"

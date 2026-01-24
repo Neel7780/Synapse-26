@@ -1,9 +1,7 @@
 "use client";
 
 import { useRef, useEffect } from "react";
-import NavigationPanel from "@/components/ui/NavigationPanel";
 import Footer from "@/components/ui/Footer";
-import { Navbar } from "@/components/ui/Resizable-navbar";
 import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -194,9 +192,7 @@ export default function About() {
 
   return (
     <div ref={containerRef}>
-      <Navbar visible={true}>
-        <NavigationPanel />
-      </Navbar>
+
 
       {/* MAIN AREA */}
       <main className="w-screen bg-black text-white overflow-x-hidden">

@@ -12,6 +12,7 @@ import { SmoothScroller } from "@/components/ui/SmoothScroller";
 import "./globals.css";
 import TransitionProvider from "@/components/TransitionProvider";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import GlobalNavbar from "@/components/GlobalNavbar";
 import PageViewTracker from "@/components/PageViewTracker";
 
 // Optimize font loading with display: swap for better performance
@@ -312,6 +313,7 @@ export default function RootLayout({
         <ErrorBoundary>
           <SmoothScroller>
             <TransitionProvider>
+              <GlobalNavbar />
               {children}
             </TransitionProvider>
           </SmoothScroller>

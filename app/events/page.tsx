@@ -6,8 +6,7 @@ import { useRouter } from "next/navigation";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Footer from "@/components/ui/Footer";
-import NavigationPanel from "@/components/ui/NavigationPanel";
-import { Navbar } from "@/components/ui/Resizable-navbar";
+
 import { useNavigationState } from "@/lib/useNavigationState";
 import { useImagePreload } from "@/hooks/useImagePreload";
 import { useEventCategories } from "@/hooks/useEvents";
@@ -131,9 +130,7 @@ export default function EventsPage() {
 
     return (
         <div ref={containerRef}>
-            <Navbar visible={true}>
-                <NavigationPanel />
-            </Navbar>
+
 
             <main className="bg-black text-white overflow-x-hidden">
                 <section className="relative h-[45dvh] w-full">
