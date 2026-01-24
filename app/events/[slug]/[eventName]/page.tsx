@@ -212,6 +212,7 @@ export default function EventPage() {
                                             max: String(currentFee.max_members || 1),
                                             qr_code: currentFee.qr_code || "",
                                             event_id: String(currentFee.event_id || 0),
+                                            is_dau_free: String(event.is_dau_free || false),
                                         });
                                         router.push(`/events/${slug}/${eventNameSlug}/register?${queryParams.toString()}`);
                                     }}
