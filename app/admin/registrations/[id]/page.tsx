@@ -23,6 +23,7 @@ type Registration = {
     team_size: number;
     registration_date: string;
   };
+  coordinator_status?: string | null;
   payment: {
     status: string;
   };
@@ -171,9 +172,28 @@ export default function RegistrationDetailPage() {
           <CardContent className="pt-6 space-y-4">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Status</span>
-              <Badge className={registration.payment.status === "done" ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" : "bg-amber-500/20 text-amber-300 border-amber-500/30"}>
-                {registration.payment.status === "done" ? "Paid" : "Pending"}
-              </Badge>
+              <div className="flex items-center gap-2">
+                {registration.payment.status === "done" ? (
+                  <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30">Paid</Badge>
+                ) : (
+                  // only show Pending if coordinator hasn't reviewed yet
+                  !registration.coordinator_status && (
+                    <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30">Pending</Badge>
+                  )
+                )}
+
+                {registration.coordinator_status ? (
+                  <Badge className={
+                    registration.coordinator_status === "accepted"
+                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                      : registration.coordinator_status === "rejected"
+                      ? "bg-red-500/20 text-red-300 border-red-500/30"
+                      : "bg-muted-500/20 text-muted-foreground border-border/30"
+                  }>
+                    {String(registration.coordinator_status).charAt(0).toUpperCase() + String(registration.coordinator_status).slice(1)}
+                  </Badge>
+                ) : null}
+              </div>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Transaction ID</span>
