@@ -15,10 +15,6 @@ const DEFAULT_PRICING: Record<number, number> = {
   4: 2800,
 };
 
-// Default QR URL fallback
-const DEFAULT_QR_URL = "";
-// ... (rest of imports/constants)
-
 // Animation variants
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -154,7 +150,7 @@ export function AccommodationComponent() {
   const [packages, setPackages] = useState<AccommodationPackage[]>([]);
   const [pricing, setPricing] =
     useState<Record<number, number>>(DEFAULT_PRICING);
-  const [qrUrl, setQrUrl] = useState<string>(DEFAULT_QR_URL);
+  const [qrCodeMap, setQrCodeMap] = useState<Record<number, string>>({});
   const [dataLoading, setDataLoading] = useState(true);
 
   // Fetch accommodation data from APIs
@@ -170,21 +166,25 @@ export function AccommodationComponent() {
           if (packagesData.packages && packagesData.packages.length > 0) {
             setPackages(packagesData.packages);
 
-            // Build pricing map from packages
+            // Build pricing map and QR code map from packages
             const newPricing: Record<number, number> = {};
-            let foundQrUrl: string | null = null;
+            const newQrCodeMap: Record<number, string> = {};
 
             packagesData.packages.forEach((pkg: AccommodationPackage) => {
               // Extract nights from package_name (e.g., "2 Nights", "3 Nights Package")
               const nightsMatch = pkg.package_name.match(/(\d+)\s*nights?/i);
-              if (nightsMatch && pkg.price) {
+              if (nightsMatch) {
                 const nights = parseInt(nightsMatch[1], 10);
-                newPricing[nights] = pkg.price;
-              }
 
-              // Get QR code URL from the first package that has one
-              if (!foundQrUrl && pkg.qr_code) {
-                foundQrUrl = pkg.qr_code;
+                // Store price if available
+                if (pkg.price) {
+                  newPricing[nights] = pkg.price;
+                }
+
+                // Store QR code if available
+                if (pkg.qr_code) {
+                  newQrCodeMap[nights] = pkg.qr_code;
+                }
               }
             });
 
@@ -193,9 +193,9 @@ export function AccommodationComponent() {
               setPricing(newPricing);
             }
 
-            // Update QR URL if found in packages
-            if (foundQrUrl) {
-              setQrUrl(foundQrUrl);
+            // Update QR code map
+            if (Object.keys(newQrCodeMap).length > 0) {
+              setQrCodeMap(newQrCodeMap);
             }
           }
         }
@@ -706,11 +706,11 @@ export function AccommodationComponent() {
             </div>
 
             {/* QR Code */}
-            {qrUrl ? (
+            {selectedNights && qrCodeMap[selectedNights] ? (
               <div className="flex flex-col items-center gap-4">
                 <div className="bg-white p-4 rounded-lg">
                   <Image
-                    src={qrUrl}
+                    src={qrCodeMap[selectedNights]}
                     alt="Payment QR Code"
                     width={250}
                     height={250}
