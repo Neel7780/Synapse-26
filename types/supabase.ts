@@ -102,6 +102,7 @@ export type Database = {
           is_available: boolean | null;
           package_name: string;
           price: number | null;
+          qr_code: string | null;
           start_date: string | null;
         };
         Insert: {
@@ -111,6 +112,7 @@ export type Database = {
           is_available?: boolean | null;
           package_name: string;
           price?: number | null;
+          qr_code?: string | null;
           start_date?: string | null;
         };
         Update: {
@@ -120,6 +122,7 @@ export type Database = {
           is_available?: boolean | null;
           package_name?: string;
           price?: number | null;
+          qr_code?: string | null;
           start_date?: string | null;
         };
         Relationships: [];
