@@ -95,7 +95,7 @@ export async function GET() {
 
                 // Feb (Month 1 in 0-indexed)
                 if (month === 1) {
-                    if (day <= 26) return 0; // Day 1: until Feb 27 6am (Shifted <= Feb 26 23:59)
+                    if (day === 26) return 0; // Day 1: Feb 26
                     if (day === 27) return 1; // Day 2
                     if (day === 28) return 2; // Day 3
                 }
