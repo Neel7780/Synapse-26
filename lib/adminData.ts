@@ -162,8 +162,8 @@ export const getTodayRevenue = unstable_cache(
       yesterdayNet > 0
         ? ((todayNet - yesterdayNet) / yesterdayNet) * 100
         : todayNet > 0
-        ? 100
-        : 0;
+          ? 100
+          : 0;
 
     return {
       today: {
@@ -194,7 +194,7 @@ export const getRecentRegistrations = unstable_cache(
         gross_amount,
         created_at,
         users(user_name),
-        event_fee(event(event_name))
+        event(event_name)
       `
       )
       .eq("payment_status", "done")
@@ -208,13 +208,13 @@ export const getRecentRegistrations = unstable_cache(
       gross_amount: number | null;
       created_at: string | null;
       users: { user_name: string | null } | null;
-      event_fee: { event: { event_name: string | null } | null } | null;
+      event: { event_name: string | null } | null;
     };
 
-    return (data ?? []).map((reg: RecentRegistrationRow) => ({
+    return (data as any ?? []).map((reg: RecentRegistrationRow) => ({
       id: String(reg.registration_id),
       userName: reg.users?.user_name || "Unknown",
-      event: reg.event_fee?.event?.event_name || "Unknown Event",
+      event: reg.event?.event_name || "Unknown Event",
       date: reg.created_at ? new Date(reg.created_at).toISOString().split("T")[0] : "",
       status: reg.payment_status ?? "pending",
       amount: reg.gross_amount ?? 0,
@@ -290,15 +290,15 @@ export const getQuickStats = unstable_cache(
       yesterdayRegistrations > 0
         ? ((todayRegistrations - yesterdayRegistrations) / yesterdayRegistrations) * 100
         : todayRegistrations > 0
-        ? 100
-        : 0;
+          ? 100
+          : 0;
 
     const revenueChange =
       yesterdayRevenue > 0
         ? ((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100
         : todayRevenue > 0
-        ? 100
-        : 0;
+          ? 100
+          : 0;
 
     return [
       {
