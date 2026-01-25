@@ -71,7 +71,12 @@ export default function RegisterPage() {
   }, [authLoading, isAuthenticated, router]);
 
   // Check if user is eligible for DAU free registration
-  const isDauRegistration = isDauFree && user?.email?.endsWith("@dau.ac.in");
+  const isDauRegistration =
+    isDauFree &&
+    user?.email?.endsWith("@dau.ac.in") &&
+    teamEmails
+      .filter((e) => e.trim())
+      .every((email) => email.trim().toLowerCase().endsWith("@dau.ac.in"));
 
   // Add team member email
   const addTeamMember = () => {
