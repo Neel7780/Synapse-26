@@ -818,10 +818,64 @@ export default function HeroSection({
           maskPosition: 'center',
           maskSize: (isLoading || clickedEnterRef.current) ? '0% 0%' : 'cover',
         }}>
-          <Image id="coloredImage" src="/images_home/RedHand2.jpeg" alt="Red Hand" fill sizes="100vw" quality={100} className="absolute inset-0 h-full w-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none max-[600px]:scale-[1.8]" priority unoptimized ref={coloredImageRef} />
+          {/* Desktop/Tablet version */}
+          <Image 
+            id="coloredImage" 
+            src="/images_home/RedHand2.jpeg" 
+            alt="Red Hand" 
+            fill 
+            sizes="100vw"
+            quality={100} 
+            className="hidden min-[601px]:block absolute inset-0 h-full w-full object-contain min-[1000px]:object-cover pointer-events-none" 
+            priority 
+            unoptimized 
+            ref={coloredImageRef} 
+          />
+          {/* Mobile version - larger container to avoid scale blur */}
+          <div className="min-[601px]:hidden absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
+            <div className="relative w-[180vh] h-[180vw] rotate-[-90deg]">
+              <Image 
+                src="/images_home/RedHand2.jpeg" 
+                alt="Red Hand" 
+                fill 
+                sizes="180vh"
+                quality={100} 
+                className="object-contain"
+                priority 
+                unoptimized 
+              />
+            </div>
+          </div>
 
           <div id="flipCard" className="absolute inset-0 transform-3d will-change-transform" ref={flipCardRef}>
-            <Image id="redCard" className="absolute inset-0 w-full h-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none backface-hidden max-[600px]:scale-[1.8]" src="/images_home/redcard4.png" alt="Red Card" fill sizes="100vw" quality={100} priority unoptimized ref={cardRef} />
+            {/* Desktop/Tablet version */}
+            <Image 
+              id="redCard" 
+              className="hidden min-[601px]:block absolute inset-0 w-full h-full object-contain min-[1000px]:object-cover pointer-events-none backface-hidden" 
+              src="/images_home/redcard4.png" 
+              alt="Red Card" 
+              fill 
+              sizes="100vw"
+              quality={100} 
+              priority 
+              unoptimized 
+              ref={cardRef} 
+            />
+            {/* Mobile version - larger container to avoid scale blur */}
+            <div className="min-[601px]:hidden absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none backface-hidden">
+              <div className="relative w-[180vh] h-[180vw] rotate-[-90deg]">
+                <Image 
+                  src="/images_home/redcard4.png" 
+                  alt="Red Card" 
+                  fill 
+                  sizes="180vh"
+                  quality={100} 
+                  className="object-contain"
+                  priority 
+                  unoptimized 
+                />
+              </div>
+            </div>
 
             <div id="part3_2" ref={part3_2Ref} className="absolute inset-0 flex flex-col items-center justify-center opacity-100 will-change-transform backface-hidden transform-[rotateY(180deg)]">
               {/* Background image using Next/Image for better quality */}
