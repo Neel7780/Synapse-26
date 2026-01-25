@@ -31,6 +31,7 @@ export async function GET(
           phone,
           college
         ),
+        coordinator_status,
         team (
           team_members ( user_id )
         ),
@@ -74,6 +75,7 @@ export async function GET(
         team_size: teamSize,
         registration_date: data.created_at,
       },
+      coordinator_status: data.coordinator_status ?? null,
       payment: {
         method: data.payment_method?.method_name,
         status: data.payment_status,

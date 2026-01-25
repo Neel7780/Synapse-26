@@ -20,13 +20,17 @@ export default function ArtistsSection() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [artists, setArtists] = useState<Artist[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const artistSectionRef = useRef<HTMLDivElement>(null);
   const artistSvgRef = useRef<SVGSVGElement>(null);
   const artistPathRef = useRef<SVGPathElement>(null);
   const artistDotRef = useRef<HTMLDivElement>(null);
-  const imagesContainerRef = useRef<HTMLDivElement>(null);
-  const carouselTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const cardsContainerRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const progressRef = useRef<HTMLDivElement>(null);
+  const autoPlayRef = useRef<gsap.core.Tween | null>(null);
+  const isPausedRef = useRef(false);
 
   useEffect(() => {
     const fetchArtists = async () => {
@@ -62,12 +66,11 @@ export default function ArtistsSection() {
           image: item.artist_image_url || "/images_home/AdityaGadhvi.jpeg",
         }));
       } else {
-        // Empty state
         loadedArtists = [
           {
             name: "TO BE ANNOUNCED",
             date: "",
-            image: "", // Empty image string triggers fallback UI
+            image: "",
           },
         ];
       }
@@ -97,94 +100,134 @@ export default function ArtistsSection() {
     return `M ${startX} ${startY} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${endX} ${endY}`;
   }, []);
 
-  const animateCarousel = useCallback(() => {
-    if (!imagesContainerRef.current) return;
+  // Modern GSAP-based card animation
+  const animateCards = useCallback((direction: 'next' | 'prev' | 'initial' = 'initial') => {
+    if (artists.length === 0) return;
+    
+    const isMobile = window.innerWidth < 768;
+    const cardWidth = isMobile ? 280 : 420;
+    const gap = isMobile ? 20 : 40;
 
-    const items = imagesContainerRef.current.querySelectorAll(".carousel-item");
-    if (items.length === 0) return;
+    cardRefs.current.forEach((card, i) => {
+      if (!card) return;
 
-    const isMobile = window.innerWidth < 600;
-    const spacing = isMobile ? window.innerWidth * 0.75 : window.innerWidth * 0.45;
-
-    items.forEach((item, i) => {
-      const element = item as HTMLElement;
       let diff = i - currentIndex;
-      const total = items.length;
+      const total = artists.length;
 
-      if (diff > total / 2) diff -= total;
-      if (diff < -total / 2) diff += total;
-
-      const offset = diff * spacing;
-      const absOffset = Math.abs(offset);
-
-      let opacity = 1;
-      let scale = 1;
-      let zIndex = 5;
-
-      if (diff === 0) {
-        element.classList.add("center");
-        zIndex = 10;
-        opacity = 1;
-        scale = 1;
-      } else if (Math.abs(diff) === 1) {
-        element.classList.remove("center");
-        opacity = 1; // Show neighbors
-        scale = 0.8; // Slightly smaller
-        zIndex = 5;
-      } else {
-        element.classList.remove("center");
-        // Hide items further away to prevent "back crossing" visual artifacts
-        opacity = 0;
-        scale = 0.5;
-        zIndex = 1;
+      // Handle wrapping
+      if (total > 2) {
+        if (diff > total / 2) diff -= total;
+        if (diff < -total / 2) diff += total;
       }
 
-      element.style.transform = `translateX(${offset}px) scale(${scale})`;
-      element.style.opacity = `${opacity}`;
-      element.style.zIndex = `${zIndex}`;
-    });
-  }, [currentIndex]);
+      const isCenter = diff === 0;
+      const isAdjacent = Math.abs(diff) === 1;
+      const isVisible = Math.abs(diff) <= 1;
 
-  const startCarouselTimer = useCallback(() => {
-    if (carouselTimerRef.current) {
-      clearInterval(carouselTimerRef.current);
+      // Calculate position with perspective offset
+      const xOffset = diff * (cardWidth * 0.6 + gap);
+      
+      // Visual properties
+      const scale = isCenter ? 1 : 0.65;
+      const opacity = isCenter ? 1 : isAdjacent ? 0.4 : 0;
+      const zIndex = isCenter ? 30 : isAdjacent ? 20 : 10;
+      const rotateY = isCenter ? 0 : diff > 0 ? -15 : 15;
+      const brightness = isCenter ? 1 : 0.5;
+
+      gsap.to(card, {
+        x: xOffset,
+        scale,
+        opacity,
+        rotateY,
+        filter: `brightness(${brightness})`,
+        zIndex,
+        duration: direction === 'initial' ? 0 : 0.7,
+        ease: "power3.out",
+      });
+    });
+  }, [artists.length, currentIndex]);
+
+  // Auto-play with progress bar
+  const startAutoPlay = useCallback(() => {
+    if (artists.length <= 1) return;
+
+    if (autoPlayRef.current) {
+      autoPlayRef.current.kill();
     }
 
-    if (artists.length <= 1) return; // No auto-scroll for single item
+    if (progressRef.current) {
+      gsap.set(progressRef.current, { scaleX: 0 });
+    }
 
-    carouselTimerRef.current = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % artists.length);
-    }, 10000);
+    autoPlayRef.current = gsap.to(progressRef.current, {
+      scaleX: 1,
+      duration: 5,
+      ease: "none",
+      onComplete: () => {
+        if (!isPausedRef.current) {
+          setCurrentIndex((prev) => (prev + 1) % artists.length);
+        }
+      }
+    });
   }, [artists.length]);
 
-  const resetCarouselTimer = useCallback(() => {
-    startCarouselTimer();
-  }, [startCarouselTimer]);
+  const pauseAutoPlay = useCallback(() => {
+    isPausedRef.current = true;
+    if (autoPlayRef.current) {
+      autoPlayRef.current.pause();
+    }
+  }, []);
+
+  const resumeAutoPlay = useCallback(() => {
+    isPausedRef.current = false;
+    if (autoPlayRef.current) {
+      autoPlayRef.current.resume();
+    }
+  }, []);
+
+  const restartAutoPlay = useCallback(() => {
+    isPausedRef.current = false;
+    startAutoPlay();
+  }, [startAutoPlay]);
 
   const nextArtist = useCallback(() => {
-    if (artists.length <= 1) return;
+    if (artists.length <= 1 || isAnimating) return;
+    setIsAnimating(true);
     setCurrentIndex((prev) => (prev + 1) % artists.length);
-    resetCarouselTimer();
-  }, [artists.length, resetCarouselTimer]);
+    restartAutoPlay();
+    setTimeout(() => setIsAnimating(false), 700);
+  }, [artists.length, isAnimating, restartAutoPlay]);
 
   const prevArtist = useCallback(() => {
-    if (artists.length <= 1) return;
+    if (artists.length <= 1 || isAnimating) return;
+    setIsAnimating(true);
     setCurrentIndex((prev) => (prev - 1 + artists.length) % artists.length);
-    resetCarouselTimer();
-  }, [artists.length, resetCarouselTimer]);
+    restartAutoPlay();
+    setTimeout(() => setIsAnimating(false), 700);
+  }, [artists.length, isAnimating, restartAutoPlay]);
 
+  const goToArtist = useCallback((index: number) => {
+    if (index === currentIndex || isAnimating) return;
+    setIsAnimating(true);
+    setCurrentIndex(index);
+    restartAutoPlay();
+    setTimeout(() => setIsAnimating(false), 700);
+  }, [currentIndex, isAnimating, restartAutoPlay]);
+
+  // Start auto-play
   useEffect(() => {
-    if (!loading) {
-      startCarouselTimer();
+    if (!loading && artists.length > 1) {
+      startAutoPlay();
     }
 
     return () => {
-      if (carouselTimerRef.current) {
-        clearInterval(carouselTimerRef.current);
+      if (autoPlayRef.current) {
+        autoPlayRef.current.kill();
       }
     };
-  }, [startCarouselTimer, loading]);
+  }, [loading, artists.length, startAutoPlay]);
 
+  // SVG path animation
   useEffect(() => {
     if (loading) return;
 
@@ -218,9 +261,7 @@ export default function ArtistsSection() {
         },
         onUpdate: (self) => {
           const progress = self.progress;
-          const point = artistPath.getPointAtLength(
-            progress * artistPathLength
-          );
+          const point = artistPath.getPointAtLength(progress * artistPathLength);
           const rect = artistSvg.getBoundingClientRect();
 
           const x = rect.left + (point.x / 1000) * rect.width;
@@ -234,138 +275,179 @@ export default function ArtistsSection() {
       const handleResize = () => {
         const newPath = generateViewportPath();
         artistPath.setAttribute("d", newPath);
-        animateCarousel();
+        animateCards('initial');
         scrollTrigger.refresh();
       };
 
       window.addEventListener("resize", handleResize);
-      // Trigger initial animation
-      animateCarousel();
+      animateCards('initial');
 
       return () => {
         window.removeEventListener("resize", handleResize);
         scrollTrigger.kill();
       };
     }
-  }, [generateViewportPath, animateCarousel, loading]);
+  }, [generateViewportPath, animateCards, loading]);
 
+  // Update cards when index changes
   useEffect(() => {
-    if (!loading) animateCarousel();
-  }, [currentIndex, animateCarousel, loading]);
+    if (!loading) {
+      animateCards('next');
+      startAutoPlay();
+    }
+  }, [currentIndex, animateCards, loading, startAutoPlay]);
 
-  if (loading) return null; // Or a loader
+  if (loading) return null;
 
   return (
     <div
-      className="artists-section relative bg-black overflow-x-clip"
+      className="artists-section relative bg-black overflow-hidden"
       id="artistsSection"
       ref={artistSectionRef}
-      style={{
-        height: "100svh",
-      }}
+      style={{ height: "100svh" }}
     >
-      <div className="artists-content relative top-[-1.6px] right-[-1px] h-full flex flex-col">
-        <svg
-          id="artistPath"
-          width="100%"
-          height="100%"
-          viewBox="0 0 1000 1000"
-          preserveAspectRatio="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="absolute inset-0 pointer-events-none z-1"
-          ref={artistSvgRef}
-        >
-          <path
-            id="artistSvgPath"
-            stroke="white"
-            strokeWidth="2"
-            fill="none"
-            ref={artistPathRef}
-          />
-        </svg>
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-zinc-950 to-black pointer-events-none z-0" />
 
-        {/* Title at top */}
-        <div className="flex-shrink-0 pt-1 pb-12">
-          <h1
-            id="artistsTitle"
-            className="font-joker text-[clamp(2.5rem,10vw,6rem)] px-8 leading-none text-white lowercase text-center"
-          >
-            ARTISTS
+      {/* SVG Path - Behind cards */}
+      <svg
+        ref={artistSvgRef}
+        width="100%"
+        height="100%"
+        viewBox="0 0 1000 1000"
+        preserveAspectRatio="none"
+        className="absolute inset-0 pointer-events-none z-[1]"
+      >
+        <path
+          ref={artistPathRef}
+          stroke="white"
+          strokeWidth="2"
+          fill="none"
+        />
+      </svg>
+
+      {/* Animated dot - Above path but can be behind cards */}
+      <div
+        ref={artistDotRef}
+        className="fixed w-16 h-16 md:w-24 md:h-24 bg-red-600 rounded-full blur-[25px] pointer-events-none z-[2] opacity-0 -translate-x-1/2 -translate-y-1/2"
+        id="artistPathDot"
+      />
+
+      {/* Main content - Above SVG path */}
+      <div className="relative h-full flex flex-col z-10">
+        {/* Header with title and counter */}
+        <div className="pt-8 md:pt-12 px-6 md:px-12 flex items-center justify-between">
+          <h1 className="font-joker text-5xl md:text-7xl lg:text-8xl text-white">
+            artists
           </h1>
+          
+          {artists.length > 1 && (
+            <div className="flex items-baseline gap-1">
+              <span className="text-4xl md:text-6xl font-jqka text-white tabular-nums">
+                {String(currentIndex + 1).padStart(2, '0')}
+              </span>
+              <span className="text-xl md:text-2xl text-white/30 font-jqka">/</span>
+              <span className="text-xl md:text-2xl text-white/30 font-jqka">
+                {String(artists.length).padStart(2, '0')}
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Carousel - Center area */}
-        <div className="carousel relative flex-1 min-h-0 flex items-center justify-center">
-          {/* White line through center - Perfectly centered */}
-          <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[2px] bg-white z-0"></div>
+        {/* Progress bar */}
+        {artists.length > 1 && (
+          <div className="px-6 md:px-12 mt-4">
+            <div className="h-[2px] bg-white/10 rounded-full overflow-hidden">
+              <div 
+                ref={progressRef}
+                className="h-full bg-gradient-to-r from-red-600 to-red-500 origin-left rounded-full"
+                style={{ transform: 'scaleX(0)' }}
+              />
+            </div>
+          </div>
+        )}
 
+        {/* Main carousel area */}
+        <div 
+          className="flex-1 relative flex items-center justify-center perspective-[1200px]"
+          onMouseEnter={pauseAutoPlay}
+          onMouseLeave={resumeAutoPlay}
+        >
+          {/* Cards container */}
           <div
-            id="artistPathDot"
-            className="fixed w-14 h-14 md:w-22.5 md:h-22.5 bg-[#ff0000] rounded-full blur-[20px] pointer-events-none z-5 opacity-0 -translate-x-1/2 -translate-y-1/2"
-            ref={artistDotRef}
-          ></div>
-
-          {/* Images Container - Centered */}
-          <div
-            className="images-container relative w-full h-full flex items-center justify-center"
-            id="imagesContainer"
-            ref={imagesContainerRef}
+            ref={cardsContainerRef}
+            className="relative w-full h-full flex items-center justify-center"
+            style={{ transformStyle: "preserve-3d" }}
           >
             {artists.map((artist, i) => (
               <div
                 key={i}
-                className={`carousel-item absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-600 ease-in-out ${i === currentIndex ? "center" : ""
-                  }`}
-                onClick={() => {
-                  setCurrentIndex(i);
-                  resetCarouselTimer();
-                }}
+                ref={(el) => { cardRefs.current[i] = el; }}
+                className="absolute cursor-pointer transform-gpu"
+                onClick={() => goToArtist(i)}
                 style={{
-                  transform: `translate(-50%, -50%) translateX(0px) scale(1)`,
+                  width: "clamp(280px, 40vw, 420px)",
+                  height: "clamp(350px, 55vw, 550px)",
+                  transformStyle: "preserve-3d",
                 }}
               >
-                {artist.image ? (
-                  <div
-                    className="relative z-10 transition-transform duration-300 md:hover:scale-110 cursor-pointer max-[550px]:scale-120"
-                    style={{
-                      width:
-                        i === currentIndex
-                          ? "clamp(240px, 45vw, 480px)"
-                          : "clamp(140px, 28vw, 260px)",
-                      height:
-                        i === currentIndex
-                          ? "clamp(150px, 35vw, 420px)"
-                          : "clamp(110px, 28vw, 260px)",
-                    }}
-                  >
-                    <Image
-                      src={artist.image}
-                      alt={artist.name}
-                      fill
-                      priority={false}
-                      loading="eager"
-                      className="object-cover"
-                    />
+                {/* Card */}
+                <div className="relative w-full h-full rounded-2xl overflow-hidden group">
+                  {/* Glowing border effect for active card */}
+                  <div 
+                    className={`absolute -inset-[2px] rounded-2xl transition-opacity duration-500 ${
+                      i === currentIndex 
+                        ? 'opacity-100 bg-gradient-to-b from-red-500/50 via-transparent to-red-500/50' 
+                        : 'opacity-0'
+                    }`}
+                  />
+                  
+                  {/* Card inner */}
+                  <div className="absolute inset-[2px] rounded-2xl overflow-hidden bg-zinc-900">
+                    {artist.image ? (
+                      <>
+                        <Image
+                          src={artist.image}
+                          alt={artist.name}
+                          fill
+                          sizes="(max-width: 768px) 100vw, 50vw"
+                          quality={100}
+                          className="object-cover transition-transform duration-700 group-hover:scale-105"
+                          priority={i < 3}
+                          unoptimized
+                        />
+                        {/* Gradient overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80" />
+                        
+                        {/* Artist info on card */}
+                        <div 
+                          className={`absolute bottom-0 left-0 right-0 p-6 transform transition-all duration-500 ${
+                            i === currentIndex ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
+                          }`}
+                        >
+                          <h3 className="text-2xl md:text-3xl font-jqka text-white uppercase tracking-wide">
+                            {artist.name}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-2">
+                            <div className="w-8 h-[2px] bg-red-600" />
+                            <p className="text-sm md:text-base text-white/70 font-jqka uppercase tracking-wider">
+                              {artist.date}
+                            </p>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-zinc-900">
+                        <span className="font-joker text-white/30 text-3xl md:text-5xl text-center px-4">
+                          TBA
+                        </span>
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <div
-                    className="flex items-center justify-center bg-zinc-900 border border-white/20 z-10 transition-transform duration-300 cursor-default"
-                    style={{
-                      width:
-                        i === currentIndex
-                          ? "clamp(240px, 45vw, 480px)"
-                          : "clamp(140px, 28vw, 260px)",
-                      height:
-                        i === currentIndex
-                          ? "clamp(150px, 20vw, 300px)"
-                          : "clamp(110px, 22vw, 260px)",
-                    }}
-                  >
-                    <span className="font-joker text-white text-3xl md:text-5xl text-center opacity-50 px-4">
-                      TO BE ANNOUNCED
-                    </span>
-                  </div>
-                )}
+
+                  {/* Shine effect on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl" />
+                </div>
               </div>
             ))}
           </div>
@@ -373,87 +455,73 @@ export default function ArtistsSection() {
           {/* Navigation buttons */}
           {artists.length > 1 && (
             <>
+              {/* Previous button */}
               <button
-                className="
-                group
-                absolute top-1/2 -translate-y-1/2
-                flex items-center justify-center
-                bg-red-600 hover:bg-white
-                transition-colors duration-400
-                z-20 cursor-pointer
-              "
-                onClick={nextArtist}
-                style={{
-                  width: "clamp(32px, 6vw, 62px)",
-                  height: "clamp(28px, 5vw, 54px)",
-                  left: "calc(clamp(240px, 45vw, 480px)/2 + 50%)",
-                }}
-                aria-label="Next artist"
-              >
-                <div
-                  className="
-                  bg-white
-                  group-hover:bg-red-600
-                  transition-colors duration-400
-                  rotate-90
-                "
-                  style={{
-                    width: "clamp(14px, 2.5vw, 33px)",
-                    height: "clamp(10px, 1.8vw, 22px)",
-                    clipPath: "polygon(50% 0%, 0% 100%, 100% 100%)",
-                  }}
-                />
-              </button>
-
-              <button
-                className="
-                group
-                absolute top-1/2 -translate-y-1/2
-                flex items-center justify-center
-                bg-red-600 hover:bg-white
-                transition-colors duration-400
-                z-20 cursor-pointer
-              "
                 onClick={prevArtist}
-                style={{
-                  width: "clamp(32px, 6vw, 62px)",
-                  height: "clamp(28px, 5vw, 54px)",
-                  right: "calc(clamp(240px, 45vw, 480px)/2 + 50%)",
-                }}
+                disabled={isAnimating}
+                className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-40 w-14 h-14 md:w-16 md:h-16 rounded-full bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center transition-all duration-300 hover:bg-red-600 hover:border-red-600 group disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Previous artist"
               >
-                <div
-                  className="
-                  bg-white
-                  group-hover:bg-red-600
-                  transition-colors duration-400
-                  -rotate-90
-                "
-                  style={{
-                    width: "clamp(14px, 2.5vw, 33px)",
-                    height: "clamp(10px, 1.8vw, 22px)",
-                    clipPath: "polygon(50% 0%, 0% 100%, 100% 100%)",
-                  }}
-                />
+                <svg
+                  className="w-6 h-6 md:w-7 md:h-7 text-white transition-transform duration-300 group-hover:-translate-x-0.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
+              {/* Next button */}
+              <button
+                onClick={nextArtist}
+                disabled={isAnimating}
+                className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-40 w-14 h-14 md:w-16 md:h-16 rounded-full bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center transition-all duration-300 hover:bg-red-600 hover:border-red-600 group disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Next artist"
+              >
+                <svg
+                  className="w-6 h-6 md:w-7 md:h-7 text-white transition-transform duration-300 group-hover:translate-x-0.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               </button>
             </>
           )}
         </div>
 
-        {/* Artist Info at bottom */}
-        {artists.length > 0 && (
-          <div className="flex-shrink-0 pb-2 sm:pb-4 pt-4 flex justify-center px-4 mb-6">
-            <div className="border-t-2 border-b-2 border-white py-3 px-6 text-center text-white bg-black/50 backdrop-blur-sm w-full max-w-md">
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-jqka uppercase">
-                {artists[currentIndex].name}
-              </h2>
-              <p className="text-sm sm:text-base md:text-xl font-jqka">
-                {artists[currentIndex].date}
-              </p>
-            </div>
+        {/* Bottom navigation dots */}
+        {artists.length > 1 && (
+          <div className="pb-8 md:pb-12 flex items-center justify-center gap-3">
+            {artists.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => goToArtist(i)}
+                className={`relative h-3 rounded-full transition-all duration-500 overflow-hidden ${
+                  i === currentIndex 
+                    ? "w-12 bg-white/20" 
+                    : "w-3 bg-white/20 hover:bg-white/40"
+                }`}
+                aria-label={`Go to artist ${i + 1}`}
+              >
+                {i === currentIndex && (
+                  <div className="absolute inset-0 bg-red-600 origin-left animate-[fillDot_5s_linear]" />
+                )}
+              </button>
+            ))}
           </div>
         )}
       </div>
+
+      {/* CSS for dot animation */}
+      <style jsx>{`
+        @keyframes fillDot {
+          from { transform: scaleX(0); }
+          to { transform: scaleX(1); }
+        }
+      `}</style>
     </div>
   );
 }

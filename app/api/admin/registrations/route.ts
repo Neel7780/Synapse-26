@@ -44,6 +44,7 @@ export async function GET(req: NextRequest) {
       transaction_id,
       registration_id,
       payment_status,
+        coordinator_status,
       payment_screenshot_url,
       gross_amount,
       team (
@@ -77,6 +78,7 @@ export async function GET(req: NextRequest) {
       transaction_id,
       registration_id,
       payment_status,
+        coordinator_status,
       payment_screenshot_url,
       gross_amount,
       team (
@@ -151,6 +153,7 @@ export async function GET(req: NextRequest) {
           payment_method: row.payment_method?.method_name,
           group_size: groupSize,
           payment_status: row.payment_status,
+          coordinator_status: row.coordinator_status ?? null,
           payment_screenshot_url: row.payment_screenshot_url,
           gross_amount: price,
           gateway_charge: gateway,

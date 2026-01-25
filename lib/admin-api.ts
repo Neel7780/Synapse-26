@@ -251,6 +251,7 @@ export type Registration = {
     gross_amount: number;
     gateway_charge: number;
     net_amount: number;
+    coordinator_status?: string | null;
 };
 
 export type RegistrationsResponse = {

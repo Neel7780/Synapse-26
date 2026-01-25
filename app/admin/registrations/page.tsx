@@ -93,7 +93,7 @@ export default function RegistrationsPage() {
 
   // Download CSV
   const downloadCSV = () => {
-    const headers = ["ID", "Name", "Email", "Event", "Amount", "Status", "Transaction ID"];
+    const headers = ["ID", "Name", "Email", "Event", "Amount", "Payment Status", "Coordinator Status", "Transaction ID"];
     const rows = registrations.map((r) => [
       r.registration_id,
       r.user_name,
@@ -101,6 +101,7 @@ export default function RegistrationsPage() {
       r.event_name,
       r.gross_amount,
       r.payment_status,
+      r.coordinator_status ?? "",
       r.transaction_id,
     ]);
     const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
@@ -279,20 +280,36 @@ export default function RegistrationsPage() {
                       <span className="font-medium">₹{reg.gross_amount}</span>
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        className={
-                          reg.payment_status === "done"
-                            ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
-                            : "bg-amber-500/20 text-amber-300 border-amber-500/30"
-                        }
-                      >
+                      <div className="flex items-center gap-2">
                         {reg.payment_status === "done" ? (
-                          <CheckCircle2 className="mr-1 h-3 w-3" />
+                          <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
+                            <CheckCircle2 className="mr-1 h-3 w-3" />
+                            Paid
+                          </Badge>
                         ) : (
-                          <Clock className="mr-1 h-3 w-3" />
+                          // Only show Pending if coordinator hasn't reviewed yet
+                          !reg.coordinator_status && (
+                            <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30">
+                              <Clock className="mr-1 h-3 w-3" />
+                              Pending
+                            </Badge>
+                          )
                         )}
-                        {reg.payment_status === "done" ? "Paid" : "Pending"}
-                      </Badge>
+
+                        {reg.coordinator_status ? (
+                          <Badge
+                            className={
+                              reg.coordinator_status === "accepted"
+                                ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                                : reg.coordinator_status === "rejected"
+                                ? "bg-red-500/20 text-red-300 border-red-500/30"
+                                : "bg-muted-500/20 text-muted-foreground border-border/30"
+                            }
+                          >
+                            {String(reg.coordinator_status).charAt(0).toUpperCase() + String(reg.coordinator_status).slice(1)}
+                          </Badge>
+                        ) : null}
+                      </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm font-mono">
                       {reg.transaction_id}
@@ -377,15 +394,31 @@ export default function RegistrationsPage() {
                   </div>
                   <div className="space-y-1">
                     <label className="text-sm font-medium text-muted-foreground">Payment Status</label>
-                    <Badge
-                      className={
-                        selectedRegistration.payment_status === "done"
-                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
-                          : "bg-amber-500/20 text-amber-300 border-amber-500/30"
-                      }
-                    >
-                      {selectedRegistration.payment_status === "done" ? "Paid" : "Pending"}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        className={
+                          selectedRegistration.payment_status === "done"
+                            ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                            : "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                        }
+                      >
+                        {selectedRegistration.payment_status === "done" ? "Paid" : "Pending"}
+                      </Badge>
+
+                      <Badge
+                        className={
+                          selectedRegistration.coordinator_status === "accepted"
+                            ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                            : selectedRegistration.coordinator_status === "rejected"
+                            ? "bg-red-500/20 text-red-300 border-red-500/30"
+                            : "bg-muted-500/20 text-muted-foreground border-border/30"
+                        }
+                      >
+                        {selectedRegistration.coordinator_status
+                          ? String(selectedRegistration.coordinator_status).charAt(0).toUpperCase() + String(selectedRegistration.coordinator_status).slice(1)
+                          : "Unreviewed"}
+                      </Badge>
+                    </div>
                   </div>
                 </div>
                 <div className="border-t border-border/50 pt-4 mt-2 space-y-2">

@@ -31,7 +31,7 @@ type RegisteredEvent = {
   id: string | number;
   name: string;
   category: string;
-  status: string;
+  coordinatorStatus?: string | null;
 };
 
 type AccommodationBooking = {
@@ -101,26 +101,25 @@ const EditableProfileField = memo(function EditableProfileField({
   );
 });
 
-// Memoized event card component
-const EventCard = memo(function EventCard({
-  event,
-}: {
-  event: RegisteredEvent;
-}) {
+// Memoized event card component (shows coordinator status only)
+const EventCard = memo(function EventCard({ event }: { event: RegisteredEvent }) {
+  const coord = event.coordinatorStatus;
+  const badge = coord
+    ? coord === "accepted"
+      ? { text: "Accepted", className: "bg-green-500/20 text-green-400" }
+      : coord === "rejected"
+      ? { text: "Rejected", className: "bg-red-500/20 text-red-400" }
+      : { text: String(coord).charAt(0).toUpperCase() + String(coord).slice(1), className: "bg-muted-500/20 text-muted-foreground" }
+    : { text: "Pending", className: "bg-orange-500/20 text-orange-400" };
+
   return (
     <div className="border border-white p-3 md:p-4 transition-colors hover:bg-white/5">
       <div className="flex justify-between items-start gap-3">
         <h3 className="font-semibold text-base md:text-lg leading-tight">
           {event.name}
         </h3>
-        <span
-          className={`px-2 py-0.5 md:px-3 md:py-1 rounded-full text-xs md:text-sm whitespace-nowrap font-medium ${
-            event.status === "Registered"
-              ? "bg-green-500/20 text-green-400"
-              : "bg-orange-500/20 text-orange-400"
-          }`}
-        >
-          {event.status}
+        <span className={`px-2 py-0.5 md:px-3 md:py-1 rounded-full text-xs md:text-sm whitespace-nowrap font-medium ${badge.className}`}>
+          {badge.text}
         </span>
       </div>
       <p className="mt-1 text-xs md:text-sm text-muted-foreground font-roboto">
@@ -173,6 +172,7 @@ export default function UserProfile() {
             .select(
               `
             *,
+            coordinator_status,
             event (
               event_name,
               event_category (
@@ -215,18 +215,16 @@ export default function UserProfile() {
             const eventObj = (reg as any).event;
             const categoryObj = eventObj?.event_category;
 
-            return {
-              id: reg.registration_id,
-              name: eventObj?.event_name || "Unknown Event",
-              category: categoryObj?.category_name || "General",
-              status:
-                reg.payment_status === "done"
-                  ? "Registered"
-                  : "Payment Pending",
-            };
-          });
-          setRegisteredEvents(mappedEvents);
-        }
+          return {
+            id: reg.registration_id,
+            name: eventObj?.event_name || "Unknown Event",
+            category: categoryObj?.category_name || "General",
+              status: reg.payment_status === "done" ? "Registered" : "Payment Pending",
+              coordinatorStatus: reg.coordinator_status ?? null,
+          };
+        });
+        setRegisteredEvents(mappedEvents);
+      }
 
         // Process accommodation data
         if (accResult.data && accResult.data.length > 0) {

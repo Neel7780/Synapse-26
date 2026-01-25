@@ -35,7 +35,10 @@ const HeroCard = ({
       alt="Hall of Fame"
       fill
       className="object-cover"
-      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+      sizes="100vw"
+      quality={100}
+      priority
+      unoptimized
     />
     <div className="hof-title absolute inset-0 z-10 flex items-end justify-center pb-6 md:pb-8">
       <span className={`${titleSize} text-center font-white font-joker text-white drop-shadow-lg tracking-wider`}>
@@ -489,13 +492,34 @@ export default function HallOfFame() {
         return true;
       };
 
+      let trigger: globalThis.ScrollTrigger | undefined;
+      let rafId: number;
+      let retryCount = 0;
+
       const waitForHero = () => {
+        // Stop if component unmounted
+        if (!hallContainerRef.current) return;
+
         if (!calculateStartScale()) {
-          requestAnimationFrame(waitForHero);
+          if (retryCount < 60) { // Try for ~1 second
+            retryCount++;
+            rafId = requestAnimationFrame(waitForHero);
+            return;
+          }
+          // If timed out, verify if we have grid items at least
+          if (process.env.NODE_ENV !== "production") {
+            console.warn("HallOfFame: Hero not found, forcing visibility");
+          }
+          // Force visibility of all items as a fallback
+          gridImages.forEach((image, index) => {
+            const mode = getActiveMode();
+            const item = gridItemsRef.current[mode][index];
+            if (item) gsap.set(item, { opacity: 1, scale: 1, filter: "none", clearProps: "all" });
+          });
           return;
         }
 
-        ScrollTrigger.create({
+        trigger = ScrollTrigger.create({
           trigger: hallContainerRef.current!,
           start: "top top-=5%",
           end: "bottom top",
@@ -505,24 +529,24 @@ export default function HallOfFame() {
           onRefreshInit: calculateStartScale,
 
           onUpdate: (self) => {
-            if (!hero) return;
+            if (hero) {
+              // Use a custom easing for the hero zoom-out
+              const heroProgress = Math.min(self.progress / 0.5, 1);
+              const heroEased = gsap.parseEase("power3.out")(heroProgress);
 
-            // Use a custom easing for the hero zoom-out
-            const heroProgress = Math.min(self.progress / 0.5, 1);
-            const heroEased = gsap.parseEase("power3.out")(heroProgress);
+              // Hero zoom-out animation with enhanced effects
+              const currentScaleX = gsap.utils.interpolate(startScaleX, 1, heroEased);
+              const currentScaleY = gsap.utils.interpolate(startScaleY, 1, heroEased);
+              const currentRadius = gsap.utils.interpolate(0, 20, heroEased);
+              const currentBrightness = gsap.utils.interpolate(1, 0.95, heroEased);
 
-            // Hero zoom-out animation with enhanced effects
-            const currentScaleX = gsap.utils.interpolate(startScaleX, 1, heroEased);
-            const currentScaleY = gsap.utils.interpolate(startScaleY, 1, heroEased);
-            const currentRadius = gsap.utils.interpolate(0, 20, heroEased);
-            const currentBrightness = gsap.utils.interpolate(1, 0.95, heroEased);
-
-            gsap.set(hero, {
-              scaleX: currentScaleX,
-              scaleY: currentScaleY,
-              borderRadius: `${currentRadius}px`,
-              filter: `brightness(${currentBrightness})`,
-            });
+              gsap.set(hero, {
+                scaleX: currentScaleX,
+                scaleY: currentScaleY,
+                borderRadius: `${currentRadius}px`,
+                filter: `brightness(${currentBrightness})`,
+              });
+            }
 
             // Grid items animation with staggered reveal
             const mode = getActiveMode();
@@ -575,8 +599,15 @@ export default function HallOfFame() {
 
       waitForHero();
 
+      // Additional safety refresh for navigation cases
+      const timer = setTimeout(() => {
+        ScrollTrigger.refresh();
+      }, 1000);
+
       return () => {
-        ScrollTrigger.getAll().forEach((t) => t.kill());
+        clearTimeout(timer);
+        cancelAnimationFrame(rafId);
+        if (trigger) trigger.kill();
       };
     },
     { scope: hallContainerRef }
@@ -606,8 +637,9 @@ export default function HallOfFame() {
           alt={image.alt}
           fill
           className="object-cover transition-transform duration-700 group-hover:scale-110"
-          loading="lazy"
-          sizes="(max-width: 768px) 33vw, (max-width: 1024px) 20vw, 16vw"
+          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          quality={100}
+          unoptimized
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       </div>
