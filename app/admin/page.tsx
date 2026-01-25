@@ -76,6 +76,7 @@ export default function AdminDashboard() {
       userName: reg.user_name,
       event: reg.event_name,
       status: reg.payment_status.toLowerCase(),
+      coordinatorStatus: reg.coordinator_status ?? null,
       amount: reg.gross_amount,
     }));
   }, [registrationsData]);
@@ -307,9 +308,20 @@ export default function AdminDashboard() {
                                 <span className="text-sm">Paid</span>
                               </div>
                             ) : (
-                              <div className="flex items-center gap-1.5 text-amber-400">
-                                <Clock className="h-3.5 w-3.5" />
-                                <span className="text-sm capitalize">{reg.status}</span>
+                              <div className="flex items-center gap-2">
+                                {/* show Pending only if coordinator hasn't reviewed */}
+                                {!reg.coordinatorStatus ? (
+                                  <div className="flex items-center gap-1.5 text-amber-400">
+                                    <Clock className="h-3.5 w-3.5" />
+                                    <span className="text-sm capitalize">pending</span>
+                                  </div>
+                                ) : null}
+
+                                {reg.coordinatorStatus ? (
+                                  <div className={`px-3 py-0.5 rounded-full text-sm font-medium ${reg.coordinatorStatus === 'accepted' ? 'bg-emerald-500/20 text-emerald-300' : reg.coordinatorStatus === 'rejected' ? 'bg-red-500/20 text-red-300' : 'bg-muted/20 text-muted-foreground'}`}>
+                                    {String(reg.coordinatorStatus).charAt(0).toUpperCase() + String(reg.coordinatorStatus).slice(1)}
+                                  </div>
+                                ) : null}
                               </div>
                             )}
                           </TableCell>
