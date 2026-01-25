@@ -594,18 +594,26 @@ export default function HallOfFame() {
           },
         });
 
-        ScrollTrigger.refresh();
+        // Immediate refresh to calculate correct positions
+        requestAnimationFrame(() => {
+          ScrollTrigger.refresh();
+        });
       };
 
       waitForHero();
 
-      // Additional safety refresh for navigation cases
-      const timer = setTimeout(() => {
+      // Additional safety refresh for navigation cases - staggered to ensure layout is complete
+      const timer1 = setTimeout(() => {
         ScrollTrigger.refresh();
-      }, 1000);
+      }, 100);
+
+      const timer2 = setTimeout(() => {
+        ScrollTrigger.refresh();
+      }, 500);
 
       return () => {
-        clearTimeout(timer);
+        clearTimeout(timer1);
+        clearTimeout(timer2);
         cancelAnimationFrame(rafId);
         if (trigger) trigger.kill();
       };

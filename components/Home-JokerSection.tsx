@@ -275,17 +275,25 @@ export default function JokerSection() {
           "<"
         );
 
+
+      // Reset only GSAP-animated properties, preserve CSS classes' transforms
+      gsap.set(exploreTitleRef.current, {
+        clearProps: "opacity,y,scale,color,top",
+      });
+      // Now set the proper initial state - use yPercent for centering to work with GSAP's y property
       gsap.set(exploreTitleRef.current, {
         opacity: 0,
         y: 80,
+        yPercent: -50,  // This replaces CSS -translate-y-1/2, works with GSAP's y
         scale: 1.1,
         color: "#9ca3af",
+        top: "50%",
       });
       jokerTl.to(
         exploreTitleRef.current,
         {
           opacity: 1,
-          y: 40,
+          y: 60,
           duration: 1.2,
           ease: "power2.out",
         },
@@ -295,7 +303,7 @@ export default function JokerSection() {
       jokerTl.to(
         exploreTitleRef.current,
         {
-          y: -window.innerHeight * 0.03,
+          y: -window.innerHeight * 0.05,
           scale: 1,
           color: "#ffffff",
           duration: 2.5,
@@ -306,8 +314,9 @@ export default function JokerSection() {
       jokerTl.to(
         exploreTitleRef.current,
         {
-          top: "2%",
-          y: -10,
+          top: "0%",
+          y: 10,
+          yPercent: 0,  // Reset centering offset when moving to top
           duration: 1.8,
           ease: "power2.inOut",
         },
