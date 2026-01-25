@@ -82,7 +82,6 @@ export default function RegistrationsPage() {
     total_registrations: 0,
     paid: 0,
     gross_revenue: 0,
-    gateway_charges: 0,
     net_revenue: 0,
   };
   const total = data?.total || 0;
@@ -118,7 +117,6 @@ export default function RegistrationsPage() {
     { title: "Paid", value: summary.paid, icon: CheckCircle2, gradient: "from-emerald-600 to-emerald-700" },
     { title: "Pending", value: summary.total_registrations - summary.paid, icon: Clock, gradient: "from-amber-600 to-amber-700" },
     { title: "Gross Revenue", value: `₹${summary.gross_revenue.toLocaleString()}`, icon: DollarSign, gradient: "from-red-600 to-rose-700" },
-    { title: "Gateway Charges", value: `₹${summary.gateway_charges.toFixed(2)}`, icon: CreditCard, gradient: "from-rose-600 to-red-700" },
     { title: "Net Revenue", value: `₹${summary.net_revenue.toFixed(2)}`, icon: TrendingUp, gradient: "from-red-600 to-rose-700" },
   ];
 
@@ -177,7 +175,7 @@ export default function RegistrationsPage() {
       {/* Filters */}
       <Card className="border-border/50">
         <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 flex gap-2">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -394,10 +392,6 @@ export default function RegistrationsPage() {
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Amount</span>
                     <span className="font-medium">₹{selectedRegistration.gross_amount}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Gateway Charge</span>
-                    <span className="text-red-400">-₹{selectedRegistration.gateway_charge.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between items-center pt-2 border-t border-border/50">
                     <span className="font-semibold">Net Amount</span>

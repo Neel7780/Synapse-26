@@ -62,16 +62,22 @@ export default function ArtistCarousel() {
         const transformedData: CarouselArtist[] = sortedData.map((item, index) => {
           // Calculate Day X relative to Feb 26, 2026
           let dayLabel = "TBA";
+
           if (item.concert?.concert_date) {
-            const concertDate = new Date(item.concert.concert_date);
-            const baseDate = new Date("2026-02-26");
-            // Difference in milliseconds
-            const diffTime = concertDate.getTime() - baseDate.getTime();
-            // Difference in days (rounded appropriately)
-            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-            // 0-indexed difference, so +1 for Day 1
-            const dayNum = diffDays + 1;
-            dayLabel = `DAY ${dayNum.toString().padStart(2, '0')}`;
+            // Hardcoded date mapping to remove all time constraints
+            const dateStr = item.concert.concert_date.split('T')[0];
+
+            if (dateStr === "2026-02-26") {
+              dayLabel = "DAY 01";
+            } else if (dateStr === "2026-02-27") {
+              dayLabel = "DAY 02";
+            } else if (dateStr === "2026-02-28") {
+              dayLabel = "DAY 03";
+            } else if (dateStr === "2026-03-01") {
+              dayLabel = "DAY 04";
+            } else if (dateStr < "2026-02-26") {
+              dayLabel = "PRE-SYNAPSE";
+            }
           }
 
           return {
@@ -79,7 +85,7 @@ export default function ArtistCarousel() {
             tag: item.genre || "MUSIC",
             artist: item.name,
             description: item.bio || "",
-            image: item.artist_image_url || "/images_home/placeholder.jpg",
+            image: item.artist_image_url || "/images_home/HallofFame.jpeg",
             hexColor: COLORS[index % COLORS.length]
           };
         });
@@ -154,9 +160,7 @@ const Card = ({ data, index, total, progress }: CardProps) => {
   const nextStartFocus = (index + 1) * sectionSize;
 
   const getSlant = (idx: number) => {
-    if (idx === 0) return 0;
-    const slants = [0, -35, 30, -25, 20];
-    return slants[idx % slants.length];
+    return 0;
   };
 
   const slant = getSlant(index);
@@ -172,20 +176,20 @@ const Card = ({ data, index, total, progress }: CardProps) => {
 
   // X-Range: Percentage of card width + gap to keep space between them
   const xValues = isFirst
-    ? ["0%", "0%", "0%", "-110%"]
+    ? ["0%", "0%", "0%", "-105%"]
     : isLast
-      ? ["110%", "0%", "0%", "0%"]
-      : ["110%", "0%", "0%", "-110%"];
+      ? ["105%", "0%", "0%", "0%"]
+      : ["105%", "0%", "0%", "-105%"];
 
   const x = useTransform(progress, xRange, xValues);
 
   // Opacity: Ensure card is only visible when it's the active one or part of the transition
   // We use a small buffer (0.05) to allow it to be seen while entering/exiting
   const opacityValues = isFirst
-    ? [1, 1, 1, 0]
+    ? [1, 1, 1, 0.4]
     : isLast
-      ? [0, 1, 1, 1]
-      : [0, 1, 1, 0];
+      ? [0.4, 1, 1, 1]
+      : [0.4, 1, 1, 0.4];
 
   const opacityRange = [
     startFocus - sectionSize,
