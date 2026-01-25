@@ -70,36 +70,38 @@ export async function GET() {
         const getDayIndex = (dateStr: string): number => {
             if (!dateStr) return -1;
 
-            // Handle "2026-02-26 08:20:20+00" or ISO formats
-            // We want to be robust about the date part regardless of timezone shifts for the Day bucket
-            // So we'll try to match the date string directly first if possible, or parse safely.
-
-            // check for specific dates in string to avoid timezone day-shift issues
-            if (dateStr.includes("2026-02-26")) return 0;
-            if (dateStr.includes("2026-02-27")) return 1;
-            if (dateStr.includes("2026-02-28")) return 2;
-            if (dateStr.includes("2026-03-01")) return 3;
-
             try {
-                const date = new Date(dateStr);
+                // Force IST interpretation by stripping any existing timezone and appending +05:30
+                // This assumes the backend data values (e.g. "12:00") are meant to be IST.
+                // e.g. "2026-02-27T00:00:00Z" -> "2026-02-27T00:00:00+05:30"
+                const cleanDateStr = dateStr.replace('Z', '').replace(/\+\d{2}:\d{2}$/, '').replace(' ', 'T');
+                const normalizedStr = `${cleanDateStr}+05:30`;
+
+                const date = new Date(normalizedStr);
                 if (isNaN(date.getTime())) {
                     console.warn(`Timeline API: Invalid date string: ${dateStr}`);
                     return -1;
                 }
 
-                // Fallback to UTC date check if string matching failed
-                const month = date.getUTCMonth(); // 0-indexed
-                const day = date.getUTCDate();
+                // Adjust for 6 AM IST (00:30 UTC) cutoff
+                // Any time before 6:00 AM IST (00:30 UTC) belongs to the previous logical day.
+                // We shift the time back by 30 minutes.
+                // Case 1: 06:00 AM IST -> 00:30 UTC. Minus 30m -> 00:00 UTC (Current Day).
+                // Case 2: 05:59 AM IST -> 00:29 UTC. Minus 30m -> 23:59 UTC (Previous Day).
+                const adjustedDate = new Date(date.getTime() - 30 * 60 * 1000);
+
+                const month = adjustedDate.getUTCMonth(); // 0-indexed
+                const day = adjustedDate.getUTCDate();
 
                 // Feb (Month 1 in 0-indexed)
                 if (month === 1) {
-                    if (day === 26) return 0;
-                    if (day === 27) return 1;
-                    if (day === 28) return 2;
+                    if (day <= 26) return 0; // Day 1: until Feb 27 6am (Shifted <= Feb 26 23:59)
+                    if (day === 27) return 1; // Day 2
+                    if (day === 28) return 2; // Day 3
                 }
                 // Mar (Month 2)
                 if (month === 2) {
-                    if (day === 1) return 3;
+                    if (day === 1) return 3; // Day 4
                 }
 
                 return -1;
@@ -114,36 +116,42 @@ export async function GET() {
             let displayTime = "";
             let sortTime = 0;
 
+            // Parse base date for formatting
+            // Force IST interpretation by stripping any existing timezone and appending +05:30
+            const cleanDateStr = dateStr ? dateStr.replace('Z', '').replace(/\+\d{2}:\d{2}$/, '').replace(' ', 'T') : '';
+            const normalizedStr = cleanDateStr ? `${cleanDateStr}+05:30` : '';
+
+            const date = new Date(normalizedStr);
+            const isValidDate = !isNaN(date.getTime());
+
+            // Format date part: "Feb 26"
+            const datePart = isValidDate
+                ? date.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "Asia/Kolkata" })
+                : "";
+
             if (timeStr) {
-                // Use explicitly provided time string
-                displayTime = timeStr;
+                // Use explicitly provided time string, but prepend date
+                displayTime = isValidDate ? `${datePart} | ${timeStr}` : timeStr;
+
                 try {
                     const startTimePart = timeStr.split('-')[0].trim();
-                    const date = new Date(`2000/01/01 ${startTimePart}`);
-                    if (!isNaN(date.getTime())) {
-                        sortTime = date.getTime();
+                    const dummyDate = new Date(`2000/01/01 ${startTimePart}`);
+                    if (!isNaN(dummyDate.getTime())) {
+                        sortTime = dummyDate.getTime();
                     }
                 } catch (e) {
                     sortTime = 0;
                 }
             } else {
-                // Parse from date string "2026-02-26 08:20:20+00"
-                const date = new Date(dateStr);
-                if (!isNaN(date.getTime())) {
+                if (isValidDate) {
                     // Start with basic local time string
-                    displayTime = date.toLocaleTimeString("en-US", {
+                    const timePart = date.toLocaleTimeString("en-US", {
                         hour: "numeric",
                         minute: "2-digit",
                         hour12: true,
+                        timeZone: "Asia/Kolkata"
                     });
-                    // Adjust for specific inputs if they are UTC but meant to be shown as local event time
-                    // However, usually +00 implies UTC. If the event is in India (+5:30), 
-                    // and the DB stores it as UTC, the above toLocaleTimeString will correct it 
-                    // IF the server timezone is set. 
-                    // But in Next.js Server Components, it might be UTC.
-                    // The user asked to "take care the timings... correctly chosen".
-                    // For now, I will standardise on showing it in a friendly format.
-
+                    displayTime = `${datePart} | ${timePart}`;
                     sortTime = date.getTime();
                 } else {
                     displayTime = "TBA";
@@ -180,7 +188,7 @@ export async function GET() {
                 schedule[dayIndex].events.push({
                     name: event.event_name,
                     time: displayTime,
-                    venue: "Synapse",
+                    venue: event.venue || "TBD",
                     rawTime: sortTime,
                 });
             }

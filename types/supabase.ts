@@ -199,6 +199,7 @@ export type Database = {
           is_dau_free: boolean | null;
           is_registration_open: boolean | null;
           rulebook: string | null;
+          venue: string | null;
         };
         Insert: {
           category_id?: number | null;
@@ -212,6 +213,7 @@ export type Database = {
           is_dau_free?: boolean | null;
           is_registration_open?: boolean | null;
           rulebook?: string | null;
+          venue?: string | null;
         };
         Update: {
           category_id?: number | null;
@@ -225,6 +227,7 @@ export type Database = {
           is_dau_free?: boolean | null;
           is_registration_open?: boolean | null;
           rulebook?: string | null;
+          venue?: string | null;
         };
         Relationships: [
           {

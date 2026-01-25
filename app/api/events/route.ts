@@ -29,6 +29,7 @@ export async function GET(request: Request) {
             event_date,
             event_picture,
             rulebook,
+            venue,
             is_dau_free,
             is_registration_open,
             category_id,
