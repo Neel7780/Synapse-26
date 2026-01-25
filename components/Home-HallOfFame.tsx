@@ -35,7 +35,10 @@ const HeroCard = ({
       alt="Hall of Fame"
       fill
       className="object-cover"
-      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+      sizes="100vw"
+      quality={100}
+      priority
+      unoptimized
     />
     <div className="hof-title absolute inset-0 z-10 flex items-end justify-center pb-6 md:pb-8">
       <span className={`${titleSize} text-center font-white font-joker text-white drop-shadow-lg tracking-wider`}>
@@ -634,8 +637,9 @@ export default function HallOfFame() {
           alt={image.alt}
           fill
           className="object-cover transition-transform duration-700 group-hover:scale-110"
-          loading="lazy"
-          sizes="(max-width: 768px) 33vw, (max-width: 1024px) 20vw, 16vw"
+          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          quality={100}
+          unoptimized
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       </div>
