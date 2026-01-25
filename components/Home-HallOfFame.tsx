@@ -594,20 +594,50 @@ export default function HallOfFame() {
           },
         });
 
-        ScrollTrigger.refresh();
+        // Immediate refresh to calculate correct positions
+        requestAnimationFrame(() => {
+          ScrollTrigger.refresh();
+        });
       };
 
       waitForHero();
 
-      // Additional safety refresh for navigation cases
-      const timer = setTimeout(() => {
+      // Additional safety refresh for navigation cases - staggered to ensure layout is complete
+      const timer1 = setTimeout(() => {
         ScrollTrigger.refresh();
-      }, 1000);
+      }, 100);
+
+      const timer2 = setTimeout(() => {
+        ScrollTrigger.refresh();
+      }, 500);
+
+      // One-time scroll listener to refresh on first user scroll
+      // This catches the case where user scrolls before timers fire
+      let hasRefreshedOnScroll = false;
+      const onFirstScroll = () => {
+        if (hasRefreshedOnScroll) return;
+        hasRefreshedOnScroll = true;
+        ScrollTrigger.refresh();
+        window.removeEventListener('scroll', onFirstScroll);
+      };
+      window.addEventListener('scroll', onFirstScroll, { passive: true });
+
+      // Also refresh when ScrollTrigger detects scroll start
+      const onScrollTriggerStart = () => {
+        if (!hasRefreshedOnScroll) {
+          hasRefreshedOnScroll = true;
+          ScrollTrigger.refresh();
+        }
+      };
+      ScrollTrigger.addEventListener('scrollStart', onScrollTriggerStart);
 
       return () => {
-        clearTimeout(timer);
+        clearTimeout(timer1);
+        clearTimeout(timer2);
         cancelAnimationFrame(rafId);
         if (trigger) trigger.kill();
+        window.removeEventListener('scroll', onFirstScroll);
+        ScrollTrigger.removeEventListener('scrollStart', onScrollTriggerStart);
       };
     },
     { scope: hallContainerRef }
