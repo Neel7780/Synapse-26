@@ -421,9 +421,9 @@ export default function UserProfile() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => {
+                onClick={async () => {
                   startTransition();
-                  logout();
+                  await logout();
                   router.push("/");
                 }}
                 className="px-6 md:px-3 lg:px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-jqka uppercase transition-all whitespace-nowrap cursor-pointer shadow-lg shadow-red-900/20 hover:shadow-red-900/40 text-lg md:text-xl md:tracking-[0.15em]"
