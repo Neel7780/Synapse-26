@@ -354,8 +354,8 @@ export const accommodationAcceptanceEmailTemplate = (props: AccommodationEmailPr
               
               <div class="info-box">
                 <strong>📋 Important Information:</strong><br>
-                • Check-in time is typically from 2:00 PM<br>
-                • Check-out time is typically by 11:00 AM<br>
+                • Check-in time is typically from 4:00 PM<br>
+                • Check-out time is typically by 9:00 AM<br>
                 • Keep your booking reference for check-in<br>
                 • Contact support if you need any assistance
               </div>
