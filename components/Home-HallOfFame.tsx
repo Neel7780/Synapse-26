@@ -504,7 +504,9 @@ export default function HallOfFame() {
             return;
           }
           // If timed out, verify if we have grid items at least
-          console.log("HallOfFame: Hero not found, forcing visibility");
+          if (process.env.NODE_ENV !== "production") {
+            console.warn("HallOfFame: Hero not found, forcing visibility");
+          }
           // Force visibility of all items as a fallback
           gridImages.forEach((image, index) => {
             const mode = getActiveMode();
