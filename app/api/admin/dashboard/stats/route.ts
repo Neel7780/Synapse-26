@@ -87,7 +87,7 @@ export async function GET(_req: NextRequest) {
           gross_amount,
           created_at,
           users(user_name),
-          event_fee(event(event_name))
+          event(event_name)
         `)
         .eq("payment_status", "done")
         .not("created_at", "is", null)
@@ -161,7 +161,7 @@ export async function GET(_req: NextRequest) {
     const recentRegistrations = (recentRegistrationsResult.data ?? []).map((reg: any) => ({
       id: reg.registration_id,
       userName: reg.users?.user_name || "Unknown",
-      event: reg.event_fee?.event?.event_name || "Unknown Event",
+      event: reg.event?.event_name || "Unknown Event",
       date: reg.created_at ? new Date(reg.created_at).toISOString().split("T")[0] : "",
       status: reg.payment_status,
       amount: reg.gross_amount ?? 0,

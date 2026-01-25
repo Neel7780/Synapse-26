@@ -30,11 +30,11 @@ export async function GET(req: NextRequest) {
     // Use admin client to bypass RLS for reading analytics data
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const supabase = createAdminClient() as any;
-    
+
     const today = new Date();
     const sevenDaysAgo = new Date(today);
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
+
     const fourteenDaysAgo = new Date(today);
     fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
 
@@ -141,9 +141,9 @@ export async function GET(req: NextRequest) {
           deviceCounts[device] = (deviceCounts[device] || 0) + 1;
         });
         deviceStatsData = Object.entries(deviceCounts)
-          .map(([device, count]) => ({ 
-            device: device.charAt(0).toUpperCase() + device.slice(1), 
-            count 
+          .map(([device, count]) => ({
+            device: device.charAt(0).toUpperCase() + device.slice(1),
+            count
           }))
           .sort((a, b) => b.count - a.count);
 
@@ -154,7 +154,7 @@ export async function GET(req: NextRequest) {
           date.setDate(date.getDate() - (6 - i));
           return date.toLocaleDateString("en-US", { weekday: "short" });
         });
-        
+
         last7Days.forEach((day) => {
           dailyMap[day] = { views: 0, visitors: new Set() };
         });
@@ -245,16 +245,18 @@ export async function GET(req: NextRequest) {
         .from("event_registrations")
         .select(`
           event_id,
-          events (
+          event (
             event_id,
-            category
+            event_category (
+              category_name
+            )
           )
         `),
       supabase
         .from("event_registrations")
         .select(`
           event_id,
-          events (
+          event (
             event_id,
             event_name
           )
@@ -316,7 +318,7 @@ export async function GET(req: NextRequest) {
     const categoryMap: { [key: string]: number } = {};
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     categoryRegistrations.data?.forEach((reg: any) => {
-      const category = reg.events?.category || "Other";
+      const category = reg.event?.event_category?.category_name || "Other";
       categoryMap[category] = (categoryMap[category] || 0) + 1;
     });
 
@@ -347,7 +349,7 @@ export async function GET(req: NextRequest) {
     const eventMap: { [key: string]: { name: string; count: number } } = {};
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     topEventsData.data?.forEach((reg: any) => {
-      const eventName = reg.events?.event_name || "Unknown Event";
+      const eventName = reg.event?.event_name || "Unknown Event";
       const eventId = reg.event_id;
       if (!eventMap[eventId]) {
         eventMap[eventId] = { name: eventName, count: 0 };
@@ -371,7 +373,7 @@ export async function GET(req: NextRequest) {
     // Build hourly traffic from today's registrations
     const todayStart = new Date(today);
     todayStart.setHours(0, 0, 0, 0);
-    
+
     const { data: todayRegs } = await supabase
       .from("event_registrations")
       .select("created_at")
@@ -411,15 +413,15 @@ export async function GET(req: NextRequest) {
     const totalDeviceViews = deviceStatsData.reduce((sum, d) => sum + d.count, 0);
     const deviceStats = pageViewsAvailable && deviceStatsData.length > 0
       ? deviceStatsData.map(d => ({
-          device: d.device,
-          percentage: totalDeviceViews > 0 ? Math.round((d.count / totalDeviceViews) * 100) : 0,
-          sessions: formatNumber(d.count),
-        }))
+        device: d.device,
+        percentage: totalDeviceViews > 0 ? Math.round((d.count / totalDeviceViews) * 100) : 0,
+        sessions: formatNumber(d.count),
+      }))
       : [
-          { device: "Total Users", percentage: 100, sessions: formatNumber(totalUsers) },
-          { device: "This Week", percentage: totalUsers > 0 ? Math.round((currentUserCount / totalUsers) * 100) : 0, sessions: formatNumber(currentUserCount) },
-          { device: "Last Week", percentage: totalUsers > 0 ? Math.round((previousUserCount / totalUsers) * 100) : 0, sessions: formatNumber(previousUserCount) },
-        ];
+        { device: "Total Users", percentage: 100, sessions: formatNumber(totalUsers) },
+        { device: "This Week", percentage: totalUsers > 0 ? Math.round((currentUserCount / totalUsers) * 100) : 0, sessions: formatNumber(currentUserCount) },
+        { device: "Last Week", percentage: totalUsers > 0 ? Math.round((previousUserCount / totalUsers) * 100) : 0, sessions: formatNumber(previousUserCount) },
+      ];
 
     // Process top pages for website analytics
     const topPagesFormatted = topPagesData.slice(0, 5).map((page, index) => ({
@@ -435,12 +437,12 @@ export async function GET(req: NextRequest) {
     // Process referrers
     const referrerColors = ["#3b82f6", "#8b5cf6", "#22c55e", "#f97316", "#ef4444"];
     const totalReferrers = referrersData.reduce((sum, r) => sum + r.count, 0);
-    const referrersFormatted = referrersData.length > 0 
+    const referrersFormatted = referrersData.length > 0
       ? referrersData.map((r, i) => ({
-          name: r.name,
-          value: totalReferrers > 0 ? Math.round((r.count / totalReferrers) * 100) : 0,
-          color: referrerColors[i % referrerColors.length],
-        }))
+        name: r.name,
+        value: totalReferrers > 0 ? Math.round((r.count / totalReferrers) * 100) : 0,
+        color: referrerColors[i % referrerColors.length],
+      }))
       : [{ name: "Direct", value: 100, color: "#3b82f6" }];
 
     // Recent registrations (last hour)
@@ -451,7 +453,7 @@ export async function GET(req: NextRequest) {
       .from("event_registrations")
       .select(`
         event_id,
-        events (
+        event (
           event_name
         )
       `)
@@ -460,7 +462,7 @@ export async function GET(req: NextRequest) {
     const recentEventMap: { [key: string]: number } = {};
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recentRegs?.forEach((reg: any) => {
-      const eventName = reg.events?.event_name || "Unknown";
+      const eventName = reg.event?.event_name || "Unknown";
       recentEventMap[eventName] = (recentEventMap[eventName] || 0) + 1;
     });
 

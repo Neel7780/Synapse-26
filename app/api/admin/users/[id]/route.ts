@@ -29,10 +29,9 @@ export async function GET(
             team_members (
             team (
             event_registrations (
-            event_fee (
             event (
             event_name
-            )))))
+            ))))
             `
       )
       .eq("user_id", userId)
@@ -46,7 +45,7 @@ export async function GET(
 
     data.team_members?.forEach((tm: any) => {
       const eventName =
-        tm.team?.event_registrations?.event_fee?.event?.event_name;
+        tm.team?.event_registrations?.event?.event_name;
 
       if (eventName) {
         events.push(eventName);

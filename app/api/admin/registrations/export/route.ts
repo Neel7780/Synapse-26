@@ -39,10 +39,8 @@ export async function GET(req: NextRequest) {
         team_members ( user_id )
       ),
       users(user_name,email,college),
-      event_fee(
-        event(event_name,event_category(category_name)),
-        fee(participation_type,price,qr_code)
-      )
+      event(event_name,event_category(category_name)),
+      fee(participation_type,price,qr_code)
       `
     );
 
@@ -58,7 +56,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (eventFilter) {
-      query = query.eq("event_fee.event.event_name", eventFilter);
+      query = query.eq("event.event_name", eventFilter);
     }
 
     if (paymentStatus) {
@@ -89,7 +87,7 @@ export async function GET(req: NextRequest) {
     const csvRows = [
       headers.join(","),
       ...(data ?? []).map((row: any) => {
-        const price = row.event_fee?.fee?.price ?? 0;
+        const price = row.fee?.price ?? 0;
         const groupSize = row.team?.team_members?.length ?? 1;
 
         return [
@@ -98,13 +96,13 @@ export async function GET(req: NextRequest) {
           `"${row.users?.user_name}"`,
           row.users?.email,
           `"${row.users?.college}"`,
-          `"${row.event_fee?.event?.event_name}"`,
-          `"${row.event_fee?.event?.event_category?.category_name}"`,
-          row.event_fee?.fee?.participation_type,
+          `"${row.event?.event_name}"`,
+          `"${row.event?.event_category?.category_name}"`,
+          row.fee?.participation_type,
           groupSize,
           row.payment_status,
           price,
-          row.event_fee?.fee?.qr_code,
+          row.fee?.qr_code,
         ].join(",");
       }),
     ];

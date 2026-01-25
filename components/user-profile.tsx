@@ -49,20 +49,20 @@ type AccommodationBooking = {
 const ProfileField = memo(function ProfileField({
   label,
   value,
-  className = ""
+  className = "",
 }: {
   label: string;
   value: string;
   className?: string;
 }) {
   return (
-    <div className={`border border-white p-3 md:p-4 min-h-[72px] flex flex-col justify-center ${className}`}>
+    <div
+      className={`border border-white p-3 md:p-4 min-h-[72px] flex flex-col justify-center ${className}`}
+    >
       <p className="text-xs text-muted-foreground font-roboto uppercase tracking-wider">
         {label}
       </p>
-      <p className="text-base font-semibold font-roboto truncate">
-        {value}
-      </p>
+      <p className="text-base font-semibold font-roboto truncate">{value}</p>
     </div>
   );
 });
@@ -74,7 +74,7 @@ const EditableProfileField = memo(function EditableProfileField({
   onChange,
   type = "text",
   className = "",
-  disabled = false
+  disabled = false,
 }: {
   label: string;
   value: string;
@@ -84,7 +84,9 @@ const EditableProfileField = memo(function EditableProfileField({
   disabled?: boolean;
 }) {
   return (
-    <div className={`border border-white p-3 md:p-4 min-h-[72px] flex flex-col justify-center ${className}`}>
+    <div
+      className={`border border-white p-3 md:p-4 min-h-[72px] flex flex-col justify-center ${className}`}
+    >
       <p className="text-xs text-muted-foreground font-roboto uppercase tracking-wider mb-1">
         {label}
       </p>
@@ -93,14 +95,18 @@ const EditableProfileField = memo(function EditableProfileField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className={`text-base font-semibold font-roboto bg-transparent border-none outline-none text-white disabled:opacity-50 disabled:cursor-not-allowed ${type === 'date' ? 'max-w-[150px] md:max-w-full' : 'w-full'}`}
+        className={`text-base font-semibold font-roboto bg-transparent border-none outline-none text-white disabled:opacity-50 disabled:cursor-not-allowed ${type === "date" ? "max-w-[150px] md:max-w-full" : "w-full"}`}
       />
     </div>
   );
 });
 
 // Memoized event card component
-const EventCard = memo(function EventCard({ event }: { event: RegisteredEvent }) {
+const EventCard = memo(function EventCard({
+  event,
+}: {
+  event: RegisteredEvent;
+}) {
   return (
     <div className="border border-white p-3 md:p-4 transition-colors hover:bg-white/5">
       <div className="flex justify-between items-start gap-3">
@@ -108,10 +114,11 @@ const EventCard = memo(function EventCard({ event }: { event: RegisteredEvent })
           {event.name}
         </h3>
         <span
-          className={`px-2 py-0.5 md:px-3 md:py-1 rounded-full text-xs md:text-sm whitespace-nowrap font-medium ${event.status === "Registered"
-            ? "bg-green-500/20 text-green-400"
-            : "bg-orange-500/20 text-orange-400"
-            }`}
+          className={`px-2 py-0.5 md:px-3 md:py-1 rounded-full text-xs md:text-sm whitespace-nowrap font-medium ${
+            event.status === "Registered"
+              ? "bg-green-500/20 text-green-400"
+              : "bg-orange-500/20 text-orange-400"
+          }`}
         >
           {event.status}
         </span>
@@ -138,8 +145,12 @@ export default function UserProfile() {
   const { startTransition } = useNavigationState();
 
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
-  const [registeredEvents, setRegisteredEvents] = useState<RegisteredEvent[]>([]);
-  const [accommodationBookings, setAccommodationBookings] = useState<AccommodationBooking[]>([]);
+  const [registeredEvents, setRegisteredEvents] = useState<RegisteredEvent[]>(
+    [],
+  );
+  const [accommodationBookings, setAccommodationBookings] = useState<
+    AccommodationBooking[]
+  >([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -147,83 +158,89 @@ export default function UserProfile() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const fetchData = useCallback(async (userId: string, userEmail: string | undefined) => {
-    setDataLoading(true);
-    setError(null);
-    const supabase = createClient();
+  const fetchData = useCallback(
+    async (userId: string, userEmail: string | undefined) => {
+      setDataLoading(true);
+      setError(null);
+      const supabase = createClient();
 
-    try {
-      // Fetch all data in parallel for better performance
-      const [userResult, regResult, accResult] = await Promise.all([
-        supabase.from("users").select("*").eq("user_id", userId).single(),
-        supabase
-          .from("event_registrations")
-          .select(`
+      try {
+        // Fetch all data in parallel for better performance
+        const [userResult, regResult, accResult] = await Promise.all([
+          supabase.from("users").select("*").eq("user_id", userId).single(),
+          supabase
+            .from("event_registrations")
+            .select(
+              `
             *,
-            event_fee (
-              event (
-                event_name,
-                event_category (
-                  category_name
-                )
+            event (
+              event_name,
+              event_category (
+                category_name
               )
             )
-          `)
-          .eq("registered_by_user_id", userId),
-        supabase
-          .from("accommodation_bookings")
-          .select("booking_id, nights, check_in, check_out, amount, verification_status, payment_status, created_at")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false }),
-      ]);
+          `,
+            )
+            .eq("registered_by_user_id", userId),
+          supabase
+            .from("accommodation_bookings")
+            .select(
+              "booking_id, nights, check_in, check_out, amount, verification_status, payment_status, created_at",
+            )
+            .eq("user_id", userId)
+            .order("created_at", { ascending: false }),
+        ]);
 
-      // Process user data
-      if (userResult.data) {
-        const fullName = userResult.data.user_name || "";
-        const nameParts = fullName.split(" ");
-        const firstName = nameParts[0] || "";
-        const lastName = nameParts.slice(1).join(" ") || "";
+        // Process user data
+        if (userResult.data) {
+          const fullName = userResult.data.user_name || "";
+          const nameParts = fullName.split(" ");
+          const firstName = nameParts[0] || "";
+          const lastName = nameParts.slice(1).join(" ") || "";
 
-        setUserDetails({
-          firstName,
-          lastName,
-          phone: userResult.data.phone || "N/A",
-          dateOfBirth: userResult.data.dob || "N/A",
-          gender: userResult.data.gender || "N/A",
-          university: userResult.data.college || "N/A",
-          email: userResult.data.email || userEmail || "N/A",
-        });
+          setUserDetails({
+            firstName,
+            lastName,
+            phone: userResult.data.phone || "N/A",
+            dateOfBirth: userResult.data.dob || "N/A",
+            gender: userResult.data.gender || "N/A",
+            university: userResult.data.college || "N/A",
+            email: userResult.data.email || userEmail || "N/A",
+          });
+        }
+
+        // Process registration data
+        if (regResult.data) {
+          const mappedEvents = regResult.data.map((reg) => {
+            const eventObj = (reg as any).event;
+            const categoryObj = eventObj?.event_category;
+
+            return {
+              id: reg.registration_id,
+              name: eventObj?.event_name || "Unknown Event",
+              category: categoryObj?.category_name || "General",
+              status:
+                reg.payment_status === "done"
+                  ? "Registered"
+                  : "Payment Pending",
+            };
+          });
+          setRegisteredEvents(mappedEvents);
+        }
+
+        // Process accommodation data
+        if (accResult.data && accResult.data.length > 0) {
+          setAccommodationBookings(accResult.data as AccommodationBooking[]);
+        }
+      } catch (err) {
+        console.error("Error fetching profile data:", err);
+        setError("Failed to load profile data. Please try again.");
+      } finally {
+        setDataLoading(false);
       }
-
-      // Process registration data
-      if (regResult.data) {
-        const mappedEvents = regResult.data.map((reg) => {
-          const eventFee = reg.event_fee as { event?: { event_name?: string; event_category?: { category_name?: string } } } | null;
-          const eventObj = eventFee?.event;
-          const categoryObj = eventObj?.event_category;
-
-          return {
-            id: reg.registration_id,
-            name: eventObj?.event_name || "Unknown Event",
-            category: categoryObj?.category_name || "General",
-            status: reg.payment_status === "done" ? "Registered" : "Payment Pending",
-          };
-        });
-        setRegisteredEvents(mappedEvents);
-      }
-
-      // Process accommodation data
-      if (accResult.data && accResult.data.length > 0) {
-        setAccommodationBookings(accResult.data as AccommodationBooking[]);
-      }
-
-    } catch (err) {
-      console.error("Error fetching profile data:", err);
-      setError("Failed to load profile data. Please try again.");
-    } finally {
-      setDataLoading(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (authLoading) return;
@@ -242,7 +259,7 @@ export default function UserProfile() {
       gsap.fromTo(
         ".animate",
         { opacity: 0, y: 14 },
-        { opacity: 1, y: 0, stagger: 0.05, duration: 0.4, ease: "power2.out" }
+        { opacity: 1, y: 0, stagger: 0.05, duration: 0.4, ease: "power2.out" },
       );
     }, ref);
 
@@ -291,8 +308,10 @@ export default function UserProfile() {
           firstName: editFormData.firstName,
           lastName: editFormData.lastName,
           phone: editFormData.phone === "N/A" ? "" : editFormData.phone,
-          college: editFormData.university === "N/A" ? "" : editFormData.university,
-          dob: editFormData.dateOfBirth === "N/A" ? "" : editFormData.dateOfBirth,
+          college:
+            editFormData.university === "N/A" ? "" : editFormData.university,
+          dob:
+            editFormData.dateOfBirth === "N/A" ? "" : editFormData.dateOfBirth,
           gender: editFormData.gender === "N/A" ? "" : editFormData.gender,
         }),
       });
@@ -309,20 +328,25 @@ export default function UserProfile() {
       setEditFormData(null);
     } catch (err) {
       console.error("Error saving profile:", err);
-      setSaveError(err instanceof Error ? err.message : "Failed to save profile");
+      setSaveError(
+        err instanceof Error ? err.message : "Failed to save profile",
+      );
     } finally {
       setSaving(false);
     }
   }, [editFormData, user, fetchData]);
 
-  const handleFieldChange = useCallback((field: keyof UserDetails, value: string) => {
-    if (editFormData) {
-      setEditFormData({
-        ...editFormData,
-        [field]: value,
-      });
-    }
-  }, [editFormData]);
+  const handleFieldChange = useCallback(
+    (field: keyof UserDetails, value: string) => {
+      if (editFormData) {
+        setEditFormData({
+          ...editFormData,
+          [field]: value,
+        });
+      }
+    },
+    [editFormData],
+  );
 
   // Helper function to format date for input (YYYY-MM-DD)
   const formatDateForInput = useCallback((dateStr: string): string => {
@@ -348,7 +372,9 @@ export default function UserProfile() {
   if (error || !userDetails) {
     return (
       <div className="min-h-svh bg-background px-4 py-6 md:px-8 md:py-12 flex flex-col items-center justify-center">
-        <div className="text-white mb-4">{error || "Failed to load profile."}</div>
+        <div className="text-white mb-4">
+          {error || "Failed to load profile."}
+        </div>
         <button
           onClick={handleBack}
           className="text-white underline hover:text-white/80 transition-colors"
@@ -360,19 +386,23 @@ export default function UserProfile() {
   }
 
   return (
-    <div ref={ref} className="min-h-dvh bg-background px-4 py-6 md:px-8 md:py-12 pt-28 md:pt-36">
+    <div
+      ref={ref}
+      className="min-h-dvh bg-background px-4 py-6 md:px-8 md:py-12 pt-28 md:pt-36"
+    >
       <Navbar visible={true}>
         <NavigationPanel />
       </Navbar>
       {/* HEADER */}
-
 
       {/* MAIN GRID */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
         {/* LEFT COLUMN: Profile */}
         <div className="animate flex flex-col gap-6">
           <div className="flex flex-row flex-wrap justify-between items-center gap-4">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">Profile</h2>
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">
+              Profile
+            </h2>
             <div className="flex gap-2">
               {!isEditing ? (
                 <motion.button
@@ -459,7 +489,11 @@ export default function UserProfile() {
                 />
                 <EditableProfileField
                   label="College"
-                  value={editFormData.university === "N/A" ? "" : editFormData.university}
+                  value={
+                    editFormData.university === "N/A"
+                      ? ""
+                      : editFormData.university
+                  }
                   onChange={(value) => handleFieldChange("university", value)}
                 />
                 <ProfileField
@@ -473,12 +507,16 @@ export default function UserProfile() {
                   <EditableProfileField
                     label="Date of Birth"
                     value={formatDateForInput(editFormData.dateOfBirth)}
-                    onChange={(value) => handleFieldChange("dateOfBirth", value)}
+                    onChange={(value) =>
+                      handleFieldChange("dateOfBirth", value)
+                    }
                     type="date"
                   />
                   <EditableProfileField
                     label="Gender"
-                    value={editFormData.gender === "N/A" ? "" : editFormData.gender}
+                    value={
+                      editFormData.gender === "N/A" ? "" : editFormData.gender
+                    }
                     onChange={(value) => handleFieldChange("gender", value)}
                   />
                 </div>
@@ -487,19 +525,45 @@ export default function UserProfile() {
               <>
                 {/* Name Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-                  <ProfileField label="First Name" value={userDetails.firstName} />
-                  <ProfileField label="Last Name" value={userDetails.lastName} />
+                  <ProfileField
+                    label="First Name"
+                    value={userDetails.firstName}
+                  />
+                  <ProfileField
+                    label="Last Name"
+                    value={userDetails.lastName}
+                  />
                 </div>
 
                 {/* Contact Info Stack */}
-                <ProfileField label="Phone" value={userDetails.phone} className="animate" />
-                <ProfileField label="College" value={userDetails.university} className="animate" />
-                <ProfileField label="Email Address" value={userDetails.email} className="animate" />
+                <ProfileField
+                  label="Phone"
+                  value={userDetails.phone}
+                  className="animate"
+                />
+                <ProfileField
+                  label="College"
+                  value={userDetails.university}
+                  className="animate"
+                />
+                <ProfileField
+                  label="Email Address"
+                  value={userDetails.email}
+                  className="animate"
+                />
 
                 {/* Demographics Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-                  <ProfileField label="Date of Birth" value={userDetails.dateOfBirth} className="animate" />
-                  <ProfileField label="Gender" value={userDetails.gender} className="animate" />
+                  <ProfileField
+                    label="Date of Birth"
+                    value={userDetails.dateOfBirth}
+                    className="animate"
+                  />
+                  <ProfileField
+                    label="Gender"
+                    value={userDetails.gender}
+                    className="animate"
+                  />
                 </div>
               </>
             )}
@@ -549,17 +613,17 @@ export default function UserProfile() {
                       case "verified":
                         return {
                           text: "Verified",
-                          className: "bg-green-500/20 text-green-400"
+                          className: "bg-green-500/20 text-green-400",
                         };
                       case "rejected":
                         return {
                           text: "Rejected",
-                          className: "bg-red-500/20 text-red-400"
+                          className: "bg-red-500/20 text-red-400",
                         };
                       default:
                         return {
                           text: "Pending Verification",
-                          className: "bg-orange-500/20 text-orange-400"
+                          className: "bg-orange-500/20 text-orange-400",
                         };
                     }
                   };
@@ -570,25 +634,32 @@ export default function UserProfile() {
                     return new Date(dateStr).toLocaleDateString("en-IN", {
                       day: "numeric",
                       month: "short",
-                      year: "numeric"
+                      year: "numeric",
                     });
                   };
 
                   return (
-                    <div key={booking.booking_id} className="border border-white p-3 md:p-4">
+                    <div
+                      key={booking.booking_id}
+                      className="border border-white p-3 md:p-4"
+                    >
                       <div className="flex justify-between items-start w-full gap-4">
                         <div className="flex-1">
                           <p className="text-sm md:text-base font-semibold font-roboto">
-                            {booking.nights} Night{booking.nights > 1 ? "s" : ""} Accommodation
+                            {booking.nights} Night
+                            {booking.nights > 1 ? "s" : ""} Accommodation
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {formatDate(booking.check_in)} - {formatDate(booking.check_out)}
+                            {formatDate(booking.check_in)} -{" "}
+                            {formatDate(booking.check_out)}
                           </p>
                           <p className="text-sm text-white/80 mt-1">
                             ₹{booking.amount.toLocaleString()}
                           </p>
                         </div>
-                        <span className={`px-3 py-1 rounded-full text-xs md:text-sm font-medium whitespace-nowrap ${status.className}`}>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs md:text-sm font-medium whitespace-nowrap ${status.className}`}
+                        >
                           {status.text}
                         </span>
                       </div>
@@ -597,7 +668,9 @@ export default function UserProfile() {
                 })
               ) : (
                 <div className="border border-white/20 border-dashed p-6 text-center">
-                  <p className="text-muted-foreground mb-3">No accommodation booked yet.</p>
+                  <p className="text-muted-foreground mb-3">
+                    No accommodation booked yet.
+                  </p>
                   <Link
                     href="/accomodation"
                     onClick={() => startTransition()}
@@ -610,7 +683,7 @@ export default function UserProfile() {
             </div>
           </div>
         </div>
-      </div >
-    </div >
+      </div>
+    </div>
   );
 }
