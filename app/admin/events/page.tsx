@@ -459,7 +459,7 @@ export default function EventsPage() {
       category_name: editingEvent.categoryName,
       event_date: editingEvent.date,
       event_time: editingEvent.time || undefined,
-      description: editingEvent.venue || undefined,
+      description: editingEvent.description || undefined,
       rulebook: editingEvent.rulebookLink || undefined,
       coordinator_email: editingEvent.coordinatorEmail || undefined,
       venue: editingEvent.venue || undefined,
@@ -712,6 +712,18 @@ export default function EventsPage() {
                 }
                 placeholder="https://..."
                 className="bg-muted/50 border-border/50"
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2 lg:col-span-3">
+              <label className="text-sm font-medium">Description</label>
+              <textarea
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                placeholder="Enter event description..."
+                rows={4}
+                className="w-full px-3 py-2 bg-muted/50 border border-border/50 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-red-500"
               />
             </div>
             <div className="md:col-span-2 lg:col-span-3 flex justify-end">
@@ -1107,6 +1119,21 @@ export default function EventsPage() {
                         }
                         placeholder="https://..."
                         className="bg-muted/50 border-border/50"
+                      />
+                    </div>
+                    <div className="space-y-2 col-span-2">
+                      <label className="text-sm font-medium">Description</label>
+                      <textarea
+                        value={editingEvent.description}
+                        onChange={(e) =>
+                          setEditingEvent({
+                            ...editingEvent,
+                            description: e.target.value,
+                          })
+                        }
+                        placeholder="Enter event description..."
+                        rows={4}
+                        className="w-full px-3 py-2 bg-muted/50 border border-border/50 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-red-500"
                       />
                     </div>
                   </div>

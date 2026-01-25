@@ -24,21 +24,56 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        if (!payment_screenshot_url || !payment_screenshot_url.trim()) {
-            return NextResponse.json(
-                { error: "Payment screenshot URL is required" },
-                { status: 400 }
-            );
-        }
-
-        if (!transaction_id || !transaction_id.trim()) {
-            return NextResponse.json(
-                { error: "Transaction ID is required" },
-                { status: 400 }
-            );
-        }
-
+        // Initialize Supabase client
         const supabase = getSupabaseServer();
+
+        // Fetch event details to check is_dau_free
+        const { data: eventData, error: eventError } = await supabase
+            .from("event")
+            .select("is_dau_free")
+            .eq("event_id", event_id)
+            .single();
+
+        if (eventError || !eventData) {
+            return NextResponse.json(
+                { error: "Event not found" },
+                { status: 404 }
+            );
+        }
+
+        // Fetch user details to check email
+        const { data: userData, error: userError } = await supabase
+            .from("users")
+            .select("email")
+            .eq("user_id", registered_by_user_id)
+            .single();
+
+        if (userError || !userData) {
+            return NextResponse.json(
+                { error: "User not found" },
+                { status: 404 }
+            );
+        }
+
+        const isDauFree = eventData.is_dau_free;
+        const isDauStudent = userData.email?.endsWith("@dau.ac.in");
+        const isFreeRegistration = isDauFree && isDauStudent;
+
+        if (!isFreeRegistration) {
+            if (!payment_screenshot_url || !payment_screenshot_url.trim()) {
+                return NextResponse.json(
+                    { error: "Payment screenshot URL is required" },
+                    { status: 400 }
+                );
+            }
+
+            if (!transaction_id || !transaction_id.trim()) {
+                return NextResponse.json(
+                    { error: "Transaction ID is required" },
+                    { status: 400 }
+                );
+            }
+        }
 
         // Get fee details to calculate amount
         const { data: feeData, error: feeError } = await supabase
@@ -53,17 +88,16 @@ export async function POST(request: NextRequest) {
         }
 
         // Create the registration
-        // Note: Using 'pending' status. Run SQL to add 'payment_pending' enum value if needed.
         const { data: registration, error: regError } = await supabase
             .from("event_registrations")
             .insert({
                 event_id,
                 fee_id,
                 registered_by_user_id,
-                payment_screenshot_url: payment_screenshot_url.trim(),
-                transaction_id: transaction_id.trim(),
-                payment_status: "pending" as const,
-                gross_amount: feeData?.price || 0,
+                payment_screenshot_url: isFreeRegistration ? "DAU_VERIFIED" : payment_screenshot_url.trim(),
+                transaction_id: isFreeRegistration ? "DAU_FREE" : transaction_id.trim(),
+                payment_status: isFreeRegistration ? "done" : "pending",
+                gross_amount: isFreeRegistration ? 0 : (feeData?.price || 0),
                 registration_date: new Date().toISOString(),
             })
             .select("registration_id")

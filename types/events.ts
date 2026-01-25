@@ -48,6 +48,7 @@ export interface EventWithRelations {
     rulebook: string | null;
     is_dau_free: boolean | null;
     is_registration_open: boolean | null;
+    venue?: string | null;
     category_id: number | null;
     coordinator_email: string | null;
     event_category: EventCategoryInfo | null;

@@ -62,12 +62,19 @@ export default function EventPage() {
     const currentFee: FormattedFee | null = sortedFees.length > 0 ? sortedFees[selectedFeeIndex] : null;
 
     // Parse event date and time
-    const eventDateTime = event.event_date ? new Date(event.event_date) : null;
+    // Force IST interpretation by stripping any existing timezone and appending +05:30
+    const parseDateAsIST = (dateStr: string) => {
+        if (!dateStr) return null;
+        const cleanDateStr = dateStr.replace('Z', '').replace(/\+\d{2}:\d{2}$/, '').replace(' ', 'T');
+        return new Date(`${cleanDateStr}+05:30`);
+    };
+
+    const eventDateTime = event.event_date ? parseDateAsIST(event.event_date) : null;
     const eventDate = eventDateTime
-        ? eventDateTime.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+        ? eventDateTime.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' })
         : "TBD";
     const eventTime = eventDateTime
-        ? eventDateTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
+        ? eventDateTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' })
         : "TBD";
 
     // Description lines
@@ -89,14 +96,15 @@ export default function EventPage() {
                     className="relative w-full h-[50vh] md:h-[60vh] lg:h-[70vh] overflow-hidden"
                 >
                     <Image
-                        src={event.event_picture || "/images_events/default.png"}
+                        // src={event.event_picture || "/images_events/default.png"}
+                        src={"/images_events/default.png"}
                         alt={event.event_name}
                         fill
                         className="object-cover object-top"
                         priority={false}
                         loading="eager"
                     />
-                    <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black to-transparent" />
+                    <div className="absolute inset-x-0 bottom-0 h-150 bg-gradient-to-t from-black to-transparent" />
                 </motion.div>
 
                 {/* Event Title */}
@@ -104,7 +112,7 @@ export default function EventPage() {
                     initial={{ opacity: 0, y: 50 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.3, ease: "backOut" }}
-                    className="font-joker text-3xl sm:text-5xl md:text-8xl leading-none text-white mt-[-30px] md:mt-[-50px] lg:mt-[-80px] relative z-10 drop-shadow-2xl text-center lowercase tracking-widest pointer-events-none whitespace-nowrap"
+                    className="font-joker text-3xl sm:text-5xl md:text-8xl leading-none text-white mt-[-20px] md:mt-[-40px] lg:mt-[-70px] relative z-10 drop-shadow-2xl text-center lowercase tracking-widest pointer-events-none whitespace-nowrap"
                 >
                     {event.event_name}
                 </motion.h1>
@@ -147,11 +155,11 @@ export default function EventPage() {
                         </div>
                         <div className="flex items-center gap-4">
                             <MapPin className="text-red-600 w-6 h-6" />
-                            <span>Venue: TBD</span>
+                            <span>Venue: {event.venue || "TBD"}</span>
                         </div>
                         <div className="flex items-center gap-4">
                             <Users className="text-red-600 w-6 h-6" />
-                            <span>Team: {currentFee?.type === 'solo' ? 'Solo' : currentFee?.type === 'duet' ? 'Duet' : 'Group (2+)'}</span>
+                            <span>Team: {currentFee?.type === 'solo' ? 'Solo' : currentFee?.type === 'duet' ? 'Duet' : 'Group'}</span>
                         </div>
                     </div>
 
@@ -209,6 +217,7 @@ export default function EventPage() {
                                             max: String(currentFee.max_members || 1),
                                             qr_code: currentFee.qr_code || "",
                                             event_id: String(currentFee.event_id || 0),
+                                            is_dau_free: String(event.is_dau_free || false),
                                         });
                                         router.push(`/events/${slug}/${eventNameSlug}/register?${queryParams.toString()}`);
                                     }}

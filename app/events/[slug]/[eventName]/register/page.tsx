@@ -27,7 +27,7 @@ type FeeInfo = {
   price: number;
   min_members: number;
   max_members: number;
-  qr_url?: string;
+  qr_code?: string;
 };
 
 export default function RegisterPage() {
@@ -45,8 +45,9 @@ export default function RegisterPage() {
   const feePrice = parseInt(searchParams.get("price") || "0");
   const minMembers = parseInt(searchParams.get("min") || "1");
   const maxMembers = parseInt(searchParams.get("max") || "1");
-  const qrCode = searchParams.get("qr_code") || "";
+  const qrUrl = searchParams.get("qr_code") || "";
   const eventId = searchParams.get("event_id");
+  const isDauFree = searchParams.get("is_dau_free") === "true";
 
   const [step, setStep] = useState<Step>("team");
   // Start with empty array for additional team members (user is auto-included)
@@ -68,6 +69,9 @@ export default function RegisterPage() {
       router.push(`/auth?redirect=${encodeURIComponent(returnUrl)}`);
     }
   }, [authLoading, isAuthenticated, router]);
+
+  // Check if user is eligible for DAU free registration
+  const isDauRegistration = isDauFree && user?.email?.endsWith("@dau.ac.in");
 
   // Add team member email
   const addTeamMember = () => {
@@ -143,13 +147,13 @@ export default function RegisterPage() {
     setSubmitting(true);
     setSubmitError("");
 
-    if (!paymentScreenshot.trim()) {
+    if (!isDauRegistration && !paymentScreenshot.trim()) {
       setSubmitError("Please upload payment screenshot");
       setSubmitting(false);
       return;
     }
 
-    if (!transactionId.trim()) {
+    if (!isDauRegistration && !transactionId.trim()) {
       setSubmitError("Please enter transaction ID");
       setSubmitting(false);
       return;
@@ -165,8 +169,10 @@ export default function RegisterPage() {
           registered_by_user_id: user?.id,
           team_member_emails:
             feeType !== "solo" ? teamEmails.filter((e) => e.trim()) : [],
-          payment_screenshot_url: paymentScreenshot.trim(),
-          transaction_id: transactionId.trim(),
+          payment_screenshot_url: isDauRegistration
+            ? "DAU_VERIFIED"
+            : paymentScreenshot.trim(),
+          transaction_id: isDauRegistration ? "DAU_FREE" : transactionId.trim(),
         }),
       });
 
@@ -366,142 +372,169 @@ export default function RegisterPage() {
 
             {/* QR Code Display */}
             <div className="mb-8">
-              <p className="text-gray-400 mb-4">
-                Scan the QR code below and make the payment of{" "}
-                <span className="text-[#b41c32] font-bold">₹{feePrice}</span>
-              </p>
+              {isDauRegistration ? (
+                <div className="text-center p-8 bg-green-500/10 border border-green-500/30 rounded-xl mb-8">
+                  <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+                  <h3 className="text-2xl font-bold text-green-400 mb-2">
+                    DAU Student Verified
+                  </h3>
+                  <p className="text-gray-300">
+                    As a DA-IICT student, you can register for this event for
+                    free!
+                  </p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    No payment required. Proceed to submit your registration.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-gray-400 mb-4">
+                    Scan the QR code below and make the payment of{" "}
+                    <span className="text-[#b41c32] font-bold">
+                      ₹{feePrice}
+                    </span>
+                  </p>
 
-              <div className="bg-white rounded-xl p-4 w-64 h-64 mx-auto flex items-center justify-center">
-                {qrCode ? (
-                  <Image
-                    src={qrCode}
-                    alt="Payment QR Code"
-                    width={240}
-                    height={240}
-                    className="object-contain"
-                    unoptimized
-                  />
-                ) : (
-                  <div className="text-center text-gray-400">
-                    <QrCode className="h-16 w-16 mx-auto mb-2 text-gray-300" />
-                    <p className="text-sm">QR Code not available</p>
-                    <p className="text-xs">
-                      Contact organizer for payment details
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Payment Screenshot Input */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">
-                Payment Screenshot
-              </label>
-
-              <div className="space-y-4">
-                {/* File Upload */}
-                <div className="border-2 border-dashed border-white/10 rounded-lg p-6 text-center hover:bg-white/5 transition-colors">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-
-                      // Validate file type
-                      if (!file.type.startsWith("image/")) {
-                        setSubmitError("Please upload an image file");
-                        return;
-                      }
-
-                      // Validate file size (5MB)
-                      if (file.size > 5 * 1024 * 1024) {
-                        setSubmitError("File size too large (max 5MB)");
-                        return;
-                      }
-
-                      setSubmitError("");
-                      setSubmitting(true); // Re-using submitting state for upload loading or add new one?
-                      // Better to have separate state but for quick task reusing submitting or validation state is risky if it blocks UI.
-                      // Let's add separate state if possible, but I can't change useState definitions easily in replace_file_content without context.
-                      // I'll assume I can just use a local logic or reuse submitting but make sure to communicate "Uploading..."
-
-                      try {
-                        const formData = new FormData();
-                        formData.append("file", file);
-
-                        // Show local preview immediately?
-                        // Yes, but let's wait for upload to get real URL
-
-                        const res = await fetch(
-                          "/api/events/upload-screenshot",
-                          {
-                            method: "POST",
-                            body: formData,
-                          },
-                        );
-
-                        const data = await res.json();
-
-                        if (!res.ok)
-                          throw new Error(data.error || "Upload failed");
-
-                        setPaymentScreenshot(data.url);
-                      } catch (err: any) {
-                        setSubmitError(err.message || "Failed to upload image");
-                      } finally {
-                        setSubmitting(false);
-                      }
-                    }}
-                    className="hidden"
-                    id="screenshot-upload"
-                    disabled={submitting}
-                  />
-                  <label
-                    htmlFor="screenshot-upload"
-                    className="cursor-pointer flex flex-col items-center"
-                  >
-                    {paymentScreenshot ? (
-                      <div className="relative w-full max-w-xs aspect-[9/16] bg-black/50 rounded-lg overflow-hidden mb-2">
-                        <Image
-                          src={paymentScreenshot}
-                          alt="Payment Screenshot"
-                          fill
-                          className="object-contain"
-                        />
-                      </div>
+                  <div className="bg-white rounded-xl p-4 w-64 h-64 mx-auto flex items-center justify-center">
+                    {qrUrl ? (
+                      <Image
+                        src={qrUrl}
+                        alt="Payment QR Code"
+                        width={240}
+                        height={240}
+                        className="object-contain"
+                        unoptimized
+                      />
                     ) : (
-                      <div className="bg-white/10 p-4 rounded-full mb-3">
-                        <Upload className="w-6 h-6 text-gray-300" />
+                      <div className="text-center text-gray-400">
+                        <QrCode className="h-16 w-16 mx-auto mb-2 text-gray-300" />
+                        <p className="text-sm">QR Code not available</p>
+                        <p className="text-xs">
+                          Contact organizer for payment details
+                        </p>
                       </div>
                     )}
-                    <span className="text-sm text-gray-400">
-                      {paymentScreenshot
-                        ? "Click to change screenshot"
-                        : "Click to upload screenshot"}
-                    </span>
-                    <span className="text-xs text-gray-600 mt-1">
-                      Max 5MB (JPEG, PNG, WEBP)
-                    </span>
-                  </label>
-                </div>
-              </div>
+                  </div>
+                </>
+              )}
             </div>
 
-            {/* Transaction ID Input */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">
-                Transaction ID
-              </label>
-              <Input
-                type="text"
-                value={transactionId}
-                onChange={(e) => setTransactionId(e.target.value)}
-                placeholder="Enter Transaction ID / UTR Number"
-                className="w-full bg-white/5 border-white/10 text-white placeholder:text-gray-500"
-              />
-            </div>
+            {/* Payment Inputs - Only if not DAU free */}
+            {!isDauRegistration && (
+              <>
+                {/* Payment Screenshot Input */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-2">
+                    Payment Screenshot
+                  </label>
+
+                  <div className="space-y-4">
+                    {/* File Upload */}
+                    <div className="border-2 border-dashed border-white/10 rounded-lg p-6 text-center hover:bg-white/5 transition-colors">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+
+                          // Validate file type
+                          if (!file.type.startsWith("image/")) {
+                            setSubmitError("Please upload an image file");
+                            return;
+                          }
+
+                          // Validate file size (5MB)
+                          if (file.size > 5 * 1024 * 1024) {
+                            setSubmitError("File size too large (max 5MB)");
+                            return;
+                          }
+
+                          setSubmitError("");
+                          setSubmitting(true); // Re-using submitting state for upload loading or add new one?
+                          // Better to have separate state but for quick task reusing submitting or validation state is risky if it blocks UI.
+                          // Let's add separate state if possible, but I can't change useState definitions easily in replace_file_content without context.
+                          // I'll assume I can just use a local logic or reuse submitting but make sure to communicate "Uploading..."
+
+                          try {
+                            const formData = new FormData();
+                            formData.append("file", file);
+
+                            // Show local preview immediately?
+                            // Yes, but let's wait for upload to get real URL
+
+                            const res = await fetch(
+                              "/api/events/upload-screenshot",
+                              {
+                                method: "POST",
+                                body: formData,
+                              },
+                            );
+
+                            const data = await res.json();
+
+                            if (!res.ok)
+                              throw new Error(data.error || "Upload failed");
+
+                            setPaymentScreenshot(data.url);
+                          } catch (err: any) {
+                            setSubmitError(
+                              err.message || "Failed to upload image",
+                            );
+                          } finally {
+                            setSubmitting(false);
+                          }
+                        }}
+                        className="hidden"
+                        id="screenshot-upload"
+                        disabled={submitting}
+                      />
+                      <label
+                        htmlFor="screenshot-upload"
+                        className="cursor-pointer flex flex-col items-center"
+                      >
+                        {paymentScreenshot ? (
+                          <div className="relative w-full max-w-xs aspect-[9/16] bg-black/50 rounded-lg overflow-hidden mb-2">
+                            <Image
+                              src={paymentScreenshot}
+                              alt="Payment Screenshot"
+                              fill
+                              className="object-contain"
+                            />
+                          </div>
+                        ) : (
+                          <div className="bg-white/10 p-4 rounded-full mb-3">
+                            <Upload className="w-6 h-6 text-gray-300" />
+                          </div>
+                        )}
+                        <span className="text-sm text-gray-400">
+                          {paymentScreenshot
+                            ? "Click to change screenshot"
+                            : "Click to upload screenshot"}
+                        </span>
+                        <span className="text-xs text-gray-600 mt-1">
+                          Max 5MB (JPEG, PNG, WEBP)
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Transaction ID Input */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-2">
+                    Transaction ID
+                  </label>
+                  <Input
+                    type="text"
+                    value={transactionId}
+                    onChange={(e) => setTransactionId(e.target.value)}
+                    placeholder="Enter Transaction ID / UTR Number"
+                    className="w-full bg-white/5 border-white/10 text-white placeholder:text-gray-500"
+                  />
+                </div>
+              </>
+            )}
 
             {submitError && (
               <div className="flex items-center gap-2 text-red-400 mb-6 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">

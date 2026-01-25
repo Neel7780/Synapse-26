@@ -247,6 +247,7 @@ export default function EventsPage() {
                                                                 backgroundClip: "content-box",
                                                             }}
                                                         >
+                                                            <div className="absolute inset-0 bg-linear-to-b from-black/0 via-black/60 to-black" />
                                                             {/* TITLE */}
                                                             <div
                                                                 className="

@@ -42,7 +42,6 @@ const itemVariants: Variants = {
   },
 };
 
-
 const generateFestivalDates = (exclude26Feb = false) => {
   const dates = [];
 
@@ -89,8 +88,8 @@ const getAvailableDateRanges = (nights: number) => {
       label = isSameMonth
         ? `${rangeArray.map((d) => d.day).join("-")} ${months[0].toLowerCase()}`
         : rangeArray
-          .map((d) => `${d.day} ${d.month.toLowerCase()}`)
-          .join(" - ");
+            .map((d) => `${d.day} ${d.month.toLowerCase()}`)
+            .join(" - ");
     }
 
     ranges.push({
@@ -153,7 +152,8 @@ export function AccommodationComponent() {
 
   // API-fetched state
   const [packages, setPackages] = useState<AccommodationPackage[]>([]);
-  const [pricing, setPricing] = useState<Record<number, number>>(DEFAULT_PRICING);
+  const [pricing, setPricing] =
+    useState<Record<number, number>>(DEFAULT_PRICING);
   const [qrUrl, setQrUrl] = useState<string>(DEFAULT_QR_URL);
   const [dataLoading, setDataLoading] = useState(true);
 
@@ -212,18 +212,19 @@ export function AccommodationComponent() {
 
   // Get available night options from pricing
   const availableNights = useMemo(() => {
-    return Object.keys(pricing).map(n => parseInt(n, 10)).sort((a, b) => a - b);
+    return Object.keys(pricing)
+      .map((n) => parseInt(n, 10))
+      .sort((a, b) => a - b);
   }, [pricing]);
 
   const availableRanges = useMemo(
     () => (selectedNights ? getAvailableDateRanges(selectedNights) : []),
-    [selectedNights]
+    [selectedNights],
   );
 
   const totalPrice = useMemo(
-    () =>
-      selectedNights ? (pricing[selectedNights] || 0) : 0,
-    [selectedNights, pricing]
+    () => (selectedNights ? pricing[selectedNights] || 0 : 0),
+    [selectedNights, pricing],
   );
 
   const festivalRange = useMemo(() => {
@@ -273,7 +274,9 @@ export function AccommodationComponent() {
     // Validate file type
     const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
-      setSubmitError("Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.");
+      setSubmitError(
+        "Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.",
+      );
       return;
     }
 
@@ -352,7 +355,8 @@ export function AccommodationComponent() {
 
       return data.url;
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to upload screenshot";
+      const message =
+        error instanceof Error ? error.message : "Failed to upload screenshot";
       setSubmitError(message);
       return null;
     } finally {
@@ -392,8 +396,8 @@ export function AccommodationComponent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           user_id: user.id,
-          check_in: selectedRange.startDate.toISOString().split('T')[0],
-          check_out: selectedRange.endDate.toISOString().split('T')[0],
+          check_in: selectedRange.startDate.toISOString().split("T")[0],
+          check_out: selectedRange.endDate.toISOString().split("T")[0],
           nights: selectedNights,
           amount: totalPrice,
           payment_screenshot_url: screenshotUrl,
@@ -424,9 +428,12 @@ export function AccommodationComponent() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-black text-white font-jqka" >
+    <div className="min-h-[100dvh] bg-black text-white font-jqka">
       {/* Header */}
-      <div className="pb-6 md:pb-8 text-center px-4 md:overflow-hidden" style={{ perspective: 1000 }}>
+      <div
+        className="pb-6 md:pb-8 text-center px-4 md:overflow-hidden"
+        style={{ perspective: 1000 }}
+      >
         <motion.h1
           initial={{ opacity: 0, y: -50, rotateX: 45 }}
           whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
@@ -448,15 +455,23 @@ export function AccommodationComponent() {
             <span className="hidden sm:inline">Dates</span>
           </div>
           <div className="w-8 h-px bg-gray-600 self-center" />
-          <div className={`flex items-center gap-2 ${step === "payment" || step === "success" ? "text-white" : "text-gray-600"}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${step === "payment" || step === "success" ? "border-white bg-white/20" : "border-gray-600"}`}>
+          <div
+            className={`flex items-center gap-2 ${step === "payment" || step === "success" ? "text-white" : "text-gray-600"}`}
+          >
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${step === "payment" || step === "success" ? "border-white bg-white/20" : "border-gray-600"}`}
+            >
               2
             </div>
             <span className="hidden sm:inline">Payment</span>
           </div>
           <div className="w-8 h-px bg-gray-600 self-center" />
-          <div className={`flex items-center gap-2 ${step === "success" ? "text-white" : "text-gray-600"}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${step === "success" ? "border-white bg-white/20" : "border-gray-600"}`}>
+          <div
+            className={`flex items-center gap-2 ${step === "success" ? "text-white" : "text-gray-600"}`}
+          >
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${step === "success" ? "border-white bg-white/20" : "border-gray-600"}`}
+            >
               3
             </div>
             <span className="hidden sm:inline">Done</span>
@@ -499,10 +514,11 @@ export function AccommodationComponent() {
                     onClick={() => handleNightSelection(nights)}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className={`p-4 md:p-6 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${selectedNights === nights
-                      ? "border-2 border-white bg-white text-black"
-                      : "border-2 border-white/30 hover:border-white"
-                      }`}
+                    className={`p-4 md:p-6 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${
+                      selectedNights === nights
+                        ? "border-2 border-white bg-white text-black"
+                        : "border-2 border-white/30 hover:border-white"
+                    }`}
                   >
                     <div className="text-xl md:text-2xl font-bold">
                       {nights} NIGHTS
@@ -559,8 +575,8 @@ export function AccommodationComponent() {
             {/* Description */}
             <div className="mb-8 md:mb-12 py-6 md:py-8 border-t border-b border-white/20">
               <p className="text-xs md:text-sm leading-relaxed font-poppins">
-                Accommodation includes full festival access for the selected stay
-                dates.
+                Accommodation includes full festival access for the selected
+                stay dates.
               </p>
             </div>
 
@@ -572,7 +588,9 @@ export function AccommodationComponent() {
                 </div>
                 <div className="flex items-center justify-center text-2xl md:text-3xl lg:text-4xl gap-2 border-2 border-[#0088FF] text-[#0088FF] px-4 py-1">
                   <span>₹</span>
-                  <span className="font-bold">{totalPrice.toLocaleString()}</span>
+                  <span className="font-bold">
+                    {totalPrice.toLocaleString()}
+                  </span>
                 </div>
               </div>
 
@@ -585,10 +603,11 @@ export function AccommodationComponent() {
                 <Button
                   onClick={handleProceedToPayment}
                   disabled={!selectedRange}
-                  className={`w-full md:w-auto px-8 md:px-12 py-4 md:py-6 text-lg md:text-2xl font-jqka uppercase transition-all ${selectedRange
-                    ? "bg-white text-black hover:bg-white/90 cursor-pointer"
-                    : "bg-white/30 text-white/50 cursor-not-allowed"
-                    }`}
+                  className={`w-full md:w-auto px-8 md:px-12 py-4 md:py-6 text-lg md:text-2xl font-jqka uppercase transition-all ${
+                    selectedRange
+                      ? "bg-white text-black hover:bg-white/90 cursor-pointer"
+                      : "bg-white/30 text-white/50 cursor-not-allowed"
+                  }`}
                 >
                   {isAuthenticated ? "Proceed to Payment" : "Login to Book"}
                 </Button>
@@ -619,9 +638,13 @@ export function AccommodationComponent() {
                   "Keep your belongings secure. Organizers will not be responsible for any loss or damage.",
                   "Respect the property and maintain cleanliness—any damage caused will result in full accountability, including covering the cost of repairs or replacement.",
                   "On 26th February, accommodation will not be provided before 4:00 PM.",
-                  "On 1st March, check-out will be before 9:00 AM. All guests must vacate the accommodation by this time."
+                  "On 1st March, check-out will be before 9:00 AM. All guests must vacate the accommodation by this time.",
                 ].map((text, i) => (
-                  <motion.li key={i} variants={itemVariants} className="flex gap-2 md:gap-3">
+                  <motion.li
+                    key={i}
+                    variants={itemVariants}
+                    className="flex gap-2 md:gap-3"
+                  >
                     <span className="text-white/60 shrink-0">{i + 1})</span>
                     <span>{text}</span>
                   </motion.li>
@@ -640,15 +663,20 @@ export function AccommodationComponent() {
             className="space-y-8"
           >
             <div className="text-center">
-              <h2 className="text-2xl md:text-3xl uppercase mb-4">Complete Payment</h2>
+              <h2 className="text-2xl md:text-3xl uppercase mb-4">
+                Complete Payment
+              </h2>
               <p className="text-white/70">
-                Scan the QR code below to make payment of ₹{totalPrice.toLocaleString()}
+                Scan the QR code below to make payment of ₹
+                {totalPrice.toLocaleString()}
               </p>
             </div>
 
             {/* Booking Summary */}
             <div className="bg-white/5 p-4 md:p-6 rounded-lg">
-              <h3 className="text-lg md:text-xl uppercase mb-4">Booking Summary</h3>
+              <h3 className="text-lg md:text-xl uppercase mb-4">
+                Booking Summary
+              </h3>
               <div className="space-y-2 text-sm md:text-base">
                 <div className="flex justify-between">
                   <span className="text-white/70">Package:</span>
@@ -668,7 +696,9 @@ export function AccommodationComponent() {
                 </div>
                 <div className="flex justify-between border-t border-white/20 pt-2 mt-2">
                   <span className="text-white/70">Total Amount:</span>
-                  <span className="text-xl font-bold text-[#0088FF]">₹{totalPrice.toLocaleString()}</span>
+                  <span className="text-xl font-bold text-[#0088FF]">
+                    ₹{totalPrice.toLocaleString()}
+                  </span>
                 </div>
               </div>
             </div>
@@ -683,6 +713,7 @@ export function AccommodationComponent() {
                     width={250}
                     height={250}
                     className="w-[200px] md:w-[250px] h-auto"
+                    unoptimized
                   />
                 </div>
                 <p className="text-sm text-white/70 text-center">
@@ -692,7 +723,7 @@ export function AccommodationComponent() {
             ) : (
               <div className="text-center p-8 border-2 border-dashed border-white/30 rounded-lg">
                 <p className="text-white/70">
-                  Payment QR code not available. Please contact support for payment details.
+                 this package is not available
                 </p>
               </div>
             )}
@@ -703,7 +734,8 @@ export function AccommodationComponent() {
                 Upload Payment Screenshot
               </span>
               <span className="text-sm text-white/70 block mb-3">
-                After making the payment, upload your payment screenshot below or paste a URL.
+                After making the payment, upload your payment screenshot below
+                or paste a URL.
               </span>
 
               {/* File Upload Area */}
@@ -716,9 +748,11 @@ export function AccommodationComponent() {
                   className={`
                     border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
                     transition-all duration-200
-                    ${isDragging
-                      ? "border-[#0088FF] bg-[#0088FF]/10"
-                      : "border-white/30 hover:border-white/60 hover:bg-white/5"}
+                    ${
+                      isDragging
+                        ? "border-[#0088FF] bg-[#0088FF]/10"
+                        : "border-white/30 hover:border-white/60 hover:bg-white/5"
+                    }
                   `}
                 >
                   <input
@@ -730,7 +764,9 @@ export function AccommodationComponent() {
                   />
                   <Upload className="w-12 h-12 mx-auto mb-4 text-white/50" />
                   <p className="text-white mb-2">
-                    {isDragging ? "Drop your image here" : "Click or drag to upload screenshot"}
+                    {isDragging
+                      ? "Drop your image here"
+                      : "Click or drag to upload screenshot"}
                   </p>
                   <p className="text-sm text-white/50">
                     Supports: JPEG, PNG, GIF, WebP (Max 5MB)
@@ -754,7 +790,9 @@ export function AccommodationComponent() {
                         <CheckCircle className="w-5 h-5" />
                         <span>File selected</span>
                       </div>
-                      <p className="text-sm text-white truncate">{selectedFile.name}</p>
+                      <p className="text-sm text-white truncate">
+                        {selectedFile.name}
+                      </p>
                       <p className="text-xs text-white/50">
                         {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                       </p>
@@ -808,7 +846,11 @@ export function AccommodationComponent() {
                 </Button>
                 <Button
                   onClick={handleSubmitBooking}
-                  disabled={submitting || uploadingFile || (!selectedFile && !paymentScreenshot.trim())}
+                  disabled={
+                    submitting ||
+                    uploadingFile ||
+                    (!selectedFile && !paymentScreenshot.trim())
+                  }
                   className="w-full md:w-auto bg-white text-black hover:bg-white/90 px-8 py-4 disabled:opacity-50"
                 >
                   {submitting || uploadingFile ? (
@@ -834,22 +876,36 @@ export function AccommodationComponent() {
             className="text-center space-y-6 py-12"
           >
             <div className="w-20 h-20 mx-auto bg-green-500/20 rounded-full flex items-center justify-center">
-              <svg className="w-10 h-10 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <svg
+                className="w-10 h-10 text-green-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
             </div>
 
-            <h2 className="text-2xl md:text-3xl uppercase">Booking Submitted!</h2>
+            <h2 className="text-2xl md:text-3xl uppercase">
+              Booking Submitted!
+            </h2>
 
             <div className="text-white/70 space-y-2">
               <p>Your accommodation booking has been submitted successfully.</p>
               {bookingId && (
                 <p className="text-lg">
-                  Booking ID: <span className="text-white font-bold">#{bookingId}</span>
+                  Booking ID:{" "}
+                  <span className="text-white font-bold">#{bookingId}</span>
                 </p>
               )}
               <p className="text-sm">
-                Your payment is pending verification. You will receive a confirmation once verified.
+                Your payment is pending verification. You will receive a
+                confirmation once verified.
               </p>
             </div>
 
@@ -866,7 +922,9 @@ export function AccommodationComponent() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-white/70">Amount:</span>
-                  <span className="text-[#0088FF]">₹{totalPrice.toLocaleString()}</span>
+                  <span className="text-[#0088FF]">
+                    ₹{totalPrice.toLocaleString()}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-white/70">Status:</span>
