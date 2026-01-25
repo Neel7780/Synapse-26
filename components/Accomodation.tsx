@@ -88,8 +88,8 @@ const getAvailableDateRanges = (nights: number) => {
       label = isSameMonth
         ? `${rangeArray.map((d) => d.day).join("-")} ${months[0].toLowerCase()}`
         : rangeArray
-            .map((d) => `${d.day} ${d.month.toLowerCase()}`)
-            .join(" - ");
+          .map((d) => `${d.day} ${d.month.toLowerCase()}`)
+          .join(" - ");
     }
 
     ranges.push({
@@ -138,7 +138,7 @@ export function AccommodationComponent() {
   const [step, setStep] = useState<Step>("dates");
   const [selectedNights, setSelectedNights] = useState<number | null>(null);
   const [selectedRange, setSelectedRange] = useState<Range | null>(null);
-  const [paymentScreenshot, setPaymentScreenshot] = useState("");
+  const [transactionId, setTransactionId] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [bookingId, setBookingId] = useState<number | null>(null);
@@ -280,10 +280,10 @@ export function AccommodationComponent() {
       return;
     }
 
-    // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024;
+    // Validate file size (max 500KB)
+    const maxSize = 500 * 1024;
     if (file.size > maxSize) {
-      setSubmitError("File too large. Maximum size is 5MB.");
+      setSubmitError("File too large. Maximum size is 500KB.");
       return;
     }
 
@@ -328,7 +328,6 @@ export function AccommodationComponent() {
       URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
     }
-    setPaymentScreenshot("");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -365,9 +364,13 @@ export function AccommodationComponent() {
   };
 
   const handleSubmitBooking = async () => {
-    // Check if we have either a file or a URL
-    if (!selectedFile && !paymentScreenshot.trim()) {
-      setSubmitError("Please upload a payment screenshot or enter a URL");
+    // Check if we have BOTH file and Transaction ID
+    if (!selectedFile) {
+      setSubmitError("Please upload the payment screenshot");
+      return;
+    }
+    if (!transactionId.trim()) {
+      setSubmitError("Please enter the Transaction ID");
       return;
     }
 
@@ -381,7 +384,7 @@ export function AccommodationComponent() {
 
     try {
       // Upload file if selected
-      let screenshotUrl = paymentScreenshot.trim();
+      let screenshotUrl = "";
       if (selectedFile) {
         const uploadedUrl = await uploadScreenshot();
         if (!uploadedUrl) {
@@ -401,6 +404,7 @@ export function AccommodationComponent() {
           nights: selectedNights,
           amount: totalPrice,
           payment_screenshot_url: screenshotUrl,
+          transaction_reference: transactionId.trim(),
         }),
       });
 
@@ -514,11 +518,10 @@ export function AccommodationComponent() {
                     onClick={() => handleNightSelection(nights)}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className={`p-4 md:p-6 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${
-                      selectedNights === nights
-                        ? "border-2 border-white bg-white text-black"
-                        : "border-2 border-white/30 hover:border-white"
-                    }`}
+                    className={`p-4 md:p-6 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${selectedNights === nights
+                      ? "border-2 border-white bg-white text-black"
+                      : "border-2 border-white/30 hover:border-white"
+                      }`}
                   >
                     <div className="text-xl md:text-2xl font-bold">
                       {nights} NIGHTS
@@ -603,11 +606,10 @@ export function AccommodationComponent() {
                 <Button
                   onClick={handleProceedToPayment}
                   disabled={!selectedRange}
-                  className={`w-full md:w-auto px-8 md:px-12 py-4 md:py-6 text-lg md:text-2xl font-jqka uppercase transition-all ${
-                    selectedRange
-                      ? "bg-white text-black hover:bg-white/90 cursor-pointer"
-                      : "bg-white/30 text-white/50 cursor-not-allowed"
-                  }`}
+                  className={`w-full md:w-auto px-8 md:px-12 py-4 md:py-6 text-lg md:text-2xl font-jqka uppercase transition-all ${selectedRange
+                    ? "bg-white text-black hover:bg-white/90 cursor-pointer"
+                    : "bg-white/30 text-white/50 cursor-not-allowed"
+                    }`}
                 >
                   {isAuthenticated ? "Proceed to Payment" : "Login to Book"}
                 </Button>
@@ -723,7 +725,7 @@ export function AccommodationComponent() {
             ) : (
               <div className="text-center p-8 border-2 border-dashed border-white/30 rounded-lg">
                 <p className="text-white/70">
-                 this package is not available
+                  this package is not available
                 </p>
               </div>
             )}
@@ -748,10 +750,9 @@ export function AccommodationComponent() {
                   className={`
                     border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
                     transition-all duration-200
-                    ${
-                      isDragging
-                        ? "border-[#0088FF] bg-[#0088FF]/10"
-                        : "border-white/30 hover:border-white/60 hover:bg-white/5"
+                    ${isDragging
+                      ? "border-[#0088FF] bg-[#0088FF]/10"
+                      : "border-white/30 hover:border-white/60 hover:bg-white/5"
                     }
                   `}
                 >
@@ -769,7 +770,7 @@ export function AccommodationComponent() {
                       : "Click or drag to upload screenshot"}
                   </p>
                   <p className="text-sm text-white/50">
-                    Supports: JPEG, PNG, GIF, WebP (Max 5MB)
+                    Supports: JPEG, PNG, GIF, WebP (Max 500KB)
                   </p>
                 </div>
               ) : (
@@ -807,25 +808,20 @@ export function AccommodationComponent() {
                 </div>
               )}
 
-              {/* Divider with OR */}
-              <div className="flex items-center gap-4 my-4">
-                <div className="flex-1 h-px bg-white/20" />
-                <span className="text-white/50 text-sm">OR</span>
-                <div className="flex-1 h-px bg-white/20" />
-              </div>
+              {/* Spacer */}
+              <div className="h-6" />
 
-              {/* URL Input as fallback */}
+              {/* Transaction ID Input */}
               <div>
                 <label className="text-sm text-white/70 block mb-2">
-                  Paste screenshot URL (if uploaded elsewhere)
+                  Transaction ID <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="url"
-                  value={paymentScreenshot}
-                  onChange={(e) => setPaymentScreenshot(e.target.value)}
-                  placeholder="https://example.com/your-screenshot.png"
-                  disabled={!!selectedFile}
-                  className="w-full bg-white/10 border border-white/30 rounded-lg px-4 py-3 text-white placeholder:text-white/40 focus:outline-none focus:border-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  type="text"
+                  value={transactionId}
+                  onChange={(e) => setTransactionId(e.target.value)}
+                  placeholder="Enter Transaction ID"
+                  className="w-full bg-white/10 border border-white/30 rounded-lg px-4 py-3 text-white placeholder:text-white/40 focus:outline-none focus:border-white"
                 />
               </div>
 
@@ -849,7 +845,8 @@ export function AccommodationComponent() {
                   disabled={
                     submitting ||
                     uploadingFile ||
-                    (!selectedFile && !paymentScreenshot.trim())
+                    !selectedFile ||
+                    !transactionId.trim()
                   }
                   className="w-full md:w-auto bg-white text-black hover:bg-white/90 px-8 py-4 disabled:opacity-50"
                 >
@@ -942,6 +939,6 @@ export function AccommodationComponent() {
           </motion.div>
         )}
       </div>
-    </div>
+    </div >
   );
 }
