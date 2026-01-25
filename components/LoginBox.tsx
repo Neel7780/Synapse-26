@@ -49,7 +49,8 @@ export default function LoginBox({ goRegister, goForgot }: LoginBoxProps) {
         router.push("/admin");
       } else {
         const next = searchParams.get("next");
-        router.push(next || "/");
+        const redirect = searchParams.get("redirect");
+        router.push(next || redirect || "/");
       }
       router.refresh();
     } catch (err: unknown) {

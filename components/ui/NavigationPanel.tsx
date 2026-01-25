@@ -43,7 +43,7 @@ export default function NavigationPanel() {
       const nextPath = pathname.startsWith("/auth") ? "/" : pathname;
       baseItems.unshift({
         name: "register / login",
-        link: `/auth?next=${encodeURIComponent(nextPath)}`,
+        link: `/auth?redirect=${encodeURIComponent(nextPath)}`,
       });
     }
 

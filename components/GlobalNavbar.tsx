@@ -10,7 +10,7 @@ export default function GlobalNavbar() {
     const { isNavbarVisible } = useNavigationState();
     const pathname = usePathname();
 
-    if (pathname?.startsWith("/admin")) return null;
+    if (pathname?.startsWith("/admin") || pathname?.startsWith("/auth")) return null;
 
     return (
         <Navbar visible={isNavbarVisible}>
