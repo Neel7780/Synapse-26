@@ -106,7 +106,8 @@ export default function OtpBox({
         } else {
           // For signup verification, redirect to user profile (user stays logged in)
           const next = searchParams.get("next");
-          router.push(next || "/user-profile");
+          const redirect = searchParams.get("redirect");
+          router.push(next || redirect || "/user-profile");
         }
       }, 1500);
     } catch (err: unknown) {
