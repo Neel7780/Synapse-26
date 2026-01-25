@@ -489,13 +489,34 @@ export default function HallOfFame() {
         return true;
       };
 
+      let trigger: globalThis.ScrollTrigger | undefined;
+      let rafId: number;
+      let retryCount = 0;
+
       const waitForHero = () => {
+        // Stop if component unmounted
+        if (!hallContainerRef.current) return;
+
         if (!calculateStartScale()) {
-          requestAnimationFrame(waitForHero);
+          if (retryCount < 60) { // Try for ~1 second
+            retryCount++;
+            rafId = requestAnimationFrame(waitForHero);
+            return;
+          }
+          // If timed out, verify if we have grid items at least
+          if (process.env.NODE_ENV !== "production") {
+            console.warn("HallOfFame: Hero not found, forcing visibility");
+          }
+          // Force visibility of all items as a fallback
+          gridImages.forEach((image, index) => {
+            const mode = getActiveMode();
+            const item = gridItemsRef.current[mode][index];
+            if (item) gsap.set(item, { opacity: 1, scale: 1, filter: "none", clearProps: "all" });
+          });
           return;
         }
 
-        ScrollTrigger.create({
+        trigger = ScrollTrigger.create({
           trigger: hallContainerRef.current!,
           start: "top top-=5%",
           end: "bottom top",
@@ -505,24 +526,24 @@ export default function HallOfFame() {
           onRefreshInit: calculateStartScale,
 
           onUpdate: (self) => {
-            if (!hero) return;
+            if (hero) {
+              // Use a custom easing for the hero zoom-out
+              const heroProgress = Math.min(self.progress / 0.5, 1);
+              const heroEased = gsap.parseEase("power3.out")(heroProgress);
 
-            // Use a custom easing for the hero zoom-out
-            const heroProgress = Math.min(self.progress / 0.5, 1);
-            const heroEased = gsap.parseEase("power3.out")(heroProgress);
+              // Hero zoom-out animation with enhanced effects
+              const currentScaleX = gsap.utils.interpolate(startScaleX, 1, heroEased);
+              const currentScaleY = gsap.utils.interpolate(startScaleY, 1, heroEased);
+              const currentRadius = gsap.utils.interpolate(0, 20, heroEased);
+              const currentBrightness = gsap.utils.interpolate(1, 0.95, heroEased);
 
-            // Hero zoom-out animation with enhanced effects
-            const currentScaleX = gsap.utils.interpolate(startScaleX, 1, heroEased);
-            const currentScaleY = gsap.utils.interpolate(startScaleY, 1, heroEased);
-            const currentRadius = gsap.utils.interpolate(0, 20, heroEased);
-            const currentBrightness = gsap.utils.interpolate(1, 0.95, heroEased);
-
-            gsap.set(hero, {
-              scaleX: currentScaleX,
-              scaleY: currentScaleY,
-              borderRadius: `${currentRadius}px`,
-              filter: `brightness(${currentBrightness})`,
-            });
+              gsap.set(hero, {
+                scaleX: currentScaleX,
+                scaleY: currentScaleY,
+                borderRadius: `${currentRadius}px`,
+                filter: `brightness(${currentBrightness})`,
+              });
+            }
 
             // Grid items animation with staggered reveal
             const mode = getActiveMode();
@@ -575,8 +596,15 @@ export default function HallOfFame() {
 
       waitForHero();
 
+      // Additional safety refresh for navigation cases
+      const timer = setTimeout(() => {
+        ScrollTrigger.refresh();
+      }, 1000);
+
       return () => {
-        ScrollTrigger.getAll().forEach((t) => t.kill());
+        clearTimeout(timer);
+        cancelAnimationFrame(rafId);
+        if (trigger) trigger.kill();
       };
     },
     { scope: hallContainerRef }
