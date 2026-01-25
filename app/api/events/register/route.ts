@@ -57,7 +57,14 @@ export async function POST(request: NextRequest) {
 
         const isDauFree = eventData.is_dau_free;
         const isDauStudent = userData.email?.endsWith("@dau.ac.in");
-        const isFreeRegistration = isDauFree && isDauStudent;
+
+        // Check if all team members are also from DAU
+        const areAllTeamMembersDau =
+            !team_member_emails ||
+            team_member_emails.length === 0 ||
+            team_member_emails.every((email: string) => email && email.toLowerCase().trim().endsWith("@dau.ac.in"));
+
+        const isFreeRegistration = isDauFree && isDauStudent && areAllTeamMembersDau;
 
         if (!isFreeRegistration) {
             if (!payment_screenshot_url || !payment_screenshot_url.trim()) {
