@@ -45,11 +45,10 @@ const FeeOption = memo(function FeeOption({
 
   return (
     <label
-      className={`flex items-center justify-between p-4 border rounded cursor-pointer transition-all ${
-        isSelected
+      className={`flex items-center justify-between p-4 border rounded cursor-pointer transition-all ${isSelected
           ? "border-blue-600 bg-blue-50 ring-1 ring-blue-600"
           : "border-gray-200 hover:border-gray-300"
-      }`}
+        }`}
     >
       <div className="flex items-center gap-3">
         <input
