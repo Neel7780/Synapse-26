@@ -29,7 +29,7 @@ type HeroSectionProps = {
   onEnter: () => void;
 };
 
-let check = false;
+
 
 export default function HeroSection({
   onEnter,
@@ -90,6 +90,8 @@ export default function HeroSection({
   const scrollHintIdleRef = useRef<gsap.core.Tween | null>(null);
   const scrollHintHomeIdleRef = useRef<gsap.core.Tween | null>(null);
   const rafIdRef = useRef<number | null>(null);
+
+  const clickedEnterRef = useRef(false);
 
   const updateProgressText = useCallback((progress: number) => {
     if (progressTextRef.current) {
@@ -313,7 +315,7 @@ export default function HeroSection({
   const handleEnterClick = useCallback(() => {
     if (enterTriggeredRef.current) return;
     enterTriggeredRef.current = true;
-    check = true;
+    clickedEnterRef.current = true;
 
     sessionStorage.setItem(INTRO_KEY, "true");
     setIsLoading(false);
@@ -352,18 +354,19 @@ export default function HeroSection({
         pin: true,
         pinSpacing: false,
         anticipatePin: 1.2,
-        onUpdate: (_self) => {
-          // Logic for part3Active removed as we use pointer-events-auto on button directly
-        },
       },
     });
 
     masterTLRef.current = masterTL;
 
-    masterTL.set("#part3_2", {
+    masterTL.set(part3_2Ref.current, {
       scale: 0.2,
       rotation: 180,
     });
+
+    // Helper for scoped selection
+    const q = gsap.utils.selector(part3Ref);
+
     masterTL
       .to(
         scrollHintRef.current,
@@ -375,7 +378,7 @@ export default function HeroSection({
       )
 
       .to(
-        "#redCard",
+        cardRef.current,
         {
           rotation: 180,
           scale: 0.5,
@@ -421,7 +424,7 @@ export default function HeroSection({
         2
       )
       .to(
-        "#part3_2",
+        part3_2Ref.current,
         {
           rotation: 360,
           duration: 2,
@@ -431,9 +434,9 @@ export default function HeroSection({
         2
       )
       .addLabel("part3Reveal")
-      .set("#part3", { opacity: 1 }, "part3Reveal")
+      .set(part3Ref.current, { opacity: 1 }, "part3Reveal")
       .from(
-        "#part3 .register-btn",
+        q(".register-btn"),
         {
           x: 100,
           opacity: 0,
@@ -443,7 +446,7 @@ export default function HeroSection({
         "part3Reveal+=0.4"
       )
       .from(
-        "#part3 .countdown",
+        q(".countdown"),
         {
           x: -100,
           opacity: 0,
@@ -453,7 +456,7 @@ export default function HeroSection({
         "part3Reveal+=0.4"
       )
       .fromTo(
-        "#part3 .scroll-hint-home",
+        scrollHintHomeRef.current,
         {
           y: -20,
           opacity: 0,
@@ -467,7 +470,7 @@ export default function HeroSection({
         "part3Reveal+=0.4"
       )
       .from(
-        "#part3 .title-wrapper",
+        q(".title-wrapper"),
         {
           opacity: 0,
           y: -100,
@@ -486,7 +489,7 @@ export default function HeroSection({
       .to(".screen-container", { duration: 0.5, ease: "power2.inOut" })
       .addLabel("part3Hide")
       .to(
-        ["#part3 .register-btn"],
+        q(".register-btn"),
         {
           x: 100,
           opacity: 0,
@@ -496,7 +499,7 @@ export default function HeroSection({
         "part3Hide+=0.2"
       )
       .to(
-        "#part3 .countdown",
+        q(".countdown"),
         {
           x: -100,
           opacity: 0,
@@ -506,7 +509,7 @@ export default function HeroSection({
         "part3Hide+=0.2"
       )
       .to(
-        "#part3 .scroll-hint-home",
+        scrollHintHomeRef.current,
         {
           y: -20,
           opacity: 0,
@@ -515,7 +518,7 @@ export default function HeroSection({
         },
         "part3Hide+=0.2"
       )
-      .to("#part3 .title-wrapper", { opacity: 0 }, "part3Hide+=0.15")
+      .to(q(".title-wrapper"), { opacity: 0 }, "part3Hide+=0.15")
       .addLabel("together")
       .to(
         frontScreenRef.current,
@@ -622,16 +625,18 @@ export default function HeroSection({
     window.addEventListener("beforeunload", clearIntroOnReload);
     window.addEventListener("resize", handleResize);
 
-    requestAnimationFrame(() => {
-      startBrowserPreloadTracking();
-    });
+    if (isLoading) {
+      requestAnimationFrame(() => {
+        startBrowserPreloadTracking();
+      });
+    }
 
     return () => {
       window.removeEventListener("beforeunload", clearIntroOnReload);
       window.removeEventListener("resize", handleResize);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startBrowserPreloadTracking]);
+  }, [isLoading, startBrowserPreloadTracking]);
 
   useEffect(() => {
     if (!isLoading) {
@@ -645,15 +650,45 @@ export default function HeroSection({
     if (hasRunMaskRef.current) return;
 
     hasRunMaskRef.current = true;
+
+    // If we are revisiting, skip the mask animation and just init everything
+    if (!clickedEnterRef.current) {
+      if (svgContainerRef.current) {
+        svgContainerRef.current.style.display = "none";
+      }
+
+      // Ensure mask is cleared (though JSX handles it, this is safe)
+      gsap.set(maskLayerRef.current, {
+        webkitMaskImage: "none",
+        maskImage: "none",
+      });
+
+      // Delay initialization slightly to ensure DOM is ready
+      setTimeout(() => {
+        initScrollAnimations();
+
+        // Force the timeline to the start to ensure Red Hand is visible
+        if (masterTLRef.current) {
+          masterTLRef.current.progress(0);
+        }
+
+        ScrollTrigger.refresh(true);
+        initScrollProgress();
+        unlockScroll();
+      }, 50);
+
+      return;
+    }
+
     gsap.to(maskLayerRef.current, {
-      duration: check ? 4 : 0.1,
+      duration: 4,
       ease: "expo.out",
       webkitMaskSize: "cover",
       maskSize: "cover",
       onStart: () => {
         requestAnimationFrame(() => {
           const audio = audioRef.current;
-          if (!check || !audio) return;
+          if (!audio) return;
 
           audio.muted = false;
           audio.volume = 0;
@@ -681,7 +716,7 @@ export default function HeroSection({
 
         initScrollProgress();
         unlockScroll();
-        check = false;
+        clickedEnterRef.current = false;
       },
     });
   }, [isLoading, initScrollAnimations, unlockScroll, initScrollProgress]);
@@ -729,15 +764,15 @@ export default function HeroSection({
           masterTLRef.current.kill();
         }
 
+        // kill progress trigger
+        if (progressTriggerRef.current) {
+          progressTriggerRef.current.kill();
+        }
+
         // kill idle tweens
         if (scrollHintIdleRef.current) scrollHintIdleRef.current.kill?.();
         if (scrollHintHomeIdleRef.current)
           scrollHintHomeIdleRef.current.kill?.();
-
-        // kill all ScrollTriggers
-        if (typeof ScrollTrigger !== "undefined" && ScrollTrigger.getAll) {
-          ScrollTrigger.getAll().forEach((st: ScrollTrigger) => st.kill());
-        }
 
         // kill all tweens on important refs
         gsap.killTweensOf(maskLayer);
@@ -774,14 +809,14 @@ export default function HeroSection({
       }
       <div className="hero relative inset-0 h-[100dvh] z-25" ref={heroRef}>
         <div id="maskLayer" className="absolute inset-0 opacity-100 " ref={maskLayerRef} style={{
-          WebkitMaskImage: 'url("/images_home/inkReveal2.gif")',
+          WebkitMaskImage: (isLoading || clickedEnterRef.current) ? 'url("/images_home/inkReveal2.gif")' : 'none',
           WebkitMaskRepeat: 'no-repeat',
           WebkitMaskPosition: 'center',
-          WebkitMaskSize: '0% 0%',
-          maskImage: 'url("/images_home/inkReveal2.gif")',
+          WebkitMaskSize: (isLoading || clickedEnterRef.current) ? '0% 0%' : 'cover',
+          maskImage: (isLoading || clickedEnterRef.current) ? 'url("/images_home/inkReveal2.gif")' : 'none',
           maskRepeat: 'no-repeat',
           maskPosition: 'center',
-          maskSize: '0% 0%',
+          maskSize: (isLoading || clickedEnterRef.current) ? '0% 0%' : 'cover',
         }}>
           <Image id="coloredImage" src="/images_home/RedHand2.jpeg" alt="Red Hand" fill className="absolute inset-0 h-full w-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none max-[600px]:scale-250" priority={false} loading="eager" ref={coloredImageRef} />
 

@@ -232,6 +232,24 @@ export default function AboutSection() {
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", positionImageFromGradientCenter);
+      // Kill all ScrollTriggers created in this scope
+      const aboutSection = aboutSectionRef.current;
+      ScrollTrigger.getAll().forEach(t => {
+        if (aboutSection && t.trigger === aboutSection) {
+          t.kill();
+        }
+        // Also check if the trigger was created with the selector string and matches (fallback)
+        if (t.vars && t.vars.trigger === ".part3_end") {
+          t.kill();
+        }
+      });
+
+      gsap.killTweensOf(".doittitle .title-letter");
+      gsap.killTweensOf(".Theme_content .word");
+      gsap.killTweensOf(image);
+      if (decorativeRef.current) {
+        gsap.killTweensOf(decorativeRef.current.querySelectorAll(".particle"));
+      }
     };
   }, [splitTextToWords, positionImageFromGradientCenter]);
 
