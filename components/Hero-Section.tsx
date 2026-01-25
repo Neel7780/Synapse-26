@@ -818,19 +818,43 @@ export default function HeroSection({
           maskPosition: 'center',
           maskSize: (isLoading || clickedEnterRef.current) ? '0% 0%' : 'cover',
         }}>
-          <Image id="coloredImage" src="/images_home/RedHand2.jpeg" alt="Red Hand" fill className="absolute inset-0 h-full w-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none max-[600px]:scale-250" priority={false} loading="eager" ref={coloredImageRef} />
+          <Image id="coloredImage" src="/images_home/RedHand2.jpeg" alt="Red Hand" fill sizes="100vw" quality={100} className="absolute inset-0 h-full w-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none max-[600px]:scale-[1.8]" priority unoptimized ref={coloredImageRef} />
 
           <div id="flipCard" className="absolute inset-0 transform-3d will-change-transform" ref={flipCardRef}>
-            <Image id="redCard" className="absolute inset-0 w-full h-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none backface-hidden max-[600px]:scale-250" src="/images_home/redcard4.png" alt="Red Card" fill priority={false} loading="eager" ref={cardRef} />
+            <Image id="redCard" className="absolute inset-0 w-full h-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none backface-hidden max-[600px]:scale-[1.8]" src="/images_home/redcard4.png" alt="Red Card" fill sizes="100vw" quality={100} priority unoptimized ref={cardRef} />
 
-            <div id="part3_2" ref={part3_2Ref} style={{
-              backgroundImage:
-                "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.15) 35%, rgba(0,0,0,0.45) 65%, rgba(0,0,0,0.75) 85%, #000 100%), url(/images_home/image_part3_2.png)",
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }} className=" absolute inset-0 flex flex-col items-center justify-center opacity-100 will-change-transform backface-hidden transform-[rotateY(180deg)]">
+            <div id="part3_2" ref={part3_2Ref} className="absolute inset-0 flex flex-col items-center justify-center opacity-100 will-change-transform backface-hidden transform-[rotateY(180deg)]">
+              {/* Background image using Next/Image for better quality */}
+              <Image 
+                src="/images_home/image_part3_2.png" 
+                alt="" 
+                fill 
+                sizes="100vw"
+                quality={100}
+                unoptimized
+                className="object-cover -z-10"
+                priority
+              />
+              {/* Gradient overlay */}
+              <div 
+                className="absolute inset-0 -z-5 pointer-events-none" 
+                style={{
+                  background: "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.15) 35%, rgba(0,0,0,0.45) 65%, rgba(0,0,0,0.75) 85%, #000 100%)"
+                }} 
+              />
               <div className="screen-container relative w-screen h-full flex items-center justify-center perspective-[1000px] transform-3d" ref={screenContainerRef}>
-                <div ref={frontScreenRef} className="screen-front absolute inset-0 bg-black bg-[url('/images_home/part3-image.png')] bg-no-repeat bg-center bg-contain z-2 backface-hidden border-4 border-solid rounded " style={{ borderColor: "rgba(250,235,215,0)" }}></div>
+                <div ref={frontScreenRef} className="screen-front absolute inset-0 bg-black z-2 backface-hidden border-4 border-solid rounded overflow-hidden" style={{ borderColor: "rgba(250,235,215,0)" }}>
+                  {/* Part3 image using Next/Image */}
+                  <Image 
+                    src="/images_home/part3-image.png" 
+                    alt="" 
+                    fill 
+                    sizes="100vw"
+                    quality={100}
+                    unoptimized
+                    className="object-contain"
+                  />
+                </div>
                 <div className="center-joker-container absolute inset-0 flex items-center justify-center transform-[rotateY(180deg)] backface-hidden z-1">
                   <Image src="/images_home/card_center.png" className="center-joker w-full h-auto rotate-[-64deg] object-contain rounded-lg" alt="Joker Card" width={500} height={500} quality={100} unoptimized />
                 </div>
