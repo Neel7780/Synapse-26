@@ -611,11 +611,33 @@ export default function HallOfFame() {
         ScrollTrigger.refresh();
       }, 500);
 
+      // One-time scroll listener to refresh on first user scroll
+      // This catches the case where user scrolls before timers fire
+      let hasRefreshedOnScroll = false;
+      const onFirstScroll = () => {
+        if (hasRefreshedOnScroll) return;
+        hasRefreshedOnScroll = true;
+        ScrollTrigger.refresh();
+        window.removeEventListener('scroll', onFirstScroll);
+      };
+      window.addEventListener('scroll', onFirstScroll, { passive: true });
+
+      // Also refresh when ScrollTrigger detects scroll start
+      const onScrollTriggerStart = () => {
+        if (!hasRefreshedOnScroll) {
+          hasRefreshedOnScroll = true;
+          ScrollTrigger.refresh();
+        }
+      };
+      ScrollTrigger.addEventListener('scrollStart', onScrollTriggerStart);
+
       return () => {
         clearTimeout(timer1);
         clearTimeout(timer2);
         cancelAnimationFrame(rafId);
         if (trigger) trigger.kill();
+        window.removeEventListener('scroll', onFirstScroll);
+        ScrollTrigger.removeEventListener('scrollStart', onScrollTriggerStart);
       };
     },
     { scope: hallContainerRef }
