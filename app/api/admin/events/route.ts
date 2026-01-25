@@ -179,13 +179,16 @@ export async function POST(request: Request) {
         qrCodeMap.group = uploadResult.publicUrl
       }
 
-      const feeInserts = fees.map((f: any) => ({
-        participation_type: f.type,
-        price: Number(f.price),
-        min_members: Number(f.min || 1),
-        max_members: Number(f.max || 1),
-        qr_code: qrCodeMap[f.type] || null,
-      }));
+      // Filter out fees with zero or invalid prices and create inserts
+      const feeInserts = fees
+        .filter((f: any) => f.price && Number(f.price) > 0)
+        .map((f: any) => ({
+          participation_type: f.type,
+          price: Number(f.price),
+          min_members: Number(f.min || 1),
+          max_members: Number(f.max || 1),
+          qr_code: qrCodeMap[f.type] || null,
+        }));
 
       const { data: feeData, error: feeError } = await supabase
         .from("fee")
@@ -348,28 +351,27 @@ export async function PUT(request: Request) {
       // 1. Find old fees linked to this event and get their QR codes
       const { data: oldLinks } = await supabase
         .from("event_fee")
-        .select("fee_id, fee(qr_code, participation_type)")
+        .select("fee_id, fee(fee_id, qr_code, participation_type)")
         .eq("event_id", Number(event_id));
 
-      const oldFeeIds = oldLinks?.map((link: any) => link.fee_id) || [];
-
-      // Store old QR codes for deletion
+      // Store old QR codes for deletion and map old fee_ids by participation type
       const oldQrCodes: Array<{ url: string, type: string }> = [];
+      const oldFeeMap: Record<string, number> = {}; // Maps participation_type to fee_id
+
       oldLinks?.forEach((link: any) => {
+        const participationType = link.fee?.participation_type;
+        if (participationType) {
+          oldFeeMap[participationType.toLowerCase()] = link.fee_id;
+        }
         if (link.fee?.qr_code) {
           oldQrCodes.push({
             url: link.fee.qr_code,
-            type: link.fee.participation_type
+            type: participationType
           });
         }
       });
 
-      // 2. Delete old fees
-      if (oldFeeIds.length > 0) {
-        await supabase.from("fee").delete().in("fee_id", oldFeeIds);
-      }
-
-      // 3. Create NEW fees from the form data
+      // 2. Create NEW fees from the form data
       if (fees.length > 0) {
         // Upload QR codes and map to participation types
         const qrCodeMap: Record<string, string | null> = {
@@ -378,31 +380,33 @@ export async function PUT(request: Request) {
           group: null
         };
 
-        // Helper function to delete old QR code and upload new one
+        // Helper function to handle QR code updates
         const handleQrCodeUpdate = async (
           newFile: File | null,
           type: string
         ): Promise<string | null> => {
-          // Find and delete old QR code for this type
+          // Find old QR code for this type
           const oldQr = oldQrCodes.find(qr => qr.type.toLowerCase() === type);
-          if (oldQr) {
-            try {
-              const url = new URL(oldQr.url);
-              const pathParts = url.pathname.split('/storage/v1/object/public/qr-code/');
-              if (pathParts.length > 1) {
-                const filePath = pathParts[1];
-                await deleteImage({
-                  bucket: 'qr-code',
-                  filePath
-                });
-              }
-            } catch (error) {
-              console.error(`Failed to delete old QR code for ${type}:`, error);
-            }
-          }
 
           // Upload new QR code if provided
           if (newFile && newFile.size > 0) {
+            // Delete old QR code before uploading new one
+            if (oldQr) {
+              try {
+                const url = new URL(oldQr.url);
+                const pathParts = url.pathname.split('/storage/v1/object/public/qr-code/');
+                if (pathParts.length > 1) {
+                  const filePath = pathParts[1];
+                  await deleteImage({
+                    bucket: 'qr-code',
+                    filePath
+                  });
+                }
+              } catch (error) {
+                console.error(`Failed to delete old QR code for ${type}:`, error);
+              }
+            }
+
             const uploadResult = await uploadImage({
               file: newFile,
               bucket: 'qr-code',
@@ -411,7 +415,8 @@ export async function PUT(request: Request) {
             return uploadResult.publicUrl;
           }
 
-          return null;
+          // If no new file, return the existing QR code URL (preserve it)
+          return oldQr ? oldQr.url : null;
         };
 
         // Handle QR code updates for each type
@@ -419,14 +424,18 @@ export async function PUT(request: Request) {
         qrCodeMap.duet = await handleQrCodeUpdate(qrCodeDuet, 'duet');
         qrCodeMap.group = await handleQrCodeUpdate(qrCodeGroup, 'group');
 
-        const feeInserts = fees.map((f: any) => ({
-          participation_type: f.type,
-          price: Number(f.price),
-          min_members: Number(f.min || 1),
-          max_members: Number(f.max || 1),
-          qr_code: qrCodeMap[f.type] || null,
-        }));
+        // Filter out fees with zero or invalid prices and create inserts
+        const feeInserts = fees
+          .filter((f: any) => f.price && Number(f.price) > 0)
+          .map((f: any) => ({
+            participation_type: f.type,
+            price: Number(f.price),
+            min_members: Number(f.min || 1),
+            max_members: Number(f.max || 1),
+            qr_code: qrCodeMap[f.type] || null,
+          }));
 
+        // Insert new fee records
         const { data: newFees, error: newFeeError } = await supabase
           .from("fee")
           .insert(feeInserts)
@@ -434,14 +443,49 @@ export async function PUT(request: Request) {
 
         if (newFeeError) throw newFeeError;
 
-        const newLinks = newFees.map((f: any) => ({
-          event_id: Number(event_id),
-          fee_id: f.fee_id,
-        }));
+        // 3. Update or insert event_fee relations
+        for (const newFee of newFees) {
+          const participationType = newFee.participation_type.toLowerCase();
+          const oldFeeId = oldFeeMap[participationType];
 
-        await supabase.from("event_fee").insert(newLinks);
+          if (oldFeeId) {
+            // UPDATE existing event_fee row to point to new fee_id
+            await supabase
+              .from("event_fee")
+              .update({ fee_id: newFee.fee_id })
+              .eq("event_id", Number(event_id))
+              .eq("fee_id", oldFeeId);
+          } else {
+            // INSERT new event_fee row (new participation type added)
+            await supabase
+              .from("event_fee")
+              .insert({
+                event_id: Number(event_id),
+                fee_id: newFee.fee_id,
+              });
+          }
+        }
+
+        // 4. Delete event_fee rows for removed participation types
+        const newParticipationTypes = fees.map((f: any) => f.type.toLowerCase());
+        const removedTypes = Object.keys(oldFeeMap).filter(
+          type => !newParticipationTypes.includes(type)
+        );
+
+        for (const removedType of removedTypes) {
+          await supabase
+            .from("event_fee")
+            .delete()
+            .eq("event_id", Number(event_id))
+            .eq("fee_id", oldFeeMap[removedType]);
+        }
       } else {
-        // If no fees provided, delete all old QR codes
+        // If no fees provided, delete all event_fee relations and QR codes
+        await supabase
+          .from("event_fee")
+          .delete()
+          .eq("event_id", Number(event_id));
+
         for (const oldQr of oldQrCodes) {
           try {
             const url = new URL(oldQr.url);
