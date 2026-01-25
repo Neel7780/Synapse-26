@@ -271,21 +271,27 @@ export default function EventsPage() {
                 fee: solo?.fee.price || 0,
                 minParticipants: solo?.fee.min_members || 1,
                 maxParticipants: solo?.fee.max_members || 1,
-                qrUrl: (solo as unknown as { payment_qr_url?: string })?.payment_qr_url || "",
+                qrUrl:
+                  (solo as unknown as { payment_qr_url?: string })
+                    ?.payment_qr_url || "",
               },
               duet: {
                 enabled: !!duet,
                 fee: duet?.fee.price || 0,
                 minParticipants: duet?.fee.min_members || 2,
                 maxParticipants: duet?.fee.max_members || 2,
-                qrUrl: (duet as unknown as { payment_qr_url?: string })?.payment_qr_url || "",
+                qrUrl:
+                  (duet as unknown as { payment_qr_url?: string })
+                    ?.payment_qr_url || "",
               },
               group: {
                 enabled: !!group,
                 fee: group?.fee.price || 0,
                 minParticipants: group?.fee.min_members || 3,
                 maxParticipants: group?.fee.max_members || 8,
-                qrUrl: (group as unknown as { payment_qr_url?: string })?.payment_qr_url || "",
+                qrUrl:
+                  (group as unknown as { payment_qr_url?: string })
+                    ?.payment_qr_url || "",
               },
             },
           };
@@ -388,7 +394,7 @@ export default function EventsPage() {
     ["solo", "duet", "group"].forEach((type) => {
       const cat =
         event.participationCategories[
-        type as keyof typeof event.participationCategories
+          type as keyof typeof event.participationCategories
         ];
       if (cat.enabled) {
         fees.push({
@@ -441,7 +447,7 @@ export default function EventsPage() {
     ["solo", "duet", "group"].forEach((type) => {
       const cat =
         editingEvent.participationCategories[
-        type as keyof typeof editingEvent.participationCategories
+          type as keyof typeof editingEvent.participationCategories
         ];
       if (cat.enabled) {
         fees.push({
@@ -459,7 +465,7 @@ export default function EventsPage() {
       category_name: editingEvent.categoryName,
       event_date: editingEvent.date,
       event_time: editingEvent.time || undefined,
-      description: editingEvent.venue || undefined,
+      description: editingEvent.description || undefined,
       rulebook: editingEvent.rulebookLink || undefined,
       coordinator_email: editingEvent.coordinatorEmail || undefined,
       venue: editingEvent.venue || undefined,
@@ -712,6 +718,18 @@ export default function EventsPage() {
                 }
                 placeholder="https://..."
                 className="bg-muted/50 border-border/50"
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2 lg:col-span-3">
+              <label className="text-sm font-medium">Description</label>
+              <textarea
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                placeholder="Enter event description..."
+                rows={4}
+                className="w-full px-3 py-2 bg-muted/50 border border-border/50 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-red-500"
               />
             </div>
             <div className="md:col-span-2 lg:col-span-3 flex justify-end">
@@ -1109,18 +1127,33 @@ export default function EventsPage() {
                         className="bg-muted/50 border-border/50"
                       />
                     </div>
+                    <div className="space-y-2 col-span-2">
+                      <label className="text-sm font-medium">Description</label>
+                      <textarea
+                        value={editingEvent.description}
+                        onChange={(e) =>
+                          setEditingEvent({
+                            ...editingEvent,
+                            description: e.target.value,
+                          })
+                        }
+                        placeholder="Enter event description..."
+                        rows={4}
+                        className="w-full px-3 py-2 bg-muted/50 border border-border/50 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-red-500"
+                      />
+                    </div>
                   </div>
                   {/* Image Preview - shown for both new uploads and existing images */}
                   {(editOriginalImageUrl ||
                     (editingEvent.picture && !editingEvent.imageFile)) && (
-                      <div className="w-full">
-                        <ImagePreview
-                          originalUrl={
-                            editOriginalImageUrl || editingEvent.picture
-                          }
-                        />
-                      </div>
-                    )}
+                    <div className="w-full">
+                      <ImagePreview
+                        originalUrl={
+                          editOriginalImageUrl || editingEvent.picture
+                        }
+                      />
+                    </div>
+                  )}
                   <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border/50">
                     <div>
                       <p className="font-medium">Free for DAU Students</p>
@@ -1215,14 +1248,14 @@ export default function EventsPage() {
                           </div>
                           {editingEvent.participationCategories.solo
                             .qrCodeFile && (
-                              <p className="text-xs text-muted-foreground">
-                                Selected:{" "}
-                                {
-                                  editingEvent.participationCategories.solo
-                                    .qrCodeFile.name
-                                }
-                              </p>
-                            )}
+                            <p className="text-xs text-muted-foreground">
+                              Selected:{" "}
+                              {
+                                editingEvent.participationCategories.solo
+                                  .qrCodeFile.name
+                              }
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}
@@ -1305,14 +1338,14 @@ export default function EventsPage() {
                           </div>
                           {editingEvent.participationCategories.duet
                             .qrCodeFile && (
-                              <p className="text-xs text-muted-foreground">
-                                Selected:{" "}
-                                {
-                                  editingEvent.participationCategories.duet
-                                    .qrCodeFile.name
-                                }
-                              </p>
-                            )}
+                            <p className="text-xs text-muted-foreground">
+                              Selected:{" "}
+                              {
+                                editingEvent.participationCategories.duet
+                                  .qrCodeFile.name
+                              }
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}
@@ -1450,14 +1483,14 @@ export default function EventsPage() {
                           </div>
                           {editingEvent.participationCategories.group
                             .qrCodeFile && (
-                              <p className="text-xs text-muted-foreground">
-                                Selected:{" "}
-                                {
-                                  editingEvent.participationCategories.group
-                                    .qrCodeFile.name
-                                }
-                              </p>
-                            )}
+                            <p className="text-xs text-muted-foreground">
+                              Selected:{" "}
+                              {
+                                editingEvent.participationCategories.group
+                                  .qrCodeFile.name
+                              }
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}
