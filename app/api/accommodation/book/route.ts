@@ -13,7 +13,8 @@ export async function POST(request: NextRequest) {
             check_out,
             nights,
             amount,
-            payment_screenshot_url
+            payment_screenshot_url,
+            transaction_reference
         } = await request.json();
 
         // Validate required fields
@@ -38,6 +39,13 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        if (!transaction_reference || !transaction_reference.trim()) {
+            return NextResponse.json(
+                { error: "Transaction ID is required" },
+                { status: 400 }
+            );
+        }
+
         if (!check_in || !check_out) {
             return NextResponse.json(
                 { error: "check_in and check_out dates are required" },
@@ -56,7 +64,8 @@ export async function POST(request: NextRequest) {
                 check_out,
                 nights,
                 amount,
-                payment_screenshot_url: payment_screenshot_url.trim(),
+                payment_screenshot_url: payment_screenshot_url || null,
+                transaction_reference: transaction_reference.trim(),
                 payment_status: "pending",
                 created_at: new Date().toISOString(),
             })
