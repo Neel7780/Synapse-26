@@ -2,7 +2,7 @@
 // This endpoint does not require authentication
 
 import { addCorsHeaders, handleCorsResponse } from '@/lib/cors'
-import { createClient } from '@/utils/supabase/server'
+import { getSupabaseServer } from '@/lib/supabaseServer'
 import { NextResponse } from 'next/server'
 
 // Handle CORS preflight requests
@@ -13,7 +13,9 @@ export async function OPTIONS(request: Request) {
 
 export async function GET(request: Request) {
     const origin = request.headers.get("origin");
-    const supabase = await createClient();
+    // Use service role client to ensure we can read all public event data including fees/QR codes
+    // This bypasses RLS which might be blocking public access to fee details
+    const supabase = getSupabaseServer();
 
     const { searchParams } = new URL(request.url);
     const categoryId = searchParams.get("category_id");

@@ -395,14 +395,13 @@ export default function RegisterPage() {
                     </span>
                   </p>
 
-                  <div className="bg-white rounded-xl p-4 w-64 h-64 mx-auto flex items-center justify-center">
+                  <div className="bg-white rounded-xl p-4 w-64 h-64 mx-auto flex items-center justify-center relative">
                     {qrUrl ? (
                       <Image
                         src={qrUrl}
                         alt="Payment QR Code"
-                        width={240}
-                        height={240}
-                        className="object-contain"
+                        fill
+                        className="object-contain p-2"
                         unoptimized
                       />
                     ) : (
