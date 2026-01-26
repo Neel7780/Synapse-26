@@ -51,10 +51,8 @@ export async function GET(req: NextRequest) {
         team_members ( user_id )
       ), 
       users!inner(user_name,email,college),
-      event_fee(
-        event(event_name,event_category(category_name)),
-        fee(participation_type)
-      )
+      event(event_name,event_category(category_name)),
+      fee(participation_type)
       `,
           { count: "exact" }
         );
@@ -66,7 +64,7 @@ export async function GET(req: NextRequest) {
         );
       }
 
-      if (eventFilter) q = q.eq("event_fee.event.event_name", eventFilter);
+      if (eventFilter) q = q.eq("event.event_name", eventFilter);
       if (paymentStatus) q = q.eq("payment_status", paymentStatus);
 
       return q;
@@ -87,10 +85,8 @@ export async function GET(req: NextRequest) {
         team_members ( user_id )
       ), 
       users(user_name,email,college),
-      event_fee(
-        event(event_name,event_category(category_name)),
-        fee(participation_type)
-      )
+      event(event_name,event_category(category_name)),
+      fee(participation_type)
       `,
           { count: "exact" }
         );
@@ -99,7 +95,7 @@ export async function GET(req: NextRequest) {
         q = q.ilike("transaction_id", `%${search}%`);
       }
 
-      if (eventFilter) q = q.eq("event_fee.event.event_name", eventFilter);
+      if (eventFilter) q = q.eq("event.event_name", eventFilter);
       if (paymentStatus) q = q.eq("payment_status", paymentStatus);
 
       return q;
@@ -111,7 +107,7 @@ export async function GET(req: NextRequest) {
     const merged = [...(d1 ?? []), ...(d2 ?? [])];
 
     const filtered = merged.filter((row: any) => {
-      if (eventFilter && row.event_fee?.event?.event_name !== eventFilter) return false;
+      if (eventFilter && row.event?.event_name !== eventFilter) return false;
       return true;
     });
 
@@ -122,11 +118,11 @@ export async function GET(req: NextRequest) {
 
     const uniqueData = Array.from(uniqueMap.values());
 
-        const totalRegistrations = uniqueData?.length ?? 0;
-        let paid = 0;
-        let grossRevenue = 0;
-        let gatewayCharges = 0;
-        let netRevenue = 0;
+    const totalRegistrations = uniqueData?.length ?? 0;
+    let paid = 0;
+    let grossRevenue = 0;
+    let gatewayCharges = 0;
+    let netRevenue = 0;
 
     uniqueData?.forEach((row: any) => {
       const price = row.gross_amount ?? 0;
@@ -151,9 +147,9 @@ export async function GET(req: NextRequest) {
           transaction_id: row?.transaction_id,
           user_name: row.users?.user_name,
           college: row.users?.college,
-          event_name: row.event_fee?.event?.event_name,
-          category: row.event_fee?.event?.event_category?.category_name,
-          participation_type: row.event_fee?.fee?.participation_type,
+          event_name: row.event?.event_name,
+          category: row.event?.event_category?.category_name,
+          participation_type: row.fee?.participation_type,
           payment_method: row.payment_method?.method_name,
           group_size: groupSize,
           payment_status: row.payment_status,

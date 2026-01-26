@@ -48,10 +48,9 @@ export async function GET(req: NextRequest) {
         team${hasEventFilter ? "!inner" : ""} (
         event_registrations${hasEventFilter ? "!inner" : ""} (
         registration_id,
-        event_fee${hasEventFilter ? "!inner" : ""} (
         event${hasEventFilter ? "!inner" : ""} (
         event_name
-        )))))
+        ))))
         `,
       { count: "exact" }
     );
@@ -64,7 +63,7 @@ export async function GET(req: NextRequest) {
 
     if (eventName) {
       query = query.eq(
-        "team_members.team.event_registrations.event_fee.event.event_name",
+        "team_members.team.event_registrations.event.event_name",
         eventName
       );
     }
@@ -87,11 +86,11 @@ export async function GET(req: NextRequest) {
 
           if (Array.isArray(registrations)) {
             registrations.forEach((er: any) => {
-              const eventName = er?.event_fee?.event?.event_name;
+              const eventName = er?.event?.event_name;
               if (eventName) eventNames.add(eventName);
             });
           } else {
-            const eventName = registrations?.event_fee?.event?.event_name;
+            const eventName = registrations?.event?.event_name;
             if (eventName) eventNames.add(eventName);
           }
         });

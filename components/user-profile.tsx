@@ -144,8 +144,12 @@ export default function UserProfile() {
   const { startTransition } = useNavigationState();
 
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
-  const [registeredEvents, setRegisteredEvents] = useState<RegisteredEvent[]>([]);
-  const [accommodationBookings, setAccommodationBookings] = useState<AccommodationBooking[]>([]);
+  const [registeredEvents, setRegisteredEvents] = useState<RegisteredEvent[]>(
+    [],
+  );
+  const [accommodationBookings, setAccommodationBookings] = useState<
+    AccommodationBooking[]
+  >([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -153,18 +157,20 @@ export default function UserProfile() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const fetchData = useCallback(async (userId: string, userEmail: string | undefined) => {
-    setDataLoading(true);
-    setError(null);
-    const supabase = createClient();
+  const fetchData = useCallback(
+    async (userId: string, userEmail: string | undefined) => {
+      setDataLoading(true);
+      setError(null);
+      const supabase = createClient();
 
-    try {
-      // Fetch all data in parallel for better performance
-      const [userResult, regResult, accResult] = await Promise.all([
-        supabase.from("users").select("*").eq("user_id", userId).single(),
-        supabase
-          .from("event_registrations")
-          .select(`
+      try {
+        // Fetch all data in parallel for better performance
+        const [userResult, regResult, accResult] = await Promise.all([
+          supabase.from("users").select("*").eq("user_id", userId).single(),
+          supabase
+            .from("event_registrations")
+            .select(
+              `
             *,
             coordinator_status,
             event_fee (
@@ -219,18 +225,19 @@ export default function UserProfile() {
         setRegisteredEvents(mappedEvents);
       }
 
-      // Process accommodation data
-      if (accResult.data && accResult.data.length > 0) {
-        setAccommodationBookings(accResult.data as AccommodationBooking[]);
+        // Process accommodation data
+        if (accResult.data && accResult.data.length > 0) {
+          setAccommodationBookings(accResult.data as AccommodationBooking[]);
+        }
+      } catch (err) {
+        console.error("Error fetching profile data:", err);
+        setError("Failed to load profile data. Please try again.");
+      } finally {
+        setDataLoading(false);
       }
-
-    } catch (err) {
-      console.error("Error fetching profile data:", err);
-      setError("Failed to load profile data. Please try again.");
-    } finally {
-      setDataLoading(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (authLoading) return;
@@ -249,7 +256,7 @@ export default function UserProfile() {
       gsap.fromTo(
         ".animate",
         { opacity: 0, y: 14 },
-        { opacity: 1, y: 0, stagger: 0.05, duration: 0.4, ease: "power2.out" }
+        { opacity: 1, y: 0, stagger: 0.05, duration: 0.4, ease: "power2.out" },
       );
     }, ref);
 
@@ -298,8 +305,10 @@ export default function UserProfile() {
           firstName: editFormData.firstName,
           lastName: editFormData.lastName,
           phone: editFormData.phone === "N/A" ? "" : editFormData.phone,
-          college: editFormData.university === "N/A" ? "" : editFormData.university,
-          dob: editFormData.dateOfBirth === "N/A" ? "" : editFormData.dateOfBirth,
+          college:
+            editFormData.university === "N/A" ? "" : editFormData.university,
+          dob:
+            editFormData.dateOfBirth === "N/A" ? "" : editFormData.dateOfBirth,
           gender: editFormData.gender === "N/A" ? "" : editFormData.gender,
         }),
       });
@@ -316,20 +325,25 @@ export default function UserProfile() {
       setEditFormData(null);
     } catch (err) {
       console.error("Error saving profile:", err);
-      setSaveError(err instanceof Error ? err.message : "Failed to save profile");
+      setSaveError(
+        err instanceof Error ? err.message : "Failed to save profile",
+      );
     } finally {
       setSaving(false);
     }
   }, [editFormData, user, fetchData]);
 
-  const handleFieldChange = useCallback((field: keyof UserDetails, value: string) => {
-    if (editFormData) {
-      setEditFormData({
-        ...editFormData,
-        [field]: value,
-      });
-    }
-  }, [editFormData]);
+  const handleFieldChange = useCallback(
+    (field: keyof UserDetails, value: string) => {
+      if (editFormData) {
+        setEditFormData({
+          ...editFormData,
+          [field]: value,
+        });
+      }
+    },
+    [editFormData],
+  );
 
   // Helper function to format date for input (YYYY-MM-DD)
   const formatDateForInput = useCallback((dateStr: string): string => {
@@ -355,7 +369,9 @@ export default function UserProfile() {
   if (error || !userDetails) {
     return (
       <div className="min-h-svh bg-background px-4 py-6 md:px-8 md:py-12 flex flex-col items-center justify-center">
-        <div className="text-white mb-4">{error || "Failed to load profile."}</div>
+        <div className="text-white mb-4">
+          {error || "Failed to load profile."}
+        </div>
         <button
           onClick={handleBack}
           className="text-white underline hover:text-white/80 transition-colors"
@@ -367,19 +383,23 @@ export default function UserProfile() {
   }
 
   return (
-    <div ref={ref} className="min-h-dvh bg-background px-4 py-6 md:px-8 md:py-12 pt-28 md:pt-36">
+    <div
+      ref={ref}
+      className="min-h-dvh bg-background px-4 py-6 md:px-8 md:py-12 pt-28 md:pt-36"
+    >
       <Navbar visible={true}>
         <NavigationPanel />
       </Navbar>
       {/* HEADER */}
-
 
       {/* MAIN GRID */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
         {/* LEFT COLUMN: Profile */}
         <div className="animate flex flex-col gap-6">
           <div className="flex flex-row flex-wrap justify-between items-center gap-4">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">Profile</h2>
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">
+              Profile
+            </h2>
             <div className="flex gap-2">
               {!isEditing ? (
                 <motion.button
@@ -466,7 +486,11 @@ export default function UserProfile() {
                 />
                 <EditableProfileField
                   label="College"
-                  value={editFormData.university === "N/A" ? "" : editFormData.university}
+                  value={
+                    editFormData.university === "N/A"
+                      ? ""
+                      : editFormData.university
+                  }
                   onChange={(value) => handleFieldChange("university", value)}
                 />
                 <ProfileField
@@ -480,12 +504,16 @@ export default function UserProfile() {
                   <EditableProfileField
                     label="Date of Birth"
                     value={formatDateForInput(editFormData.dateOfBirth)}
-                    onChange={(value) => handleFieldChange("dateOfBirth", value)}
+                    onChange={(value) =>
+                      handleFieldChange("dateOfBirth", value)
+                    }
                     type="date"
                   />
                   <EditableProfileField
                     label="Gender"
-                    value={editFormData.gender === "N/A" ? "" : editFormData.gender}
+                    value={
+                      editFormData.gender === "N/A" ? "" : editFormData.gender
+                    }
                     onChange={(value) => handleFieldChange("gender", value)}
                   />
                 </div>
@@ -494,19 +522,45 @@ export default function UserProfile() {
               <>
                 {/* Name Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-                  <ProfileField label="First Name" value={userDetails.firstName} />
-                  <ProfileField label="Last Name" value={userDetails.lastName} />
+                  <ProfileField
+                    label="First Name"
+                    value={userDetails.firstName}
+                  />
+                  <ProfileField
+                    label="Last Name"
+                    value={userDetails.lastName}
+                  />
                 </div>
 
                 {/* Contact Info Stack */}
-                <ProfileField label="Phone" value={userDetails.phone} className="animate" />
-                <ProfileField label="College" value={userDetails.university} className="animate" />
-                <ProfileField label="Email Address" value={userDetails.email} className="animate" />
+                <ProfileField
+                  label="Phone"
+                  value={userDetails.phone}
+                  className="animate"
+                />
+                <ProfileField
+                  label="College"
+                  value={userDetails.university}
+                  className="animate"
+                />
+                <ProfileField
+                  label="Email Address"
+                  value={userDetails.email}
+                  className="animate"
+                />
 
                 {/* Demographics Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-                  <ProfileField label="Date of Birth" value={userDetails.dateOfBirth} className="animate" />
-                  <ProfileField label="Gender" value={userDetails.gender} className="animate" />
+                  <ProfileField
+                    label="Date of Birth"
+                    value={userDetails.dateOfBirth}
+                    className="animate"
+                  />
+                  <ProfileField
+                    label="Gender"
+                    value={userDetails.gender}
+                    className="animate"
+                  />
                 </div>
               </>
             )}
@@ -556,17 +610,17 @@ export default function UserProfile() {
                       case "verified":
                         return {
                           text: "Verified",
-                          className: "bg-green-500/20 text-green-400"
+                          className: "bg-green-500/20 text-green-400",
                         };
                       case "rejected":
                         return {
                           text: "Rejected",
-                          className: "bg-red-500/20 text-red-400"
+                          className: "bg-red-500/20 text-red-400",
                         };
                       default:
                         return {
                           text: "Pending Verification",
-                          className: "bg-orange-500/20 text-orange-400"
+                          className: "bg-orange-500/20 text-orange-400",
                         };
                     }
                   };
@@ -577,25 +631,32 @@ export default function UserProfile() {
                     return new Date(dateStr).toLocaleDateString("en-IN", {
                       day: "numeric",
                       month: "short",
-                      year: "numeric"
+                      year: "numeric",
                     });
                   };
 
                   return (
-                    <div key={booking.booking_id} className="border border-white p-3 md:p-4">
+                    <div
+                      key={booking.booking_id}
+                      className="border border-white p-3 md:p-4"
+                    >
                       <div className="flex justify-between items-start w-full gap-4">
                         <div className="flex-1">
                           <p className="text-sm md:text-base font-semibold font-roboto">
-                            {booking.nights} Night{booking.nights > 1 ? "s" : ""} Accommodation
+                            {booking.nights} Night
+                            {booking.nights > 1 ? "s" : ""} Accommodation
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {formatDate(booking.check_in)} - {formatDate(booking.check_out)}
+                            {formatDate(booking.check_in)} -{" "}
+                            {formatDate(booking.check_out)}
                           </p>
                           <p className="text-sm text-white/80 mt-1">
                             ₹{booking.amount.toLocaleString()}
                           </p>
                         </div>
-                        <span className={`px-3 py-1 rounded-full text-xs md:text-sm font-medium whitespace-nowrap ${status.className}`}>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs md:text-sm font-medium whitespace-nowrap ${status.className}`}
+                        >
                           {status.text}
                         </span>
                       </div>
@@ -604,7 +665,9 @@ export default function UserProfile() {
                 })
               ) : (
                 <div className="border border-white/20 border-dashed p-6 text-center">
-                  <p className="text-muted-foreground mb-3">No accommodation booked yet.</p>
+                  <p className="text-muted-foreground mb-3">
+                    No accommodation booked yet.
+                  </p>
                   <Link
                     href="/accomodation"
                     onClick={() => startTransition()}
@@ -617,7 +680,7 @@ export default function UserProfile() {
             </div>
           </div>
         </div>
-      </div >
-    </div >
+      </div>
+    </div>
   );
 }

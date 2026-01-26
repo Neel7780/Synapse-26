@@ -389,7 +389,7 @@ export default function ArtistsSection() {
           <h1 className="font-joker text-5xl md:text-7xl lg:text-8xl text-white">
             artists
           </h1>
-          
+
           {artists.length > 1 && (
             <div className="flex items-baseline gap-1">
               <span className="text-4xl md:text-6xl font-jqka text-white tabular-nums">
@@ -407,7 +407,7 @@ export default function ArtistsSection() {
         {artists.length > 1 && (
           <div className="px-6 md:px-12 mt-4">
             <div className="h-[2px] bg-white/10 rounded-full overflow-hidden">
-              <div 
+              <div
                 ref={progressRef}
                 className="h-full bg-linear-to-r from-red-600 to-red-500 origin-left rounded-full"
                 style={{ transform: 'scaleX(0)' }}
@@ -438,8 +438,8 @@ export default function ArtistsSection() {
                 className="absolute cursor-pointer transform-gpu"
                 onClick={() => goToArtist(i)}
                 style={{
-                  width: "clamp(280px, 40vw, 420px)",
-                  height: "clamp(350px, 55vw, 550px)",
+                  width: "clamp(280px, 35vw, 380px)",
+                  height: "clamp(350px, 50vw, 480px)",
                   transformStyle: "preserve-3d",
                 }}
               >
@@ -453,7 +453,7 @@ export default function ArtistsSection() {
                         : 'opacity-0'
                     }`}
                   />
-                  
+
                   {/* Card inner */}
                   <div className="absolute inset-[2px] rounded-2xl overflow-hidden bg-zinc-900">
                     {artist.image ? (
@@ -471,10 +471,9 @@ export default function ArtistsSection() {
                         <div className="absolute inset-0 bg-linear-to-t from-black via-black/20 to-transparent opacity-80" />
                         
                         {/* Artist info on card */}
-                        <div 
-                          className={`absolute bottom-0 left-0 right-0 p-6 transform transition-all duration-500 ${
-                            i === currentIndex ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-                          }`}
+                        <div
+                          className={`absolute bottom-0 left-0 right-0 p-6 md:p-8 pb-10 md:pb-12 transform transition-all duration-500 ${i === currentIndex ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
+                            }`}
                         >
                           <h3 className="text-2xl md:text-3xl font-jqka text-white uppercase tracking-wide">
                             {artist.name}
@@ -503,23 +502,23 @@ export default function ArtistsSection() {
             ))}
           </div>
 
-          {/* Navigation buttons */}
+          {/* Navigation buttons - enhanced styles */}
           {artists.length > 1 && (
             <>
               {/* Previous button */}
               <button
                 onClick={prevArtist}
                 disabled={isAnimating}
-                className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-40 w-14 h-14 md:w-16 md:h-16 rounded-full bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center transition-all duration-300 hover:bg-red-600 hover:border-red-600 group disabled:opacity-50 disabled:cursor-not-allowed"
+                className="absolute left-4 md:left-12 lg:left-20 top-1/2 -translate-y-1/2 z-40 w-12 h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full bg-black/40 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all duration-300 hover:bg-red-600 hover:border-red-600 hover:scale-110 group disabled:opacity-0 disabled:cursor-default"
                 aria-label="Previous artist"
               >
                 <svg
-                  className="w-6 h-6 md:w-7 md:h-7 text-white transition-transform duration-300 group-hover:-translate-x-0.5"
+                  className="w-5 h-5 md:w-8 md:h-8 text-white transition-transform duration-300 group-hover:-translate-x-1"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
 
@@ -527,16 +526,16 @@ export default function ArtistsSection() {
               <button
                 onClick={nextArtist}
                 disabled={isAnimating}
-                className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-40 w-14 h-14 md:w-16 md:h-16 rounded-full bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center transition-all duration-300 hover:bg-red-600 hover:border-red-600 group disabled:opacity-50 disabled:cursor-not-allowed"
+                className="absolute right-4 md:right-12 lg:right-20 top-1/2 -translate-y-1/2 z-40 w-12 h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full bg-black/40 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all duration-300 hover:bg-red-600 hover:border-red-600 hover:scale-110 group disabled:opacity-0 disabled:cursor-default"
                 aria-label="Next artist"
               >
                 <svg
-                  className="w-6 h-6 md:w-7 md:h-7 text-white transition-transform duration-300 group-hover:translate-x-0.5"
+                  className="w-5 h-5 md:w-8 md:h-8 text-white transition-transform duration-300 group-hover:translate-x-1"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
             </>
@@ -550,11 +549,10 @@ export default function ArtistsSection() {
               <button
                 key={i}
                 onClick={() => goToArtist(i)}
-                className={`relative h-3 rounded-full transition-all duration-500 overflow-hidden ${
-                  i === currentIndex 
-                    ? "w-12 bg-white/20" 
-                    : "w-3 bg-white/20 hover:bg-white/40"
-                }`}
+                className={`relative h-3 rounded-full transition-all duration-500 overflow-hidden ${i === currentIndex
+                  ? "w-12 bg-white/20"
+                  : "w-3 bg-white/20 hover:bg-white/40"
+                  }`}
                 aria-label={`Go to artist ${i + 1}`}
               >
                 {i === currentIndex && (
