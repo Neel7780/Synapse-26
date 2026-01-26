@@ -84,8 +84,6 @@ Place environment variables in a `.env.local` file for local development. Exampl
 NEXT_PUBLIC_SUPABASE_URL=https://xyzcompany.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=public-anon-key
 SUPABASE_SERVICE_ROLE_KEY=service-role-secret
-RAZORPAY_KEY_ID=rzp_test_...
-RAZORPAY_KEY_SECRET=...
 ```
 
 ### Authentication and Admin
