@@ -22,7 +22,7 @@ export default function ProniteHero() {
           artists who <br /> own the night
         </h1>
         <p className="text-[clamp(0.8rem,2vw,1.2rem)] font-jqka text-gray-300 tracking-[0.2em]">
-          Three nights. One stage. Infinite energy.
+          Four nights. One stage. Infinite energy.
         </p>
       </div>
 

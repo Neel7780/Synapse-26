@@ -140,7 +140,7 @@ export default function PronitePage() {
         <div className="relative z-10">
           <h1
             ref={ctaTitleRef}
-            className="text-[clamp(3.5rem,15vw,10rem)] font-texgyreadventor leading-none mb-4"
+            className="text-[clamp(3.5rem,15vw,10rem)] font-texgyreadventor leading-none select-none mb-4"
             style={{ perspective: "1000px" }}
           >
             Join the Celebration
@@ -148,9 +148,9 @@ export default function PronitePage() {
 
           <p
             ref={ctaSubtitleRef}
-            className="font-jqka text-lg md:text-xl text-gray-400 mb-12 max-w-2xl mx-auto"
+            className="font-jqka text-lg md:text-xl text-gray-400 mt-12 mb-12 max-w-2xl mx-auto select-none"
           >
-            One night. Endless energy. Unforgettable memories. <br />A moment
+            Four Nights. Endless energy. Unforgettable memories. <br />Moments
             you&apos;ll wish you were part of.
           </p>
 

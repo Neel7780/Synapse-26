@@ -29,7 +29,9 @@ export default function SponsorsPage() {
   }
 
   // Transform categories for navigation
-  const navCategories = categories.map(c => ({ id: c.sponsor_category_id, tier: c.tier }));
+  const navCategories = categories
+    .filter(c => c.sponsors.length > 0)
+    .map(c => ({ id: c.sponsor_category_id, tier: c.tier }));
 
   return (
     <main className="bg-black text-white flex flex-col items-center min-h-screen w-full overflow-x-hidden">
@@ -39,17 +41,17 @@ export default function SponsorsPage() {
 
       <div className="w-full flex flex-col items-center gap-y-2 md:gap-y-6 pb-40">
         {categories.map((category) => {
-          // If no sponsors, show "To be Announced"
-          const displaySponsors = category.sponsors.length > 0
-            ? category.sponsors
-            : [{ name: "To be Revealed", logo_url: null, website_url: null }];
+          // If no sponsors, skip this category
+          if (category.sponsors.length === 0) {
+            return null;
+          }
 
           return (
             <SponsorTier
               key={category.sponsor_category_id}
               id={category.tier}
               title={category.tier}
-              sponsors={displaySponsors}
+              sponsors={category.sponsors}
             />
           );
         })}

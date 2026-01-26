@@ -537,6 +537,10 @@ export default function RegisterPage() {
                     className="w-full bg-white/5 border-white/10 text-white placeholder:text-gray-500"
                   />
                 </div>
+                <p className="text-xs text-yellow-500/80 mt-[-20px] mb-6">
+                  Note: After successful submission your registration will be
+                  approved in 24 to 48 hours.
+                </p>
               </>
             )}
 
@@ -589,7 +593,7 @@ export default function RegisterPage() {
             )}
             <p className="text-sm text-gray-400 mb-8">
               You will be notified once your payment is verified by the
-              coordinator.
+              coordinator within next 24-48 hours.
             </p>
 
             <div className="flex gap-4 justify-center">
