@@ -51,8 +51,6 @@ const nextConfig: NextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 192, 256, 384],
     // Aggressive caching for mobile bandwidth optimization
     minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
-    // Configure allowed qualities
-    qualities: [75, 80],
     // Limit concurrent image optimizations for memory efficiency
     dangerouslyAllowSVG: false,
     contentDispositionType: "inline",

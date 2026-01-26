@@ -36,8 +36,6 @@ export function useStaggerReveal(
   useEffect(() => {
     if (prefersReducedMotion() || !containerRef.current || hasAnimated.current) return;
 
-    const isMobile = window.innerWidth < 768;
-
     const ctx = gsap.context(() => {
       const elements = containerRef.current?.querySelectorAll(selector);
       if (!elements?.length) return;
@@ -46,19 +44,19 @@ export function useStaggerReveal(
         elements,
         {
           opacity: 0,
-          y: isMobile ? 30 : 60, // Reduced movement on mobile
+          y: 60,
           ...options.from,
         },
         {
           opacity: 1,
           y: 0,
-          duration: isMobile ? 0.6 : 0.8, // Faster on mobile
+          duration: 0.8,
           ease: "power3.out",
-          stagger: options.stagger ?? (isMobile ? 0.05 : 0.1), // Faster stagger on mobile
+          stagger: options.stagger ?? 0.1,
           ...options.to,
           scrollTrigger: {
             trigger: options.trigger || containerRef.current,
-            start: options.start || "top 85%", // Trigger slightly later on mobile
+            start: options.start || "top 80%",
             end: options.end || "bottom 20%",
             scrub: options.scrub ?? false,
             once: true,
@@ -135,33 +133,32 @@ export function useTextReveal(
 
     const ctx = gsap.context(() => {
       const targets = element.querySelectorAll(`.gsap-${type.slice(0, -1)}, .gsap-${type}`);
-      const isMobile = window.innerWidth < 768;
 
       gsap.fromTo(
         targets,
         {
           opacity: 0,
-          y: isMobile ? 15 : 30,
-          rotateX: isMobile ? -10 : -20,
+          y: 30,
+          rotateX: -20,
         },
         {
           opacity: 1,
           y: 0,
           rotateX: 0,
-          duration: options.duration || (isMobile ? 0.4 : 0.6),
+          duration: options.duration || 0.6,
           ease: "power3.out",
-          stagger: options.stagger || (isMobile ? 0.02 : 0.03),
+          stagger: options.stagger || 0.03,
           delay: options.delay || 0,
           scrollTrigger: options.scrub !== undefined
             ? {
               trigger: element,
-              start: options.start || "top 90%",
-              end: options.end || "top 60%",
+              start: options.start || "top 85%",
+              end: options.end || "top 50%",
               scrub: options.scrub,
             }
             : {
               trigger: element,
-              start: options.start || "top 90%",
+              start: options.start || "top 85%",
               once: true,
             },
         }
