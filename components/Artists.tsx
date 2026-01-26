@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import gsap from "gsap";
@@ -103,56 +103,48 @@ export default function ArtistsSection() {
   // Modern GSAP-based card animation
   const animateCards = useCallback((direction: 'next' | 'prev' | 'initial' = 'initial') => {
     if (artists.length === 0) return;
-    
-    const mm = gsap.matchMedia();
 
-    mm.add({
-      isMobile: "(max-width: 767px)",
-      isDesktop: "(min-width: 768px)"
-    }, (context) => {
-      const { isMobile } = context.conditions as { isMobile: boolean };
-      const cardWidth = isMobile ? 280 : 420;
-      const gap = isMobile ? 20 : 40;
+    const isMobile = window.innerWidth < 768;
+    const cardWidth = isMobile ? 280 : 420;
+    const gap = isMobile ? 20 : 40;
 
-      cardRefs.current.forEach((card, i) => {
-        if (!card) return;
+    cardRefs.current.forEach((card, i) => {
+      if (!card) return;
 
-        let diff = i - currentIndex;
-        const total = artists.length;
+      let diff = i - currentIndex;
+      const total = artists.length;
 
-        // Handle wrapping
-        if (total > 2) {
-          if (diff > total / 2) diff -= total;
-          if (diff < -total / 2) diff += total;
-        }
+      // Handle wrapping
+      if (total > 2) {
+        if (diff > total / 2) diff -= total;
+        if (diff < -total / 2) diff += total;
+      }
 
-        const isCenter = diff === 0;
-        const isAdjacent = Math.abs(diff) === 1;
+      const isCenter = diff === 0;
+      const isAdjacent = Math.abs(diff) === 1;
+      const isVisible = Math.abs(diff) <= 1;
 
-        // Calculate position with perspective offset
-        const xOffset = diff * (cardWidth * 0.6 + gap);
-        
-        // Visual properties
-        const scale = isCenter ? 1 : 0.65;
-        const opacity = isCenter ? 1 : isAdjacent ? 0.4 : 0;
-        const zIndex = isCenter ? 30 : isAdjacent ? 20 : 10;
-        const rotateY = isCenter ? 0 : diff > 0 ? -15 : 15;
-        const brightness = isCenter ? 1 : 0.5;
+      // Calculate position with perspective offset
+      const xOffset = diff * (cardWidth * 0.6 + gap);
 
-        gsap.to(card, {
-          x: xOffset,
-          scale,
-          opacity,
-          rotateY: isMobile ? 0 : rotateY, // Disable rotateY on mobile for performance
-          filter: `brightness(${brightness})`,
-          zIndex,
-          duration: direction === 'initial' ? 0 : 0.7,
-          ease: "power3.out",
-        });
+      // Visual properties
+      const scale = isCenter ? 1 : 0.65;
+      const opacity = isCenter ? 1 : isAdjacent ? 0.4 : 0;
+      const zIndex = isCenter ? 30 : isAdjacent ? 20 : 10;
+      const rotateY = isCenter ? 0 : diff > 0 ? -15 : 15;
+      const brightness = isCenter ? 1 : 0.5;
+
+      gsap.to(card, {
+        x: xOffset,
+        scale,
+        opacity,
+        rotateY,
+        filter: `brightness(${brightness})`,
+        zIndex,
+        duration: direction === 'initial' ? 0 : 0.7,
+        ease: "power3.out",
       });
     });
-
-    return () => mm.revert();
   }, [artists.length, currentIndex]);
 
   // Auto-play with progress bar
@@ -276,56 +268,48 @@ export default function ArtistsSection() {
       const artistSvg = artistSvgRef.current;
       const artistPath = artistPathRef.current;
       const artistDot = artistDotRef.current;
+
       const jokerDot = document.getElementById("jokerPathDot");
 
-      const mm = gsap.matchMedia();
+      const path = generateViewportPath();
+      artistPath.setAttribute("d", path);
+      const artistPathLength = artistPath.getTotalLength();
 
-      mm.add({
-        isMobile: "(max-width: 767px)",
-        isDesktop: "(min-width: 768px)"
-      }, (context) => {
-        const { isMobile } = context.conditions as { isMobile: boolean };
-        
-        const path = generateViewportPath();
-        artistPath.setAttribute("d", path);
-        const artistPathLength = artistPath.getTotalLength();
+      const scrollTrigger = ScrollTrigger.create({
+        trigger: artistSectionRef.current,
+        start: "top bottom",
+        end: "bottom top",
+        scrub: true,
+        onEnter: () => {
+          if (jokerDot) jokerDot.style.opacity = "0";
+          if (artistDot) artistDot.style.opacity = "1";
+        },
+        onLeave: () => {
+          if (jokerDot) jokerDot.style.opacity = "0";
+          if (artistDot) artistDot.style.opacity = "0";
+        },
+        onEnterBack: () => {
+          if (jokerDot) jokerDot.style.opacity = "0";
+          if (artistDot) artistDot.style.opacity = "1";
+        },
+        onUpdate: (self) => {
+          const progress = self.progress;
+          const point = artistPath.getPointAtLength(progress * artistPathLength);
+          const rect = artistSvg.getBoundingClientRect();
 
-        const scrollTrigger = ScrollTrigger.create({
-          trigger: artistSectionRef.current,
-          start: "top bottom",
-          end: "bottom top",
-          scrub: isMobile ? 0.5 : true, // Faster scrub on mobile
-          onEnter: () => {
-            if (jokerDot) jokerDot.style.opacity = "0";
-            if (artistDot) artistDot.style.opacity = "1";
-          },
-          onLeave: () => {
-            if (jokerDot) jokerDot.style.opacity = "0";
-            if (artistDot) artistDot.style.opacity = "0";
-          },
-          onEnterBack: () => {
-            if (jokerDot) jokerDot.style.opacity = "0";
-            if (artistDot) artistDot.style.opacity = "1";
-          },
-          onUpdate: (self) => {
-            const progress = self.progress;
-            const point = artistPath.getPointAtLength(progress * artistPathLength);
-            const rect = artistSvg.getBoundingClientRect();
+          const x = rect.left + (point.x / 1000) * rect.width;
+          const y = rect.top + (point.y / 1000) * rect.height;
 
-            const x = rect.left + (point.x / 1000) * rect.width;
-            const y = rect.top + (point.y / 1000) * rect.height;
-
-            artistDot.style.left = `${x}px`;
-            artistDot.style.top = `${y}px`;
-          },
-        });
-
-        return () => scrollTrigger.kill();
+          artistDot.style.left = `${x}px`;
+          artistDot.style.top = `${y}px`;
+        },
       });
 
       const handleResize = () => {
+        const newPath = generateViewportPath();
+        artistPath.setAttribute("d", newPath);
         animateCards('initial');
-        ScrollTrigger.refresh();
+        scrollTrigger.refresh();
       };
 
       window.addEventListener("resize", handleResize);
@@ -333,7 +317,7 @@ export default function ArtistsSection() {
 
       return () => {
         window.removeEventListener("resize", handleResize);
-        mm.revert();
+        scrollTrigger.kill();
       };
     }
   }, [generateViewportPath, animateCards, loading]);
@@ -356,7 +340,7 @@ export default function ArtistsSection() {
       style={{ height: "100svh" }}
     >
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-linear-to-b from-black via-zinc-950 to-black pointer-events-none z-0" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-zinc-950 to-black pointer-events-none z-0" />
 
       {/* SVG Path - Behind cards */}
       <svg
@@ -365,7 +349,7 @@ export default function ArtistsSection() {
         height="100%"
         viewBox="0 0 1000 1000"
         preserveAspectRatio="none"
-        className="absolute inset-0 pointer-events-none z-1"
+        className="absolute inset-0 pointer-events-none z-[1]"
       >
         <path
           ref={artistPathRef}
@@ -378,7 +362,7 @@ export default function ArtistsSection() {
       {/* Animated dot - Above path but can be behind cards */}
       <div
         ref={artistDotRef}
-        className="fixed w-16 h-16 md:w-24 md:h-24 bg-red-600 rounded-full blur-[25px] pointer-events-none z-2 opacity-0 -translate-x-1/2 -translate-y-1/2"
+        className="fixed w-16 h-16 md:w-24 md:h-24 bg-red-600 rounded-full blur-[25px] pointer-events-none z-[2] opacity-0 -translate-x-1/2 -translate-y-1/2"
         id="artistPathDot"
       />
 
@@ -409,7 +393,7 @@ export default function ArtistsSection() {
             <div className="h-[2px] bg-white/10 rounded-full overflow-hidden">
               <div
                 ref={progressRef}
-                className="h-full bg-linear-to-r from-red-600 to-red-500 origin-left rounded-full"
+                className="h-full bg-gradient-to-r from-red-600 to-red-500 origin-left rounded-full"
                 style={{ transform: 'scaleX(0)' }}
               />
             </div>
@@ -417,8 +401,8 @@ export default function ArtistsSection() {
         )}
 
         {/* Main carousel area */}
-        <div 
-          className="flex-1 relative flex items-center justify-center perspective-distant touch-pan-y"
+        <div
+          className="flex-1 relative flex items-center justify-center perspective-[1200px] md:perspective-[2000px] touch-pan-y"
           onMouseEnter={pauseAutoPlay}
           onMouseLeave={resumeAutoPlay}
           onTouchStart={onTouchStart}
@@ -446,12 +430,11 @@ export default function ArtistsSection() {
                 {/* Card */}
                 <div className="relative w-full h-full rounded-2xl overflow-hidden group">
                   {/* Glowing border effect for active card */}
-                  <div 
-                    className={`absolute -inset-[2px] rounded-2xl transition-opacity duration-500 ${
-                      i === currentIndex 
-                        ? 'opacity-100 bg-linear-to-b from-red-500/50 via-transparent to-red-500/50' 
-                        : 'opacity-0'
-                    }`}
+                  <div
+                    className={`absolute -inset-[2px] rounded-2xl transition-opacity duration-500 ${i === currentIndex
+                      ? 'opacity-100 bg-gradient-to-b from-red-500/50 via-transparent to-red-500/50'
+                      : 'opacity-0'
+                      }`}
                   />
 
                   {/* Card inner */}
@@ -463,13 +446,14 @@ export default function ArtistsSection() {
                           alt={artist.name}
                           fill
                           sizes="(max-width: 768px) 100vw, 50vw"
-                          quality={80}
+                          quality={100}
                           className="object-cover transition-transform duration-700 group-hover:scale-105"
                           priority={i < 3}
+                          unoptimized
                         />
                         {/* Gradient overlay */}
-                        <div className="absolute inset-0 bg-linear-to-t from-black via-black/20 to-transparent opacity-80" />
-                        
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80" />
+
                         {/* Artist info on card */}
                         <div
                           className={`absolute bottom-0 left-0 right-0 p-6 md:p-8 pb-10 md:pb-12 transform transition-all duration-500 ${i === currentIndex ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
@@ -496,7 +480,7 @@ export default function ArtistsSection() {
                   </div>
 
                   {/* Shine effect on hover */}
-                  <div className="absolute inset-0 bg-linear-to-tr from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl" />
+                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl" />
                 </div>
               </div>
             ))}

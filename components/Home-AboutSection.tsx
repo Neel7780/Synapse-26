@@ -4,7 +4,6 @@ import { useEffect, useRef, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Image from "next/image";
-import { useIsMobile } from "@/hooks/useIsMobile";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -13,7 +12,6 @@ if (typeof window !== "undefined") {
 const GRADIENT = { angle: 195, stop: 0.6, offsetRatio: -0.4 };
 
 export default function AboutSection() {
-  const isMobile = useIsMobile();
   const aboutSectionRef = useRef<HTMLDivElement>(null);
   const singleCardRef = useRef<HTMLImageElement>(null);
   const hasSplitRef = useRef(false);
@@ -111,114 +109,119 @@ export default function AboutSection() {
     const titleEl = document.querySelector(".doittitle") as HTMLElement;
     if (!section || !image || !titleEl) return;
 
-    const mm = gsap.matchMedia();
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    mm.add({
-      isMobile: "(max-width: 767px)",
-      isDesktop: "(min-width: 768px)",
-      reduceMotion: "(prefers-reduced-motion: reduce)"
-    }, (context) => {
-      const { isMobile, reduceMotion } = context.conditions as { isMobile: boolean, reduceMotion: boolean };
+    if (!hasSplitRef.current) {
+      splitTextToWords(section);
+      splitTitleToLetters(titleEl);
+      hasSplitRef.current = true;
+    }
 
-      if (!hasSplitRef.current) {
-        splitTextToWords(section);
-        splitTitleToLetters(titleEl);
-        hasSplitRef.current = true;
-      }
+    if (prefersReducedMotion) {
+      gsap.set(".Theme_content .word", { opacity: 1, y: 0 });
+      gsap.set(".doittitle .title-letter", { opacity: 1, y: 0 });
+      gsap.set(image, { opacity: 1 });
+      return;
+    }
 
-      if (reduceMotion) {
-        gsap.set(".Theme_content .word", { opacity: 1, y: 0 });
-        gsap.set(".doittitle .title-letter", { opacity: 1, y: 0 });
-        gsap.set(image, { opacity: 1 });
-        return;
-      }
+    gsap.set(".Theme_content .word", { opacity: 0, y: 30, filter: "blur(4px)" });
+    gsap.set(".doittitle .title-letter", { opacity: 0, y: 100, rotateX: -45 });
+    gsap.set(image, { opacity: 0, scale: 0.8, rotation: -15 });
 
-      gsap.set(".Theme_content .word", { opacity: 0, y: isMobile ? 15 : 30, filter: isMobile ? "none" : "blur(4px)" });
-      gsap.set(".doittitle .title-letter", { opacity: 0, y: isMobile ? 50 : 100, rotateX: isMobile ? 0 : -45 });
-      gsap.set(image, { opacity: 0, scale: 0.8, rotation: -15 });
-
-      // Title animation
-      gsap.to(".doittitle .title-letter", {
-        opacity: 1,
-        y: 0,
-        rotateX: 0,
-        duration: isMobile ? 1 : 1.5,
-        ease: "power4.out",
-        stagger: { each: isMobile ? 0.08 : 0.15 },
-        scrollTrigger: {
-          trigger: ".part3_end",
-          start: "top center",
-          end: "top center-=10%",
-          scrub: isMobile ? 1 : 2,
-          anticipatePin: 1,
-          invalidateOnRefresh: true,
-          onRefresh: positionImageFromGradientCenter,
-        },
-      });
-
-      // Content words animation
-      gsap.to(".Theme_content .word", {
-        opacity: 1,
-        y: 0,
-        filter: "blur(0px)",
-        ease: "power3.out",
-        stagger: { each: isMobile ? 0.01 : 0.03 },
-        scrollTrigger: {
-          trigger: ".part3_end",
-          start: "top center",
-          end: "bottom bottom",
-          scrub: isMobile ? 0.5 : 1,
-          anticipatePin: 1,
-          invalidateOnRefresh: true,
-          onRefresh: positionImageFromGradientCenter,
-        },
-      });
-
-      // Image animation
-      const imageTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: ".part3_end",
-          start: "top center-=15%",
-          end: "top center-=35%",
-          scrub: isMobile ? 1 : 2,
-          anticipatePin: 1,
-          invalidateOnRefresh: true,
-        },
-      });
-
-      imageTl.to(image, {
-        opacity: 1,
-        scale: 1,
-        rotation: 0,
-        duration: 2,
-        ease: "power3.out",
-      });
-
-      // Floating animation
-      gsap.to(image, {
-        y: "+=15",
-        rotation: "+=2",
-        duration: 3,
-        ease: "sine.inOut",
-        repeat: -1,
-        yoyo: true,
-        delay: 2,
-      });
-
-      return () => {
-        gsap.killTweensOf(".doittitle .title-letter");
-        gsap.killTweensOf(".Theme_content .word");
-        gsap.killTweensOf(image);
-      };
+    // Title animation - dramatic entrance
+    gsap.to(".doittitle .title-letter", {
+      opacity: 1,
+      y: 0,
+      rotateX: 0,
+      duration: 1.5,
+      ease: "power4.out",
+      stagger: { each: 0.15 },
+      scrollTrigger: {
+        trigger: ".part3_end",
+        start: "top center",
+        end: "top center-=10%",
+        scrub: 2,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        onRefresh: positionImageFromGradientCenter,
+      },
     });
+
+    // Content words animation - blur to clear with stagger
+    gsap.to(".Theme_content .word", {
+      opacity: 1,
+      y: 0,
+      filter: "blur(0px)",
+      ease: "power3.out",
+      stagger: { each: 0.03 },
+      scrollTrigger: {
+        trigger: ".part3_end",
+        start: "top center",
+        end: "bottom bottom",
+        scrub: 1,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        onRefresh: positionImageFromGradientCenter,
+      },
+    });
+
+    // Image animation - card flip entrance with float
+    const imageTl = gsap.timeline({
+      scrollTrigger: {
+        trigger: ".part3_end",
+        start: "top center-=15%",
+        end: "top center-=35%",
+        scrub: 2,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+      },
+    });
+
+    imageTl.to(image, {
+      opacity: 1,
+      scale: 1,
+      rotation: 0,
+      duration: 2,
+      ease: "power3.out",
+    });
+
+    // Floating animation for image after entrance
+    gsap.to(image, {
+      y: "+=15",
+      rotation: "+=2",
+      duration: 3,
+      ease: "sine.inOut",
+      repeat: -1,
+      yoyo: true,
+      delay: 2,
+    });
+
+    // Decorative elements animation
+    if (decorativeRef.current) {
+      const particles = decorativeRef.current.querySelectorAll(".particle");
+      particles.forEach((particle, i) => {
+        gsap.to(particle, {
+          y: gsap.utils.random(-30, 30),
+          x: gsap.utils.random(-20, 20),
+          opacity: gsap.utils.random(0.3, 0.8),
+          duration: gsap.utils.random(2, 4),
+          ease: "sine.inOut",
+          repeat: -1,
+          yoyo: true,
+          delay: i * 0.2,
+        });
+      });
+    }
 
     Promise.all([
       document.fonts?.ready ?? Promise.resolve(),
       image.complete ? Promise.resolve() : image.decode(),
     ]).then(() => {
       requestAnimationFrame(() => {
-        ScrollTrigger.refresh(true);
-        positionImageFromGradientCenter();
+        requestAnimationFrame(() => {
+          ScrollTrigger.refresh(true);
+          positionImageFromGradientCenter();
+        });
       });
     });
 
@@ -229,14 +232,31 @@ export default function AboutSection() {
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", positionImageFromGradientCenter);
-      mm.revert();
+      // Kill all ScrollTriggers created in this scope
+      const aboutSection = aboutSectionRef.current;
+      ScrollTrigger.getAll().forEach(t => {
+        if (aboutSection && t.trigger === aboutSection) {
+          t.kill();
+        }
+        // Also check if the trigger was created with the selector string and matches (fallback)
+        if (t.vars && t.vars.trigger === ".part3_end") {
+          t.kill();
+        }
+      });
+
+      gsap.killTweensOf(".doittitle .title-letter");
+      gsap.killTweensOf(".Theme_content .word");
+      gsap.killTweensOf(image);
+      if (decorativeRef.current) {
+        gsap.killTweensOf(decorativeRef.current.querySelectorAll(".particle"));
+      }
     };
   }, [splitTextToWords, positionImageFromGradientCenter]);
 
   return (
     <section
       ref={aboutSectionRef}
-      className="part3_end relative min-h-screen w-full flex flex-col px-[clamp(1.5rem,4vw,3.75rem)] py-[clamp(1.2rem,5svh,5rem)] overflow-hidden justify-evenly"
+      className="part3_end relative min-h-[100vh] w-full flex flex-col px-[clamp(1.5rem,4vw,3.75rem)] py-[clamp(1.2rem,5svh,5rem)] overflow-hidden justify-evenly"
       style={{
         background: `linear-gradient(195deg, #000000 0%, #000000 60%, #ffffff 60%, #ffffff 100%)`,
       }}

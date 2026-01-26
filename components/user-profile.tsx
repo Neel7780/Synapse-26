@@ -173,53 +173,54 @@ export default function UserProfile() {
               `
             *,
             coordinator_status,
-            event_fee (
-              event (
-                event_name,
-                event_category (
-                  category_name
-                )
+            event (
+              event_name,
+              event_category (
+                category_name
               )
             )
-          `)
-          .eq("registered_by_user_id", userId),
-        supabase
-          .from("accommodation_bookings")
-          .select("booking_id, nights, check_in, check_out, amount, verification_status, payment_status, created_at")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false }),
-      ]);
+          `,
+            )
+            .eq("registered_by_user_id", userId),
+          supabase
+            .from("accommodation_bookings")
+            .select(
+              "booking_id, nights, check_in, check_out, amount, verification_status, payment_status, created_at",
+            )
+            .eq("user_id", userId)
+            .order("created_at", { ascending: false }),
+        ]);
 
-      // Process user data
-      if (userResult.data) {
-        const fullName = userResult.data.user_name || "";
-        const nameParts = fullName.split(" ");
-        const firstName = nameParts[0] || "";
-        const lastName = nameParts.slice(1).join(" ") || "";
+        // Process user data
+        if (userResult.data) {
+          const fullName = userResult.data.user_name || "";
+          const nameParts = fullName.split(" ");
+          const firstName = nameParts[0] || "";
+          const lastName = nameParts.slice(1).join(" ") || "";
 
-        setUserDetails({
-          firstName,
-          lastName,
-          phone: userResult.data.phone || "N/A",
-          dateOfBirth: userResult.data.dob || "N/A",
-          gender: userResult.data.gender || "N/A",
-          university: userResult.data.college || "N/A",
-          email: userResult.data.email || userEmail || "N/A",
-        });
-      }
+          setUserDetails({
+            firstName,
+            lastName,
+            phone: userResult.data.phone || "N/A",
+            dateOfBirth: userResult.data.dob || "N/A",
+            gender: userResult.data.gender || "N/A",
+            university: userResult.data.college || "N/A",
+            email: userResult.data.email || userEmail || "N/A",
+          });
+        }
 
-      // Process registration data
-      if (regResult.data) {
+        // Process registration data
+        if (regResult.data) {
           const mappedEvents = regResult.data.map((reg) => {
-          const eventFee = reg.event_fee as { event?: { event_name?: string; event_category?: { category_name?: string } } } | null;
-          const eventObj = eventFee?.event;
-          const categoryObj = eventObj?.event_category;
+            const eventObj = (reg as any).event;
+            const categoryObj = eventObj?.event_category;
 
           return {
             id: reg.registration_id,
             name: eventObj?.event_name || "Unknown Event",
             category: categoryObj?.category_name || "General",
-            coordinatorStatus: reg.coordinator_status ?? null,
+              status: reg.payment_status === "done" ? "Registered" : "Payment Pending",
+              coordinatorStatus: reg.coordinator_status ?? null,
           };
         });
         setRegisteredEvents(mappedEvents);
