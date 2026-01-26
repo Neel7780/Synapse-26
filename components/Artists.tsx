@@ -222,6 +222,39 @@ export default function ArtistsSection() {
     setTimeout(() => setIsAnimating(false), 700);
   }, [currentIndex, isAnimating, restartAutoPlay]);
 
+  // Swipe handling
+  const touchStartRef = useRef<number | null>(null);
+  const touchEndRef = useRef<number | null>(null);
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchEndRef.current = null;
+    touchStartRef.current = e.targetTouches[0].clientX;
+    pauseAutoPlay();
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    touchEndRef.current = e.targetTouches[0].clientX;
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStartRef.current || !touchEndRef.current) return;
+
+    const distance = touchStartRef.current - touchEndRef.current;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      nextArtist();
+    } else if (isRightSwipe) {
+      prevArtist();
+    }
+
+    resumeAutoPlay();
+    touchStartRef.current = null;
+    touchEndRef.current = null;
+  };
+
   // Start auto-play
   useEffect(() => {
     if (!loading && artists.length > 1) {
@@ -385,9 +418,12 @@ export default function ArtistsSection() {
 
         {/* Main carousel area */}
         <div 
-          className="flex-1 relative flex items-center justify-center perspective-distant"
+          className="flex-1 relative flex items-center justify-center perspective-distant touch-pan-y"
           onMouseEnter={pauseAutoPlay}
           onMouseLeave={resumeAutoPlay}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
         >
           {/* Cards container */}
           <div

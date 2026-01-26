@@ -49,20 +49,20 @@ type AccommodationBooking = {
 const ProfileField = memo(function ProfileField({
   label,
   value,
-  className = ""
+  className = "",
 }: {
   label: string;
   value: string;
   className?: string;
 }) {
   return (
-    <div className={`border border-white p-3 md:p-4 min-h-[72px] flex flex-col justify-center ${className}`}>
+    <div
+      className={`border border-white p-3 md:p-4 min-h-[72px] flex flex-col justify-center ${className}`}
+    >
       <p className="text-xs text-muted-foreground font-roboto uppercase tracking-wider">
         {label}
       </p>
-      <p className="text-base font-semibold font-roboto truncate">
-        {value}
-      </p>
+      <p className="text-base font-semibold font-roboto truncate">{value}</p>
     </div>
   );
 });
@@ -74,7 +74,7 @@ const EditableProfileField = memo(function EditableProfileField({
   onChange,
   type = "text",
   className = "",
-  disabled = false
+  disabled = false,
 }: {
   label: string;
   value: string;
@@ -84,7 +84,9 @@ const EditableProfileField = memo(function EditableProfileField({
   disabled?: boolean;
 }) {
   return (
-    <div className={`border border-white p-3 md:p-4 min-h-[72px] flex flex-col justify-center ${className}`}>
+    <div
+      className={`border border-white p-3 md:p-4 min-h-[72px] flex flex-col justify-center ${className}`}
+    >
       <p className="text-xs text-muted-foreground font-roboto uppercase tracking-wider mb-1">
         {label}
       </p>
@@ -93,7 +95,7 @@ const EditableProfileField = memo(function EditableProfileField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className={`text-base font-semibold font-roboto bg-transparent border-none outline-none text-white disabled:opacity-50 disabled:cursor-not-allowed ${type === 'date' ? 'max-w-[150px] md:max-w-full' : 'w-full'}`}
+        className={`text-base font-semibold font-roboto bg-transparent border-none outline-none text-white disabled:opacity-50 disabled:cursor-not-allowed ${type === "date" ? "max-w-[150px] md:max-w-full" : "w-full"}`}
       />
     </div>
   );
@@ -211,8 +213,7 @@ export default function UserProfile() {
             id: reg.registration_id,
             name: eventObj?.event_name || "Unknown Event",
             category: categoryObj?.category_name || "General",
-              status: reg.payment_status === "done" ? "Registered" : "Payment Pending",
-              coordinatorStatus: reg.coordinator_status ?? null,
+            coordinatorStatus: reg.coordinator_status ?? null,
           };
         });
         setRegisteredEvents(mappedEvents);
