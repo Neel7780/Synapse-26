@@ -83,7 +83,7 @@ Place environment variables in a `.env.local` file for local development. Exampl
 ```text
 NEXT_PUBLIC_SUPABASE_URL=https://xyzcompany.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=public-anon-key
-SUPABASE_SERVICE_ROLE_KEY=service-role-secret
+SUPABASE_SECRET_KEY=service-role-secret
 ```
 
 ### Authentication and Admin
@@ -118,7 +118,7 @@ npm start
 ### Deployment
 
 - The project is compatible with Vercel (Next.js recommended), Netlify, or other Node.js hosts. If deploying to Vercel, set the environment variables in the project settings and enable any preview branch protections you need.
-- Make sure server-only secrets (like `SUPABASE_SERVICE_ROLE_KEY`) are stored only in secure environment settings and never exposed to client bundles.
+- Make sure server-only secrets (like `SUPABASE_SECRET_KEY`) are stored only in secure environment settings and never exposed to client bundles.
 
 ### Contributing
 

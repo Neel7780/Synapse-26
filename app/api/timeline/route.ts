@@ -24,8 +24,8 @@ export async function GET() {
             console.error("Timeline API Error: NEXT_PUBLIC_SUPABASE_URL is missing");
             return NextResponse.json({ error: "Configuration error: Missing URL" }, { status: 500 });
         }
-        if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-            console.error("Timeline API Error: SUPABASE_SERVICE_ROLE_KEY is missing");
+        if (!process.env.SUPABASE_SECRET_KEY) {
+            console.error("Timeline API Error: SUPABASE_SECRET_KEY is missing");
             return NextResponse.json({ error: "Configuration error: Missing Key" }, { status: 500 });
         }
 
