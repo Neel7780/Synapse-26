@@ -25,14 +25,14 @@ const globalForSupabase = globalThis as unknown as {
 
 function createSupabaseAdmin(): SupabaseClient<Database> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseServiceKey = process.env.SUPABASE_SECRET_KEY;
 
   if (!supabaseUrl) {
     throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL environment variable");
   }
 
   if (!supabaseServiceKey) {
-    throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY environment variable");
+    throw new Error("Missing SUPABASE_SECRET_KEY environment variable");
   }
 
   return createClient<Database>(supabaseUrl, supabaseServiceKey, {
