@@ -46,66 +46,76 @@ export const EventCard = memo(function EventCard({
   useEffect(() => {
     if (!cardRef.current) return;
 
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReducedMotion) return;
+    const mm = gsap.matchMedia();
 
-    const card = cardRef.current;
-    const content = contentRef.current;
-    const badge = badgeRef.current;
-    const arrow = arrowRef.current;
+    mm.add({
+      isMobile: "(max-width: 767px)",
+      isDesktop: "(min-width: 768px)",
+      reduceMotion: "(prefers-reduced-motion: reduce)"
+    }, (context) => {
+      const { isMobile, reduceMotion } = context.conditions as { isMobile: boolean, reduceMotion: boolean };
+      
+      if (reduceMotion) return;
 
-    // Initial state
-    gsap.set(card, {
-      opacity: 0,
-      y: 80,
-      rotateX: -15,
-      scale: 0.9,
-    });
+      const card = cardRef.current;
+      const content = contentRef.current;
+      const badge = badgeRef.current;
+      const arrow = arrowRef.current;
 
-    gsap.set(badge, { opacity: 0, x: -20 });
-    gsap.set(content, { opacity: 0, y: 30 });
+      // Initial state
+      gsap.set(card, {
+        opacity: 0,
+        y: isMobile ? 40 : 80,
+        rotateX: isMobile ? 0 : -15,
+        scale: isMobile ? 0.95 : 0.9,
+      });
 
-    // Scroll-triggered entrance animation
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: card,
-        start: "top 85%",
-        once: true,
-      },
-    });
+      gsap.set(badge, { opacity: 0, x: -20 });
+      gsap.set(content, { opacity: 0, y: 20 });
 
-    tl.to(card, {
-      opacity: 1,
-      y: 0,
-      rotateX: 0,
-      scale: 1,
-      duration: 0.8,
-      delay: index * 0.1,
-      ease: "back.out(1.4)",
-    })
-      .to(
-        badge,
-        {
+      // Scroll-triggered entrance animation
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: card,
+          start: isMobile ? "top 90%" : "top 85%",
+          once: true,
+        },
+      });
+
+      tl.to(card, {
+        opacity: 1,
+        y: 0,
+        rotateX: 0,
+        scale: 1,
+        duration: isMobile ? 0.6 : 0.8,
+        delay: isMobile ? 0 : index * 0.1,
+        ease: isMobile ? "power2.out" : "back.out(1.4)",
+      })
+        .to(badge, {
           opacity: 1,
           x: 0,
           duration: 0.4,
           ease: "power2.out",
-        },
-        "-=0.4"
-      )
-      .to(
-        content,
-        {
+        }, "-=0.4")
+        .to(content, {
           opacity: 1,
           y: 0,
           duration: 0.5,
           ease: "power2.out",
-        },
-        "-=0.3"
-      );
+        }, "-=0.3");
 
-    // Hover animations
+      return () => {
+        tl.kill();
+      };
+    });
+
+    // Hover animations (Desktop only)
+    const card = cardRef.current;
+    const arrow = arrowRef.current;
+    const badge = badgeRef.current;
+
     const handleMouseEnter = () => {
+      if (window.innerWidth < 768) return;
       gsap.to(card, {
         y: -10,
         scale: 1.02,
@@ -113,7 +123,6 @@ export const EventCard = memo(function EventCard({
         duration: 0.4,
         ease: "power2.out",
       });
-
       gsap.to(arrow, {
         opacity: 1,
         x: 0,
@@ -121,7 +130,6 @@ export const EventCard = memo(function EventCard({
         duration: 0.3,
         ease: "back.out(2)",
       });
-
       gsap.to(badge, {
         scale: 1.05,
         duration: 0.3,
@@ -130,6 +138,7 @@ export const EventCard = memo(function EventCard({
     };
 
     const handleMouseLeave = () => {
+      if (window.innerWidth < 768) return;
       gsap.to(card, {
         y: 0,
         scale: 1,
@@ -137,7 +146,6 @@ export const EventCard = memo(function EventCard({
         duration: 0.4,
         ease: "power2.out",
       });
-
       gsap.to(arrow, {
         opacity: 0,
         x: -10,
@@ -145,7 +153,6 @@ export const EventCard = memo(function EventCard({
         duration: 0.3,
         ease: "power2.in",
       });
-
       gsap.to(badge, {
         scale: 1,
         duration: 0.3,
@@ -153,42 +160,42 @@ export const EventCard = memo(function EventCard({
       });
     };
 
-    card.addEventListener("mouseenter", handleMouseEnter);
-    card.addEventListener("mouseleave", handleMouseLeave);
+    card?.addEventListener("mouseenter", handleMouseEnter);
+    card?.addEventListener("mouseleave", handleMouseLeave);
 
     return () => {
-      card.removeEventListener("mouseenter", handleMouseEnter);
-      card.removeEventListener("mouseleave", handleMouseLeave);
-      tl.kill();
+      card?.removeEventListener("mouseenter", handleMouseEnter);
+      card?.removeEventListener("mouseleave", handleMouseLeave);
+      mm.revert();
     };
   }, [index]);
 
   return (
     <div
       ref={cardRef}
-      className="event-card group will-change-transform"
+      className="event-card group will-change-transform h-full"
       style={{ perspective: "1000px" }}
     >
       <Link
         href={link}
-        className="block"
+        className="block h-full"
         onClick={() => {
           if (link.startsWith("/")) {
             startTransition();
           }
         }}
       >
-        <div className="relative rounded-2xl overflow-hidden bg-white/5 backdrop-blur-sm border border-white/10 transition-colors duration-300 group-hover:border-red-500/30">
+        <div className="relative h-full flex flex-col rounded-2xl overflow-hidden bg-white/5 backdrop-blur-sm border border-white/10 transition-colors duration-300 group-hover:border-red-500/30">
           {/* Image Container */}
-          <div className="relative aspect-[4/3] overflow-hidden">
+          <div className="relative aspect-4/3 overflow-hidden">
             {/* Placeholder gradient */}
-            <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass}`} />
+            <div className={`absolute inset-0 bg-linear-to-br ${gradientClass}`} />
 
             {/* Animated overlay gradient */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-10" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-transparent z-10" />
 
             {/* Shimmer effect on hover */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out z-10" />
+            <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out z-10" />
 
             {/* Category Badge */}
             <div ref={badgeRef} className="absolute top-4 left-4 z-20">

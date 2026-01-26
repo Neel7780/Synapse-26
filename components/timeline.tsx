@@ -76,13 +76,13 @@ const EventRow = memo(function EventRow({
       ref={rowRef}
       className="event-row border-b border-white/10 transition-colors cursor-default"
     >
-      <td className="py-3 px-2 sm:px-4 md:px-6 text-sm sm:text-base md:text-xl text-white text-center break-words whitespace-normal">
+      <td className="py-3 px-2 sm:px-4 md:px-6 text-sm sm:text-base md:text-xl text-white text-center wrap-break-word whitespace-normal">
         {event.name}
       </td>
-      <td className="py-3 px-2 sm:px-4 md:px-6 text-sm sm:text-base md:text-xl text-white/80 text-center break-words whitespace-normal">
+      <td className="py-3 px-2 sm:px-4 md:px-6 text-sm sm:text-base md:text-xl text-white/80 text-center wrap-break-word whitespace-normal">
         {event.time || "To be declared"}
       </td>
-      <td className="py-3 px-2 sm:px-4 md:px-6 text-sm sm:text-base md:text-xl text-white/80 text-center break-words whitespace-normal">
+      <td className="py-3 px-2 sm:px-4 md:px-6 text-sm sm:text-base md:text-xl text-white/80 text-center wrap-break-word whitespace-normal">
         {event.venue || "To be declared"}
       </td>
     </tr>
@@ -113,16 +113,14 @@ const DaySection = memo(function DaySection({
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion) return;
 
-    const ctx = gsap.context(() => {
-      // Day number dramatic entrance
+    const mm = gsap.matchMedia();
+
+    mm.add("(min-width: 768px)", () => {
+      // Desktop Animations
       if (dayNumberRef.current) {
         gsap.fromTo(
           dayNumberRef.current,
-          {
-            opacity: 0,
-            scale: 0.3,
-            rotateX: -90,
-          },
+          { opacity: 0, scale: 0.3, rotateX: -90 },
           {
             opacity: 1,
             scale: 1,
@@ -132,21 +130,16 @@ const DaySection = memo(function DaySection({
             scrollTrigger: {
               trigger: sectionRef.current,
               start: "top 80%",
-              end: "+=5000",
               toggleActions: "play none none reverse",
             },
           }
         );
       }
 
-      // Connecting line draw animation
       if (lineRef.current) {
         gsap.fromTo(
           lineRef.current,
-          {
-            scaleY: 0,
-            transformOrigin: "top center",
-          },
+          { scaleY: 0, transformOrigin: "top center" },
           {
             scaleY: 1,
             duration: 0.8,
@@ -154,22 +147,17 @@ const DaySection = memo(function DaySection({
             scrollTrigger: {
               trigger: sectionRef.current,
               start: "top 75%",
-              end: "+=5000",
               toggleActions: "play none none reverse",
             },
           }
         );
       }
 
-      // Table fade in with slide
       if (tableRef.current) {
         const direction = index % 2 === 0 ? -50 : 50;
         gsap.fromTo(
           tableRef.current,
-          {
-            opacity: 0,
-            x: direction,
-          },
+          { opacity: 0, x: direction },
           {
             opacity: 1,
             x: 0,
@@ -178,20 +166,15 @@ const DaySection = memo(function DaySection({
             scrollTrigger: {
               trigger: sectionRef.current,
               start: "top 75%",
-              end: "+=5000",
               toggleActions: "play none none reverse",
             },
           }
         );
 
-        // Event rows stagger
         const rows = tableRef.current.querySelectorAll(".event-row");
         gsap.fromTo(
           rows,
-          {
-            opacity: 0,
-            x: direction * 0.5,
-          },
+          { opacity: 0, x: direction * 0.5 },
           {
             opacity: 1,
             x: 0,
@@ -202,65 +185,105 @@ const DaySection = memo(function DaySection({
             scrollTrigger: {
               trigger: sectionRef.current,
               start: "top 75%",
-              end: "+=5000",
               toggleActions: "play none none reverse",
             },
           }
         );
       }
-    }, sectionRef);
+    });
 
-    return () => ctx.revert();
+    mm.add("(max-width: 767px)", () => {
+      // Mobile Animations - Simplified
+      if (dayNumberRef.current) {
+        gsap.fromTo(
+          dayNumberRef.current,
+          { opacity: 0, y: 30 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.8,
+            ease: "power2.out",
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: "top 90%",
+              toggleActions: "play none none reverse",
+            },
+          }
+        );
+      }
+
+      if (tableRef.current) {
+        gsap.fromTo(
+          tableRef.current,
+          { opacity: 0, y: 20 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.6,
+            ease: "power2.out",
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: "top 85%",
+              toggleActions: "play none none reverse",
+            },
+          }
+        );
+      }
+    });
+
+    return () => mm.revert();
   }, [index]);
 
   return (
     <div
       id={`day-${daySchedule.day}`}
       ref={sectionRef}
-      className="day-section max-w-7xl mx-auto px-3 sm:px-4 space-y-6 md:space-y-12 relative"
+      className="day-section max-w-7xl mx-auto px-4 space-y-8 md:space-y-12 relative"
     >
-      {/* Connecting line to next section */}
+      {/* Connecting line to next section - Hidden on small mobile */}
       {index < totalDays - 1 && (
         <div
           ref={lineRef}
-          className="absolute left-1/2 -translate-x-1/2 top-full w-[2px] h-20 md:h-40 bg-gradient-to-b from-red-600 to-transparent sm:h-32"
+          className="absolute left-1/2 -translate-x-1/2 top-full w-[2px] h-12 md:h-40 bg-linear-to-b from-red-600 to-transparent hidden sm:block"
         />
       )}
 
       {/* Day heading */}
       <h2
         ref={dayNumberRef}
-        className="text-4xl sm:text-5xl md:text-[100px] lg:text-[120px] text-center leading-none tracking-wide text-red-600 font-joker"
+        className="text-[clamp(2.5rem,15vw,120px)] text-center leading-none tracking-wide text-red-600 font-joker"
         style={{ perspective: "1000px" }}
       >
         day {daySchedule.day}
       </h2>
 
-      {/* Table */}
-      <table
-        ref={tableRef}
-        className="w-full table-fixed bg-black/30 backdrop-blur-sm rounded-lg font-roboto overflow-hidden"
-      >
-        <thead>
-          <tr className="border-b border-white/20">
-            <th className="py-3 px-2 sm:px-4 md:px-6 text-xs sm:text-sm uppercase tracking-wide text-white/70 text-center">
-              Event
-            </th>
-            <th className="py-3 px-2 sm:px-4 md:px-6 text-xs sm:text-sm uppercase tracking-wide text-white/70 text-center">
-              Time
-            </th>
-            <th className="py-3 px-2 sm:px-4 md:px-6 text-xs sm:text-sm uppercase tracking-wide text-white/70 text-center">
-              Venue
-            </th>
-          </tr>
-        </thead>
+      {/* Table Container for horizontal scroll if needed */}
+      <div className="w-full overflow-x-auto rounded-lg bg-black/30 backdrop-blur-sm border border-white/10">
+        <table
+          ref={tableRef}
+          className="w-full min-w-[300px] table-fixed font-roboto"
+        >
+          <thead>
+            <tr className="border-b border-white/20">
+              <th className="py-4 px-2 sm:px-4 text-[clamp(10px,3vw,14px)] uppercase tracking-widest text-white/50 text-center font-bold">
+                Event
+              </th>
+              <th className="py-4 px-2 sm:px-4 text-[clamp(10px,3vw,14px)] uppercase tracking-widest text-white/50 text-center font-bold">
+                Time
+              </th>
+              <th className="py-4 px-2 sm:px-4 text-[clamp(10px,3vw,14px)] uppercase tracking-widest text-white/50 text-center font-bold">
+                Venue
+              </th>
+            </tr>
+          </thead>
 
-        <tbody>
-          {daySchedule.events.map((event, i) => (
-            <EventRow key={i} event={event} index={i} />
-          ))}
-        </tbody>
-      </table>
+          <tbody>
+            {daySchedule.events.map((event, i) => (
+              <EventRow key={i} event={event} index={i} />
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 });

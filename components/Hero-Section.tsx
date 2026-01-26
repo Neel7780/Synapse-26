@@ -16,6 +16,8 @@ import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import Image from "next/image";
 
+import { useIsMobile } from "@/hooks/useIsMobile";
+
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
@@ -45,6 +47,7 @@ export default function HeroSection({
   const [loadingProgress, setLoadingProgress] = useState(0);
   const { isAuthenticated } = useAuth();
   const { setNavbarVisible, isNavbarVisible } = useNavigationState();
+  const isMobile = useIsMobile();
 
   const hasRunMaskRef = useRef(false);
   const enterTriggeredRef = useRef(false);
@@ -350,7 +353,7 @@ export default function HeroSection({
         trigger: heroRef.current,
         start: "top top",
         end: "+=300%",
-        scrub: 2.5,
+        scrub: isMobile ? 1 : 2.5,
         pin: true,
         pinSpacing: false,
         anticipatePin: 1.2,
@@ -807,7 +810,7 @@ export default function HeroSection({
         </>
       ) : <></>
       }
-      <div className="hero relative inset-0 h-[100dvh] z-25" ref={heroRef}>
+      <div className="hero relative inset-0 h-svh z-25" ref={heroRef}>
         <div id="maskLayer" className="absolute inset-0 opacity-100 " ref={maskLayerRef} style={{
           WebkitMaskImage: (isLoading || clickedEnterRef.current) ? 'url("/images_home/inkReveal2.gif")' : 'none',
           WebkitMaskRepeat: 'no-repeat',
@@ -818,21 +821,93 @@ export default function HeroSection({
           maskPosition: 'center',
           maskSize: (isLoading || clickedEnterRef.current) ? '0% 0%' : 'cover',
         }}>
-          <Image id="coloredImage" src="/images_home/RedHand2.jpeg" alt="Red Hand" fill className="absolute inset-0 h-full w-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none max-[600px]:scale-250" priority={false} loading="eager" ref={coloredImageRef} />
+          {/* Desktop/Tablet version */}
+          <Image 
+            id="coloredImage" 
+            src="/images_home/RedHand2.jpeg" 
+            alt="Red Hand" 
+            fill 
+            sizes="100vw"
+            quality={80} 
+            className="hidden min-[601px]:block absolute inset-0 h-full w-full object-contain min-[1000px]:object-cover pointer-events-none" 
+            priority 
+            ref={coloredImageRef} 
+          />
+          {/* Mobile version - larger container to avoid scale blur */}
+          <div className="min-[601px]:hidden absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
+            <div className="relative w-[180vh] h-[180vw] -rotate-90">
+              <Image 
+                src="/images_home/RedHand2.jpeg" 
+                alt="Red Hand" 
+                fill 
+                sizes="180svh"
+                quality={80} 
+                className="object-contain"
+                priority 
+              />
+            </div>
+          </div>
 
           <div id="flipCard" className="absolute inset-0 transform-3d will-change-transform" ref={flipCardRef}>
-            <Image id="redCard" className="absolute inset-0 w-full h-full object-contain max-[600px]:rotate-270 min-[1000px]:object-cover pointer-events-none backface-hidden max-[600px]:scale-250" src="/images_home/redcard4.png" alt="Red Card" fill priority={false} loading="eager" ref={cardRef} />
+            {/* Desktop/Tablet version */}
+            <Image 
+              id="redCard" 
+              className="hidden min-[601px]:block absolute inset-0 w-full h-full object-contain min-[1000px]:object-cover pointer-events-none backface-hidden" 
+              src="/images_home/redcard4.png" 
+              alt="Red Card" 
+              fill 
+              sizes="100vw"
+              quality={80} 
+              priority 
+              ref={cardRef} 
+            />
+            {/* Mobile version - larger container to avoid scale blur */}
+            <div className="min-[601px]:hidden absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none backface-hidden">
+              <div className="relative w-[180vh] h-[180vw] -rotate-90">
+                <Image 
+                  src="/images_home/redcard4.png" 
+                  alt="Red Card" 
+                  fill 
+                  sizes="180svh"
+                  quality={80} 
+                  className="object-contain"
+                  priority 
+                />
+              </div>
+            </div>
 
-            <div id="part3_2" ref={part3_2Ref} style={{
-              backgroundImage:
-                "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.15) 35%, rgba(0,0,0,0.45) 65%, rgba(0,0,0,0.75) 85%, #000 100%), url(/images_home/image_part3_2.png)",
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }} className=" absolute inset-0 flex flex-col items-center justify-center opacity-100 will-change-transform backface-hidden transform-[rotateY(180deg)]">
+            <div id="part3_2" ref={part3_2Ref} className="absolute inset-0 flex flex-col items-center justify-center opacity-100 will-change-transform backface-hidden transform-[rotateY(180deg)]">
+              {/* Background image using Next/Image for better quality */}
+              <Image 
+                src="/images_home/image_part3_2.png" 
+                alt="" 
+                fill 
+                sizes="100vw"
+                quality={80}
+                className="object-cover -z-10"
+                priority
+              />
+              {/* Gradient overlay */}
+              <div 
+                className="absolute inset-0 -z-5 pointer-events-none" 
+                style={{
+                  background: "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.15) 35%, rgba(0,0,0,0.45) 65%, rgba(0,0,0,0.75) 85%, #000 100%)"
+                }} 
+              />
               <div className="screen-container relative w-screen h-full flex items-center justify-center perspective-[1000px] transform-3d" ref={screenContainerRef}>
-                <div ref={frontScreenRef} className="screen-front absolute inset-0 bg-black bg-[url('/images_home/part3-image.png')] bg-no-repeat bg-center bg-contain z-2 backface-hidden border-4 border-solid rounded " style={{ borderColor: "rgba(250,235,215,0)" }}></div>
+                <div ref={frontScreenRef} className="screen-front absolute inset-0 bg-black z-2 backface-hidden border-4 border-solid rounded overflow-hidden" style={{ borderColor: "rgba(250,235,215,0)" }}>
+                  {/* Part3 image using Next/Image */}
+                  <Image 
+                    src="/images_home/part3-image.png" 
+                    alt="" 
+                    fill 
+                    sizes="100vw"
+                    quality={80}
+                    className="object-contain"
+                  />
+                </div>
                 <div className="center-joker-container absolute inset-0 flex items-center justify-center transform-[rotateY(180deg)] backface-hidden z-1">
-                  <Image src="/images_home/card_center.png" className="center-joker w-full h-auto rotate-[-64deg] object-contain rounded-lg" alt="Joker Card" width={500} height={500} quality={100} unoptimized />
+                  <Image src="/images_home/card_center.png" className="center-joker w-full h-auto rotate-[-64deg] object-contain rounded-lg" alt="Joker Card" width={500} height={500} quality={80} />
                 </div>
               </div>
             </div>
@@ -845,7 +920,7 @@ export default function HeroSection({
                 )}
               </div>
 
-              <div className="title-wrapper flex justify-center pt-[80px] sm:pt-[60px] md:pt-[120px] h-[calc(100dvh-120px)] md:h-[calc(100dvh-200px)] pointer-events-none">
+              <div className="title-wrapper flex justify-center pt-[80px] sm:pt-[60px] md:pt-[120px] h-[calc(100svh-120px)] md:h-[calc(100svh-200px)] pointer-events-none">
                 <h1 className="title text-4xl min-[450px]:text-6xl sm:text-7xl md:text-[clamp(40px,12vw,140px)] font-joker leading-none text-center px-4" ref={titleRef}>synapse&apos; 26</h1>
               </div>
 
@@ -861,7 +936,7 @@ export default function HeroSection({
           </div>
           <div
             ref={scrollHintRef}
-            className=" absolute left-1/2 -translate-x-1/2  bottom-5 md:bottom-[30px] z-[100] flex flex-col items-center justify-center gap-1 w-[70px] h-[130px] md:w-[70px] md:h-[120px] font-jqka text-amber-50 text-xs md:text-xs leading-tight tracking-wide uppercase border border-amber-50 rounded-full backdrop-blur-[2px]"
+            className=" absolute left-1/2 -translate-x-1/2  bottom-5 md:bottom-[30px] z-100 flex flex-col items-center justify-center gap-1 w-[70px] h-[130px] md:w-[70px] md:h-[120px] font-jqka text-amber-50 text-xs md:text-xs leading-tight tracking-wide uppercase border border-amber-50 rounded-full backdrop-blur-[2px]"
           >
             <span className="text-center text-[17px] md:text-[14px]">
               Scroll <br /> To <br /> Explore
@@ -883,7 +958,7 @@ export default function HeroSection({
         ref={scrollTrackRef}
         className="
     fixed right-[12px] md:right-[24px]
-    top-1/2 -translate-y-1/2 z-[999]
+    top-1/2 -translate-y-1/2 z-999
     h-[180px] md:h-[300px]
     w-[5px] md:w-[10px]
     rounded-full border border-solid border-gray-700
@@ -895,7 +970,7 @@ export default function HeroSection({
       >
         <div
           ref={scrollFillRef}
-          className="absolute top-0 left-0 w-full h-0 z-[9990]
+          className="absolute top-0 left-0 w-full h-0 z-9990
                    bg-red-600 rounded-full"
         />
       </div>

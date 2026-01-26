@@ -100,8 +100,20 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground overflow-x-hidden w-full;
+    position: relative;
   }
+}
+
+/* Responsive Viewport Height Utilities */
+.h-svh { height: 100svh; }
+.min-h-svh { min-height: 100svh; }
+.h-dvh { height: 100dvh; }
+.min-h-dvh { min-height: 100dvh; }
+
+/* Prevent horizontal overflow on mobile */
+.overflow-x-hidden {
+  overflow-x: hidden !important;
 }
 
 input[type="date"]::-webkit-calendar-picker-indicator {
@@ -238,6 +250,12 @@ html.lenis body {
 
 .animate-marquee {
   animation: marquee 18s linear infinite;
+}
+
+@media (max-width: 768px) {
+  .animate-marquee {
+    animation-duration: 25s; /* Slower on mobile to reduce CPU load */
+  }
 }
 
 /* Shimmer animation for skeleton loaders */
