@@ -31,8 +31,10 @@ export function SmoothScroller({ children }: SmoothScrollerProps) {
 
     // Check if user prefers reduced motion
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReducedMotion) {
-      return; // Skip smooth scrolling for users who prefer reduced motion
+    const isMobile = window.innerWidth < 768;
+
+    if (prefersReducedMotion || isMobile) {
+      return; // Skip smooth scrolling for users who prefer reduced motion or are on mobile
     }
 
     // Dynamically import Lenis and GSAP only on client side

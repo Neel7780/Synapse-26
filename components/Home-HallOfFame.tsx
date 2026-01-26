@@ -5,6 +5,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import Image from "next/image";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -35,10 +36,9 @@ const HeroCard = ({
       alt="Hall of Fame"
       fill
       className="object-cover"
-      sizes="100vw"
-      quality={100}
+      sizes="(max-width: 768px) 100vw, 50vw"
+      quality={80}
       priority
-      unoptimized
     />
     <div className="hof-title absolute inset-0 z-10 flex items-end justify-center pb-6 md:pb-8">
       <span className={`${titleSize} text-center font-white font-joker text-white drop-shadow-lg tracking-wider`}>
@@ -50,6 +50,7 @@ const HeroCard = ({
 );
 
 export default function HallOfFame() {
+  const isMobile = useIsMobile();
   const hallContainerRef = useRef<HTMLDivElement>(null);
   const hallRef = useRef<Array<HTMLDivElement | null>>([]);
   const scrollIndicatorRef = useRef<HTMLDivElement>(null);
@@ -433,181 +434,181 @@ export default function HallOfFame() {
     () => {
       if (!hallContainerRef.current) return;
 
-      let startScaleX = 1;
-      let startScaleY = 1;
-      let hero: HTMLDivElement | null = null;
+      const mm = gsap.matchMedia();
 
-      const resolveHero = () => {
-        const index = getActiveHeroIndex();
-        hero = hallRef.current[index] ?? null;
-        return hero;
-      };
+      mm.add({
+        isMobile: "(max-width: 767px)",
+        isDesktop: "(min-width: 768px)"
+      }, (context) => {
+        const { isMobile } = context.conditions as { isMobile: boolean };
+        
+        let startScaleX = 1;
+        let startScaleY = 1;
+        let hero: HTMLDivElement | null = null;
 
-      // Fade out scroll indicator smoothly
-      gsap.to(scrollIndicatorRef.current, {
-        opacity: 0,
-        y: -20,
-        pointerEvents: "none",
-        ease: "power2.out",
-        scrollTrigger: {
-          trigger: hallContainerRef.current,
-          start: "top top",
-          end: "+=15%",
-          scrub: 0.5,
-        },
-      });
+        const resolveHero = () => {
+          const index = getActiveHeroIndex();
+          hero = hallRef.current[index] ?? null;
+          return hero;
+        };
 
-      // Fade out title with elegant animation
-      gsap.to(".hof-title", {
-        opacity: 0,
-        y: 30,
-        scale: 0.95,
-        ease: "power2.out",
-        scrollTrigger: {
-          trigger: hallContainerRef.current,
-          start: "top top",
-          end: "+=20%",
-          scrub: 0.8,
-        },
-      });
-
-      const calculateStartScale = () => {
-        hero = resolveHero();
-        if (!hero) return false;
-
-        const { cellW, cellH, heroCols, heroRows } = getGridMetrics();
-
-        startScaleX = window.innerWidth / (cellW * heroCols);
-        startScaleY = window.innerHeight / (cellH * heroRows);
-
-        gsap.set(hero, {
-          scaleX: startScaleX,
-          scaleY: startScaleY,
-          borderRadius: 0,
-          transformOrigin: "center center",
-          filter: "brightness(1)",
-        });
-
-        resetGridItems();
-        return true;
-      };
-
-      let trigger: globalThis.ScrollTrigger | undefined;
-      let rafId: number;
-      let retryCount = 0;
-
-      const waitForHero = () => {
-        // Stop if component unmounted
-        if (!hallContainerRef.current) return;
-
-        if (!calculateStartScale()) {
-          if (retryCount < 60) { // Try for ~1 second
-            retryCount++;
-            rafId = requestAnimationFrame(waitForHero);
-            return;
-          }
-          // If timed out, verify if we have grid items at least
-          if (process.env.NODE_ENV !== "production") {
-            console.warn("HallOfFame: Hero not found, forcing visibility");
-          }
-          // Force visibility of all items as a fallback
-          gridImages.forEach((image, index) => {
-            const mode = getActiveMode();
-            const item = gridItemsRef.current[mode][index];
-            if (item) gsap.set(item, { opacity: 1, scale: 1, filter: "none", clearProps: "all" });
-          });
-          return;
-        }
-
-        trigger = ScrollTrigger.create({
-          trigger: hallContainerRef.current!,
-          start: "top top-=5%",
-          end: "bottom top",
-          scrub: 1.2, // Smoother scrubbing
-          pin: true,
-          anticipatePin: 1,
-          onRefreshInit: calculateStartScale,
-
-          onUpdate: (self) => {
-            if (hero) {
-              // Use a custom easing for the hero zoom-out
-              const heroProgress = Math.min(self.progress / 0.5, 1);
-              const heroEased = gsap.parseEase("power3.out")(heroProgress);
-
-              // Hero zoom-out animation with enhanced effects
-              const currentScaleX = gsap.utils.interpolate(startScaleX, 1, heroEased);
-              const currentScaleY = gsap.utils.interpolate(startScaleY, 1, heroEased);
-              const currentRadius = gsap.utils.interpolate(0, 20, heroEased);
-              const currentBrightness = gsap.utils.interpolate(1, 0.95, heroEased);
-
-              gsap.set(hero, {
-                scaleX: currentScaleX,
-                scaleY: currentScaleY,
-                borderRadius: `${currentRadius}px`,
-                filter: `brightness(${currentBrightness})`,
-              });
-            }
-
-            // Grid items animation with staggered reveal
-            const mode = getActiveMode();
-
-            gridImages.forEach((image, index) => {
-              const item = gridItemsRef.current[mode][index];
-              if (!item || !isItemVisible(image)) return;
-
-              const itemDelay = image.delay;
-              const itemDuration = 0.4; // Duration of each item's animation
-
-              if (self.progress < itemDelay) {
-                // Item hasn't started animating yet
-                gsap.set(item, {
-                  x: image.startX,
-                  y: image.startY,
-                  rotation: image.startRotation || 0,
-                  opacity: 0,
-                  scale: 0.3,
-                  filter: "blur(10px)",
-                });
-                return;
-              }
-
-              // Calculate item's individual progress
-              const itemProgress = gsap.utils.clamp(
-                0,
-                1,
-                (self.progress - itemDelay) / itemDuration
-              );
-
-              // Use elastic easing for a bouncy, playful feel
-              const itemEased = gsap.parseEase("back.out(1)")(itemProgress);
-              const opacityEased = gsap.parseEase("power2.out")(itemProgress);
-
-              gsap.set(item, {
-                x: gsap.utils.interpolate(image.startX, 0, itemEased),
-                y: gsap.utils.interpolate(image.startY, 0, itemEased),
-                rotation: gsap.utils.interpolate(image.startRotation || 0, 0, itemEased),
-                opacity: gsap.utils.interpolate(0, 1, opacityEased),
-                scale: gsap.utils.interpolate(0.3, 1, itemEased),
-                filter: `blur(${gsap.utils.interpolate(10, 0, opacityEased)}px)`,
-              });
-            });
+        // Fade out scroll indicator smoothly
+        gsap.to(scrollIndicatorRef.current, {
+          opacity: 0,
+          y: -20,
+          pointerEvents: "none",
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: hallContainerRef.current,
+            start: "top top",
+            end: "+=15%",
+            scrub: 0.5,
           },
         });
 
-        ScrollTrigger.refresh();
-      };
+        // Fade out title with elegant animation
+        gsap.to(".hof-title", {
+          opacity: 0,
+          y: 30,
+          scale: 0.95,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: hallContainerRef.current,
+            start: "top top",
+            end: "+=20%",
+            scrub: 0.8,
+          },
+        });
 
-      waitForHero();
+        const calculateStartScale = () => {
+          hero = resolveHero();
+          if (!hero) return false;
 
-      // Additional safety refresh for navigation cases
+          const { cellW, cellH, heroCols, heroRows } = getGridMetrics();
+
+          startScaleX = window.innerWidth / (cellW * heroCols);
+          startScaleY = window.innerHeight / (cellH * heroRows);
+
+          gsap.set(hero, {
+            scaleX: startScaleX,
+            scaleY: startScaleY,
+            borderRadius: 0,
+            transformOrigin: "center center",
+            filter: "brightness(1)",
+          });
+
+          resetGridItems();
+          return true;
+        };
+
+        let trigger: globalThis.ScrollTrigger | undefined;
+        let rafId: number;
+        let retryCount = 0;
+
+        const waitForHero = () => {
+          if (!hallContainerRef.current) return;
+
+          if (!calculateStartScale()) {
+            if (retryCount < 60) {
+              retryCount++;
+              rafId = requestAnimationFrame(waitForHero);
+              return;
+            }
+            gridImages.forEach((image, index) => {
+              const mode = getActiveMode();
+              const item = gridItemsRef.current[mode][index];
+              if (item) gsap.set(item, { opacity: 1, scale: 1, filter: "none", clearProps: "all" });
+            });
+            return;
+          }
+
+          trigger = ScrollTrigger.create({
+            trigger: hallContainerRef.current!,
+            start: "top top-=5%",
+            end: "bottom top",
+            scrub: isMobile ? 0.8 : 1.2,
+            pin: true,
+            anticipatePin: 1,
+            onRefreshInit: calculateStartScale,
+
+            onUpdate: (self) => {
+              if (hero) {
+                const heroProgress = Math.min(self.progress / 0.5, 1);
+                const heroEased = gsap.parseEase("power3.out")(heroProgress);
+
+                const currentScaleX = gsap.utils.interpolate(startScaleX, 1, heroEased);
+                const currentScaleY = gsap.utils.interpolate(startScaleY, 1, heroEased);
+                const currentRadius = gsap.utils.interpolate(0, 20, heroEased);
+                const currentBrightness = gsap.utils.interpolate(1, 0.95, heroEased);
+
+                gsap.set(hero, {
+                  scaleX: currentScaleX,
+                  scaleY: currentScaleY,
+                  borderRadius: `${currentRadius}px`,
+                  filter: `brightness(${currentBrightness})`,
+                });
+              }
+
+              const mode = getActiveMode();
+
+              gridImages.forEach((image, index) => {
+                const item = gridItemsRef.current[mode][index];
+                if (!item || !isItemVisible(image)) return;
+
+                const itemDelay = image.delay;
+                const itemDuration = isMobile ? 0.3 : 0.4;
+
+                if (self.progress < itemDelay) {
+                  gsap.set(item, {
+                    x: image.startX,
+                    y: image.startY,
+                    rotation: image.startRotation || 0,
+                    opacity: 0,
+                    scale: 0.3,
+                    filter: "blur(10px)",
+                  });
+                  return;
+                }
+
+                const itemProgress = gsap.utils.clamp(
+                  0,
+                  1,
+                  (self.progress - itemDelay) / itemDuration
+                );
+
+                const itemEased = gsap.parseEase(isMobile ? "power2.out" : "back.out(1)")(itemProgress);
+                const opacityEased = gsap.parseEase("power2.out")(itemProgress);
+
+                gsap.set(item, {
+                  x: gsap.utils.interpolate(image.startX, 0, itemEased),
+                  y: gsap.utils.interpolate(image.startY, 0, itemEased),
+                  rotation: gsap.utils.interpolate(image.startRotation || 0, 0, itemEased),
+                  opacity: gsap.utils.interpolate(0, 1, opacityEased),
+                  scale: gsap.utils.interpolate(0.3, 1, itemEased),
+                  filter: `blur(${gsap.utils.interpolate(10, 0, opacityEased)}px)`,
+                });
+              });
+            },
+          });
+
+          ScrollTrigger.refresh();
+        };
+
+        waitForHero();
+
+        return () => {
+          cancelAnimationFrame(rafId);
+          if (trigger) trigger.kill();
+        };
+      });
+
       const timer = setTimeout(() => {
         ScrollTrigger.refresh();
       }, 1000);
 
       return () => {
         clearTimeout(timer);
-        cancelAnimationFrame(rafId);
-        if (trigger) trigger.kill();
+        mm.revert();
       };
     },
     { scope: hallContainerRef }
@@ -637,9 +638,8 @@ export default function HallOfFame() {
           alt={image.alt}
           fill
           className="object-cover transition-transform duration-700 group-hover:scale-110"
-          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          quality={100}
-          unoptimized
+          sizes="(max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+          quality={75}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       </div>
@@ -657,7 +657,7 @@ export default function HallOfFame() {
   return (
     <div className="relative overflow-hidden w-full bg-black">
       <div ref={hallContainerRef} className="relative">
-        <div className="h-[100svh] z-15 w-full bg-black">
+        <div className="h-svh z-15 w-full bg-black">
 
           {/* Mobile Grid (3x3) */}
           <div className="md:hidden absolute inset-0 flex items-center justify-center p-2">

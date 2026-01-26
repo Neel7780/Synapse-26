@@ -6,12 +6,14 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useNavigationState } from "@/lib/useNavigationState";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
 export default function JokerSection() {
+  const isMobile = useIsMobile();
   const router = useRouter();
   const { startTransition } = useNavigationState();
   const jokerSectionRef = useRef<HTMLDivElement>(null);
@@ -178,240 +180,254 @@ export default function JokerSection() {
 
       const jokerPathLength = jokerPath.getTotalLength();
 
-      const jokerTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: jokerSectionRef.current,
-          start: "top top",
-          end: "+=300%",
-          scrub: 2.5,
-          pin: true,
-          pinSpacing: false,
-          anticipatePin: 1.2,
-          invalidateOnRefresh: true,
-          onUpdate: (self) => {
-            // Eagerly unlock if velocity is very low
-            if (Math.abs(self.getVelocity()) < 5) {
-              handleScrollEnd();
-            }
+      const mm = gsap.matchMedia();
 
-            const progress = self.progress;
-            const point = jokerPath.getPointAtLength(
-              jokerPathLength * progress
-            );
-            const rect = jokerSvg.getBoundingClientRect();
+      mm.add({
+        isMobile: "(max-width: 767px)",
+        isDesktop: "(min-width: 768px)"
+      }, (context) => {
+        const { isMobile } = context.conditions as { isMobile: boolean };
 
-            const x = rect.left + (point.x / 1000) * rect.width;
-            const y = rect.top + (point.y / 1000) * rect.height;
+        const jokerTl = gsap.timeline({
+          scrollTrigger: {
+            trigger: jokerSectionRef.current,
+            start: "top top",
+            end: "+=300%",
+            scrub: isMobile ? 1 : 2.5,
+            pin: true,
+            pinSpacing: false,
+            anticipatePin: 1.2,
+            invalidateOnRefresh: true,
+            onUpdate: (self) => {
+              // Eagerly unlock if velocity is very low
+              if (Math.abs(self.getVelocity()) < 5) {
+                handleScrollEnd();
+              }
 
-            jokerDot.style.left = `${x}px`;
-            jokerDot.style.top = `${y}px`;
-          },
-          onEnter: () => {
-            jokerDot.style.opacity = "1";
-            const artistDot = document.getElementById("artistPathDot");
-            if (artistDot) artistDot.style.opacity = "0";
-          },
-          onLeave: () => {
-            jokerDot.style.opacity = "0";
-            const artistDot = document.getElementById("artistPathDot");
-            if (artistDot) artistDot.style.opacity = "1";
-          },
-          onEnterBack: () => {
-            jokerDot.style.opacity = "1";
-            const artistDot = document.getElementById("artistPathDot");
-            if (artistDot) artistDot.style.opacity = "0";
-          },
-        },
-      });
-      jokerTl.set(scrollhintjokerRef.current, { opacity: 1 });
-      jokerTl.to({}, { duration: 2 });
-      jokerTl.to(
-        scrollhintjokerRef.current,
-        {
-          opacity: 0,
-          duration: 1,
-          ease: "power2.out",
-        },
-        ">"
-      );
+              const progress = self.progress;
+              const point = jokerPath.getPointAtLength(
+                jokerPathLength * progress
+              );
+              const rect = jokerSvg.getBoundingClientRect();
 
-      jokerTl
-        .to(
-          leftTitle,
+              const x = rect.left + (point.x / 1000) * rect.width;
+              const y = rect.top + (point.y / 1000) * rect.height;
+
+              jokerDot.style.left = `${x}px`;
+              jokerDot.style.top = `${y}px`;
+            },
+            onEnter: () => {
+              jokerDot.style.opacity = "1";
+              const artistDot = document.getElementById("artistPathDot");
+              if (artistDot) artistDot.style.opacity = "0";
+            },
+            onLeave: () => {
+              jokerDot.style.opacity = "0";
+              const artistDot = document.getElementById("artistPathDot");
+              if (artistDot) artistDot.style.opacity = "1";
+            },
+            onEnterBack: () => {
+              jokerDot.style.opacity = "1";
+              const artistDot = document.getElementById("artistPathDot");
+              if (artistDot) artistDot.style.opacity = "0";
+            },
+          },
+        });
+
+        jokerTl.set(scrollhintjokerRef.current, { opacity: 1 });
+        jokerTl.to({}, { duration: 2 });
+        jokerTl.to(
+          scrollhintjokerRef.current,
           {
-            y: -40,
-            duration: 2,
+            opacity: 0,
+            duration: 1,
             ease: "power2.out",
           },
           ">"
-        )
-        .to(
-          rightTitle,
+        );
+
+        jokerTl
+          .to(
+            leftTitle,
+            {
+              y: isMobile ? -20 : -40,
+              duration: 2,
+              ease: "power2.out",
+            },
+            ">"
+          )
+          .to(
+            rightTitle,
+            {
+              y: isMobile ? 20 : 40,
+              duration: 2,
+              ease: "power2.out",
+            },
+            "<"
+          );
+
+        jokerTl
+          .to(
+            leftDoor,
+            {
+              x: "-100%",
+              duration: 4,
+              ease: "power2.inOut",
+            },
+            "<"
+          )
+          .to(
+            rightDoor,
+            {
+              x: "100%",
+              duration: 4,
+              ease: "power2.inOut",
+            },
+            "<"
+          );
+
+        gsap.set(exploreTitleRef.current, {
+          opacity: 0,
+          y: isMobile ? 40 : 80,
+          scale: 1.1,
+          color: "#9ca3af",
+        });
+        
+        jokerTl.to(
+          exploreTitleRef.current,
           {
-            y: 40,
-            duration: 2,
+            opacity: 1,
+            y: isMobile ? 20 : 40,
+            duration: 1.2,
             ease: "power2.out",
           },
-          "<"
+          "<+0.3"
         );
 
-      jokerTl
-        .to(
-          leftDoor,
+        jokerTl.to(
+          exploreTitleRef.current,
           {
-            x: "-100%",
-            duration: 4,
+            y: -window.innerHeight * 0.03,
+            scale: 1,
+            color: "#ffffff",
+            duration: 2.5,
+            ease: "power1.out",
+          },
+          ">+0.8"
+        );
+        
+        jokerTl.to(
+          exploreTitleRef.current,
+          {
+            top: "2%",
+            y: -10,
+            duration: 1.8,
             ease: "power2.inOut",
           },
-          "<"
-        )
-        .to(
-          rightDoor,
-          {
-            x: "100%",
-            duration: 4,
-            ease: "power2.inOut",
-          },
-          "<"
+          ">"
         );
 
-      gsap.set(exploreTitleRef.current, {
-        opacity: 0,
-        y: 80,
-        scale: 1.1,
-        color: "#9ca3af",
-      });
-      jokerTl.to(
-        exploreTitleRef.current,
-        {
-          opacity: 1,
-          y: 40,
-          duration: 1.2,
-          ease: "power2.out",
-        },
-        "<+0.3"
-      );
+        const getCardX = (i: number) => {
+          const vw = window.innerWidth;
+          const isSmallMobile = vw < 426;
+          const isTablet = vw < 729;
+          const isother = vw < 1000;
 
-      jokerTl.to(
-        exploreTitleRef.current,
-        {
-          y: -window.innerHeight * 0.03,
-          scale: 1,
-          color: "#ffffff",
-          duration: 2.5,
-          ease: "power1.out",
-        },
-        ">+0.8"
-      );
-      jokerTl.to(
-        exploreTitleRef.current,
-        {
-          top: "2%",
-          y: -10,
-          duration: 1.8,
-          ease: "power2.inOut",
-        },
-        ">"
-      );
-
-      const getCardX = (i: number) => {
-        const vw = window.innerWidth;
-        const isMobile = vw < 426;
-        const isTablet = vw < 729;
-        const isother = vw < 1000;
-
-        if (isMobile) {
-          const offset = Math.min(vw * 0.15, 240);
-          return i % 2 === 0 ? -offset : offset;
-        }
-        else if (isTablet) {
-          const spread = Math.min(vw * 0.4, 290);
-
-          return (i - 1.5) * (spread / 2.5);
-        } else if (isother) {
-          const spread = Math.min(vw * 0.5, 370);
-
-          return (i - 1.5) * (spread / 2.3);
-        }
-
-        const spread = Math.min(vw * 0.35, 420);
-        return (i - 1.5) * (spread / 1.5);
-      };
-
-      const getCardY = (i: number) => {
-        const vh = window.innerHeight;
-        const isMobile = window.innerWidth < 426;
-        const isTablet = window.innerWidth < 769;
-        const isother = window.innerWidth < 1000;
-
-        if (isMobile) {
-          const step = vh * 0.15;
-          return i * step - vh * 0.18;
-        } else if (isTablet) {
-          const TabletStagger = [0.07, -0.1, 0.07, -0.07];
-          return TabletStagger[i] * vh;
-        } else if (isother) {
-          const TabletStagger = [0.12, -0.09, 0.15, -0.1];
-          return TabletStagger[i] * vh;
-        }
-
-        return [0.1, -0.08, 0.11, -0.02][i] * vh;
-      };
-
-      const getCardR = (i: number) => {
-        const isMobile = window.innerWidth < 426;
-        const isTablet = window.innerWidth < 769;
-
-        if (isMobile) {
-          return i % 2 === 0 ? -6 : 6;
-        }
-        if (isTablet) {
-          return [-15, 10, 5, 15][i];
-        }
-
-        return [-15, 5, -5, 15][i];
-      };
-
-      jokerTl.to(
-        ["#c1", "#c2", "#c3", "#c4"],
-        {
-          opacity: 1,
-          scale: 1,
-          x: (i: number) => getCardX(i),
-          y: (i: number) => getCardY(i),
-          rotation: (i: number) => getCardR(i),
-          rotateY: 0, // Enforce Timeline control of Y-rotation
-          duration: 2,
-          ease: "expo.out",
-        },
-        ">+0.5"
-      );
-
-      const cardWrappers = gsap.utils.toArray(".card-scroll-wrapper");
-      const shuffledWrappers = cardWrappers.sort(() => Math.random() - 0.5);
-
-      jokerTl
-        .to(
-          shuffledWrappers,
-          {
-            rotateY: 180,
-            duration: 1,
-            stagger: 1,
-            ease: "power1.inOut",
+          if (isSmallMobile) {
+            const offset = Math.min(vw * 0.15, 240);
+            return i % 2 === 0 ? -offset : offset;
           }
-        )
-        .to(shuffledWrappers, {
-          duration: 1,
-          ease: "none",
-        });
+          else if (isTablet) {
+            const spread = Math.min(vw * 0.4, 290);
+            return (i - 1.5) * (spread / 2.5);
+          } else if (isother) {
+            const spread = Math.min(vw * 0.5, 370);
+            return (i - 1.5) * (spread / 2.3);
+          }
+
+          const spread = Math.min(vw * 0.35, 420);
+          return (i - 1.5) * (spread / 1.5);
+        };
+
+        const getCardY = (i: number) => {
+          const vh = window.innerHeight;
+          const isSmallMobile = window.innerWidth < 426;
+          const isTablet = window.innerWidth < 769;
+          const isother = window.innerWidth < 1000;
+
+          if (isSmallMobile) {
+            const step = vh * 0.15;
+            return i * step - vh * 0.18;
+          } else if (isTablet) {
+            const TabletStagger = [0.07, -0.1, 0.07, -0.07];
+            return TabletStagger[i] * vh;
+          } else if (isother) {
+            const TabletStagger = [0.12, -0.09, 0.15, -0.1];
+            return TabletStagger[i] * vh;
+          }
+
+          return [0.1, -0.08, 0.11, -0.02][i] * vh;
+        };
+
+        const getCardR = (i: number) => {
+          const isSmallMobile = window.innerWidth < 426;
+          const isTablet = window.innerWidth < 769;
+
+          if (isSmallMobile) {
+            return i % 2 === 0 ? -6 : 6;
+          }
+          if (isTablet) {
+            return [-15, 10, 5, 15][i];
+          }
+
+          return [-15, 5, -5, 15][i];
+        };
+
+        jokerTl.to(
+          ["#c1", "#c2", "#c3", "#c4"],
+          {
+            opacity: 1,
+            scale: 1,
+            x: (i: number) => getCardX(i),
+            y: (i: number) => getCardY(i),
+            rotation: (i: number) => getCardR(i),
+            rotateY: 0,
+            duration: 2,
+            ease: "expo.out",
+          },
+          ">+0.5"
+        );
+
+        const cardWrappers = gsap.utils.toArray(".card-scroll-wrapper");
+        const shuffledWrappers = cardWrappers.sort(() => Math.random() - 0.5);
+
+        jokerTl
+          .to(
+            shuffledWrappers,
+            {
+              rotateY: 180,
+              duration: 1,
+              stagger: isMobile ? 0.5 : 1,
+              ease: "power1.inOut",
+            }
+          )
+          .to(shuffledWrappers, {
+            duration: 1,
+            ease: "none",
+          });
+
+        return () => {
+          jokerTl.scrollTrigger?.kill();
+          jokerTl.kill();
+        };
+      });
 
       const cleanupHover = setupCardHoverAnimations();
 
       const handleResize = () => {
         const newPath = generateViewportPath();
         jokerPath.setAttribute("d", newPath);
-
-        jokerTl.scrollTrigger?.refresh();
+        ScrollTrigger.refresh();
       };
 
       window.addEventListener("resize", handleResize);
@@ -420,7 +436,7 @@ export default function JokerSection() {
       const sectionRef = jokerSectionRef.current;
       return () => {
         window.removeEventListener("resize", handleResize);
-        jokerTl.scrollTrigger?.kill();
+        mm.revert();
         cleanupHover?.();
         ScrollTrigger.getAll().forEach((trigger) => {
           if (trigger.trigger === sectionRef) {
@@ -495,16 +511,16 @@ export default function JokerSection() {
   return (
     <div className='relative'>
       <div
-        className="joker-section relative h-[100dvh] overflow-hidden"
+        className="joker-section relative h-dvh overflow-hidden"
         id="jokerSection"
         ref={jokerSectionRef}
       >
-        <div className="joker-content relative top-0 h-[100dvh] overflow-hidden">
+        <div className="joker-content relative top-0 h-dvh overflow-hidden">
           <div className="viewport-wrapper absolute inset-0 flex overflow-hidden z-10">
 
             {/* LEFT DOOR */}
             <div
-              className="door door-left absolute top-0 w-1/2 h-full bg-white z-[100] bg-cover md:bg-contain bg-no-repeat"
+              className="door door-left absolute top-0 w-1/2 h-full bg-white z-100 bg-cover md:bg-contain bg-no-repeat"
               id="leftDoor"
               ref={leftDoorRef}
               style={{
@@ -521,7 +537,7 @@ export default function JokerSection() {
                             leading-none
                             text-black
                             pointer-events-none
-                            lg:tracking-[0.1em]
+                            lg:tracking-widest
                             will-change-transform
                             text-right
                             pr-4 md:pr-12"
@@ -549,7 +565,7 @@ export default function JokerSection() {
                             text-[clamp(2rem,10vw,5rem)]
                             leading-none
                             text-black
-                            lg:tracking-[0.1em]
+                            lg:tracking-widest
                             pointer-events-none
                             will-change-transform
                             text-left

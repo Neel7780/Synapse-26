@@ -60,7 +60,7 @@ export const Navbar = ({
 }: NavbarProps & { visible?: boolean }) => {
   return (
     <motion.div
-      className={cn("fixed z-9990 inset-x-0 top-0 z-40 w-full", className)}
+      className={cn("fixed inset-x-0 top-0 w-full z-9990", className)}
       initial={false}
       animate={{
         opacity: visible ? 1 : 0,
@@ -91,10 +91,10 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
         damping: 50,
       }}
       style={{
-        minWidth: "800px",
+        minWidth: visible ? "min(800px, 90vw)" : "100%",
       }}
       className={cn(
-        "relative z-[150] mx-auto hidden w-full max-w-[95vw] flex-row items-center justify-between self-start rounded-full bg-black/40 px-6 py-3 lg:flex border border-white/10 pointer-events-auto",
+        "relative mx-auto hidden w-full max-w-[95vw] flex-row items-center justify-between self-start rounded-full bg-black/40 px-6 py-3 lg:flex border border-white/10 pointer-events-auto z-150",
         visible && "bg-black/80",
         className
       )}
@@ -166,7 +166,7 @@ export const MobileNav = ({ children, className, visible }: MobileNavProps) => {
         damping: 50,
       }}
       className={cn(
-        "relative z-50 z-9990 mx-auto flex w-full flex-col items-center justify-between px-4",
+        "relative mx-auto flex w-full flex-col items-center justify-between px-4 z-50",
         visible,
         className
       )}
@@ -236,7 +236,7 @@ export const MobileNavHeader = ({
   return (
     <div
       className={cn(
-        "flex w-full z-9990 px-4 py-4 flex-row items-center justify-between pointer-events-none",
+        "flex w-full px-4 py-4 flex-row items-center justify-between pointer-events-none z-50",
         className,
       )}
     >
@@ -264,7 +264,7 @@ export const MobileNavMenu = forwardRef<
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
           className={cn(
-            "fixed inset-x-0 top-2 mx-auto w-[calc(100%-16px)] rounded-xl bg-black/95 border border-white/10 shadow-[0_4px_30px_rgba(235,0,0,0.15)] pointer-events-auto",
+            "fixed inset-x-0 top-2 mx-auto w-[calc(100%-16px)] rounded-xl bg-black/95 border border-white/10 shadow-[0_4px_30px_rgba(235,0,0,0.15)] pointer-events-auto z-50",
             className
           )}
           onWheel={(e) => e.stopPropagation()}
@@ -291,9 +291,9 @@ export const MobileNavToggle = ({
   onClick: () => void;
 }) => {
   return isOpen ? (
-    <IconX size={35} className=" z-9999 text-white cursor-pointer hover:text-[#EB0000] transition-colors pointer-events-auto" onClick={onClick} />
+    <IconX size={35} className="text-white cursor-pointer hover:text-[#EB0000] transition-colors pointer-events-auto z-9999" onClick={onClick} />
   ) : (
-    <IconMenu3 size={35} className="z-9999 text-white scale-[0.9] md:scale-[1] cursor-pointer hover:text-[#EB0000] transition-colors pointer-events-auto" onClick={onClick} />
+    <IconMenu3 size={35} className="text-white scale-[0.9] md:scale-[1] cursor-pointer hover:text-[#EB0000] transition-colors pointer-events-auto z-9999" onClick={onClick} />
   );
 };
 
