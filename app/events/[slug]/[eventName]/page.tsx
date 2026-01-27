@@ -165,7 +165,27 @@ export default function EventPage() {
 
                     {/* Registration Section */}
                     <section className="mt-10">
-                        {sortedFees.length > 0 ? (
+                        {/* Check if registration is closed */}
+                        {event.is_registration_open === false ? (
+                            <div className="flex flex-col gap-6">
+                                {/* Registration Closed Banner */}
+                                <div className="flex items-center gap-3 px-5 py-4 bg-red-950/40 border border-red-800/50 rounded-lg">
+                                    <AlertCircle className="w-6 h-6 text-red-500 flex-shrink-0" />
+                                    <div>
+                                        <p className="text-red-400 font-medium text-lg">Registration is currently closed</p>
+                                        <p className="text-gray-400 text-sm mt-1">Please check back later or contact the organizers for more information.</p>
+                                    </div>
+                                </div>
+
+                                {/* Disabled Registration Button */}
+                                <Button
+                                    disabled
+                                    className="w-fit px-12 py-6 text-xl font-jqka tracking-[0.2em] uppercase bg-gray-700 border border-gray-600 text-gray-400 rounded-none mt-4 cursor-not-allowed opacity-70 select-none"
+                                >
+                                    REGISTRATION CLOSED
+                                </Button>
+                            </div>
+                        ) : sortedFees.length > 0 ? (
                             <div className="flex flex-col gap-8">
                                 <div className="flex flex-wrap items-center gap-4">
                                     <span className="text-red-600 text-xl md:text-2xl font-normal">Select Team:</span>

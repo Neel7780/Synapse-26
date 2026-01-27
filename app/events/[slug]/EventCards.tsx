@@ -162,8 +162,7 @@ const EventCardItem = memo(function EventCardItem({
       <div className="p-5 pt-0 relative z-20">
         <button
           onClick={onRegister}
-          disabled={isRegistrationClosed}
-          className={`
+          className="
             register-btn
             w-full h-[52px]
             flex items-center justify-center gap-2
@@ -172,18 +171,11 @@ const EventCardItem = memo(function EventCardItem({
             transition-all duration-300 rounded-sm
             relative overflow-hidden
             group
-            ${isRegistrationClosed
-              ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-              : 'bg-white text-black hover:bg-[#b41c32] hover:text-white cursor-pointer'
-            }
-          `}
+            bg-white text-black hover:bg-[#b41c32] hover:text-white cursor-pointer
+          "
         >
-          {!isRegistrationClosed && (
-            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-          )}
-          <span className="relative z-10">
-            {isRegistrationClosed ? 'Coming Soon' : 'Register'}
-          </span>
+          <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+          <span className="relative z-10">View Event</span>
         </button>
       </div>
     </article>
@@ -202,10 +194,6 @@ export default function EventCards({ events, categorySlug }: EventCardsProps) {
 
   const handleRegisterClick = useCallback(
     (event: EventWithRelations) => {
-      if (event.is_registration_open === false) {
-        return;
-      }
-
       startTransition();
       const eventSlug = generateSlug(event.event_name);
       router.push(`/events/${categorySlug}/${eventSlug}`);
