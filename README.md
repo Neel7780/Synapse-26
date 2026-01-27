@@ -139,5 +139,5 @@ npm start
 - `app/layout.tsx` — application-level layout and providers
 - `app/page.tsx` — public home page entry
 - `app/admin/layout.tsx` — admin-specific layout and middleware
-- `utils/supabase/` — Supabase client and server helpers
+- `utils/supabase/` — Supabase client and server helpers ;;;
 ---
