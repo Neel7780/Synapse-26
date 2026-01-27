@@ -53,9 +53,19 @@ export default function TransitionProvider({
     useEffect(() => {
         if (isTransitioning) {
             startPathRef.current = pathname;
+            // Reset back flag when a new transition starts (forward navigation)
+            isBackRef.current = false;
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isTransitioning]); // Don't include pathname here, we want the path AT START
+
+    // Update startPathRef when not transitioning and pathname changes
+    // This ensures the reference is fresh for the next transition
+    useEffect(() => {
+        if (!isTransitioning) {
+            startPathRef.current = pathname;
+        }
+    }, [pathname, isTransitioning]);
 
     // Track back/forward navigation
     const isBackRef = useRef(false);
