@@ -32,7 +32,11 @@ export default function RegistrationExportPage() {
       });
 
       const res = await fetch(`/api/admin/registrations/export?${params.toString()}`);
-      if (!res.ok) throw new Error("Export failed");
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: "Export failed" }));
+        throw new Error(errorData.error || "Export failed");
+      }
 
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -42,6 +46,7 @@ export default function RegistrationExportPage() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err: any) {
+      console.error("Export error:", err);
       alert("Export failed: " + err.message);
     } finally {
       setLoading(false);
