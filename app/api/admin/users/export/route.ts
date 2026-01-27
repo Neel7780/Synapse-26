@@ -41,10 +41,9 @@ export async function GET(req: NextRequest) {
         team_members${hasEventFilter ? "!inner" : ""} (
         team${hasEventFilter ? "!inner" : ""} (
         event_registrations${hasEventFilter ? "!inner" : ""} (
-        event_fee${hasEventFilter ? "!inner" : ""} (
         event${hasEventFilter ? "!inner" : ""} (
         event_name
-        )))))
+        ))))
         `
     );
 
@@ -56,7 +55,7 @@ export async function GET(req: NextRequest) {
 
     if (eventName) {
       query = query.eq(
-        "team_members.team.event_registrations.event_fee.event.event_name",
+        "team_members.team.event_registrations.event.event_name",
         eventName
       );
     }
@@ -64,7 +63,12 @@ export async function GET(req: NextRequest) {
     const { data, error } = await query;
 
     if (error) {
-      return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
+      console.error("Database error:", error);
+      return NextResponse.json({ error: error.message || "Database query failed" }, { status: 500 });
+    }
+
+    if (!data || data.length === 0) {
+      return NextResponse.json({ error: "No users found matching the criteria" }, { status: 404 });
     }
 
     const headers = [
@@ -88,11 +92,11 @@ export async function GET(req: NextRequest) {
 
           if (Array.isArray(registrations)) {
             registrations.forEach((er: any) => {
-              const eventName = er?.event_fee?.event?.event_name;
+              const eventName = er?.event?.event_name;
               if (eventName) eventNames.add(eventName);
             });
           } else {
-            const eventName = registrations?.event_fee?.event?.event_name;
+            const eventName = registrations?.event?.event_name;
             if (eventName) eventNames.add(eventName);
           }
         });
@@ -102,11 +106,11 @@ export async function GET(req: NextRequest) {
 
         return [
           user.user_id,
-          `"${user.user_name}"`,
-          user.email,
-          user.phone,
-          `"${user.college}"`,
-          user.registration_date,
+          `"${user.user_name || ""}"`,
+          user.email || "",
+          user.phone || "",
+          `"${user.college || ""}"`,
+          user.registration_date || "",
           eventCount,
           `"${eventsList.join("; ")}"`,
         ].join(",");
@@ -123,9 +127,9 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error(error);
+    console.error("Export error:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: error instanceof Error ? error.message : "Internal Server Error" },
       { status: 500 }
     );
   }

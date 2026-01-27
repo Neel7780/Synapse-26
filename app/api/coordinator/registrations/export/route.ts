@@ -1,34 +1,54 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
-import { corsHeaders, handleCorsResponse, addCorsHeaders } from '@/lib/cors'
-
-async function checkAdmin(supabase: any) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return false;
-  return user.email === process.env.ADMIN_EMAIL;
-}
-
-export async function OPTIONS(request: Request) {
-  const origin = request.headers.get("origin");
-  return handleCorsResponse(origin);
-}
 
 export async function GET(req: NextRequest) {
   try {
-    const origin = req.headers.get("origin");
     const supabase = (await createClient()) as any;
 
-    if (!(await checkAdmin(supabase))) {
-      const response = NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-      return addCorsHeaders(response, origin);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Get coordinator email
+    const { data: userData } = await supabase
+      .from("users")
+      .select("email")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!userData?.email) {
+      return NextResponse.json({ error: "User email not found" }, { status: 400 });
+    }
+
     const { searchParams } = new URL(req.url);
+    const eventId = searchParams.get("eventId");
+
+    if (!eventId) {
+      return NextResponse.json({ error: "Event ID is required" }, { status: 400 });
+    }
+
+    // Verify that the coordinator owns this event
+    const { data: eventData, error: eventError } = await supabase
+      .from("event")
+      .select("event_id, event_name, coordinator_email")
+      .eq("event_id", eventId)
+      .single();
+
+    if (!eventData || eventError) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
+    if (eventData.coordinator_email !== userData.email) {
+      return NextResponse.json({ error: "Access denied to this event" }, { status: 403 });
+    }
 
     const search = searchParams.get("searchParams") ?? "";
-    const eventFilter = searchParams.get("filter");
-    const paymentStatus = searchParams.get("paymentStatus");
+    const statusFilter = searchParams.get("status");
 
     let query = supabase.from("event_registrations").select(
       `
@@ -38,17 +58,16 @@ export async function GET(req: NextRequest) {
       coordinator_status,
       registered_by_user_id,
       fee_id,
-      event_id,
       gross_amount
       `
-    );
+    ).eq("event_id", eventId);
 
-    if (eventFilter) {
-      // We'll filter by event name after fetching event data
-    }
-
-    if (paymentStatus) {
-      query = query.eq("payment_status", paymentStatus);
+    if (statusFilter && statusFilter !== "all") {
+      if (statusFilter === "pending") {
+        query = query.or("coordinator_status.is.null,coordinator_status.eq.pending");
+      } else {
+        query = query.eq("coordinator_status", statusFilter);
+      }
     }
 
     const { data: registrations, error } = await query;
@@ -61,6 +80,8 @@ export async function GET(req: NextRequest) {
     // Enrich registrations with user, fee, event, and team data
     const enrichedData = await Promise.all(
       (registrations || []).map(async (reg: any) => {
+        console.log(`Processing registration ${reg.registration_id}, registered_by_user_id:`, reg.registered_by_user_id);
+        
         let userData: any = null;
         let feeData: any = null;
         let eventData: any = null;
@@ -68,11 +89,18 @@ export async function GET(req: NextRequest) {
 
         // Fetch user details
         if (reg.registered_by_user_id) {
-          const { data: user } = await supabase
+          const { data: user, error: userError } = await supabase
             .from("users")
             .select("user_id, user_name, email, phone, college")
             .eq("user_id", reg.registered_by_user_id)
             .single();
+          
+          if (userError) {
+            console.error(`Error fetching user for registration ${reg.registration_id}:`, userError);
+            console.log(`Attempted to find user with user_id: "${reg.registered_by_user_id}"`);
+          } else {
+            console.log(`User data for registration ${reg.registration_id}:`, user);
+          }
           userData = user;
         }
 
@@ -87,14 +115,12 @@ export async function GET(req: NextRequest) {
         }
 
         // Fetch event details
-        if (reg.event_id) {
-          const { data: event } = await supabase
-            .from("event")
-            .select("event_name, event_category(category_name)")
-            .eq("event_id", reg.event_id)
-            .single();
-          eventData = event;
-        }
+        const { data: event } = await supabase
+          .from("event")
+          .select("event_name, event_category(category_name)")
+          .eq("event_id", eventId)
+          .single();
+        eventData = event;
 
         // Fetch team members
         const { data: teamRow } = await supabase
@@ -134,11 +160,10 @@ export async function GET(req: NextRequest) {
       })
     );
 
-    // Apply filters after enrichment
+    // Apply search filter after enrichment
     let filteredData = enrichedData;
-    
     if (search.trim()) {
-      filteredData = filteredData.filter((reg: any) => {
+      filteredData = enrichedData.filter((reg: any) => {
         const searchLower = search.toLowerCase();
         return (
           reg.transaction_id?.toLowerCase().includes(searchLower) ||
@@ -147,12 +172,6 @@ export async function GET(req: NextRequest) {
           reg.users?.college?.toLowerCase().includes(searchLower)
         );
       });
-    }
-
-    if (eventFilter) {
-      filteredData = filteredData.filter((reg: any) => 
-        reg.event?.event_name === eventFilter
-      );
     }
 
     const headers = [
@@ -181,6 +200,13 @@ export async function GET(req: NextRequest) {
         const price = row.fee?.price ?? 0;
         const teamMembers = row.team_members ?? [];
         const groupSize = teamMembers.length || 1;
+
+        // Log the row data to debug
+        console.log(`CSV Row for registration ${row.registration_id}:`, {
+          users: row.users,
+          fee: row.fee,
+          event: row.event
+        });
 
         // Get all team member details
         const teamMemberNames: string[] = [];

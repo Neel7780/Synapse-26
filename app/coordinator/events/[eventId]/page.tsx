@@ -42,6 +42,7 @@ import {
   DollarSign,
   Users,
   Calendar,
+  Download,
 } from "lucide-react";
 
 interface Registration {
@@ -142,6 +143,40 @@ export default function EventRegistrationsPage({
 
     setFilteredRegistrations(filtered);
   }, [registrations, searchTerm, statusFilter]);
+
+  const downloadCSV = async () => {
+    try {
+      const params = new URLSearchParams();
+      params.append("eventId", eventIdParam);
+      if (searchTerm) params.append("searchParams", searchTerm);
+      if (statusFilter !== "all") params.append("status", statusFilter);
+      params.append("t", Date.now().toString()); // Cache busting
+
+      const res = await fetch(`/api/coordinator/registrations/export?${params.toString()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: "Export failed" }));
+        throw new Error(errorData.error || "Export failed");
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+      a.download = `${eventName.replace(/\s+/g, "_")}_registrations_${timestamp}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error("Export error:", err);
+      alert(err?.message ?? "Export failed");
+    }
+  };
 
   useEffect(() => {
     fetchRegistrations();
@@ -253,6 +288,13 @@ export default function EventRegistrationsPage({
           <h1 className="text-3xl font-bold text-white">{eventName}</h1>
           <p className="text-gray-400 mt-2">Manage event registrations</p>
         </div>
+        <Button
+          onClick={downloadCSV}
+          className="bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white border-0"
+        >
+          <Download className="mr-2 h-4 w-4" />
+          Export CSV
+        </Button>
       </div>
 
       {/* Stats Cards */}
