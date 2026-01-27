@@ -65,7 +65,7 @@ export async function GET(_req: NextRequest) {
       // Today's registrations (only fetch needed fields)
       supabase
         .from("event_registrations")
-        .select("registration_id, payment_status, gross_amount, payment_method(gateway_charge)")
+        .select("registration_id, payment_status, coordinator_status, gross_amount, payment_method(gateway_charge)")
         .not("created_at", "is", null)
         .gte("created_at", todayStart)
         .lt("created_at", todayEnd),
@@ -73,7 +73,7 @@ export async function GET(_req: NextRequest) {
       // Yesterday's registrations for comparison
       supabase
         .from("event_registrations")
-        .select("registration_id, payment_status, gross_amount, payment_method(gateway_charge)")
+        .select("registration_id, payment_status, coordinator_status, gross_amount, payment_method(gateway_charge)")
         .not("created_at", "is", null)
         .gte("created_at", yesterdayStart)
         .lt("created_at", todayStart),
@@ -124,7 +124,7 @@ export async function GET(_req: NextRequest) {
     let todayPaidCount = 0;
 
     (todayRegistrationsResult.data ?? []).forEach((reg: any) => {
-      if (reg.payment_status === "done") {
+      if (reg.payment_status === "done" && reg.coordinator_status === "accepted") {
         todayPaidCount++;
         todayGross += reg.gross_amount ?? 0;
         todayGateway += reg.payment_method?.gateway_charge ?? 0;
@@ -139,7 +139,7 @@ export async function GET(_req: NextRequest) {
     let yesterdayPaidCount = 0;
 
     (yesterdayRegistrationsResult.data ?? []).forEach((reg: any) => {
-      if (reg.payment_status === "done") {
+      if (reg.payment_status === "done" && reg.coordinator_status === "accepted") {
         yesterdayPaidCount++;
         yesterdayGross += reg.gross_amount ?? 0;
         yesterdayGateway += reg.payment_method?.gateway_charge ?? 0;

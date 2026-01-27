@@ -303,11 +303,59 @@ export const registrationsApi = {
                 params.append(key, value.toString());
             }
         });
-        return apiFetch<{ csv: string }>(
-            `/api/admin/registrations/export?${params.toString()}`
+        // This is a direct download link, usually handled by window.open or anchor tag
+        return `/api/admin/registrations/export?${params.toString()}`;
+    },
+};
+
+// ============================================================================
+// Accommodation API
+// ============================================================================
+
+export type AccommodationOrder = {
+    order_id: number;
+    booking_id: number;
+    user_id: string;
+    user_name: string | null;
+    user_email: string | null;
+    check_in: string | null;
+    check_out: string | null;
+    nights: number;
+    amount: number;
+    verification_status: string;
+    payment_screenshot_url: string | null;
+    transaction_reference: string | null;
+    created_at: string;
+};
+
+export type AccommodationResponse = {
+    orders: AccommodationOrder[];
+    count: number;
+    summary: {
+        total_orders: number;
+        pending_verification: number;
+        verified: number;
+        rejected: number;
+        total_revenue: number;
+    };
+    page: number;
+    limit: number;
+    total_pages: number;
+};
+
+export const accommodationApi = {
+    getAll: (filters: { page?: number; limit?: number; status?: string } = {}) => {
+        const params = new URLSearchParams();
+        if (filters.page) params.append("page", filters.page.toString());
+        if (filters.limit) params.append("limit", filters.limit.toString());
+        if (filters.status) params.append("status", filters.status);
+        
+        return apiFetch<AccommodationResponse>(
+            `/api/admin/accommodation/orders?${params.toString()}`
         );
     },
 };
+
 
 // ============================================================================
 // Users API
@@ -544,38 +592,4 @@ export const merchandiseApi = {
     },
 };
 
-// ============================================================================
-// Accommodation API
-// ============================================================================
 
-export type Accommodation = {
-    accommodation_id: number;
-    name: string;
-    location?: string;
-    price_per_night?: number;
-    capacity?: number;
-    description?: string;
-};
-
-export const accommodationApi = {
-    getAll: () => apiFetch<Accommodation[]>("/api/admin/accommodation"),
-
-    getById: (id: number) => apiFetch<Accommodation>(`/api/admin/accommodation/${id}`),
-
-    create: (payload: Omit<Accommodation, "accommodation_id">) =>
-        apiFetch<Accommodation>("/api/admin/accommodation", {
-            method: "POST",
-            body: JSON.stringify(payload),
-        }),
-
-    update: (id: number, payload: Partial<Accommodation>) =>
-        apiFetch<Accommodation>(`/api/admin/accommodation/${id}`, {
-            method: "PUT",
-            body: JSON.stringify(payload),
-        }),
-
-    delete: (id: number) =>
-        apiFetch<{ success: boolean }>(`/api/admin/accommodation/${id}`, {
-            method: "DELETE",
-        }),
-};

@@ -34,6 +34,7 @@ import {
   useRegistrations,
   useUsers,
   useSponsors,
+  useAccommodationOrders,
 } from "@/hooks/use-admin-data";
 
 export default function AdminDashboard() {
@@ -42,6 +43,7 @@ export default function AdminDashboard() {
   const { data: registrationsData, loading: registrationsLoading } = useRegistrations({ limit: 5 });
   const { data: usersData, loading: usersLoading } = useUsers({});
   const { data: sponsorsData, loading: sponsorsLoading } = useSponsors();
+  const { data: accommodationData, loading: accommodationLoading } = useAccommodationOrders();
 
   // Compute stats from real data
   const stats = useMemo(() => {
@@ -59,15 +61,24 @@ export default function AdminDashboard() {
     };
   }, [eventsData, registrationsData, usersData, sponsorsData]);
 
-  // Revenue data from registrations
+  // Revenue data from registrations and accommodation
   const revenueData = useMemo(() => {
-    const summary = registrationsData?.summary;
+    const regSummary = registrationsData?.summary;
+    const accSummary = accommodationData?.summary;
+    
+    // Revenue from registrations (only verified/paid)
+    // Note: regSummary.net_revenue already accounts for payment_status='done' && coordinator_status='accepted'
+    const regRevenue = regSummary?.net_revenue || 0;
+    
+    // Revenue from accommodation (only verified)
+    const accRevenue = accSummary?.total_revenue || 0;
+
     return {
-      grossRevenue: summary?.gross_revenue || 0,
-      netRevenue: summary?.net_revenue || 0,
-      paidCount: summary?.paid || 0,
+      grossRevenue: (regSummary?.gross_revenue || 0) + accRevenue,
+      netRevenue: regRevenue + accRevenue,
+      paidCount: (regSummary?.paid || 0) + (accSummary?.verified || 0),
     };
-  }, [registrationsData]);
+  }, [registrationsData, accommodationData]);
 
   // Recent registrations from real data
   const recentRegistrations = useMemo(() => {
@@ -105,7 +116,7 @@ export default function AdminDashboard() {
     ];
   }, [stats, revenueData]);
 
-  const isLoading = eventsLoading || registrationsLoading || usersLoading || sponsorsLoading;
+  const isLoading = eventsLoading || registrationsLoading || usersLoading || sponsorsLoading || accommodationLoading;
 
   // Get greeting based on time of day
   const getGreeting = () => {
