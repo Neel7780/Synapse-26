@@ -19,21 +19,23 @@ export default function SponsorNavigation({ categories }: { categories: Category
             const windowHeight = window.innerHeight;
 
             // Visibility Logic
-            const heroHeight = window.innerHeight * 0.8; // Increased threshold to avoid hero overlap
+            // Visibility Logic
+            const heroThreshold = window.innerHeight * 0.5; // Hide when in hero section (approx 80vh)
             const footer = document.getElementById("contact");
 
-            let footerVisible = false;
+            let isFooterInView = false;
+            // Check if footer is visible in the viewport
             if (footer) {
                 const rect = footer.getBoundingClientRect();
-                // If footer top is entering the viewport (e.g. within the window height from top)
-                // We want to hide if the footer is taking up significant space.
-                // Let's say if footer top is less than windoe height, it's visible.
-                if (rect.top < window.innerHeight) {
-                    footerVisible = true;
+                // If the top of the footer is within the viewport height, it's visible
+                // We add a small buffer (e.g., 50px) to start hiding slightly before it hits
+                if (rect.top < window.innerHeight - 50) {
+                    isFooterInView = true;
                 }
             }
 
-            const shouldShow = scrollPosition > heroHeight && !footerVisible;
+            // Show only if we are past the hero and not yet at the footer
+            const shouldShow = scrollPosition > heroThreshold && !isFooterInView;
             setIsVisible(shouldShow);
 
             const sections = categories.map((cat) => document.getElementById(cat.tier));

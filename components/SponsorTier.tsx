@@ -49,12 +49,7 @@ export default function SponsorTier({
   id,
 }: SponsorTierProps) {
 
-  // Check if this is a "To be Announced" case
-  const isTBA = sponsors.length === 1 && (
-    sponsors[0].name === "To be declared" ||
-    sponsors[0].name === "To be Announced" ||
-    sponsors[0].name === "To be Revealed"
-  );
+
 
   return (
     <section
@@ -100,15 +95,9 @@ export default function SponsorTier({
           mx-auto
         "
       >
-        {isTBA ? (
-          <motion.div variants={fadeInUp} className="text-gray-400 text-lg italic tracking-wider">
-            {sponsors[0].name}
-          </motion.div>
-        ) : (
-          sponsors.map((s, i) => (
-            <SponsorBox key={i} name={s.name} logo_url={s.logo_url} website_url={s.website_url} />
-          ))
-        )}
+        {sponsors.map((s, i) => (
+          <SponsorBox key={i} name={s.name} logo_url={s.logo_url} website_url={s.website_url} />
+        ))}
       </motion.div>
     </section>
   );
@@ -134,7 +123,6 @@ function SponsorBox({
   const content = (
     <motion.div
       variants={cardVariants}
-      whileHover={{ y: -5, scale: 1.02 }}
       className="flex flex-col items-center group"
     >
       {/* Sponsor image box - ONLY render if logo exists */}
@@ -151,9 +139,6 @@ function SponsorBox({
             overflow-hidden
             transition-all
             duration-300
-            group-hover:border-white/30
-            group-hover:bg-white/10
-            group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.3)]
             p-6
           "
         >
@@ -161,7 +146,7 @@ function SponsorBox({
           <img
             src={logo_url}
             alt={name}
-            className="w-full h-full object-contain filter grayscale group-hover:grayscale-0 transition-all duration-300"
+            className="w-full h-full object-contain filter transition-all duration-300"
             loading="lazy"
           />
         </div>

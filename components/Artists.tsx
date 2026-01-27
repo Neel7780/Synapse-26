@@ -370,7 +370,7 @@ export default function ArtistsSection() {
       <div className="relative h-full flex flex-col z-10">
         {/* Header with title and counter */}
         <div className="pt-8 md:pt-12 px-6 md:px-12 flex items-center justify-between">
-          <h1 className="font-joker text-5xl md:text-7xl lg:text-8xl text-white">
+          <h1 className="font-joker text-5xl md:text-7xl lg:text-8xl text-white w-full text-center">
             artists
           </h1>
 
@@ -423,7 +423,7 @@ export default function ArtistsSection() {
                 onClick={() => goToArtist(i)}
                 style={{
                   width: "clamp(280px, 35vw, 380px)",
-                  height: "clamp(350px, 50vw, 480px)",
+                  height: "clamp(350px, 30vw, 480px)",
                   transformStyle: "preserve-3d",
                 }}
               >
