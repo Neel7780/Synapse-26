@@ -91,7 +91,11 @@ export default function UsersPage() {
       if (eventFilter !== "all") params.append("filter", eventFilter);
 
       const res = await fetch(`/api/admin/users/export?${params.toString()}`);
-      if (!res.ok) throw new Error("Export failed");
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: "Export failed" }));
+        throw new Error(errorData.error || "Export failed");
+      }
 
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -101,6 +105,7 @@ export default function UsersPage() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err: any) {
+      console.error("Export error:", err);
       alert(err?.message ?? "Export failed");
     }
   };

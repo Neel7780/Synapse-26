@@ -92,25 +92,39 @@ export default function RegistrationsPage() {
   const allEvents = eventListData?.events || [];
 
   // Download CSV
-  const downloadCSV = () => {
-    const headers = ["ID", "Name", "Email", "Event", "Amount", "Payment Status", "Coordinator Status", "Transaction ID"];
-    const rows = registrations.map((r) => [
-      r.registration_id,
-      r.user_name,
-      "",
-      r.event_name,
-      r.gross_amount,
-      r.payment_status,
-      r.coordinator_status ?? "",
-      r.transaction_id,
-    ]);
-    const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `registrations_${new Date().toISOString().split("T")[0]}.csv`;
-    a.click();
+  // Download CSV (all entries from API)
+  const downloadCSV = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (debouncedSearch) params.append("searchParams", debouncedSearch);
+      if (eventFilter !== "all") params.append("filter", eventFilter);
+      if (paymentStatusFilter !== "all") params.append("paymentStatus", paymentStatusFilter);
+      params.append("t", Date.now().toString()); // Cache busting
+
+      const res = await fetch(`/api/admin/registrations/export?${params.toString()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: "Export failed" }));
+        throw new Error(errorData.error || "Export failed");
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+      a.download = `registrations_${eventFilter === "all" ? "all" : eventFilter.replace(/\s+/g, "_")}_${timestamp}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error("Export error:", err);
+      alert(err?.message ?? "Export failed");
+    }
   };
 
   const statsCards = [

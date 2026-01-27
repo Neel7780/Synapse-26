@@ -1,4 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
+import { getSupabaseAdmin } from "@/lib/supabaseServer";
+import { checkAdmin } from "@/lib/checkAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -7,6 +9,13 @@ export async function GET(
 ) {
   try {
     const supabase = (await createClient()) as any;
+    
+    // Check admin permissions
+    const isAdmin = await checkAdmin(supabase);
+    if (!isAdmin) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
     const { id: registrationId } = await params;
 
     if (!registrationId) {
@@ -16,7 +25,10 @@ export async function GET(
       );
     }
 
-    const { data, error } = await supabase
+    // Use admin client for data fetching to bypass RLS
+    const adminSupabase = getSupabaseAdmin();
+
+    const { data, error } = await adminSupabase
       .from("event_registrations")
       .select(
         `
@@ -24,6 +36,7 @@ export async function GET(
         registration_id,
         payment_status,
         gross_amount,
+        created_at,
         
         users (
           user_name,
@@ -50,7 +63,7 @@ export async function GET(
         )
         `
       )
-      .eq("registration_id", registrationId)
+      .eq("registration_id", parseInt(registrationId))
       .single();
 
     if (error) {

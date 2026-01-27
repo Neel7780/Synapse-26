@@ -58,10 +58,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Access denied to this event" }, { status: 403 });
     }
 
-    // Update the coordinator_status
+    // Prepare update object
+    const updateData: any = { coordinator_status: status };
+
+    // Update payment_status based on coordinator decision
+    if (status === "accepted") {
+      updateData.payment_status = "done";
+    } else if (status === "rejected") {
+      updateData.payment_status = "failed";
+    }
+
+    // Update the coordinator_status and payment_status
     const { data, error } = await supabase
       .from("event_registrations")
-      .update({ coordinator_status: status })
+      .update(updateData)
       .eq("registration_id", registration_id)
       .eq("event_id", event_id)
       .select();

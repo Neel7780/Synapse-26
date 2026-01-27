@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import { getSupabaseAdmin } from "@/lib/supabaseServer";
 import { NextRequest, NextResponse } from "next/server";
 import { checkAdmin } from "@/lib/checkAdmin";
 import { getEmailTransporter, senderEmail } from "@/lib/email-config";
@@ -18,6 +19,9 @@ export async function GET(
     if (!isAdmin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
+    
+    // Use admin client for data fetching to bypass RLS
+    const adminSupabase = getSupabaseAdmin();
 
     // Convert id to number for proper comparison with booking_id
     const bookingId = parseInt(id, 10);
@@ -25,7 +29,7 @@ export async function GET(
       return NextResponse.json({ error: "Invalid booking ID" }, { status: 400 });
     }
 
-    const { data: booking, error } = await supabase
+    const { data: booking, error } = await adminSupabase
       .from("accommodation_bookings")
       .select("*")
       .eq("booking_id", bookingId)
@@ -48,7 +52,7 @@ export async function GET(
     // Get user details separately
     let user: any = {};
     if (booking.user_id) {
-      const { data: userData } = await supabase
+      const { data: userData } = await adminSupabase
         .from("users")
         .select("user_id, user_name, email, phone")
         .eq("user_id", booking.user_id)
@@ -106,6 +110,9 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
+    // Use admin client for data operations to bypass RLS
+    const adminSupabase = getSupabaseAdmin();
+
     const body = await request.json();
 
     // Build update data - only include fields that exist in the database
@@ -137,7 +144,7 @@ export async function PATCH(
     }
 
     // First check if the booking exists
-    const { data: existingBooking, error: fetchError } = await supabase
+    const { data: existingBooking, error: fetchError } = await adminSupabase
       .from("accommodation_bookings")
       .select("booking_id")
       .eq("booking_id", bookingId)
@@ -155,7 +162,7 @@ export async function PATCH(
     console.log("Updating booking", bookingId, "with data:", updateData);
 
     // Perform the update
-    const { data: updatedBookings, error, status, statusText } = await supabase
+    const { data: updatedBookings, error, status, statusText } = await adminSupabase
       .from("accommodation_bookings")
       .update(updateData)
       .eq("booking_id", bookingId)
@@ -187,7 +194,7 @@ export async function PATCH(
     let userEmail = "";
     let userName = "";
     if (updatedBooking.user_id) {
-      const { data: userData } = await supabase
+      const { data: userData } = await adminSupabase
         .from("users")
         .select("email, user_name")
         .eq("user_id", updatedBooking.user_id)
@@ -209,8 +216,8 @@ export async function PATCH(
           emailTemplate = accommodationAcceptanceEmailTemplate({
             participantName: userName,
             email: userEmail,
-            checkIn: updatedBooking.check_in,
-            checkOut: updatedBooking.check_out,
+            checkIn: updatedBooking.check_in || "",
+            checkOut: updatedBooking.check_out || "",
             nights: updatedBooking.nights,
             amount: updatedBooking.amount,
             bookingReference: `ACC-${updatedBooking.booking_id}`,
@@ -219,8 +226,8 @@ export async function PATCH(
           emailTemplate = accommodationRejectionEmailTemplate({
             participantName: userName,
             email: userEmail,
-            checkIn: updatedBooking.check_in,
-            checkOut: updatedBooking.check_out,
+            checkIn: updatedBooking.check_in || "",
+            checkOut: updatedBooking.check_out || "",
             nights: updatedBooking.nights,
             amount: updatedBooking.amount,
             rejectionReason: body.rejection_reason,
@@ -245,7 +252,6 @@ export async function PATCH(
     // Transform to match expected format
     const order = {
       order_id: updatedBooking.booking_id,
-      booking_id: updatedBooking.booking_id,
       ...updatedBooking,
     };
 

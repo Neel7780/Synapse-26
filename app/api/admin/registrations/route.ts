@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
+import { getSupabaseAdmin } from "@/lib/supabaseServer";
 import { NextRequest, NextResponse } from "next/server";
-import { corsHeaders, handleCorsResponse, addCorsHeaders } from '@/lib/cors'
+import { handleCorsResponse, addCorsHeaders } from '@/lib/cors'
 
 async function checkAdmin(supabase: any) {
   const {
@@ -24,6 +25,9 @@ export async function GET(req: NextRequest) {
       const response = NextResponse.json({ error: "Unauthorized" }, { status: 403 });
       return addCorsHeaders(response, origin);
     }
+    
+    // Use admin client for data fetching to bypass RLS
+    const adminSupabase = getSupabaseAdmin();
 
     const { searchParams } = new URL(req.url);
 
@@ -37,7 +41,7 @@ export async function GET(req: NextRequest) {
     const paymentStatus = searchParams.get("paymentStatus");
 
     const buildQueryUsers = () => {
-      let q = supabase
+      let q = adminSupabase
         .from("event_registrations")
         .select(
           `
@@ -65,7 +69,7 @@ export async function GET(req: NextRequest) {
       }
 
       if (eventFilter) q = q.eq("event.event_name", eventFilter);
-      if (paymentStatus) q = q.eq("payment_status", paymentStatus);
+      if (paymentStatus) q = q.eq("payment_status", paymentStatus as any);
 
       return q;
     };
@@ -96,7 +100,7 @@ export async function GET(req: NextRequest) {
       }
 
       if (eventFilter) q = q.eq("event.event_name", eventFilter);
-      if (paymentStatus) q = q.eq("payment_status", paymentStatus);
+      if (paymentStatus) q = q.eq("payment_status", paymentStatus as any);
 
       return q;
     };
@@ -128,7 +132,8 @@ export async function GET(req: NextRequest) {
       const price = row.gross_amount ?? 0;
       const gateway = row.payment_method?.gateway_charge ?? 0;
 
-      if (row.payment_status === "done") {
+      // Only count revenue if payment is done AND coordinator has accepted
+      if (row.payment_status === "done" && row.coordinator_status === "accepted") {
         paid += 1;
         grossRevenue += price;
         gatewayCharges += gateway;

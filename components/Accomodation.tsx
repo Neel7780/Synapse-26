@@ -640,7 +640,7 @@ export function AccommodationComponent() {
                   "Keep your belongings secure. Organizers will not be responsible for any loss or damage.",
                   "Respect the property and maintain cleanliness—any damage caused will result in full accountability, including covering the cost of repairs or replacement.",
                   "On 26th February, accommodation will not be provided before 4:00 PM.",
-                  "On 1st March, check-out will be before 9:00 AM. All guests must vacate the accommodation by this time.",
+                  "On 2nd March, check-out will be before 9:00 AM. All guests must vacate the accommodation by this time.",
                 ].map((text, i) => (
                   <motion.li
                     key={i}
