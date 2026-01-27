@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import { getSupabaseAdmin } from "@/lib/supabaseServer";
 import { NextRequest, NextResponse } from "next/server";
 import { checkAdmin } from "@/lib/checkAdmin";
 
@@ -13,6 +14,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
+    // Use admin client for data fetching to bypass RLS
+    const adminSupabase = getSupabaseAdmin();
+
     // Get pagination and filter parameters
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get("page") || "1");
@@ -22,14 +26,14 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
 
     // Build query - simple select without join
-    let query = supabase
+    let query = adminSupabase
       .from("accommodation_bookings")
       .select("*", { count: "exact" })
       .order("created_at", { ascending: false });
 
     // Apply filters
     if (status && status !== "all") {
-      query = query.eq("verification_status", status);
+      query = query.eq("verification_status", status as "pending" | "verified" | "rejected");
     }
 
     // Apply pagination
@@ -45,7 +49,7 @@ export async function GET(request: NextRequest) {
     let usersMap: Record<string, any> = {};
 
     if (userIds.length > 0) {
-      const { data: users } = await supabase
+      const { data: users } = await adminSupabase
         .from("users")
         .select("user_id, user_name, email, phone")
         .in("user_id", userIds);
@@ -84,7 +88,7 @@ export async function GET(request: NextRequest) {
     }) || [];
 
     // Get summary stats
-    const { data: allBookings } = await supabase
+    const { data: allBookings } = await adminSupabase
       .from("accommodation_bookings")
       .select("verification_status, amount");
 

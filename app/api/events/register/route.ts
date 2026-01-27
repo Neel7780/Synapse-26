@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
                 registered_by_user_id,
                 payment_screenshot_url: isFreeRegistration ? "DAU_VERIFIED" : payment_screenshot_url.trim(),
                 transaction_id: isFreeRegistration ? "DAU_FREE" : transaction_id.trim(),
-                payment_status: isFreeRegistration ? "done" : "pending",
+                payment_status: "done",
                 gross_amount: isFreeRegistration ? 0 : (feeData?.price || 0),
                 registration_date: new Date().toISOString(),
             })

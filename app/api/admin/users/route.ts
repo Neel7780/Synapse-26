@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
+import { getSupabaseAdmin } from "@/lib/supabaseServer";
 import { NextRequest, NextResponse } from "next/server";
-import { corsHeaders, handleCorsResponse, addCorsHeaders } from '@/lib/cors'
+import { handleCorsResponse, addCorsHeaders } from '@/lib/cors'
 
 async function checkAdmin(supabase: any) {
   const {
@@ -24,6 +25,10 @@ export async function GET(req: NextRequest) {
       const response = NextResponse.json({ error: "Unauthorized" }, { status: 403 });
       return addCorsHeaders(response, origin);
     }
+    
+    // Use admin client for data fetching to bypass RLS
+    const adminSupabase = getSupabaseAdmin();
+
     const { searchParams } = new URL(req.url);
 
     const page = Number(searchParams.get("page") ?? 1);
@@ -36,7 +41,7 @@ export async function GET(req: NextRequest) {
 
     const hasEventFilter = Boolean(eventName);
 
-    let query = supabase.from("users").select(
+    let query = adminSupabase.from("users").select(
       `
         user_id,
         user_name,

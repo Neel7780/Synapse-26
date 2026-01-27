@@ -157,6 +157,20 @@ export function useRegistrationEventList() {
 }
 
 // ============================================================================
+// Accommodation Hooks
+// ============================================================================
+
+export function useAccommodationOrders(filters: { page?: number; limit?: number; status?: string } = {}) {
+    const filtersKey = useMemo(() => JSON.stringify(filters), [filters]);
+    const fetchFn = useCallback(
+        () => adminApi.accommodationApi.getAll(filters),
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [filtersKey]
+    );
+    return useAdminData(fetchFn, `accommodation-orders-${filtersKey}`);
+}
+
+// ============================================================================
 // Users Hooks
 // ============================================================================
 
