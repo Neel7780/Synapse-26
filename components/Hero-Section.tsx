@@ -751,6 +751,9 @@ export default function HeroSection({
 
     return () => {
       try {
+        // Reset navbar visibility when leaving the home page
+        setNavbarVisible(true);
+
         // cancel any running RAF
         if (rafIdRef.current) {
           cancelAnimationFrame(rafIdRef.current);
@@ -783,7 +786,7 @@ export default function HeroSection({
         // console.warn("Error cleaning up animations:", e);
       }
     };
-  }, []);
+  }, [setNavbarVisible]);
   return (
     <div>
       <div
