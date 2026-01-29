@@ -23,10 +23,16 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
-    const eventId = searchParams.get("eventId");
+    const eventIdParam = searchParams.get("eventId");
 
-    if (!eventId) {
+    if (!eventIdParam) {
       return NextResponse.json({ error: "Event ID is required" }, { status: 400 });
+    }
+
+    const eventId = parseInt(eventIdParam, 10);
+
+    if (isNaN(eventId)) {
+      return NextResponse.json({ error: "Invalid event ID" }, { status: 400 });
     }
 
     // Verify that the coordinator owns this event
@@ -45,7 +51,7 @@ export async function GET(req: NextRequest) {
     }
 
     const search = searchParams.get("searchParams") ?? "";
-    const statusFilter = searchParams.get("status");
+    const statusFilter = searchParams.get("status") as "pending" | "accepted" | "rejected" | "all" | null;
 
     let query = supabaseAdmin.from("event_registrations").select(
       `
@@ -62,7 +68,7 @@ export async function GET(req: NextRequest) {
     if (statusFilter && statusFilter !== "all") {
       if (statusFilter === "pending") {
         query = query.or("coordinator_status.is.null,coordinator_status.eq.pending");
-      } else {
+      } else if (statusFilter === "accepted" || statusFilter === "rejected") {
         query = query.eq("coordinator_status", statusFilter);
       }
     }

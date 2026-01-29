@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
 
     const search = searchParams.get("searchParams") ?? "";
     const eventFilter = searchParams.get("filter");
-    const paymentStatus = searchParams.get("paymentStatus");
+    const paymentStatus = searchParams.get("paymentStatus") as "pending" | "done" | "failed" | null;
 
     let query = supabaseAdmin.from("event_registrations").select(
       `
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
       // We'll filter by event name after fetching event data
     }
 
-    if (paymentStatus) {
+    if (paymentStatus && (paymentStatus === "pending" || paymentStatus === "done" || paymentStatus === "failed")) {
       query = query.eq("payment_status", paymentStatus);
     }
 
