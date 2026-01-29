@@ -77,7 +77,7 @@ export default function ProniteGallery() {
       </div>
 
       {/* Signature Banner - Exact Arrowhead Style */}
-      <div className="absolute right-0 bottom-[20%] z-50">
+      <div className="absolute right-0 bottom-[20%] z-20">
         <div
           className="bg-white text-black py-8 pl-40 pr-12 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col items-end"
           style={{

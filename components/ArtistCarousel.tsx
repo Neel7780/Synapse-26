@@ -164,7 +164,24 @@ const Card = ({ data, index, total, progress }: CardProps) => {
   };
 
   const slant = getSlant(index);
-  const zIndex = 10 + index;
+
+  // Dynamic Z-Index: 
+  // Right side (Future): Descending order (Total - Index) so next card is on top of global stack
+  // Left side (Past): Ascending order (Index) so recent exited card is on top of old exited cards
+  // Active: Boosted to ensure it's above everything
+  const zRight = total - index + 10;
+  const zLeft = index + 10;
+  const zActive = 100;
+
+  // Pivot Z-index around the "center" focus point
+  const zIndexRaw = useTransform(
+    progress,
+    [startFocus - 0.05, startFocus, startFocus + 0.05],
+    [zRight, zActive, zLeft]
+  );
+
+  // Round to integer for valid CSS z-index
+  const zIndex = useTransform(zIndexRaw, (z) => Math.round(z));
 
   // X-Range: Synchronized train movement
   const xRange = [
@@ -186,10 +203,10 @@ const Card = ({ data, index, total, progress }: CardProps) => {
   // Opacity: Ensure card is only visible when it's the active one or part of the transition
   // We use a small buffer (0.05) to allow it to be seen while entering/exiting
   const opacityValues = isFirst
-    ? [1, 1, 1, 0.4]
+    ? [1, 1, 1, 1]
     : isLast
-      ? [0.4, 1, 1, 1]
-      : [0.4, 1, 1, 0.4];
+      ? [1, 1, 1, 1]
+      : [1, 1, 1, 1];
 
   const opacityRange = [
     startFocus - sectionSize,
