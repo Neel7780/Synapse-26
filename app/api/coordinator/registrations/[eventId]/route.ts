@@ -1,30 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { getSupabaseServer } from "@/lib/supabaseServer";
 
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ eventId: string }> }
 ) {
   try {
-    const supabase = await createClient();
+    const supabaseAuth = await createClient();
+    const supabaseAdmin = getSupabaseServer();
 
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await supabaseAuth.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get coordinator email
-    const { data: userData } = await supabase
-      .from("users")
-      .select("email")
-      .eq("user_id", user.id)
-      .single();
-
-    if (!userData?.email) {
+    const coordinatorEmail = user.email ?? null;
+    if (!coordinatorEmail) {
       return NextResponse.json({ error: "User email not found" }, { status: 400 });
     }
 
@@ -38,7 +35,7 @@ export async function GET(
     }
 
     // Verify that the coordinator owns this event and fetch event details
-    const { data: eventData, error: eventError } = await supabase
+    const { data: eventData, error: eventError } = await supabaseAdmin
       .from("event")
       .select("event_id, event_name, event_date, description, coordinator_email")
       .eq("event_id", eventId)
@@ -48,12 +45,12 @@ export async function GET(
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
-    if (eventData.coordinator_email !== userData.email) {
+    if (eventData.coordinator_email !== coordinatorEmail) {
       return NextResponse.json({ error: "Access denied to this event" }, { status: 403 });
     }
 
     // Fetch registrations for this event with user details and fee info
-    const { data: registrations, error: regError } = await supabase
+    const { data: registrations, error: regError } = await supabaseAdmin
       .from("event_registrations")
       .select(`
         registration_id,
@@ -88,7 +85,7 @@ export async function GET(
 
         // Fetch user details
         if (reg.registered_by_user_id) {
-          const { data: user } = await supabase
+          const { data: user } = await supabaseAdmin
             .from("users")
             .select("user_id, user_name, email, phone, college")
             .eq("user_id", reg.registered_by_user_id)
@@ -104,7 +101,7 @@ export async function GET(
           console.log(`Attempting to fetch fee_id ${reg.fee_id} for registration ${reg.registration_id}`);
           
           // Fetch from the fee table which has participation_type
-          const { data: feeRaw, error: feeError } = await supabase
+          const { data: feeRaw, error: feeError } = await supabaseAdmin
             .from("fee")
             .select("*")
             .eq("fee_id", reg.fee_id)
@@ -127,7 +124,7 @@ export async function GET(
 
         // If there could be multiple members (duet/group), fetch team and members
         try {
-          const { data: teamRow, error: teamError } = await supabase
+          const { data: teamRow, error: teamError } = await supabaseAdmin
             .from("team")
             .select("team_id, registration_id")
             .eq("registration_id", reg.registration_id)
@@ -138,7 +135,7 @@ export async function GET(
           }
 
           if (teamRow?.team_id) {
-            const { data: memberRows, error: membersError } = await supabase
+            const { data: memberRows, error: membersError } = await supabaseAdmin
               .from("team_members")
               .select("user_id")
               .eq("team_id", teamRow.team_id);
@@ -149,7 +146,7 @@ export async function GET(
               // Fetch user details for each member
               const membersDetailed = await Promise.all(
                 memberRows.map(async (m) => {
-                  const { data: memberUser } = await supabase
+                  const { data: memberUser } = await supabaseAdmin
                     .from("users")
                     .select("user_id, user_name, email, phone, college")
                     .eq("user_id", m.user_id)
@@ -166,11 +163,32 @@ export async function GET(
           console.error(`Error while assembling team info for registration ${reg.registration_id}:`, e);
         }
 
+        // Include the team leader (registered_by user) in team_members
+        // Deduplicate by user_id to avoid including leader twice
+        const memberIds = new Set<string>();
+        const allTeamMembers: Array<{ user_id: string; user_name: string | null; email: string; phone: string | null; college: string | null }> = [];
+        
+        // Add team leader first
+        if (userData && userData.user_id) {
+          memberIds.add(userData.user_id);
+          allTeamMembers.push(userData);
+        }
+        
+        // Add other team members, skipping duplicates
+        teamMembers.forEach(member => {
+          if (member && member.user_id && !memberIds.has(member.user_id)) {
+            memberIds.add(member.user_id);
+            allTeamMembers.push(member);
+          }
+        });
+
+        console.log(`Registration ${reg.registration_id}: Found ${allTeamMembers.length} team members - ${allTeamMembers.map(m => m.user_name).join(', ')}`);
+
         return {
           ...reg,
           users: userData,
           fee: feeData,
-          team_members: teamMembers,
+          team_members: allTeamMembers,
         };
       })
     );
