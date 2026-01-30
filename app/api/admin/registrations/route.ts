@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       const response = NextResponse.json({ error: "Unauthorized" }, { status: 403 });
       return addCorsHeaders(response, origin);
     }
-    
+
     // Use admin client for data fetching to bypass RLS
     const adminSupabase = getSupabaseAdmin();
 
@@ -105,6 +105,7 @@ export async function GET(req: NextRequest) {
       return q;
     };
 
+    // 1. Fetch Paginated Data for Table Display
     const { data: d1 } = await buildQueryUsers().range(from, to);
     const { data: d2 } = await buildQueryTxn().range(from, to);
 
@@ -122,18 +123,97 @@ export async function GET(req: NextRequest) {
 
     const uniqueData = Array.from(uniqueMap.values());
 
-    const totalRegistrations = uniqueData?.length ?? 0;
+    // 2. Fetch ALL Data for Summary Statistics (Revenue, Counts)
+    // We recreate the queries but select minimal fields and DO NOT apply range/pagination
+    const buildSummaryQueryUsers = () => {
+      let q = adminSupabase
+        .from("event_registrations")
+        .select(
+          `
+          registration_id,
+          payment_status,
+          coordinator_status,
+          gross_amount,
+          users!inner(user_name,email,college),
+          event(event_name)
+          `
+        );
+
+      if (search.trim() !== "") {
+        q = q.or(
+          `user_name.ilike.%${search}%,email.ilike.%${search}%,college.ilike.%${search}%`,
+          { foreignTable: "users" }
+        );
+      }
+
+      if (eventFilter) q = q.eq("event.event_name", eventFilter);
+      if (paymentStatus) q = q.eq("payment_status", paymentStatus as any);
+
+      return q;
+    };
+
+    const buildSummaryQueryTxn = () => {
+      let q = supabase
+        .from("event_registrations")
+        .select(
+          `
+          registration_id,
+          payment_status,
+          coordinator_status,
+          gross_amount,
+          event(event_name)
+          `
+        );
+
+      if (search.trim() !== "") {
+        q = q.ilike("transaction_id", `%${search}%`);
+      }
+
+      if (eventFilter) q = q.eq("event.event_name", eventFilter);
+      if (paymentStatus) q = q.eq("payment_status", paymentStatus as any);
+
+      return q;
+    };
+
+    const { data: s1, error: e1 } = await buildSummaryQueryUsers();
+    const { data: s2, error: e2 } = await buildSummaryQueryTxn();
+
+    if (e1 || e2) {
+      console.error("Summary query error:", e1, e2);
+    }
+
+    const mergedSummary = [...(s1 ?? []), ...(s2 ?? [])];
+
+    // Filter summary data (same logic as above for event name match if needed)
+    const filteredSummary = mergedSummary.filter((row: any) => {
+      if (eventFilter && row.event?.event_name !== eventFilter) return false;
+      return true;
+    });
+
+    // Deduplicate summary data
+    const uniqueSummaryMap = new Map();
+    filteredSummary.forEach((row: any) => {
+      uniqueSummaryMap.set(row.registration_id, row);
+    });
+    const uniqueSummaryData = Array.from(uniqueSummaryMap.values());
+
+    const totalRegistrations = uniqueSummaryData.length;
     let paid = 0;
     let grossRevenue = 0;
     let gatewayCharges = 0;
     let netRevenue = 0;
 
-    uniqueData?.forEach((row: any) => {
+    uniqueSummaryData.forEach((row: any) => {
       const price = row.gross_amount ?? 0;
       const gateway = row.payment_method?.gateway_charge ?? 0;
+      const pStatus = row.payment_status?.toLowerCase();
+      const cStatus = row.coordinator_status?.toLowerCase();
 
-      // Only count revenue if payment is done AND coordinator has accepted
-      if (row.payment_status === "done" && row.coordinator_status === "accepted") {
+      // Relaxed status check: 'done', 'paid', 'success' are all valid payment states
+      const isPaid = pStatus === "done" || pStatus === "paid" || pStatus === "success";
+
+      // Only count revenue if paid AND coordinator has accepted
+      if (isPaid && cStatus === "accepted") {
         paid += 1;
         grossRevenue += price;
         gatewayCharges += gateway;

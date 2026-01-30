@@ -94,7 +94,8 @@ export type CreateEventPayload = {
     qr_code_solo?: File;
     qr_code_duet?: File;
     qr_code_group?: File;
-    qr_code_custom?: File;
+    qr_code_custom?: File; // Deprecated but kept for compatibility
+    custom_qr_codes?: Record<string, File>; // New: Dynamic custom QR codes
     fees?: EventFee[];
 };
 
@@ -141,6 +142,13 @@ function buildEventFormData(payload: Partial<CreateEventPayload> & { event_id?: 
     }
     if (payload.qr_code_custom) {
         formData.append('qr_code_custom', payload.qr_code_custom);
+    }
+
+    // Handle dynamic custom QR codes
+    if (payload.custom_qr_codes) {
+        Object.entries(payload.custom_qr_codes).forEach(([key, file]) => {
+            formData.append(key, file);
+        });
     }
 
     // Handle fees array - convert to JSON string
