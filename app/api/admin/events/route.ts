@@ -27,6 +27,25 @@ import { corsHeaders, handleCorsResponse, addCorsHeaders } from '@/lib/cors'
 import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
 import { uploadImage, deleteImage } from '@/lib/imageUtil'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+
+// Helper to create a service role client (bypasses RLS)
+const createAdminClient = () => {
+  const serviceRoleKey = process.env.SUPABASE_SECRET_KEY;
+  if (!serviceRoleKey) {
+    throw new Error('SUPABASE_SECRET_KEY is not defined');
+  }
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    serviceRoleKey,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  );
+};
 
 async function checkAdmin(supabase: any) {
   const {
@@ -80,6 +99,9 @@ export async function POST(request: Request) {
     return addCorsHeaders(response, origin);
   }
 
+  // Use admin client for database operations to bypass RLS
+  const adminSupabase = createAdminClient();
+
   try {
     const formData = await request.formData()
 
@@ -98,6 +120,7 @@ export async function POST(request: Request) {
     const qrCodeSolo = formData.get('qr_code_solo') as File | null
     const qrCodeDuet = formData.get('qr_code_duet') as File | null
     const qrCodeGroup = formData.get('qr_code_group') as File | null
+    const qrCodeCustom = formData.get('qr_code_custom') as File | null
 
     // Combine event_date and event_time into a timestamp
     let eventTimestamp = event_date;
@@ -119,7 +142,7 @@ export async function POST(request: Request) {
     }
 
     // A. Create the Event
-    const { data: eventData, error: eventError } = await supabase
+    const { data: eventData, error: eventError } = await adminSupabase
       .from("event")
       .insert({
         event_name,
@@ -179,6 +202,19 @@ export async function POST(request: Request) {
         qrCodeMap.group = uploadResult.publicUrl
       }
 
+      // Upload QR code for custom category if provided
+      const standardTypes = ['solo', 'duet', 'group'];
+      const customFee = fees.find((f: any) => !standardTypes.includes(f.type.toLowerCase()));
+
+      if (customFee && qrCodeCustom && qrCodeCustom.size > 0) {
+        const uploadResult = await uploadImage({
+          file: qrCodeCustom,
+          bucket: 'qr-code',
+          folder: 'events'
+        })
+        qrCodeMap[customFee.type] = uploadResult.publicUrl;
+      }
+
       // Filter out fees with zero or invalid prices and create inserts
       const feeInserts = fees
         .filter((f: any) => f.price && Number(f.price) > 0)
@@ -190,7 +226,7 @@ export async function POST(request: Request) {
           qr_code: qrCodeMap[f.type] || null,
         }));
 
-      const { data: feeData, error: feeError } = await supabase
+      const { data: feeData, error: feeError } = await adminSupabase
         .from("fee")
         .insert(feeInserts)
         .select();
@@ -202,7 +238,7 @@ export async function POST(request: Request) {
         fee_id: f.fee_id,
       }));
 
-      const { error: linkError } = await supabase
+      const { error: linkError } = await adminSupabase
         .from("event_fee")
         .insert(eventFeeLinks);
 
@@ -233,6 +269,9 @@ export async function PUT(request: Request) {
     return addCorsHeaders(response, origin);
   }
 
+  // Use admin client for database operations to bypass RLS
+  const adminSupabase = createAdminClient();
+
   try {
     const formData = await request.formData();
 
@@ -252,6 +291,7 @@ export async function PUT(request: Request) {
     const qrCodeSolo = formData.get('qr_code_solo') as File | null;
     const qrCodeDuet = formData.get('qr_code_duet') as File | null;
     const qrCodeGroup = formData.get('qr_code_group') as File | null;
+    const qrCodeCustom = formData.get('qr_code_custom') as File | null;
 
     if (!event_id) {
       const response = NextResponse.json(
@@ -271,11 +311,11 @@ export async function PUT(request: Request) {
     // Get category_id from category_name
     let category_id = null;
     if (category_name) {
-      const { data: categoryData } = await supabase
+      const { data: categoryData } = await adminSupabase
         .from('event_category')
         .select('category_id')
         .eq('category_name', category_name)
-        .single();
+        .maybeSingle();
 
       if (categoryData) {
         category_id = categoryData.category_id;
@@ -283,11 +323,11 @@ export async function PUT(request: Request) {
     }
 
     // Get the existing event to check for old image
-    const { data: existingEvent } = await supabase
+    const { data: existingEvent } = await adminSupabase
       .from('event')
       .select('event_picture')
       .eq('event_id', Number(event_id))
-      .single();
+      .maybeSingle();
 
     let event_picture = existingEvent?.event_picture;
 
@@ -335,12 +375,12 @@ export async function PUT(request: Request) {
     if (venue) updates.venue = venue;
 
     // Update the event
-    const { data: eventData, error: eventError } = await supabase
+    const { data: eventData, error: eventError } = await adminSupabase
       .from("event")
       .update(updates)
       .eq("event_id", Number(event_id))
       .select()
-      .single();
+      .maybeSingle();
 
     if (eventError) throw eventError;
 
@@ -349,7 +389,7 @@ export async function PUT(request: Request) {
 
     if (fees && Array.isArray(fees)) {
       // 1. Find old fees linked to this event and get their QR codes
-      const { data: oldLinks } = await supabase
+      const { data: oldLinks } = await adminSupabase
         .from("event_fee")
         .select("fee_id, fee(fee_id, qr_code, participation_type)")
         .eq("event_id", Number(event_id));
@@ -424,6 +464,47 @@ export async function PUT(request: Request) {
         qrCodeMap.duet = await handleQrCodeUpdate(qrCodeDuet, 'duet');
         qrCodeMap.group = await handleQrCodeUpdate(qrCodeGroup, 'group');
 
+        // Handle Custom QR Code Update
+        const standardTypes = ['solo', 'duet', 'group'];
+        const customFee = fees.find((f: any) => !standardTypes.includes(f.type.toLowerCase()));
+
+        if (customFee) {
+          // Find old custom fee (any fee that is not standard)
+          const oldCustomQr = oldQrCodes.find(qr => !standardTypes.includes(qr.type.toLowerCase()));
+
+          // Re-use handleQrCodeUpdate logic but manually pass the old URL check or just implement here
+          if (qrCodeCustom && qrCodeCustom.size > 0) {
+            // Delete old QR code if exists
+            if (oldCustomQr) {
+              try {
+                const url = new URL(oldCustomQr.url);
+                const pathParts = url.pathname.split('/storage/v1/object/public/qr-code/');
+                if (pathParts.length > 1) {
+                  await deleteImage({ bucket: 'qr-code', filePath: pathParts[1] });
+                }
+              } catch (error) {
+                console.error('Failed to delete old custom QR code:', error);
+              }
+            }
+            // Upload new
+            const uploadResult = await uploadImage({
+              file: qrCodeCustom,
+              bucket: 'qr-code',
+              folder: 'events'
+            });
+            qrCodeMap[customFee.type] = uploadResult.publicUrl;
+          } else {
+            // Keep old QR if no new file provided (and if one existed)
+            // NOTE: If the custom type NAME changed, strictly speaking it's a "different" fee type conceptually,
+            // but for the "4th field" feature, we treat it as persisting the custom slot.
+            if (oldCustomQr) {
+              qrCodeMap[customFee.type] = oldCustomQr.url;
+            } else {
+              qrCodeMap[customFee.type] = null;
+            }
+          }
+        }
+
         // Filter out fees with zero or invalid prices and create inserts
         const feeInserts = fees
           .filter((f: any) => f.price && Number(f.price) > 0)
@@ -432,11 +513,11 @@ export async function PUT(request: Request) {
             price: Number(f.price),
             min_members: Number(f.min || 1),
             max_members: Number(f.max || 1),
-            qr_code: qrCodeMap[f.type] || null,
+            qr_code: qrCodeMap[f.type] || null, // logic works because we added custom type to map
           }));
 
         // Insert new fee records
-        const { data: newFees, error: newFeeError } = await supabase
+        const { data: newFees, error: newFeeError } = await adminSupabase
           .from("fee")
           .insert(feeInserts)
           .select();
@@ -450,14 +531,14 @@ export async function PUT(request: Request) {
 
           if (oldFeeId) {
             // UPDATE existing event_fee row to point to new fee_id
-            await supabase
+            await adminSupabase
               .from("event_fee")
               .update({ fee_id: newFee.fee_id })
               .eq("event_id", Number(event_id))
               .eq("fee_id", oldFeeId);
           } else {
             // INSERT new event_fee row (new participation type added)
-            await supabase
+            await adminSupabase
               .from("event_fee")
               .insert({
                 event_id: Number(event_id),
@@ -473,7 +554,7 @@ export async function PUT(request: Request) {
         );
 
         for (const removedType of removedTypes) {
-          await supabase
+          await adminSupabase
             .from("event_fee")
             .delete()
             .eq("event_id", Number(event_id))
@@ -481,7 +562,7 @@ export async function PUT(request: Request) {
         }
       } else {
         // If no fees provided, delete all event_fee relations and QR codes
-        await supabase
+        await adminSupabase
           .from("event_fee")
           .delete()
           .eq("event_id", Number(event_id));
@@ -525,6 +606,9 @@ export async function DELETE(request: Request) {
     return addCorsHeaders(response, origin);
   }
 
+  // Use admin client for database operations to bypass RLS
+  const adminSupabase = createAdminClient();
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
@@ -538,20 +622,20 @@ export async function DELETE(request: Request) {
     }
 
     // Get the event to retrieve the image path and associated fees
-    const { data: event } = await supabase
+    const { data: event } = await adminSupabase
       .from('event')
       .select('event_picture')
       .eq('event_id', Number(id))
       .single()
 
     // Get all fees associated with this event to delete their QR codes
-    const { data: eventFees } = await supabase
+    const { data: eventFees } = await adminSupabase
       .from('event_fee')
       .select('fee_id, fee(qr_code)')
       .eq('event_id', Number(id))
 
     // Delete the event from database (cascade will delete event_fee links)
-    const { error } = await supabase
+    const { error } = await adminSupabase
       .from('event')
       .delete()
       .eq('event_id', Number(id))
@@ -580,9 +664,10 @@ export async function DELETE(request: Request) {
     // Delete all QR codes associated with the event fees
     if (eventFees && eventFees.length > 0) {
       for (const eventFee of eventFees) {
-        if (eventFee.fee?.qr_code) {
+        const fee = Array.isArray(eventFee.fee) ? eventFee.fee[0] : eventFee.fee;
+        if (fee?.qr_code) {
           try {
-            const url = new URL(eventFee.fee.qr_code)
+            const url = new URL(fee.qr_code)
             const pathParts = url.pathname.split('/storage/v1/object/public/qr-code/')
             if (pathParts.length > 1) {
               const filePath = pathParts[1]

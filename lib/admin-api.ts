@@ -94,6 +94,7 @@ export type CreateEventPayload = {
     qr_code_solo?: File;
     qr_code_duet?: File;
     qr_code_group?: File;
+    qr_code_custom?: File;
     fees?: EventFee[];
 };
 
@@ -137,6 +138,9 @@ function buildEventFormData(payload: Partial<CreateEventPayload> & { event_id?: 
     }
     if (payload.qr_code_group) {
         formData.append('qr_code_group', payload.qr_code_group);
+    }
+    if (payload.qr_code_custom) {
+        formData.append('qr_code_custom', payload.qr_code_custom);
     }
 
     // Handle fees array - convert to JSON string
@@ -349,7 +353,7 @@ export const accommodationApi = {
         if (filters.page) params.append("page", filters.page.toString());
         if (filters.limit) params.append("limit", filters.limit.toString());
         if (filters.status) params.append("status", filters.status);
-        
+
         return apiFetch<AccommodationResponse>(
             `/api/admin/accommodation/orders?${params.toString()}`
         );
