@@ -75,6 +75,10 @@ type ParticipationCategory = {
   qrCodeFile?: File;
 };
 
+type ParticipationCategoryWithCustom = ParticipationCategory & {
+  name?: string;
+};
+
 type LocalEvent = {
   id: number;
   name: string;
@@ -94,6 +98,7 @@ type LocalEvent = {
     solo: ParticipationCategory;
     duet: ParticipationCategory;
     group: ParticipationCategory;
+    custom: ParticipationCategoryWithCustom;
   };
 };
 
@@ -247,6 +252,11 @@ export default function EventsPage() {
             (f) => f.fee.participation_type.toLowerCase() === "group",
           );
 
+          const standardTypes = ["solo", "duet", "group"];
+          const custom = fees.find(
+            (f) => !standardTypes.includes(f.fee.participation_type.toLowerCase())
+          );
+
           // Extract time from timestamp
           const dateTime = event.event_date.split("T");
           const time = dateTime[1] ? dateTime[1].substring(0, 5) : "";
@@ -286,6 +296,14 @@ export default function EventsPage() {
                 minParticipants: group?.fee.min_members || 3,
                 maxParticipants: group?.fee.max_members || 8,
                 qrUrl: group?.fee.qr_code || "",
+              },
+              custom: {
+                enabled: !!custom,
+                name: custom?.fee.participation_type || "",
+                fee: custom?.fee.price || 0,
+                minParticipants: custom?.fee.min_members || 1,
+                maxParticipants: custom?.fee.max_members || 1,
+                qrUrl: custom?.fee.qr_code || "",
               },
             },
           };
@@ -388,7 +406,7 @@ export default function EventsPage() {
     ["solo", "duet", "group"].forEach((type) => {
       const cat =
         event.participationCategories[
-          type as keyof typeof event.participationCategories
+        type as keyof typeof event.participationCategories
         ];
       if (cat.enabled) {
         fees.push({
@@ -441,9 +459,11 @@ export default function EventsPage() {
     ["solo", "duet", "group"].forEach((type) => {
       const cat =
         editingEvent.participationCategories[
-          type as keyof typeof editingEvent.participationCategories
+        type as keyof typeof editingEvent.participationCategories
         ];
-      if (cat.enabled) {
+
+      // Handle standard types
+      if (type !== 'custom' && cat.enabled) {
         fees.push({
           type,
           price: cat.fee,
@@ -452,6 +472,17 @@ export default function EventsPage() {
         });
       }
     });
+
+    // Handle Custom
+    const customCat = editingEvent.participationCategories.custom;
+    if (customCat.enabled && customCat.name) {
+      fees.push({
+        type: customCat.name,
+        price: customCat.fee,
+        min: customCat.minParticipants,
+        max: customCat.maxParticipants,
+      });
+    }
 
     const result = await updateEvent(editingEvent.id, {
       event_id: editingEvent.id,
@@ -467,6 +498,7 @@ export default function EventsPage() {
       qr_code_solo: editingEvent.participationCategories.solo.qrCodeFile,
       qr_code_duet: editingEvent.participationCategories.duet.qrCodeFile,
       qr_code_group: editingEvent.participationCategories.group.qrCodeFile,
+      qr_code_custom: editingEvent.participationCategories.custom.qrCodeFile,
       is_registration_open: editingEvent.registrationOpen,
       is_dau_free: editingEvent.freeForDau,
       fees,
@@ -864,6 +896,14 @@ export default function EventsPage() {
                             Group: ₹{event.participationCategories.group.fee}
                           </Badge>
                         )}
+                        {event.participationCategories.custom.enabled && (
+                          <Badge
+                            variant="secondary"
+                            className="text-xs bg-muted/50 border-border/50"
+                          >
+                            {event.participationCategories.custom.name}: ₹{event.participationCategories.custom.fee}
+                          </Badge>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -1140,14 +1180,14 @@ export default function EventsPage() {
                   {/* Image Preview - shown for both new uploads and existing images */}
                   {(editOriginalImageUrl ||
                     (editingEvent.picture && !editingEvent.imageFile)) && (
-                    <div className="w-full">
-                      <ImagePreview
-                        originalUrl={
-                          editOriginalImageUrl || editingEvent.picture
-                        }
-                      />
-                    </div>
-                  )}
+                      <div className="w-full">
+                        <ImagePreview
+                          originalUrl={
+                            editOriginalImageUrl || editingEvent.picture
+                          }
+                        />
+                      </div>
+                    )}
                   <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border/50">
                     <div>
                       <p className="font-medium">Free for DAU Students</p>
@@ -1244,47 +1284,47 @@ export default function EventsPage() {
                             .qrCodeFile ||
                             editingEvent.participationCategories.solo
                               .qrUrl) && (
-                            <div className="mt-3">
-                              {editingEvent.participationCategories.solo
-                                .qrCodeFile ? (
-                                <>
-                                  <p className="text-xs text-muted-foreground mb-2">
-                                    New QR Code:{" "}
-                                    {
-                                      editingEvent.participationCategories.solo
-                                        .qrCodeFile.name
-                                    }
-                                  </p>
-                                  <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
-                                    <img
-                                      src={URL.createObjectURL(
-                                        editingEvent.participationCategories
-                                          .solo.qrCodeFile,
-                                      )}
-                                      alt="Solo QR Code Preview"
-                                      className="w-full h-full object-contain"
-                                    />
-                                  </div>
-                                </>
-                              ) : (
-                                <>
-                                  <p className="text-xs text-muted-foreground mb-2">
-                                    Current QR Code
-                                  </p>
-                                  <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
-                                    <img
-                                      src={
-                                        editingEvent.participationCategories
-                                          .solo.qrUrl
+                              <div className="mt-3">
+                                {editingEvent.participationCategories.solo
+                                  .qrCodeFile ? (
+                                  <>
+                                    <p className="text-xs text-muted-foreground mb-2">
+                                      New QR Code:{" "}
+                                      {
+                                        editingEvent.participationCategories.solo
+                                          .qrCodeFile.name
                                       }
-                                      alt="Solo QR Code"
-                                      className="w-full h-full object-contain"
-                                    />
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          )}
+                                    </p>
+                                    <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
+                                      <img
+                                        src={URL.createObjectURL(
+                                          editingEvent.participationCategories
+                                            .solo.qrCodeFile,
+                                        )}
+                                        alt="Solo QR Code Preview"
+                                        className="w-full h-full object-contain"
+                                      />
+                                    </div>
+                                  </>
+                                ) : (
+                                  <>
+                                    <p className="text-xs text-muted-foreground mb-2">
+                                      Current QR Code
+                                    </p>
+                                    <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
+                                      <img
+                                        src={
+                                          editingEvent.participationCategories
+                                            .solo.qrUrl
+                                        }
+                                        alt="Solo QR Code"
+                                        className="w-full h-full object-contain"
+                                      />
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            )}
                         </div>
                       </div>
                     )}
@@ -1369,47 +1409,47 @@ export default function EventsPage() {
                             .qrCodeFile ||
                             editingEvent.participationCategories.duet
                               .qrUrl) && (
-                            <div className="mt-3">
-                              {editingEvent.participationCategories.duet
-                                .qrCodeFile ? (
-                                <>
-                                  <p className="text-xs text-muted-foreground mb-2">
-                                    New QR Code:{" "}
-                                    {
-                                      editingEvent.participationCategories.duet
-                                        .qrCodeFile.name
-                                    }
-                                  </p>
-                                  <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
-                                    <img
-                                      src={URL.createObjectURL(
-                                        editingEvent.participationCategories
-                                          .duet.qrCodeFile,
-                                      )}
-                                      alt="Duet QR Code Preview"
-                                      className="w-full h-full object-contain"
-                                    />
-                                  </div>
-                                </>
-                              ) : (
-                                <>
-                                  <p className="text-xs text-muted-foreground mb-2">
-                                    Current QR Code
-                                  </p>
-                                  <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
-                                    <img
-                                      src={
-                                        editingEvent.participationCategories
-                                          .duet.qrUrl
+                              <div className="mt-3">
+                                {editingEvent.participationCategories.duet
+                                  .qrCodeFile ? (
+                                  <>
+                                    <p className="text-xs text-muted-foreground mb-2">
+                                      New QR Code:{" "}
+                                      {
+                                        editingEvent.participationCategories.duet
+                                          .qrCodeFile.name
                                       }
-                                      alt="Duet QR Code"
-                                      className="w-full h-full object-contain"
-                                    />
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          )}
+                                    </p>
+                                    <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
+                                      <img
+                                        src={URL.createObjectURL(
+                                          editingEvent.participationCategories
+                                            .duet.qrCodeFile,
+                                        )}
+                                        alt="Duet QR Code Preview"
+                                        className="w-full h-full object-contain"
+                                      />
+                                    </div>
+                                  </>
+                                ) : (
+                                  <>
+                                    <p className="text-xs text-muted-foreground mb-2">
+                                      Current QR Code
+                                    </p>
+                                    <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
+                                      <img
+                                        src={
+                                          editingEvent.participationCategories
+                                            .duet.qrUrl
+                                        }
+                                        alt="Duet QR Code"
+                                        className="w-full h-full object-contain"
+                                      />
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            )}
                         </div>
                       </div>
                     )}
@@ -1549,47 +1589,215 @@ export default function EventsPage() {
                             .qrCodeFile ||
                             editingEvent.participationCategories.group
                               .qrUrl) && (
-                            <div className="mt-3">
-                              {editingEvent.participationCategories.group
-                                .qrCodeFile ? (
-                                <>
-                                  <p className="text-xs text-muted-foreground mb-2">
-                                    New QR Code:{" "}
-                                    {
-                                      editingEvent.participationCategories.group
-                                        .qrCodeFile.name
-                                    }
-                                  </p>
-                                  <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
-                                    <img
-                                      src={URL.createObjectURL(
-                                        editingEvent.participationCategories
-                                          .group.qrCodeFile,
-                                      )}
-                                      alt="Group QR Code Preview"
-                                      className="w-full h-full object-contain"
-                                    />
-                                  </div>
-                                </>
-                              ) : (
-                                <>
-                                  <p className="text-xs text-muted-foreground mb-2">
-                                    Current QR Code
-                                  </p>
-                                  <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
-                                    <img
-                                      src={
-                                        editingEvent.participationCategories
-                                          .group.qrUrl
+                              <div className="mt-3">
+                                {editingEvent.participationCategories.group
+                                  .qrCodeFile ? (
+                                  <>
+                                    <p className="text-xs text-muted-foreground mb-2">
+                                      New QR Code:{" "}
+                                      {
+                                        editingEvent.participationCategories.group
+                                          .qrCodeFile.name
                                       }
-                                      alt="Group QR Code"
-                                      className="w-full h-full object-contain"
-                                    />
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          )}
+                                    </p>
+                                    <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
+                                      <img
+                                        src={URL.createObjectURL(
+                                          editingEvent.participationCategories
+                                            .group.qrCodeFile,
+                                        )}
+                                        alt="Group QR Code Preview"
+                                        className="w-full h-full object-contain"
+                                      />
+                                    </div>
+                                  </>
+                                ) : (
+                                  <>
+                                    <p className="text-xs text-muted-foreground mb-2">
+                                      Current QR Code
+                                    </p>
+                                    <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
+                                      <img
+                                        src={
+                                          editingEvent.participationCategories
+                                            .group.qrUrl
+                                        }
+                                        alt="Group QR Code"
+                                        className="w-full h-full object-contain"
+                                      />
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {/* Custom Participation */}
+                  <div className="p-4 rounded-lg border border-border/50 bg-muted/30 mt-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-5 w-5 text-amber-400" />
+                        <span className="font-medium">Custom Participation</span>
+                      </div>
+                      <Switch
+                        checked={editingEvent.participationCategories.custom.enabled}
+                        onCheckedChange={(v) =>
+                          setEditingEvent({
+                            ...editingEvent,
+                            participationCategories: {
+                              ...editingEvent.participationCategories,
+                              custom: {
+                                ...editingEvent.participationCategories.custom,
+                                enabled: v,
+                              },
+                            },
+                          })
+                        }
+                      />
+                    </div>
+                    {editingEvent.participationCategories.custom.enabled && (
+                      <div className="space-y-3">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Participation Details</label>
+                          <Input
+                            placeholder="Participation Name (e.g. Squad)"
+                            value={editingEvent.participationCategories.custom.name || ""}
+                            onChange={(e) =>
+                              setEditingEvent({
+                                ...editingEvent,
+                                participationCategories: {
+                                  ...editingEvent.participationCategories,
+                                  custom: {
+                                    ...editingEvent.participationCategories.custom,
+                                    name: e.target.value
+                                  }
+                                }
+                              })
+                            }
+                            className="bg-muted/50 border-border/50"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-4 w-4 text-muted-foreground" />
+                          <Input
+                            type="number"
+                            value={editingEvent.participationCategories.custom.fee}
+                            onChange={(e) =>
+                              setEditingEvent({
+                                ...editingEvent,
+                                participationCategories: {
+                                  ...editingEvent.participationCategories,
+                                  custom: {
+                                    ...editingEvent.participationCategories.custom,
+                                    fee: parseInt(e.target.value) || 0,
+                                  },
+                                },
+                              })
+                            }
+                            className="w-32 bg-muted/50 border-border/50"
+                          />
+                          <span className="text-sm text-muted-foreground">
+                            per team
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm">Min:</span>
+                            <Input
+                              type="number"
+                              value={editingEvent.participationCategories.custom.minParticipants}
+                              onChange={(e) =>
+                                setEditingEvent({
+                                  ...editingEvent,
+                                  participationCategories: {
+                                    ...editingEvent.participationCategories,
+                                    custom: {
+                                      ...editingEvent.participationCategories.custom,
+                                      minParticipants: parseInt(e.target.value) || 1,
+                                    },
+                                  },
+                                })
+                              }
+                              className="w-20 bg-muted/50 border-border/50"
+                            />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm">Max:</span>
+                            <Input
+                              type="number"
+                              value={editingEvent.participationCategories.custom.maxParticipants}
+                              onChange={(e) =>
+                                setEditingEvent({
+                                  ...editingEvent,
+                                  participationCategories: {
+                                    ...editingEvent.participationCategories,
+                                    custom: {
+                                      ...editingEvent.participationCategories.custom,
+                                      maxParticipants: parseInt(e.target.value) || 1,
+                                    },
+                                  },
+                                })
+                              }
+                              className="w-20 bg-muted/50 border-border/50"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Upload className="h-4 w-4 text-muted-foreground" />
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0] || null;
+                                setEditingEvent({
+                                  ...editingEvent,
+                                  participationCategories: {
+                                    ...editingEvent.participationCategories,
+                                    custom: {
+                                      ...editingEvent.participationCategories.custom,
+                                      qrCodeFile: file || undefined,
+                                    },
+                                  },
+                                });
+                              }}
+                              className="flex-1 bg-muted/50 border-border/50"
+                            />
+                          </div>
+                          {(editingEvent.participationCategories.custom.qrCodeFile ||
+                            editingEvent.participationCategories.custom.qrUrl) && (
+                              <div className="mt-3">
+                                {editingEvent.participationCategories.custom.qrCodeFile ? (
+                                  <>
+                                    <p className="text-xs text-muted-foreground mb-2">
+                                      New QR Code: {editingEvent.participationCategories.custom.qrCodeFile.name}
+                                    </p>
+                                    <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
+                                      <img
+                                        src={URL.createObjectURL(editingEvent.participationCategories.custom.qrCodeFile)}
+                                        alt="Custom QR Code Preview"
+                                        className="w-full h-full object-contain"
+                                      />
+                                    </div>
+                                  </>
+                                ) : (
+                                  <>
+                                    <p className="text-xs text-muted-foreground mb-2">
+                                      Current QR Code
+                                    </p>
+                                    <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
+                                      <img
+                                        src={editingEvent.participationCategories.custom.qrUrl}
+                                        alt="Custom QR Code"
+                                        className="w-full h-full object-contain"
+                                      />
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            )}
                         </div>
                       </div>
                     )}

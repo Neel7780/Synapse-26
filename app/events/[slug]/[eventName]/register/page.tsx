@@ -126,6 +126,13 @@ export default function RegisterPage() {
       return;
     }
 
+    // Skip validation if no additional team members (e.g. min=1 custom type)
+    if (emails.length === 0) {
+      setStep("payment");
+      setValidating(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/events/validate-team", {
         method: "POST",
