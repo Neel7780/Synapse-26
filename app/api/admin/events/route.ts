@@ -202,17 +202,31 @@ export async function POST(request: Request) {
         qrCodeMap.group = uploadResult.publicUrl
       }
 
-      // Upload QR code for custom category if provided
+      // Upload QR code for custom types
       const standardTypes = ['solo', 'duet', 'group'];
-      const customFee = fees.find((f: any) => !standardTypes.includes(f.type.toLowerCase()));
 
-      if (customFee && qrCodeCustom && qrCodeCustom.size > 0) {
-        const uploadResult = await uploadImage({
-          file: qrCodeCustom,
-          bucket: 'qr-code',
-          folder: 'events'
-        })
-        qrCodeMap[customFee.type] = uploadResult.publicUrl;
+      for (const fee of fees) {
+        const typeLower = fee.type.toLowerCase();
+        if (!standardTypes.includes(typeLower)) {
+          // Custom type
+          let fileToUpload: File | null = null;
+
+          if (fee.fileKey) {
+            fileToUpload = formData.get(fee.fileKey) as File | null;
+          }
+
+          // If we want to support the legacy single 'qr_code_custom' for the first custom fee?
+          // Not strictly necessary given we control the frontend, but safe to ignore for now.
+
+          if (fileToUpload && fileToUpload.size > 0) {
+            const uploadResult = await uploadImage({
+              file: fileToUpload,
+              bucket: 'qr-code',
+              folder: 'events'
+            });
+            qrCodeMap[fee.type] = uploadResult.publicUrl;
+          }
+        }
       }
 
       // Filter out fees with zero or invalid prices and create inserts
@@ -426,7 +440,7 @@ export async function PUT(request: Request) {
           type: string
         ): Promise<string | null> => {
           // Find old QR code for this type
-          const oldQr = oldQrCodes.find(qr => qr.type.toLowerCase() === type);
+          const oldQr = oldQrCodes.find(qr => qr.type.toLowerCase() === type.toLowerCase());
 
           // Upload new QR code if provided
           if (newFile && newFile.size > 0) {
@@ -459,49 +473,36 @@ export async function PUT(request: Request) {
           return oldQr ? oldQr.url : null;
         };
 
-        // Handle QR code updates for each type
+        // Handle QR code updates for standard types
         qrCodeMap.solo = await handleQrCodeUpdate(qrCodeSolo, 'solo');
         qrCodeMap.duet = await handleQrCodeUpdate(qrCodeDuet, 'duet');
         qrCodeMap.group = await handleQrCodeUpdate(qrCodeGroup, 'group');
 
-        // Handle Custom QR Code Update
+        // Handle Custom QR Codes (Iterate through all fees to catch multiple custom types)
         const standardTypes = ['solo', 'duet', 'group'];
-        const customFee = fees.find((f: any) => !standardTypes.includes(f.type.toLowerCase()));
 
-        if (customFee) {
-          // Find old custom fee (any fee that is not standard)
-          const oldCustomQr = oldQrCodes.find(qr => !standardTypes.includes(qr.type.toLowerCase()));
+        for (const fee of fees) {
+          const typeLower = fee.type.toLowerCase();
+          if (!standardTypes.includes(typeLower)) {
+            // It is a custom type.
+            // Check if a file was uploaded for this specific custom fee
+            let fileToUpload: File | null = null;
 
-          // Re-use handleQrCodeUpdate logic but manually pass the old URL check or just implement here
-          if (qrCodeCustom && qrCodeCustom.size > 0) {
-            // Delete old QR code if exists
-            if (oldCustomQr) {
-              try {
-                const url = new URL(oldCustomQr.url);
-                const pathParts = url.pathname.split('/storage/v1/object/public/qr-code/');
-                if (pathParts.length > 1) {
-                  await deleteImage({ bucket: 'qr-code', filePath: pathParts[1] });
-                }
-              } catch (error) {
-                console.error('Failed to delete old custom QR code:', error);
-              }
+            if (fee.fileKey) {
+              fileToUpload = formData.get(fee.fileKey) as File | null;
+            } else if (qrCodeCustom && qrCodeCustom.size > 0) {
+              // Fallback for single legacy custom type if key not present (or first one)
+              // But usually we should rely on fileKey now.
+              // Only default to qrCodeCustom if this is the ONLY custom fee?
+              // Let's stick to fileKey preference.
+              // Use qrCodeCustom only if fileKey is missing AND type matches 'custom' generic concept (which we don't really have)?
+              // For backward compat, if we have ONE custom fee and it doesn't have fileKey, maybe use qrCodeCustom?
+              // Ignored for now to favor the new explicit system.
             }
-            // Upload new
-            const uploadResult = await uploadImage({
-              file: qrCodeCustom,
-              bucket: 'qr-code',
-              folder: 'events'
-            });
-            qrCodeMap[customFee.type] = uploadResult.publicUrl;
-          } else {
-            // Keep old QR if no new file provided (and if one existed)
-            // NOTE: If the custom type NAME changed, strictly speaking it's a "different" fee type conceptually,
-            // but for the "4th field" feature, we treat it as persisting the custom slot.
-            if (oldCustomQr) {
-              qrCodeMap[customFee.type] = oldCustomQr.url;
-            } else {
-              qrCodeMap[customFee.type] = null;
-            }
+
+            // Update/Upload QR
+            const url = await handleQrCodeUpdate(fileToUpload, fee.type);
+            qrCodeMap[fee.type] = url;
           }
         }
 

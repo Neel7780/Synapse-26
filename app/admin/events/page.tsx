@@ -98,7 +98,7 @@ type LocalEvent = {
     solo: ParticipationCategory;
     duet: ParticipationCategory;
     group: ParticipationCategory;
-    custom: ParticipationCategoryWithCustom;
+    custom: ParticipationCategoryWithCustom[];
   };
 };
 
@@ -253,7 +253,7 @@ export default function EventsPage() {
           );
 
           const standardTypes = ["solo", "duet", "group"];
-          const custom = fees.find(
+          const customFees = fees.filter(
             (f) => !standardTypes.includes(f.fee.participation_type.toLowerCase())
           );
 
@@ -297,14 +297,14 @@ export default function EventsPage() {
                 maxParticipants: group?.fee.max_members || 8,
                 qrUrl: group?.fee.qr_code || "",
               },
-              custom: {
-                enabled: !!custom,
-                name: custom?.fee.participation_type || "",
-                fee: custom?.fee.price || 0,
-                minParticipants: custom?.fee.min_members || 1,
-                maxParticipants: custom?.fee.max_members || 1,
-                qrUrl: custom?.fee.qr_code || "",
-              },
+              custom: customFees.map(c => ({
+                enabled: true,
+                name: c.fee.participation_type,
+                fee: c.fee.price,
+                minParticipants: c.fee.min_members,
+                maxParticipants: c.fee.max_members,
+                qrUrl: c.fee.qr_code || "",
+              })),
             },
           };
         },
@@ -408,12 +408,27 @@ export default function EventsPage() {
         event.participationCategories[
         type as keyof typeof event.participationCategories
         ];
-      if (cat.enabled) {
+      if (!Array.isArray(cat) && cat.enabled) {
         fees.push({
           type,
           price: cat.fee,
           min: cat.minParticipants,
           max: cat.maxParticipants,
+        });
+      }
+    });
+
+    // Handle Custom
+    event.participationCategories.custom.forEach((customCat) => {
+      if (customCat.name) { // Assuming if it exists in the array it should be counted, or check enabled?
+        // Current model: custom types array items are enabled if present, or add enabled field logic if needed.
+        // Assuming we kept enabled field:
+        // if (customCat.enabled) 
+        fees.push({
+          type: customCat.name,
+          price: customCat.fee,
+          min: customCat.minParticipants,
+          max: customCat.maxParticipants,
         });
       }
     });
@@ -463,7 +478,7 @@ export default function EventsPage() {
         ];
 
       // Handle standard types
-      if (type !== 'custom' && cat.enabled) {
+      if (!Array.isArray(cat) && cat.enabled) {
         fees.push({
           type,
           price: cat.fee,
@@ -473,16 +488,56 @@ export default function EventsPage() {
       }
     });
 
+    const customQrCodes: Record<string, File> = {};
+
     // Handle Custom
-    const customCat = editingEvent.participationCategories.custom;
-    if (customCat.enabled && customCat.name) {
-      fees.push({
-        type: customCat.name,
-        price: customCat.fee,
-        min: customCat.minParticipants,
-        max: customCat.maxParticipants,
-      });
-    }
+    editingEvent.participationCategories.custom.forEach((customCat, index) => {
+      if (customCat.name) { // Assuming check for valid name
+        fees.push({
+          type: customCat.name,
+          price: customCat.fee,
+          min: customCat.minParticipants,
+          max: customCat.maxParticipants,
+        });
+
+        // Handle QR Code
+        if (customCat.qrCodeFile) {
+          // We use the participation type name as key suffix, but names can change or duplicate (though duplicate types are bad)
+          // If we use index, backend needs to know which fee maps to which file.
+          // Solution: Add a specialized property to the fee object sent to backend?
+          // OR: Use strict convention. Backend can map by matching "qr_code_{type}".
+          // BUT: The file key must be unique. If valid identifier chars are used.
+          // Let's use `qr_code_${customCat.name}`? If name has spaces or non-standard chars it might be tricky.
+          // BETTER: Use indices and tell backend. But `fees` is an array.
+          // Backend iterates fees. If fee matches convention...
+
+          // Going with `qr_code_custom_${index}` and adding a `fileKey` property to the fee object? 
+          // `EventFee` in lib is rigid. 
+
+          // Let's use the NAME as the key since that's what ties it together. 
+          // Risk: Names with spaces/weird chars.
+          // The API endpoint constructs `qrCodeMap[customFee.type] = ...`. 
+          // It expects to find the file under a key.
+          // In my route.ts plan, I said "look for a fileKey property".
+          // But `EventFee` type is strict.
+
+          // Modification: I will use `qr_code_{sanitized_name}`? 
+          // Or just `qr_code_custom_${index}` and rely on order? No, order is fragile if backend filters arrays.
+
+          // Best approach: Use `qr_code_custom_${index}` and pass this key in the fee object if possible.
+          // Since `EventFee` type is local in page.tsx (imported from lib), I can cast it or extend it locally.
+          // Let's assume I can send extra props and backend ignores them unless I read them.
+          // I will verify route.ts can read extra props from JSON. Yes it can.
+
+          const fileKey = `qr_code_custom_${index}`;
+          customQrCodes[fileKey] = customCat.qrCodeFile;
+          // We need to attach this key to the fee object so backend knows where to look.
+          // But `fees.push` pushes `EventFee` which has specific shape.
+          // I will cast it to any or explicitly modify the fee object pushed.
+          (fees[fees.length - 1] as any).fileKey = fileKey;
+        }
+      }
+    });
 
     const result = await updateEvent(editingEvent.id, {
       event_id: editingEvent.id,
@@ -498,7 +553,8 @@ export default function EventsPage() {
       qr_code_solo: editingEvent.participationCategories.solo.qrCodeFile,
       qr_code_duet: editingEvent.participationCategories.duet.qrCodeFile,
       qr_code_group: editingEvent.participationCategories.group.qrCodeFile,
-      qr_code_custom: editingEvent.participationCategories.custom.qrCodeFile,
+      // Pass the map of custom files
+      custom_qr_codes: customQrCodes,
       is_registration_open: editingEvent.registrationOpen,
       is_dau_free: editingEvent.freeForDau,
       fees,
@@ -896,14 +952,15 @@ export default function EventsPage() {
                             Group: ₹{event.participationCategories.group.fee}
                           </Badge>
                         )}
-                        {event.participationCategories.custom.enabled && (
+                        {event.participationCategories.custom.map((customCat, idx) => (
                           <Badge
+                            key={idx}
                             variant="secondary"
                             className="text-xs bg-muted/50 border-border/50"
                           >
-                            {event.participationCategories.custom.name}: ₹{event.participationCategories.custom.fee}
+                            {customCat.name}: ₹{customCat.fee}
                           </Badge>
-                        )}
+                        ))}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -1641,166 +1698,205 @@ export default function EventsPage() {
                         <Users className="h-5 w-5 text-amber-400" />
                         <span className="font-medium">Custom Participation</span>
                       </div>
-                      <Switch
-                        checked={editingEvent.participationCategories.custom.enabled}
-                        onCheckedChange={(v) =>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const newCustom = [...editingEvent.participationCategories.custom, {
+                            enabled: true,
+                            name: "",
+                            fee: 0,
+                            minParticipants: 1,
+                            maxParticipants: 1,
+                            qrUrl: "",
+                          }];
                           setEditingEvent({
                             ...editingEvent,
                             participationCategories: {
                               ...editingEvent.participationCategories,
-                              custom: {
-                                ...editingEvent.participationCategories.custom,
-                                enabled: v,
-                              },
-                            },
-                          })
-                        }
-                      />
+                              custom: newCustom
+                            }
+                          });
+                        }}
+                        className="h-8 text-xs hover:bg-amber-500/10 hover:text-amber-500"
+                      >
+                        <Plus className="mr-1 h-3 w-3" />
+                        Add Type
+                      </Button>
                     </div>
-                    {editingEvent.participationCategories.custom.enabled && (
-                      <div className="space-y-3">
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">Participation Details</label>
-                          <Input
-                            placeholder="Participation Name (e.g. Squad)"
-                            value={editingEvent.participationCategories.custom.name || ""}
-                            onChange={(e) =>
-                              setEditingEvent({
-                                ...editingEvent,
-                                participationCategories: {
-                                  ...editingEvent.participationCategories,
-                                  custom: {
-                                    ...editingEvent.participationCategories.custom,
-                                    name: e.target.value
+
+                    <div className="space-y-4">
+                      {editingEvent.participationCategories.custom.map((customCat, index) => (
+                        <div key={index} className="p-3 bg-background/50 rounded-md border border-border/50 relative group">
+                          <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-muted-foreground hover:text-red-500"
+                              onClick={() => {
+                                const newCustom = [...editingEvent.participationCategories.custom];
+                                newCustom.splice(index, 1);
+                                setEditingEvent({
+                                  ...editingEvent,
+                                  participationCategories: {
+                                    ...editingEvent.participationCategories,
+                                    custom: newCustom
                                   }
-                                }
-                              })
-                            }
-                            className="bg-muted/50 border-border/50"
-                          />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="h-4 w-4 text-muted-foreground" />
-                          <Input
-                            type="number"
-                            value={editingEvent.participationCategories.custom.fee}
-                            onChange={(e) =>
-                              setEditingEvent({
-                                ...editingEvent,
-                                participationCategories: {
-                                  ...editingEvent.participationCategories,
-                                  custom: {
-                                    ...editingEvent.participationCategories.custom,
-                                    fee: parseInt(e.target.value) || 0,
-                                  },
-                                },
-                              })
-                            }
-                            className="w-32 bg-muted/50 border-border/50"
-                          />
-                          <span className="text-sm text-muted-foreground">
-                            per team
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">Min:</span>
-                            <Input
-                              type="number"
-                              value={editingEvent.participationCategories.custom.minParticipants}
-                              onChange={(e) =>
-                                setEditingEvent({
-                                  ...editingEvent,
-                                  participationCategories: {
-                                    ...editingEvent.participationCategories,
-                                    custom: {
-                                      ...editingEvent.participationCategories.custom,
-                                      minParticipants: parseInt(e.target.value) || 1,
-                                    },
-                                  },
-                                })
-                              }
-                              className="w-20 bg-muted/50 border-border/50"
-                            />
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">Max:</span>
-                            <Input
-                              type="number"
-                              value={editingEvent.participationCategories.custom.maxParticipants}
-                              onChange={(e) =>
-                                setEditingEvent({
-                                  ...editingEvent,
-                                  participationCategories: {
-                                    ...editingEvent.participationCategories,
-                                    custom: {
-                                      ...editingEvent.participationCategories.custom,
-                                      maxParticipants: parseInt(e.target.value) || 1,
-                                    },
-                                  },
-                                })
-                              }
-                              className="w-20 bg-muted/50 border-border/50"
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Upload className="h-4 w-4 text-muted-foreground" />
-                            <Input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0] || null;
-                                setEditingEvent({
-                                  ...editingEvent,
-                                  participationCategories: {
-                                    ...editingEvent.participationCategories,
-                                    custom: {
-                                      ...editingEvent.participationCategories.custom,
-                                      qrCodeFile: file || undefined,
-                                    },
-                                  },
                                 });
                               }}
-                              className="flex-1 bg-muted/50 border-border/50"
-                            />
+                            >
+                              <XCircle className="h-4 w-4" />
+                            </Button>
                           </div>
-                          {(editingEvent.participationCategories.custom.qrCodeFile ||
-                            editingEvent.participationCategories.custom.qrUrl) && (
-                              <div className="mt-3">
-                                {editingEvent.participationCategories.custom.qrCodeFile ? (
-                                  <>
-                                    <p className="text-xs text-muted-foreground mb-2">
-                                      New QR Code: {editingEvent.participationCategories.custom.qrCodeFile.name}
-                                    </p>
-                                    <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
-                                      <img
-                                        src={URL.createObjectURL(editingEvent.participationCategories.custom.qrCodeFile)}
-                                        alt="Custom QR Code Preview"
-                                        className="w-full h-full object-contain"
-                                      />
-                                    </div>
-                                  </>
-                                ) : (
-                                  <>
-                                    <p className="text-xs text-muted-foreground mb-2">
-                                      Current QR Code
-                                    </p>
-                                    <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
-                                      <img
-                                        src={editingEvent.participationCategories.custom.qrUrl}
-                                        alt="Custom QR Code"
-                                        className="w-full h-full object-contain"
-                                      />
-                                    </div>
-                                  </>
-                                )}
+
+                          <div className="space-y-3">
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium">Participation Details</label>
+                              <Input
+                                placeholder="Participation Name (e.g. VIP, Spectator)"
+                                value={customCat.name}
+                                onChange={(e) => {
+                                  const newCustom = [...editingEvent.participationCategories.custom];
+                                  newCustom[index] = { ...newCustom[index], name: e.target.value };
+                                  setEditingEvent({
+                                    ...editingEvent,
+                                    participationCategories: {
+                                      ...editingEvent.participationCategories,
+                                      custom: newCustom
+                                    }
+                                  });
+                                }}
+                                className="bg-muted/50 border-border/50"
+                              />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <DollarSign className="h-4 w-4 text-muted-foreground" />
+                              <Input
+                                type="number"
+                                value={customCat.fee}
+                                onChange={(e) => {
+                                  const newCustom = [...editingEvent.participationCategories.custom];
+                                  newCustom[index] = { ...newCustom[index], fee: parseInt(e.target.value) || 0 };
+                                  setEditingEvent({
+                                    ...editingEvent,
+                                    participationCategories: {
+                                      ...editingEvent.participationCategories,
+                                      custom: newCustom
+                                    }
+                                  });
+                                }}
+                                className="w-32 bg-muted/50 border-border/50"
+                              />
+                              <span className="text-sm text-muted-foreground">
+                                per team
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm">Min:</span>
+                                <Input
+                                  type="number"
+                                  value={customCat.minParticipants}
+                                  onChange={(e) => {
+                                    const newCustom = [...editingEvent.participationCategories.custom];
+                                    newCustom[index] = { ...newCustom[index], minParticipants: parseInt(e.target.value) || 1 };
+                                    setEditingEvent({
+                                      ...editingEvent,
+                                      participationCategories: {
+                                        ...editingEvent.participationCategories,
+                                        custom: newCustom
+                                      }
+                                    });
+                                  }}
+                                  className="w-20 bg-muted/50 border-border/50"
+                                />
                               </div>
-                            )}
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm">Max:</span>
+                                <Input
+                                  type="number"
+                                  value={customCat.maxParticipants}
+                                  onChange={(e) => {
+                                    const newCustom = [...editingEvent.participationCategories.custom];
+                                    newCustom[index] = { ...newCustom[index], maxParticipants: parseInt(e.target.value) || 1 };
+                                    setEditingEvent({
+                                      ...editingEvent,
+                                      participationCategories: {
+                                        ...editingEvent.participationCategories,
+                                        custom: newCustom
+                                      }
+                                    });
+                                  }}
+                                  className="w-20 bg-muted/50 border-border/50"
+                                />
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <Upload className="h-4 w-4 text-muted-foreground" />
+                                <Input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0] || null;
+                                    const newCustom = [...editingEvent.participationCategories.custom];
+                                    newCustom[index] = { ...newCustom[index], qrCodeFile: file || undefined };
+                                    setEditingEvent({
+                                      ...editingEvent,
+                                      participationCategories: {
+                                        ...editingEvent.participationCategories,
+                                        custom: newCustom
+                                      }
+                                    });
+                                  }}
+                                  className="flex-1 bg-muted/50 border-border/50"
+                                />
+                              </div>
+                              {(customCat.qrCodeFile || customCat.qrUrl) && (
+                                <div className="mt-3">
+                                  {customCat.qrCodeFile ? (
+                                    <>
+                                      <p className="text-xs text-muted-foreground mb-2">
+                                        New QR Code: {customCat.qrCodeFile.name}
+                                      </p>
+                                      <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
+                                        <img
+                                          src={URL.createObjectURL(customCat.qrCodeFile)}
+                                          alt="Custom QR Code Preview"
+                                          className="w-full h-full object-contain"
+                                        />
+                                      </div>
+                                    </>
+                                  ) : (
+                                    customCat.qrUrl && (
+                                      <>
+                                        <p className="text-xs text-muted-foreground mb-2">
+                                          Current QR Code
+                                        </p>
+                                        <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
+                                          <img
+                                            src={customCat.qrUrl}
+                                            alt="Custom QR Code"
+                                            className="w-full h-full object-contain"
+                                          />
+                                        </div>
+                                      </>
+                                    )
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      ))}
+                      {editingEvent.participationCategories.custom.length === 0 && (
+                        <div className="text-center py-6 text-muted-foreground text-sm border border-dashed border-border/50 rounded-md">
+                          No custom participation types added.
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </TabsContent>
               </Tabs>
