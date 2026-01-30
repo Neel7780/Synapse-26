@@ -1,39 +1,42 @@
 import { createClient } from "@/utils/supabase/server";
+import { getSupabaseServer } from "@/lib/supabaseServer";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
-    const supabase = (await createClient()) as any;
+    const supabaseAuth = (await createClient()) as any;
+    const supabaseAdmin = getSupabaseServer();
 
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await supabaseAuth.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get coordinator email
-    const { data: userData } = await supabase
-      .from("users")
-      .select("email")
-      .eq("user_id", user.id)
-      .single();
+    const coordinatorEmail = user.email ?? null;
 
-    if (!userData?.email) {
+    if (!coordinatorEmail) {
       return NextResponse.json({ error: "User email not found" }, { status: 400 });
     }
 
     const { searchParams } = new URL(req.url);
-    const eventId = searchParams.get("eventId");
+    const eventIdParam = searchParams.get("eventId");
 
-    if (!eventId) {
+    if (!eventIdParam) {
       return NextResponse.json({ error: "Event ID is required" }, { status: 400 });
     }
 
+    const eventId = parseInt(eventIdParam, 10);
+
+    if (isNaN(eventId)) {
+      return NextResponse.json({ error: "Invalid event ID" }, { status: 400 });
+    }
+
     // Verify that the coordinator owns this event
-    const { data: eventData, error: eventError } = await supabase
+    const { data: eventData, error: eventError } = await supabaseAdmin
       .from("event")
       .select("event_id, event_name, coordinator_email")
       .eq("event_id", eventId)
@@ -43,14 +46,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
-    if (eventData.coordinator_email !== userData.email) {
+    if (eventData.coordinator_email !== coordinatorEmail) {
       return NextResponse.json({ error: "Access denied to this event" }, { status: 403 });
     }
 
     const search = searchParams.get("searchParams") ?? "";
-    const statusFilter = searchParams.get("status");
+    const statusFilter = searchParams.get("status") as "pending" | "accepted" | "rejected" | "all" | null;
 
-    let query = supabase.from("event_registrations").select(
+    let query = supabaseAdmin.from("event_registrations").select(
       `
       registration_id,
       transaction_id,
@@ -65,7 +68,7 @@ export async function GET(req: NextRequest) {
     if (statusFilter && statusFilter !== "all") {
       if (statusFilter === "pending") {
         query = query.or("coordinator_status.is.null,coordinator_status.eq.pending");
-      } else {
+      } else if (statusFilter === "accepted" || statusFilter === "rejected") {
         query = query.eq("coordinator_status", statusFilter);
       }
     }
@@ -89,7 +92,7 @@ export async function GET(req: NextRequest) {
 
         // Fetch user details
         if (reg.registered_by_user_id) {
-          const { data: user, error: userError } = await supabase
+          const { data: user, error: userError } = await supabaseAdmin
             .from("users")
             .select("user_id, user_name, email, phone, college")
             .eq("user_id", reg.registered_by_user_id)
@@ -106,7 +109,7 @@ export async function GET(req: NextRequest) {
 
         // Fetch fee details
         if (reg.fee_id) {
-          const { data: fee } = await supabase
+          const { data: fee } = await supabaseAdmin
             .from("fee")
             .select("participation_type, price, qr_code")
             .eq("fee_id", reg.fee_id)
@@ -115,7 +118,7 @@ export async function GET(req: NextRequest) {
         }
 
         // Fetch event details
-        const { data: event } = await supabase
+        const { data: event } = await supabaseAdmin
           .from("event")
           .select("event_name, event_category(category_name)")
           .eq("event_id", eventId)
@@ -123,14 +126,14 @@ export async function GET(req: NextRequest) {
         eventData = event;
 
         // Fetch team members
-        const { data: teamRow } = await supabase
+        const { data: teamRow } = await supabaseAdmin
           .from("team")
           .select("team_id")
           .eq("registration_id", reg.registration_id)
           .single();
 
         if (teamRow?.team_id) {
-          const { data: memberRows } = await supabase
+          const { data: memberRows } = await supabaseAdmin
             .from("team_members")
             .select("user_id")
             .eq("team_id", teamRow.team_id);
@@ -138,7 +141,7 @@ export async function GET(req: NextRequest) {
           if (memberRows && memberRows.length > 0) {
             const membersDetailed = await Promise.all(
               memberRows.map(async (member: any) => {
-                const { data: memberUser } = await supabase
+                const { data: memberUser } = await supabaseAdmin
                   .from("users")
                   .select("user_id, user_name, email, phone, college")
                   .eq("user_id", member.user_id)
@@ -150,12 +153,15 @@ export async function GET(req: NextRequest) {
           }
         }
 
+        // Include the team leader (registered_by user) in team_members
+        const allTeamMembers = [userData, ...teamMembers].filter(member => member && member.user_id);
+
         return {
           ...reg,
           users: userData,
           fee: feeData,
           event: eventData,
-          team_members: teamMembers,
+          team_members: allTeamMembers,
         };
       })
     );
@@ -199,7 +205,7 @@ export async function GET(req: NextRequest) {
       ...(filteredData ?? []).map((row: any) => {
         const price = row.fee?.price ?? 0;
         const teamMembers = row.team_members ?? [];
-        const groupSize = teamMembers.length || 1;
+        const groupSize = teamMembers.length;
 
         // Log the row data to debug
         console.log(`CSV Row for registration ${row.registration_id}:`, {

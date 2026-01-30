@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import { getSupabaseServer } from "@/lib/supabaseServer";
 import { NextRequest, NextResponse } from "next/server";
 import { corsHeaders, handleCorsResponse, addCorsHeaders } from '@/lib/cors'
 
@@ -18,9 +19,10 @@ export async function OPTIONS(request: Request) {
 export async function GET(req: NextRequest) {
   try {
     const origin = req.headers.get("origin");
-    const supabase = (await createClient()) as any;
+    const supabaseAuth = (await createClient()) as any;
+    const supabaseAdmin = getSupabaseServer();
 
-    if (!(await checkAdmin(supabase))) {
+    if (!(await checkAdmin(supabaseAuth))) {
       const response = NextResponse.json({ error: "Unauthorized" }, { status: 403 });
       return addCorsHeaders(response, origin);
     }
@@ -28,9 +30,9 @@ export async function GET(req: NextRequest) {
 
     const search = searchParams.get("searchParams") ?? "";
     const eventFilter = searchParams.get("filter");
-    const paymentStatus = searchParams.get("paymentStatus");
+    const paymentStatus = searchParams.get("paymentStatus") as "pending" | "done" | "failed" | null;
 
-    let query = supabase.from("event_registrations").select(
+    let query = supabaseAdmin.from("event_registrations").select(
       `
       registration_id,
       transaction_id,
@@ -47,7 +49,7 @@ export async function GET(req: NextRequest) {
       // We'll filter by event name after fetching event data
     }
 
-    if (paymentStatus) {
+    if (paymentStatus && (paymentStatus === "pending" || paymentStatus === "done" || paymentStatus === "failed")) {
       query = query.eq("payment_status", paymentStatus);
     }
 
@@ -68,7 +70,7 @@ export async function GET(req: NextRequest) {
 
         // Fetch user details
         if (reg.registered_by_user_id) {
-          const { data: user } = await supabase
+          const { data: user } = await supabaseAdmin
             .from("users")
             .select("user_id, user_name, email, phone, college")
             .eq("user_id", reg.registered_by_user_id)
@@ -78,7 +80,7 @@ export async function GET(req: NextRequest) {
 
         // Fetch fee details
         if (reg.fee_id) {
-          const { data: fee } = await supabase
+          const { data: fee } = await supabaseAdmin
             .from("fee")
             .select("participation_type, price, qr_code")
             .eq("fee_id", reg.fee_id)
@@ -88,7 +90,7 @@ export async function GET(req: NextRequest) {
 
         // Fetch event details
         if (reg.event_id) {
-          const { data: event } = await supabase
+          const { data: event } = await supabaseAdmin
             .from("event")
             .select("event_name, event_category(category_name)")
             .eq("event_id", reg.event_id)
@@ -97,14 +99,14 @@ export async function GET(req: NextRequest) {
         }
 
         // Fetch team members
-        const { data: teamRow } = await supabase
+        const { data: teamRow } = await supabaseAdmin
           .from("team")
           .select("team_id")
           .eq("registration_id", reg.registration_id)
           .single();
 
         if (teamRow?.team_id) {
-          const { data: memberRows } = await supabase
+          const { data: memberRows } = await supabaseAdmin
             .from("team_members")
             .select("user_id")
             .eq("team_id", teamRow.team_id);
@@ -112,7 +114,7 @@ export async function GET(req: NextRequest) {
           if (memberRows && memberRows.length > 0) {
             const membersDetailed = await Promise.all(
               memberRows.map(async (member: any) => {
-                const { data: memberUser } = await supabase
+                const { data: memberUser } = await supabaseAdmin
                   .from("users")
                   .select("user_id, user_name, email, phone, college")
                   .eq("user_id", member.user_id)
@@ -124,12 +126,31 @@ export async function GET(req: NextRequest) {
           }
         }
 
+        // Include the team leader (registered_by user) in team_members
+        // Deduplicate by user_id to avoid including leader twice
+        const memberIds = new Set<string>();
+        const allTeamMembers: any[] = [];
+        
+        // Add team leader first
+        if (userData && userData.user_id) {
+          memberIds.add(userData.user_id);
+          allTeamMembers.push(userData);
+        }
+        
+        // Add other team members, skipping duplicates
+        teamMembers.forEach((member: any) => {
+          if (member && member.user_id && !memberIds.has(member.user_id)) {
+            memberIds.add(member.user_id);
+            allTeamMembers.push(member);
+          }
+        });
+
         return {
           ...reg,
           users: userData,
           fee: feeData,
           event: eventData,
-          team_members: teamMembers,
+          team_members: allTeamMembers,
         };
       })
     );
@@ -180,7 +201,7 @@ export async function GET(req: NextRequest) {
       ...(filteredData ?? []).map((row: any) => {
         const price = row.fee?.price ?? 0;
         const teamMembers = row.team_members ?? [];
-        const groupSize = teamMembers.length || 1;
+        const groupSize = teamMembers.length;
 
         // Get all team member details
         const teamMemberNames: string[] = [];
