@@ -9,8 +9,8 @@ export type EventCategoryRow = Database['public']['Tables']['event_category']['R
 export type FeeRow = Database['public']['Tables']['fee']['Row'];
 export type EventFeeRow = Database['public']['Tables']['event_fee']['Row'];
 
-// Participation type enum from Supabase
-export type ParticipationType = Database['public']['Enums']['participation_type_enum'];
+// Participation type enum from Supabase (extended to allow custom types)
+export type ParticipationType = Database['public']['Enums']['participation_type_enum'] | string;
 
 // Fee details from the fee table
 export interface FeeDetails {

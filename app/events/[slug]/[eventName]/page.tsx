@@ -27,10 +27,22 @@ export default function EventPage() {
     const [selectedFeeIndex, setSelectedFeeIndex] = useState(0);
 
     // Sort fees: Solo -> Duet -> Group
+    // Sort fees: Solo -> Duet -> Group -> Others
     const sortedFees = useMemo(() => {
         if (!fees || fees.length === 0) return [];
         const order = ["solo", "duet", "group"];
-        return [...fees].sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type));
+        return [...fees].sort((a, b) => {
+            const indexA = order.indexOf(a.type.toLowerCase());
+            const indexB = order.indexOf(b.type.toLowerCase());
+            // If both are standard types, sort by order
+            if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+            // If a is standard and b is custom, a comes first
+            if (indexA !== -1) return -1;
+            // If b is standard and a is custom, b comes first
+            if (indexB !== -1) return 1;
+            // Both are custom, sort alphabetically
+            return a.type.localeCompare(b.type);
+        });
     }, [fees]);
 
     // Reset selection when fees change
@@ -159,7 +171,7 @@ export default function EventPage() {
                         </div>
                         <div className="flex items-center gap-4">
                             <Users className="text-red-600 w-6 h-6" />
-                            <span>Team: {currentFee?.type === 'solo' ? 'Solo' : currentFee?.type === 'duet' ? 'Duet' : 'Group'}</span>
+                            <span>Team: {currentFee?.type ? (currentFee.type.charAt(0).toUpperCase() + currentFee.type.slice(1)) : 'Group'}</span>
                         </div>
                     </div>
 
@@ -208,7 +220,7 @@ export default function EventPage() {
                                                         />
                                                     )}
                                                     <span className="relative z-20">
-                                                        {fee.type === 'solo' ? 'Solo' : fee.type === 'duet' ? 'Duet' : 'Group'}
+                                                        {fee.type.charAt(0).toUpperCase() + fee.type.slice(1)}
                                                     </span>
                                                 </button>
                                             );
