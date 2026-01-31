@@ -190,12 +190,10 @@ export default function EventPage() {
                                 </div>
 
                                 {/* Disabled Registration Button */}
-                                <Button
-                                    disabled
-                                    className="w-fit px-12 py-6 text-xl font-jqka tracking-[0.2em] uppercase bg-gray-700 border border-gray-600 text-gray-400 rounded-none mt-4 cursor-not-allowed opacity-70 select-none"
-                                >
+                                <Button disabled className="w-full sm:w-fit px-5 py-3 sm:px-8 sm:py-4 lg:px-12 lg:py-6 text-sm sm:text-base lg:text-xl font-jqka tracking-[0.12em] sm:tracking-[0.16em] lg:tracking-[0.2em] uppercase bg-gray-700 border border-gray-600 text-gray-400 rounded-none mt-4 cursor-not-allowed opacity-70 select-none">
                                     REGISTRATION CLOSED
                                 </Button>
+
                             </div>
                         ) : sortedFees.length > 0 ? (
                             <div className="flex flex-col gap-8">
