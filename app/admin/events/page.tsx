@@ -1337,10 +1337,11 @@ export default function EventsPage() {
                               className="flex-1 bg-muted/50 border-border/50"
                             />
                           </div>
-                          {(editingEvent.participationCategories.solo
-                            .qrCodeFile ||
-                            editingEvent.participationCategories.solo
-                              .qrUrl) && (
+                          {(editingEvent.participationCategories.solo.fee > 0 &&
+                            (editingEvent.participationCategories.solo
+                              .qrCodeFile ||
+                              editingEvent.participationCategories.solo
+                                .qrUrl)) && (
                               <div className="mt-3">
                                 {editingEvent.participationCategories.solo
                                   .qrCodeFile ? (
@@ -1462,10 +1463,11 @@ export default function EventsPage() {
                               className="flex-1 bg-muted/50 border-border/50"
                             />
                           </div>
-                          {(editingEvent.participationCategories.duet
-                            .qrCodeFile ||
-                            editingEvent.participationCategories.duet
-                              .qrUrl) && (
+                          {(editingEvent.participationCategories.duet.fee > 0 &&
+                            (editingEvent.participationCategories.duet
+                              .qrCodeFile ||
+                              editingEvent.participationCategories.duet
+                                .qrUrl)) && (
                               <div className="mt-3">
                                 {editingEvent.participationCategories.duet
                                   .qrCodeFile ? (
@@ -1642,10 +1644,11 @@ export default function EventsPage() {
                               className="flex-1 bg-muted/50 border-border/50"
                             />
                           </div>
-                          {(editingEvent.participationCategories.group
-                            .qrCodeFile ||
-                            editingEvent.participationCategories.group
-                              .qrUrl) && (
+                          {(editingEvent.participationCategories.group.fee > 0 &&
+                            (editingEvent.participationCategories.group
+                              .qrCodeFile ||
+                              editingEvent.participationCategories.group
+                                .qrUrl)) && (
                               <div className="mt-3">
                                 {editingEvent.participationCategories.group
                                   .qrCodeFile ? (
@@ -1854,7 +1857,7 @@ export default function EventsPage() {
                                   className="flex-1 bg-muted/50 border-border/50"
                                 />
                               </div>
-                              {(customCat.qrCodeFile || customCat.qrUrl) && (
+                              {(customCat.fee > 0 && (customCat.qrCodeFile || customCat.qrUrl)) && (
                                 <div className="mt-3">
                                   {customCat.qrCodeFile ? (
                                     <>

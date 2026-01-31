@@ -229,9 +229,9 @@ export async function POST(request: Request) {
         }
       }
 
-      // Filter out fees with zero or invalid prices and create inserts
+      // Filter out fees with invalid prices (allow 0) and create inserts
       const feeInserts = fees
-        .filter((f: any) => f.price && Number(f.price) > 0)
+        .filter((f: any) => f.price !== undefined && f.price !== null && Number(f.price) >= 0)
         .map((f: any) => ({
           participation_type: f.type,
           price: Number(f.price),
@@ -506,9 +506,9 @@ export async function PUT(request: Request) {
           }
         }
 
-        // Filter out fees with zero or invalid prices and create inserts
+        // Filter out fees with invalid prices (allow 0) and create inserts
         const feeInserts = fees
-          .filter((f: any) => f.price && Number(f.price) > 0)
+          .filter((f: any) => f.price !== undefined && f.price !== null && Number(f.price) >= 0)
           .map((f: any) => ({
             participation_type: f.type,
             price: Number(f.price),
