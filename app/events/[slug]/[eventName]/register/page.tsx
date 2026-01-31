@@ -159,13 +159,17 @@ export default function RegisterPage() {
     setSubmitting(true);
     setSubmitError("");
 
-    if (!isDauRegistration && !paymentScreenshot.trim()) {
+    // Check if registration is free (either DAU free or price is 0)
+    const isFreeEvent = feePrice === 0;
+    const isFreeRegistration = isDauRegistration || isFreeEvent;
+
+    if (!isFreeRegistration && !paymentScreenshot.trim()) {
       setSubmitError("Please upload payment screenshot");
       setSubmitting(false);
       return;
     }
 
-    if (!isDauRegistration && !transactionId.trim()) {
+    if (!isFreeRegistration && !transactionId.trim()) {
       setSubmitError("Please enter transaction ID");
       setSubmitting(false);
       return;
@@ -181,10 +185,10 @@ export default function RegisterPage() {
           registered_by_user_id: user?.id,
           team_member_emails:
             feeType !== "solo" ? teamEmails.filter((e) => e.trim()) : [],
-          payment_screenshot_url: isDauRegistration
-            ? "DAU_VERIFIED"
+          payment_screenshot_url: isFreeRegistration
+            ? (isDauRegistration ? "DAU_VERIFIED" : "FREE_EVENT")
             : paymentScreenshot.trim(),
-          transaction_id: isDauRegistration ? "DAU_FREE" : transactionId.trim(),
+          transaction_id: isFreeRegistration ? (isDauRegistration ? "DAU_FREE" : "FREE_EVENT") : transactionId.trim(),
         }),
       });
 
@@ -384,15 +388,16 @@ export default function RegisterPage() {
 
             {/* QR Code Display */}
             <div className="mb-8">
-              {isDauRegistration ? (
+              {isDauRegistration || feePrice === 0 ? (
                 <div className="text-center p-8 bg-green-500/10 border border-green-500/30 rounded-xl mb-8">
                   <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
                   <h3 className="text-2xl font-bold text-green-400 mb-2">
-                    DAU Student Verified
+                    {isDauRegistration ? "DAU Student Verified" : "Free Event"}
                   </h3>
                   <p className="text-gray-300">
-                    As a DA-IICT student, you can register for this event for
-                    free!
+                    {isDauRegistration
+                      ? "As a DA-IICT student, you can register for this event for free!"
+                      : "This event is free for everyone!"}
                   </p>
                   <p className="text-sm text-gray-500 mt-2">
                     No payment required. Proceed to submit your registration.
@@ -430,8 +435,8 @@ export default function RegisterPage() {
               )}
             </div>
 
-            {/* Payment Inputs - Only if not DAU free */}
-            {!isDauRegistration && (
+            {/* Payment Inputs - Only if not DAU free AND not free event */}
+            {!isDauRegistration && feePrice > 0 && (
               <>
                 {/* Payment Screenshot Input */}
                 <div className="mb-6">

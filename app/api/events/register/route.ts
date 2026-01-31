@@ -64,7 +64,15 @@ export async function POST(request: NextRequest) {
             team_member_emails.length === 0 ||
             team_member_emails.every((email: string) => email && email.toLowerCase().trim().endsWith("@dau.ac.in"));
 
-        const isFreeRegistration = isDauFree && isDauStudent && areAllTeamMembersDau;
+        // Get fee details to calculate amount and check for free event
+        const { data: feeData, error: feeError } = await supabase
+            .from("fee")
+            .select("price, participation_type")
+            .eq("fee_id", fee_id)
+            .single();
+
+        const isFreeEvent = feeData?.price === 0;
+        const isFreeRegistration = (isDauFree && isDauStudent && areAllTeamMembersDau) || isFreeEvent;
 
         if (!isFreeRegistration) {
             if (!payment_screenshot_url || !payment_screenshot_url.trim()) {
@@ -82,18 +90,6 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // Get fee details to calculate amount
-        const { data: feeData, error: feeError } = await supabase
-            .from("fee")
-            .select("price, participation_type")
-            .eq("fee_id", fee_id)
-            .single();
-
-        if (feeError || !feeData) {
-            // Fee not found in DB - use price from request if available
-            console.log("Fee not found, using default");
-        }
-
         // Create the registration
         const { data: registration, error: regError } = await supabase
             .from("event_registrations")
@@ -101,8 +97,8 @@ export async function POST(request: NextRequest) {
                 event_id,
                 fee_id,
                 registered_by_user_id,
-                payment_screenshot_url: isFreeRegistration ? "DAU_VERIFIED" : payment_screenshot_url.trim(),
-                transaction_id: isFreeRegistration ? "DAU_FREE" : transaction_id.trim(),
+                payment_screenshot_url: isFreeRegistration ? (isDauFree && isDauStudent ? "DAU_VERIFIED" : "FREE_EVENT") : payment_screenshot_url.trim(),
+                transaction_id: isFreeRegistration ? (isDauFree && isDauStudent ? "DAU_FREE" : "FREE_EVENT") : transaction_id.trim(),
                 payment_status: "done",
                 gross_amount: isFreeRegistration ? 0 : (feeData?.price || 0),
                 registration_date: new Date().toISOString(),
