@@ -98,7 +98,9 @@ export async function POST(request: NextRequest) {
                 fee_id,
                 registered_by_user_id,
                 payment_screenshot_url: isFreeRegistration ? (isDauFree && isDauStudent ? "DAU_VERIFIED" : "FREE_EVENT") : payment_screenshot_url.trim(),
-                transaction_id: isFreeRegistration ? (isDauFree && isDauStudent ? "DAU_FREE" : "FREE_EVENT") : transaction_id.trim(),
+                transaction_id: isFreeRegistration
+                    ? (isDauFree && isDauStudent ? `DAU_FREE_${registered_by_user_id}_${Date.now()}` : `FREE_EVENT_${registered_by_user_id}_${Date.now()}`)
+                    : transaction_id.trim(),
                 payment_status: "done",
                 gross_amount: isFreeRegistration ? 0 : (feeData?.price || 0),
                 registration_date: new Date().toISOString(),
