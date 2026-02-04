@@ -199,31 +199,53 @@ export default function EventPage() {
                             <div className="flex flex-col gap-8">
                                 <div className="flex flex-wrap items-center gap-4">
                                     <span className="text-red-600 text-xl md:text-2xl font-normal">Select Team:</span>
-                                    {/* Toggle Group */}
-                                    <div className="flex bg-white rounded-full relative p-0 overflow-hidden">
-                                        {sortedFees.map((fee, index) => {
-                                            const isActive = selectedFeeIndex === index;
-                                            return (
-                                                <button
-                                                    key={fee.fee_id}
-                                                    onClick={() => setSelectedFeeIndex(index)}
-                                                    className={`relative px-6 py-2 text-base font-medium capitalize rounded-full transition-colors duration-300 z-10 ${isActive ? "text-white" : "text-black hover:bg-gray-100"
-                                                        }`}
-                                                >
-                                                    {isActive && (
-                                                        <motion.div
-                                                            layoutId="active-pill"
-                                                            className="absolute inset-0 bg-red-600 rounded-full -z-10"
-                                                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                                        />
-                                                    )}
-                                                    <span className="relative z-20">
+                                    {/* Toggle Group - Original pill UI for ≤3, flex-wrap for more */}
+                                    {sortedFees.length <= 3 ? (
+                                        /* Original animated pill UI for 3 or fewer */
+                                        <div className="flex bg-white rounded-full relative p-0 overflow-hidden">
+                                            {sortedFees.map((fee, index) => {
+                                                const isActive = selectedFeeIndex === index;
+                                                return (
+                                                    <button
+                                                        key={fee.fee_id}
+                                                        onClick={() => setSelectedFeeIndex(index)}
+                                                        className={`relative px-6 py-2 text-base font-medium capitalize rounded-full transition-colors duration-300 z-10 ${isActive ? "text-white" : "text-black hover:bg-gray-100"
+                                                            }`}
+                                                    >
+                                                        {isActive && (
+                                                            <motion.div
+                                                                layoutId="active-pill"
+                                                                className="absolute inset-0 bg-red-600 rounded-full -z-10"
+                                                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                                            />
+                                                        )}
+                                                        <span className="relative z-20">
+                                                            {fee.type.charAt(0).toUpperCase() + fee.type.slice(1)}
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        /* New flex-wrap UI for more than 3 categories */
+                                        <div className="flex flex-wrap gap-2 sm:gap-3 w-full mt-2">
+                                            {sortedFees.map((fee, index) => {
+                                                const isActive = selectedFeeIndex === index;
+                                                return (
+                                                    <button
+                                                        key={fee.fee_id}
+                                                        onClick={() => setSelectedFeeIndex(index)}
+                                                        className={`px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 text-sm sm:text-base font-medium capitalize rounded-full transition-all duration-300 min-w-[70px] sm:min-w-[80px] text-center ${isActive
+                                                            ? "bg-red-600 text-white shadow-lg shadow-red-600/30"
+                                                            : "bg-white text-black hover:bg-gray-100"
+                                                            }`}
+                                                    >
                                                         {fee.type.charAt(0).toUpperCase() + fee.type.slice(1)}
-                                                    </span>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="flex items-center gap-4">
