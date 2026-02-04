@@ -537,19 +537,34 @@ export default function RegisterPage() {
                 </div>
 
                 {/* Transaction ID Input */}
-                <div className="mb-6">
+                <div className="mb-3">
                   <label className="block text-sm font-medium mb-2">
                     Transaction ID
                   </label>
+
+                  <div className="bg-yellow-500/10 border border-yellow-500/50 rounded-lg p-3 mb-3">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm text-white">
+                        <p className="font-bold text-yellow-500 mb-1">IMPORTANT:</p>
+                        <p>
+                          <span className="font-bold text-white ">Transaction ID</span> is <span className="font-bold text-white">NOT</span> the same as <span className="font-bold text-white">UPI ID</span>.
+                          <br />
+                          Please enter the unique <span className="font-bold text-white">Transaction ID / UTR Number</span> for this payment.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   <Input
                     type="text"
                     value={transactionId}
                     onChange={(e) => setTransactionId(e.target.value)}
-                    placeholder="Enter Transaction ID / UTR Number"
+                    placeholder="Transaction ID/ UTR Number"
                     className="w-full bg-white/5 border-white/10 text-white placeholder:text-gray-500"
                   />
                 </div>
-                <p className="text-xs text-yellow-500/80 mt-[-20px] mb-6">
+                <p className="text-xs text-yellow-500/80 mb-6 pt-[5px]">
                   Note: After successful submission your registration will be
                   approved in 24 to 48 hours.
                 </p>
@@ -563,18 +578,18 @@ export default function RegisterPage() {
               </div>
             )}
 
-            <div className="flex gap-4">
+            <div className="flex flex-col-reverse sm:flex-row gap-4">
               <Button
                 variant="outline"
                 onClick={() => setStep("team")}
-                className="flex-1 py-4 border-white/10 hover:bg-white/5"
+                className="w-full sm:w-auto sm:flex-1 py-4 border-white/10 hover:bg-white/5"
               >
                 Back
               </Button>
               <Button
                 onClick={submitRegistration}
                 disabled={submitting}
-                className="flex-1 py-4 text-lg bg-[#b41c32] hover:bg-[#901628]"
+                className="w-full sm:w-auto sm:flex-1 py-4 text-lg bg-[#b41c32] hover:bg-[#901628]"
               >
                 {submitting ? (
                   <>
@@ -628,6 +643,6 @@ export default function RegisterPage() {
       </div>
 
       <Footer />
-    </main>
+    </main >
   );
 }
