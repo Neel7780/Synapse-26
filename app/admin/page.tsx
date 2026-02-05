@@ -1,6 +1,5 @@
 'use client';
 
-import { useMemo } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
@@ -29,94 +28,43 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
-import {
-  useEvents,
-  useRegistrations,
-  useUsers,
-  useSponsors,
-  useAccommodationOrders,
-} from "@/hooks/use-admin-data";
+import { useDashboardStats } from "@/hooks/use-admin-data";
 
 export default function AdminDashboard() {
-  // Fetch real data from APIs
-  const { data: eventsData, loading: eventsLoading } = useEvents();
-  const { data: registrationsData, loading: registrationsLoading } = useRegistrations({ limit: 5 });
-  const { data: usersData, loading: usersLoading } = useUsers({});
-  const { data: sponsorsData, loading: sponsorsLoading } = useSponsors();
-  const { data: accommodationData, loading: accommodationLoading } = useAccommodationOrders();
+  const { data: dashboardData, loading: isLoading, error, refetch } = useDashboardStats();
 
-  // Compute stats from real data
-  const stats = useMemo(() => {
-    const events = eventsData?.events || [];
-    const totalEvents = events.length;
-    const totalRegistrations = registrationsData?.summary?.total_registrations || 0;
-    const totalUsers = usersData?.total || 0;
-    const totalSponsors = sponsorsData?.count || 0;
+  const stats = {
+    totalEvents: dashboardData?.stats?.totalEvents ?? 0,
+    totalRegistrations: dashboardData?.stats?.totalRegistrations ?? 0,
+    totalUsers: dashboardData?.stats?.totalUsers ?? 0,
+    totalSponsors: dashboardData?.stats?.totalSponsors ?? 0,
+  };
 
-    return {
-      totalEvents,
-      totalRegistrations,
-      totalUsers,
-      totalSponsors,
-    };
-  }, [eventsData, registrationsData, usersData, sponsorsData]);
+  const revenueData = {
+    grossRevenue: dashboardData?.revenue?.gross ?? 0,
+    netRevenue: dashboardData?.revenue?.net ?? 0,
+    paidCount: dashboardData?.revenue?.paidCount ?? 0,
+  };
 
-  // Revenue data from registrations and accommodation
-  const revenueData = useMemo(() => {
-    const regSummary = registrationsData?.summary;
-    const accSummary = accommodationData?.summary;
-    
-    // Revenue from registrations (only verified/paid)
-    // Note: regSummary.net_revenue already accounts for payment_status='done' && coordinator_status='accepted'
-    const regRevenue = regSummary?.net_revenue || 0;
-    
-    // Revenue from accommodation (only verified)
-    const accRevenue = accSummary?.total_revenue || 0;
+  const recentRegistrations = (dashboardData?.recentRegistrations ?? []).map((reg) => ({
+    id: reg.id,
+    userName: reg.userName ?? "Unknown",
+    event: reg.event ?? "Unknown Event",
+    status: (reg.status ?? "pending").toLowerCase(),
+    coordinatorStatus: reg.coordinatorStatus ?? null,
+    amount: reg.amount ?? 0,
+  }));
 
-    return {
-      grossRevenue: (regSummary?.gross_revenue || 0) + accRevenue,
-      netRevenue: regRevenue + accRevenue,
-      paidCount: (regSummary?.paid || 0) + (accSummary?.verified || 0),
-    };
-  }, [registrationsData, accommodationData]);
-
-  // Recent registrations from real data
-  const recentRegistrations = useMemo(() => {
-    return (registrationsData?.data || []).slice(0, 5).map((reg) => ({
-      id: reg.registration_id,
-      userName: reg.user_name,
-      event: reg.event_name,
-      status: reg.payment_status.toLowerCase(),
-      coordinatorStatus: reg.coordinator_status ?? null,
-      amount: reg.gross_amount,
-    }));
-  }, [registrationsData]);
-
-  // Quick stats derived from real data
-  const quickStats = useMemo(() => {
-    return [
-      {
-        label: "Total Users",
-        value: stats.totalUsers.toLocaleString(),
-        change: "Active",
-        positive: true,
-      },
-      {
-        label: "Registrations",
-        value: stats.totalRegistrations.toLocaleString(),
-        change: `${revenueData.paidCount} paid`,
-        positive: true,
-      },
-      {
-        label: "Revenue",
-        value: `₹${(revenueData.netRevenue / 1000).toFixed(1)}K`,
-        change: "Net amount",
-        positive: true,
-      },
-    ];
-  }, [stats, revenueData]);
-
-  const isLoading = eventsLoading || registrationsLoading || usersLoading || sponsorsLoading || accommodationLoading;
+  const quickStats = [
+    { label: "Total Users", value: stats.totalUsers.toLocaleString(), change: "Active", positive: true },
+    { label: "Registrations", value: stats.totalRegistrations.toLocaleString(), change: `${revenueData.paidCount} paid`, positive: true },
+    {
+      label: "Revenue",
+      value: revenueData.netRevenue >= 1000 ? `₹${(revenueData.netRevenue / 1000).toFixed(1)}K` : `₹${revenueData.netRevenue.toLocaleString()}`,
+      change: "Net amount",
+      positive: true,
+    },
+  ];
 
   // Get greeting based on time of day
   const getGreeting = () => {
@@ -128,15 +76,27 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6 p-6">
+      {/* Error State */}
+      {error && (
+        <div className="flex flex-col items-center justify-center py-12 rounded-lg border border-destructive/50 bg-destructive/5">
+          <AlertCircle className="h-10 w-10 text-destructive mb-3" />
+          <p className="text-destructive font-medium">Failed to load dashboard</p>
+          <p className="text-sm text-muted-foreground mt-1 mb-4">{error}</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      )}
+
       {/* Loading State */}
-      {isLoading && (
+      {isLoading && !error && (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <span className="ml-2 text-muted-foreground">Loading dashboard data...</span>
         </div>
       )}
 
-      {!isLoading && (
+      {!isLoading && !error && (
         <>
           {/* Welcome Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -186,7 +146,7 @@ export default function AdminDashboard() {
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-3xl font-bold">₹{revenueData.netRevenue.toLocaleString()}</p>
+                    <p className="text-3xl font-bold">₹{(revenueData.netRevenue ?? 0).toLocaleString()}</p>
                     <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                       <ArrowUpRight className="h-3 w-3 text-emerald-400" />
                       <span className="text-emerald-400 font-medium">Net Revenue</span>
@@ -196,7 +156,7 @@ export default function AdminDashboard() {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-muted-foreground">Gross</p>
-                      <p className="font-semibold">₹{revenueData.grossRevenue.toLocaleString()}</p>
+                      <p className="font-semibold">₹{(revenueData.grossRevenue ?? 0).toLocaleString()}</p>
                     </div>
                   </div>
                 </div>
@@ -285,9 +245,13 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent className="p-0">
                 {recentRegistrations.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                    <AlertCircle className="h-8 w-8 mb-2" />
-                    <p>No registrations yet</p>
+                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                    <Ticket className="h-10 w-10 mb-3 opacity-50" />
+                    <p className="font-medium">No registrations yet</p>
+                    <p className="text-sm mt-1">Registrations will appear here once users sign up for events</p>
+                    <Link href="/admin/registrations" className="mt-4">
+                      <Button variant="outline" size="sm">View Registrations</Button>
+                    </Link>
                   </div>
                 ) : (
                   <Table>
@@ -305,13 +269,19 @@ export default function AdminDashboard() {
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-xs font-medium">
-                                {reg.userName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                                {(reg.userName || "?")
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .filter(Boolean)
+                                  .join("")
+                                  .slice(0, 2)
+                                  .toUpperCase() || "?"}
                               </div>
-                              <span className="font-medium truncate max-w-[120px]">{reg.userName}</span>
+                              <span className="font-medium truncate max-w-[120px]">{reg.userName || "Unknown"}</span>
                             </div>
                           </TableCell>
-                          <TableCell className="text-muted-foreground truncate max-w-[150px]">{reg.event}</TableCell>
-                          <TableCell className="font-medium">₹{reg.amount}</TableCell>
+                          <TableCell className="text-muted-foreground truncate max-w-[150px]">{reg.event || "—"}</TableCell>
+                          <TableCell className="font-medium">₹{(reg.amount ?? 0).toLocaleString()}</TableCell>
                           <TableCell>
                             {reg.status === "paid" || reg.status === "success" ? (
                               <div className="flex items-center gap-1.5 text-emerald-400">

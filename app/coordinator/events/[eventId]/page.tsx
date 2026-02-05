@@ -39,7 +39,7 @@ import {
   Mail,
   Phone,
   Building,
-  DollarSign,
+  IndianRupee,
   Users,
   Calendar,
   Download,

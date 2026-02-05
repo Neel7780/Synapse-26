@@ -34,7 +34,7 @@ import {
   Trash2,
   ShoppingBag,
   Package,
-  DollarSign,
+  IndianRupee,
   Loader2,
   AlertCircle,
   Check,
@@ -179,7 +179,7 @@ export default function MerchandiseManagementPage() {
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-2">
               <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                <DollarSign className="h-5 w-5 text-amber-400" />
+                <IndianRupee className="h-5 w-5 text-amber-400" />
               </div>
             </div>
             <p className="text-2xl font-bold">₹{totalValue.toLocaleString()}</p>

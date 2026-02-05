@@ -7,7 +7,7 @@ import { AdminPageHeader } from "@/components/admin/ui/AdminSidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
-import { ArrowLeft, Ticket, User, DollarSign, CreditCard, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Ticket, User, IndianRupee, CreditCard, Loader2, AlertCircle } from "lucide-react";
 
 type Registration = {
   user: {

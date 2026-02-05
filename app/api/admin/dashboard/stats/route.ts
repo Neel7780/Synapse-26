@@ -54,6 +54,8 @@ export async function GET(_req: NextRequest) {
       todayRegistrationsResult,
       yesterdayRegistrationsResult,
       recentRegistrationsResult,
+      allRegistrationsResult,
+      accommodationResult,
     ] = await Promise.all([
       // Total counts (using head: true for efficiency)
       supabase.from("event").select("event_id", { count: "exact", head: true }),
@@ -78,21 +80,22 @@ export async function GET(_req: NextRequest) {
         .gte("created_at", yesterdayStart)
         .lt("created_at", todayStart),
 
-      // Recent paid registrations (limit 5)
+      // Recent registrations (all statuses, limit 5)
       supabase
         .from("event_registrations")
-        .select(`
-          registration_id,
-          payment_status,
-          gross_amount,
-          created_at,
-          users(user_name),
-          event(event_name)
-        `)
-        .eq("payment_status", "done")
-        .not("created_at", "is", null)
+        .select("registration_id, registered_by_user_id, payment_status, coordinator_status, gross_amount, created_at, event_id")
         .order("created_at", { ascending: false })
         .limit(5),
+
+      // All registrations for overall revenue (paid + accepted only)
+      supabase
+        .from("event_registrations")
+        .select("payment_status, coordinator_status, gross_amount, payment_method(gateway_charge)"),
+
+      // Accommodation summary (verified revenue)
+      supabase
+        .from("accommodation_bookings")
+        .select("verification_status, amount"),
     ]);
 
     // Log any errors but don't fail the request
@@ -105,6 +108,8 @@ export async function GET(_req: NextRequest) {
       todayRegistrationsResult.error,
       yesterdayRegistrationsResult.error,
       recentRegistrationsResult.error,
+      allRegistrationsResult.error,
+      accommodationResult.error,
     ].filter(Boolean);
 
     if (queryErrors.length > 0) {
@@ -148,6 +153,49 @@ export async function GET(_req: NextRequest) {
 
     const yesterdayNet = yesterdayGross - yesterdayGateway;
 
+    // Calculate overall revenue (all paid + accepted registrations)
+    let overallGross = 0;
+    let overallGateway = 0;
+    let paidCount = 0;
+    (allRegistrationsResult.data ?? []).forEach((reg: any) => {
+      const pStatus = (reg.payment_status || "").toLowerCase();
+      const cStatus = (reg.coordinator_status || "").toLowerCase();
+      const isPaid = pStatus === "done" || pStatus === "paid" || pStatus === "success";
+      if (isPaid && cStatus === "accepted") {
+        paidCount++;
+        overallGross += reg.gross_amount ?? 0;
+        overallGateway += reg.payment_method?.gateway_charge ?? 0;
+      }
+    });
+    const overallNet = overallGross - overallGateway;
+
+    // Accommodation revenue
+    const accommodationData = accommodationResult.data ?? [];
+    const accommodationRevenue = accommodationData
+      .filter((o: any) => o.verification_status === "verified")
+      .reduce((sum: number, o: any) => sum + (o.amount || 0), 0);
+    const accommodationVerified = accommodationData.filter((o: any) => o.verification_status === "verified").length;
+
+    const totalGrossRevenue = overallGross + accommodationRevenue;
+    const totalNetRevenue = overallNet + accommodationRevenue;
+    const totalPaidCount = paidCount + accommodationVerified;
+
+    // Enrich recent registrations with user and event names (fetch separately to avoid join issues)
+    const recentRaw = recentRegistrationsResult.data ?? [];
+    const userIds = [...new Set(recentRaw.map((r: any) => r.registered_by_user_id).filter(Boolean))];
+    const eventIds = [...new Set(recentRaw.map((r: any) => r.event_id).filter(Boolean))];
+
+    let usersMap: Record<string, { user_name: string | null }> = {};
+    let eventsMap: Record<number, { event_name: string }> = {};
+    if (userIds.length > 0) {
+      const { data: usersData } = await supabase.from("users").select("user_id, user_name").in("user_id", userIds);
+      usersMap = (usersData ?? []).reduce((acc: any, u: any) => { acc[u.user_id] = { user_name: u.user_name }; return acc; }, {});
+    }
+    if (eventIds.length > 0) {
+      const { data: eventsData } = await supabase.from("event").select("event_id, event_name").in("event_id", eventIds);
+      eventsMap = (eventsData ?? []).reduce((acc: any, e: any) => { acc[e.event_id] = { event_name: e.event_name }; return acc; }, {});
+    }
+
     // Calculate change percentages
     const revenueChange = yesterdayNet > 0
       ? ((todayNet - yesterdayNet) / yesterdayNet) * 100
@@ -158,12 +206,13 @@ export async function GET(_req: NextRequest) {
       : todayPaidCount > 0 ? 100 : 0;
 
     // Format recent registrations
-    const recentRegistrations = (recentRegistrationsResult.data ?? []).map((reg: any) => ({
+    const recentRegistrations = recentRaw.map((reg: any) => ({
       id: reg.registration_id,
-      userName: reg.users?.user_name || "Unknown",
-      event: reg.event?.event_name || "Unknown Event",
+      userName: usersMap[reg.registered_by_user_id]?.user_name ?? "Unknown",
+      event: eventsMap[reg.event_id]?.event_name ?? "Unknown Event",
       date: reg.created_at ? new Date(reg.created_at).toISOString().split("T")[0] : "",
-      status: reg.payment_status,
+      status: reg.payment_status ?? "pending",
+      coordinatorStatus: reg.coordinator_status ?? null,
       amount: reg.gross_amount ?? 0,
     }));
 
@@ -177,6 +226,9 @@ export async function GET(_req: NextRequest) {
         activeEvents,
       },
       revenue: {
+        gross: totalGrossRevenue,
+        net: totalNetRevenue,
+        paidCount: totalPaidCount,
         today: {
           gross: todayGross,
           gatewayCharges: todayGateway,

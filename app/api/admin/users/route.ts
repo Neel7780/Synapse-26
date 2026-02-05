@@ -1,15 +1,8 @@
 import { createClient } from "@/utils/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabaseServer";
+import { checkAdmin } from "@/lib/checkAdmin";
 import { NextRequest, NextResponse } from "next/server";
 import { handleCorsResponse, addCorsHeaders } from '@/lib/cors'
-
-async function checkAdmin(supabase: any) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return false;
-  return user.email === process.env.ADMIN_EMAIL;
-}
 
 export async function OPTIONS(request: Request) {
   const origin = request.headers.get("origin");
@@ -21,7 +14,7 @@ export async function GET(req: NextRequest) {
     const origin = req.headers.get("origin");
     const supabase = (await createClient()) as any;
 
-    if (!(await checkAdmin(supabase))) {
+    if (!(await checkAdmin(supabase as Parameters<typeof checkAdmin>[0]))) {
       const response = NextResponse.json({ error: "Unauthorized" }, { status: 403 });
       return addCorsHeaders(response, origin);
     }
@@ -40,6 +33,15 @@ export async function GET(req: NextRequest) {
     const to = from + limit - 1;
 
     const hasEventFilter = Boolean(eventName);
+
+    // When no event filter, use a simple count for accurate total (complex join can cause edge cases)
+    let totalCount: number | null = null;
+    if (!hasEventFilter) {
+      const { count: simpleCount } = await adminSupabase
+        .from("users")
+        .select("user_id", { count: "exact", head: true });
+      totalCount = simpleCount;
+    }
 
     let query = adminSupabase.from("users").select(
       `
@@ -115,7 +117,7 @@ export async function GET(req: NextRequest) {
       }) ?? [];
 
     return NextResponse.json({
-      total: count ?? 0,
+      total: totalCount ?? count ?? 0,
       page,
       limit,
       users,

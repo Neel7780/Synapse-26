@@ -34,7 +34,7 @@ import {
   Download,
   Search,
   Eye,
-  DollarSign,
+  IndianRupee,
   TrendingUp,
   Users,
   CreditCard,
@@ -131,7 +131,7 @@ export default function RegistrationsPage() {
     { title: "Total Registrations", value: summary.total_registrations, icon: Users, gradient: "from-red-600 to-rose-700" },
     { title: "Paid", value: summary.paid, icon: CheckCircle2, gradient: "from-emerald-600 to-emerald-700" },
     { title: "Pending", value: summary.total_registrations - summary.paid, icon: Clock, gradient: "from-amber-600 to-amber-700" },
-    { title: "Gross Revenue", value: `₹${summary.gross_revenue.toLocaleString()}`, icon: DollarSign, gradient: "from-red-600 to-rose-700" },
+    { title: "Gross Revenue", value: `₹${summary.gross_revenue.toLocaleString()}`, icon: IndianRupee, gradient: "from-red-600 to-rose-700" },
     { title: "Net Revenue", value: `₹${summary.net_revenue.toFixed(2)}`, icon: TrendingUp, gradient: "from-red-600 to-rose-700" },
   ];
 

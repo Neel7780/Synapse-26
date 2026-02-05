@@ -1,15 +1,8 @@
 import { createClient } from "@/utils/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabaseServer";
+import { checkAdmin } from "@/lib/checkAdmin";
 import { NextRequest, NextResponse } from "next/server";
 import { handleCorsResponse, addCorsHeaders } from '@/lib/cors'
-
-async function checkAdmin(supabase: any) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return false;
-  return user.email === process.env.ADMIN_EMAIL;
-}
 
 export async function OPTIONS(request: Request) {
   const origin = request.headers.get("origin");
@@ -21,7 +14,7 @@ export async function GET(req: NextRequest) {
     const origin = req.headers.get("origin");
     const supabase = (await createClient()) as any;
 
-    if (!(await checkAdmin(supabase))) {
+    if (!(await checkAdmin(supabase as Parameters<typeof checkAdmin>[0]))) {
       const response = NextResponse.json({ error: "Unauthorized" }, { status: 403 });
       return addCorsHeaders(response, origin);
     }
@@ -54,7 +47,7 @@ export async function GET(req: NextRequest) {
       team (
         team_members ( user_id )
       ), 
-      users!inner(user_name,email,college),
+      users(user_name,email,college),
       event(event_name,event_category(category_name)),
       fee(participation_type)
       `,
@@ -75,7 +68,7 @@ export async function GET(req: NextRequest) {
     };
 
     const buildQueryTxn = () => {
-      let q = supabase
+      let q = adminSupabase
         .from("event_registrations")
         .select(
           `
@@ -124,7 +117,20 @@ export async function GET(req: NextRequest) {
     const uniqueData = Array.from(uniqueMap.values());
 
     // 2. Fetch ALL Data for Summary Statistics (Revenue, Counts)
-    // We recreate the queries but select minimal fields and DO NOT apply range/pagination
+    // When no filters: use a single direct query (no joins) for reliable counts
+    const hasFilters = search.trim() !== "" || eventFilter || paymentStatus;
+    let uniqueSummaryData: any[];
+
+    if (!hasFilters) {
+      const { data: directData, error: directError } = await adminSupabase
+        .from("event_registrations")
+        .select("registration_id, payment_status, coordinator_status, gross_amount, payment_method(gateway_charge)");
+      if (directError) {
+        console.error("Direct summary query error:", directError);
+      }
+      uniqueSummaryData = directData ?? [];
+    } else {
+      // With filters: use the original dual-query approach
     const buildSummaryQueryUsers = () => {
       let q = adminSupabase
         .from("event_registrations")
@@ -134,7 +140,8 @@ export async function GET(req: NextRequest) {
           payment_status,
           coordinator_status,
           gross_amount,
-          users!inner(user_name,email,college),
+          payment_method(gateway_charge),
+          users(user_name,email,college),
           event(event_name)
           `
         );
@@ -153,7 +160,7 @@ export async function GET(req: NextRequest) {
     };
 
     const buildSummaryQueryTxn = () => {
-      let q = supabase
+      let q = adminSupabase
         .from("event_registrations")
         .select(
           `
@@ -161,6 +168,7 @@ export async function GET(req: NextRequest) {
           payment_status,
           coordinator_status,
           gross_amount,
+          payment_method(gateway_charge),
           event(event_name)
           `
         );
@@ -195,7 +203,8 @@ export async function GET(req: NextRequest) {
     filteredSummary.forEach((row: any) => {
       uniqueSummaryMap.set(row.registration_id, row);
     });
-    const uniqueSummaryData = Array.from(uniqueSummaryMap.values());
+    uniqueSummaryData = Array.from(uniqueSummaryMap.values());
+    }
 
     const totalRegistrations = uniqueSummaryData.length;
     let paid = 0;

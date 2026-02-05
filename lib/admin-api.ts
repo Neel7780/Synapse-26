@@ -19,6 +19,7 @@ async function apiFetch<T>(
     try {
         const response = await fetch(endpoint, {
             ...options,
+            credentials: "same-origin",
             headers: {
                 "Content-Type": "application/json",
                 ...options.headers,
@@ -40,6 +41,40 @@ async function apiFetch<T>(
         };
     }
 }
+
+// ============================================================================
+// Dashboard Stats API
+// ============================================================================
+
+export type DashboardStatsResponse = {
+  stats: {
+    totalEvents: number;
+    totalRegistrations: number;
+    totalUsers: number;
+    totalSponsors: number;
+    activeEvents: number;
+  };
+  revenue: {
+    gross: number;
+    net: number;
+    paidCount: number;
+    today: { gross: number; gatewayCharges: number; net: number; change: number };
+  };
+  recentRegistrations: Array<{
+    id: number;
+    userName: string;
+    event: string;
+    date: string;
+    status: string;
+    coordinatorStatus: string | null;
+    amount: number;
+  }>;
+  quickStats: Array<{ label: string; value: string; change: string; positive: boolean }>;
+};
+
+export const dashboardApi = {
+  getStats: () => apiFetch<DashboardStatsResponse>("/api/admin/dashboard/stats"),
+};
 
 // ============================================================================
 // Events API

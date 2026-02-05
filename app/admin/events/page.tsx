@@ -58,7 +58,7 @@ import {
   Users,
   ExternalLink,
   Tag,
-  DollarSign,
+  IndianRupee,
   CheckCircle2,
   XCircle,
   Loader2,
@@ -1289,7 +1289,7 @@ export default function EventsPage() {
                     {editingEvent.participationCategories.solo.enabled && (
                       <div className="space-y-3">
                         <div className="flex items-center gap-2">
-                          <DollarSign className="h-4 w-4 text-muted-foreground" />
+                          <IndianRupee className="h-4 w-4 text-muted-foreground" />
                           <Input
                             type="number"
                             value={
@@ -1415,7 +1415,7 @@ export default function EventsPage() {
                     {editingEvent.participationCategories.duet.enabled && (
                       <div className="space-y-3">
                         <div className="flex items-center gap-2">
-                          <DollarSign className="h-4 w-4 text-muted-foreground" />
+                          <IndianRupee className="h-4 w-4 text-muted-foreground" />
                           <Input
                             type="number"
                             value={
@@ -1541,7 +1541,7 @@ export default function EventsPage() {
                     {editingEvent.participationCategories.group.enabled && (
                       <div className="space-y-3">
                         <div className="flex items-center gap-2">
-                          <DollarSign className="h-4 w-4 text-muted-foreground" />
+                          <IndianRupee className="h-4 w-4 text-muted-foreground" />
                           <Input
                             type="number"
                             value={
@@ -1775,7 +1775,7 @@ export default function EventsPage() {
                               />
                             </div>
                             <div className="flex items-center gap-2">
-                              <DollarSign className="h-4 w-4 text-muted-foreground" />
+                              <IndianRupee className="h-4 w-4 text-muted-foreground" />
                               <Input
                                 type="number"
                                 value={customCat.fee}

@@ -32,7 +32,7 @@ import {
 } from "@/app/components/ui/table";
 import {
   Home,
-  DollarSign,
+  IndianRupee,
   CheckCircle2,
   Clock,
   AlertCircle,
@@ -334,7 +334,7 @@ export default function AccommodationOrdersPage() {
     {
       title: "Revenue (Verified)",
       value: `₹${summary.total_revenue.toLocaleString()}`,
-      icon: DollarSign,
+      icon: IndianRupee,
       gradient: "from-green-600 to-green-700",
     },
   ];
@@ -763,7 +763,7 @@ export default function AccommodationOrdersPage() {
                   </div>
                 </div>
                 <div className="space-y-3">
-                  <h4 className="font-semibold flex items-center gap-2"><DollarSign className="h-4 w-4" /> Payment</h4>
+                  <h4 className="font-semibold flex items-center gap-2"><IndianRupee className="h-4 w-4" /> Payment</h4>
                   <div className="bg-muted/50 p-3 rounded-lg text-sm space-y-1">
                     <p><strong>Amount:</strong> ₹{selectedOrder.amount.toLocaleString()}</p>
                     <p><strong>Status:</strong> {getStatusBadge(selectedOrder.verification_status)}</p>

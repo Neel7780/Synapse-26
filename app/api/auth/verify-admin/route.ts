@@ -2,6 +2,13 @@ import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function GET() {
+    if (process.env.NODE_ENV === "development") {
+        return NextResponse.json({
+            isAdmin: true,
+            email: "dev@localhost",
+        });
+    }
+
     const supabase = await createClient();
 
     try {

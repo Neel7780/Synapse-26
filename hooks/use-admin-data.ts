@@ -60,6 +60,15 @@ function useAdminData<T>(
 }
 
 // ============================================================================
+// Dashboard Stats Hook
+// ============================================================================
+
+export function useDashboardStats() {
+  const fetchFn = useCallback(() => adminApi.dashboardApi.getStats(), []);
+  return useAdminData(fetchFn, "dashboard-stats");
+}
+
+// ============================================================================
 // Events Hooks
 // ============================================================================
 
