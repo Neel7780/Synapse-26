@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app
 import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
+import Image from "next/image";
 import {
   Select,
   SelectContent,
@@ -453,11 +454,13 @@ export default function RegistrationsPage() {
                 <label className="text-sm font-medium text-muted-foreground">Payment Screenshot</label>
                 {selectedRegistration.payment_screenshot_url ? (
                   <div className="space-y-2">
-                    <div className="rounded-lg border border-border/50 overflow-hidden bg-muted/30">
-                      <img
+                    <div className="relative rounded-lg border border-border/50 overflow-hidden bg-muted/30 min-h-[192px] max-h-48">
+                      <Image
                         src={selectedRegistration.payment_screenshot_url}
                         alt="Payment screenshot"
-                        className="w-full h-full object-contain max-h-48 bg-background"
+                        fill
+                        className="object-contain bg-background"
+                        sizes="(max-width: 768px) 100vw, 400px"
                         loading="lazy"
                       />
                     </div>

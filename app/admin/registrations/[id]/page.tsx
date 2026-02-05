@@ -207,7 +207,7 @@ export default function RegistrationDetailPage() {
           <CardHeader className="border-b border-border/40">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <DollarSign className="h-5 w-5 text-primary" />
+                <IndianRupee className="h-5 w-5 text-primary" />
               </div>
               <div>
                 <CardTitle>Financials</CardTitle>
