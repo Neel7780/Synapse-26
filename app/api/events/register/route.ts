@@ -71,7 +71,32 @@ export async function POST(request: NextRequest) {
             .eq("fee_id", fee_id)
             .single();
 
-        const isFreeEvent = feeData?.price === 0;
+        // Validate that the fee exists
+        if (feeError || !feeData) {
+            console.error("Fee not found:", feeError);
+            return NextResponse.json(
+                { error: `Invalid fee_id: ${fee_id}. The selected participation type may no longer be available.` },
+                { status: 400 }
+            );
+        }
+
+        // Validate that the fee is actually linked to this event
+        const { data: eventFeeLink, error: eventFeeLinkError } = await supabase
+            .from("event_fee")
+            .select("event_id, fee_id")
+            .eq("event_id", event_id)
+            .eq("fee_id", fee_id)
+            .single();
+
+        if (eventFeeLinkError || !eventFeeLink) {
+            console.error("Fee not linked to event:", eventFeeLinkError);
+            return NextResponse.json(
+                { error: `This participation type (fee_id: ${fee_id}) is not available for this event. Please refresh the page and try again.` },
+                { status: 400 }
+            );
+        }
+
+        const isFreeEvent = feeData.price === 0;
         const isFreeRegistration = (isDauFree && isDauStudent && areAllTeamMembersDau) || isFreeEvent;
 
         if (!isFreeRegistration) {
