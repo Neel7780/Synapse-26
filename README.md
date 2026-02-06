@@ -26,7 +26,7 @@ A Next.js web application powering the Synapse 2026 website. This repository con
 - **Local setup:** prerequisites, install, run
 - **Environment:** required env variables (non-secret guidance)
 - **Development & build:** scripts and commands
-- **Deployment & notes:** tips for production
+- **Deployment & notes:** tips for production,
 - **Contributing & license**
 
 **Project status:** actively used for Synapse 2026 event site and admin workflows.
