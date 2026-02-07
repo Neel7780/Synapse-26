@@ -113,26 +113,19 @@ export const getTodayRevenue = unstable_cache(
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStart = yesterday.toISOString();
 
-    const { data: paymentMethods } = await supabase.from("payment_method").select("payment_method_id, gateway_charge");
-    const gatewayByPmId = new Map(
-      (paymentMethods ?? []).map((pm: { payment_method_id: number; gateway_charge: number | null }) => [
-        pm.payment_method_id,
-        pm.gateway_charge ?? 0,
-      ])
-    );
-    const getGateway = (reg: { payment_method_id?: number | null }) =>
-      reg.payment_method_id != null ? (gatewayByPmId.get(reg.payment_method_id) ?? 0) : 0;
+    // Gateway charges treated as 0 (payment_method_id column not in event_registrations)
+    const getGateway = (_reg: unknown) => 0;
 
     const [todayResult, yesterdayResult] = await Promise.all([
       supabase
         .from("event_registrations")
-        .select("registration_id, payment_status, gross_amount, payment_method_id")
+        .select("registration_id, payment_status, gross_amount")
         .not("created_at", "is", null)
         .gte("created_at", todayStart)
         .lt("created_at", todayEnd),
       supabase
         .from("event_registrations")
-        .select("registration_id, payment_status, gross_amount, payment_method_id")
+        .select("registration_id, payment_status, gross_amount")
         .not("created_at", "is", null)
         .gte("created_at", yesterdayStart)
         .lt("created_at", todayStart),
@@ -145,7 +138,6 @@ export const getTodayRevenue = unstable_cache(
       registration_id: number;
       payment_status: "pending" | "done" | "failed" | null;
       gross_amount: number | null;
-      payment_method_id: number | null;
     };
 
     (todayResult.data ?? []).forEach((reg: RegistrationWithPayment) => {
@@ -254,26 +246,19 @@ export const getQuickStats = unstable_cache(
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStart = yesterday.toISOString();
 
-    const { data: paymentMethods } = await supabase.from("payment_method").select("payment_method_id, gateway_charge");
-    const gatewayByPmId = new Map(
-      (paymentMethods ?? []).map((pm: { payment_method_id: number; gateway_charge: number | null }) => [
-        pm.payment_method_id,
-        pm.gateway_charge ?? 0,
-      ])
-    );
-    const getGateway = (reg: { payment_method_id?: number | null }) =>
-      reg.payment_method_id != null ? (gatewayByPmId.get(reg.payment_method_id) ?? 0) : 0;
+    // Gateway charges treated as 0 (payment_method_id column not in event_registrations)
+    const getGateway = (_reg: unknown) => 0;
 
     const [todayResult, yesterdayResult] = await Promise.all([
       supabase
         .from("event_registrations")
-        .select("registration_id, payment_status, gross_amount, payment_method_id")
+        .select("registration_id, payment_status, gross_amount")
         .not("created_at", "is", null)
         .gte("created_at", todayStart)
         .lt("created_at", todayEnd),
       supabase
         .from("event_registrations")
-        .select("registration_id, payment_status, gross_amount, payment_method_id")
+        .select("registration_id, payment_status, gross_amount")
         .not("created_at", "is", null)
         .gte("created_at", yesterdayStart)
         .lt("created_at", todayStart),
@@ -283,7 +268,6 @@ export const getQuickStats = unstable_cache(
       registration_id: number;
       payment_status: "pending" | "done" | "failed" | null;
       gross_amount: number | null;
-      payment_method_id: number | null;
     };
 
     // Calculate today's stats

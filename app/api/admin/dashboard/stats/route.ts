@@ -33,26 +33,18 @@ export async function GET(_req: NextRequest) {
     // Use admin client for data fetching (bypasses RLS for performance)
     const supabase = getSupabaseAdmin();
 
-    // Get date ranges
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayStart = today.toISOString();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const todayEnd = tomorrow.toISOString();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStart = yesterday.toISOString();
+    // Get date ranges in IST (Asia/Kolkata) so "today" aligns with Indian users
+    const tz = "Asia/Kolkata";
+    const now = new Date();
+    const todayIST = now.toLocaleDateString("en-CA", { timeZone: tz });
+    const yesterdayDate = new Date(now.getTime() - 86400000);
+    const yesterdayIST = yesterdayDate.toLocaleDateString("en-CA", { timeZone: tz });
+    const todayStart = new Date(`${todayIST}T00:00:00+05:30`).toISOString();
+    const todayEnd = new Date(new Date(`${todayIST}T00:00:00+05:30`).getTime() + 86400000).toISOString();
+    const yesterdayStart = new Date(`${yesterdayIST}T00:00:00+05:30`).toISOString();
 
-    // Fetch payment_method lookup for gateway_charge (avoids FK relationship in PostgREST)
-    const { data: paymentMethods } = await supabase
-      .from("payment_method")
-      .select("payment_method_id, gateway_charge");
-    const gatewayByPmId = new Map(
-      (paymentMethods ?? []).map((pm: any) => [pm.payment_method_id, pm.gateway_charge ?? 0])
-    );
-    const getGatewayCharge = (reg: any) =>
-      reg.payment_method_id != null ? (gatewayByPmId.get(reg.payment_method_id) ?? 0) : 0;
+    // Gateway charges treated as 0 (payment_method_id column not in event_registrations)
+    const getGatewayCharge = (_reg: any) => 0;
 
     // Fetch all stats in parallel for optimal performance
     const [
@@ -77,7 +69,7 @@ export async function GET(_req: NextRequest) {
       // Today's registrations (only fetch needed fields)
       supabase
         .from("event_registrations")
-        .select("registration_id, payment_status, coordinator_status, gross_amount, payment_method_id")
+        .select("registration_id, payment_status, coordinator_status, gross_amount")
         .not("created_at", "is", null)
         .gte("created_at", todayStart)
         .lt("created_at", todayEnd),
@@ -85,7 +77,7 @@ export async function GET(_req: NextRequest) {
       // Yesterday's registrations for comparison
       supabase
         .from("event_registrations")
-        .select("registration_id, payment_status, coordinator_status, gross_amount, payment_method_id")
+        .select("registration_id, payment_status, coordinator_status, gross_amount")
         .not("created_at", "is", null)
         .gte("created_at", yesterdayStart)
         .lt("created_at", todayStart),
@@ -100,7 +92,7 @@ export async function GET(_req: NextRequest) {
       // All registrations for overall revenue (paid + accepted only)
       supabase
         .from("event_registrations")
-        .select("payment_status, coordinator_status, gross_amount, payment_method_id"),
+        .select("payment_status, coordinator_status, gross_amount"),
 
       // Accommodation summary (verified revenue)
       supabase
@@ -139,7 +131,10 @@ export async function GET(_req: NextRequest) {
     let todayPaidCount = 0;
 
     (todayRegistrationsResult.data ?? []).forEach((reg: any) => {
-      if (reg.payment_status === "done" && reg.coordinator_status === "accepted") {
+      const pStatus = (reg.payment_status || "").toLowerCase();
+      const cStatus = (reg.coordinator_status || "").toLowerCase();
+      const isPaid = pStatus === "done" || pStatus === "paid" || pStatus === "success";
+      if (isPaid && cStatus === "accepted") {
         todayPaidCount++;
         todayGross += reg.gross_amount ?? 0;
         todayGateway += getGatewayCharge(reg);
@@ -154,7 +149,10 @@ export async function GET(_req: NextRequest) {
     let yesterdayPaidCount = 0;
 
     (yesterdayRegistrationsResult.data ?? []).forEach((reg: any) => {
-      if (reg.payment_status === "done" && reg.coordinator_status === "accepted") {
+      const pStatus = (reg.payment_status || "").toLowerCase();
+      const cStatus = (reg.coordinator_status || "").toLowerCase();
+      const isPaid = pStatus === "done" || pStatus === "paid" || pStatus === "success";
+      if (isPaid && cStatus === "accepted") {
         yesterdayPaidCount++;
         yesterdayGross += reg.gross_amount ?? 0;
         yesterdayGateway += getGatewayCharge(reg);

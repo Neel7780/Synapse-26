@@ -44,7 +44,6 @@ export async function GET(req: NextRequest) {
         coordinator_status,
       payment_screenshot_url,
       gross_amount,
-      payment_method_id,
       team (
         team_members ( user_id )
       ), 
@@ -79,7 +78,6 @@ export async function GET(req: NextRequest) {
         coordinator_status,
       payment_screenshot_url,
       gross_amount,
-      payment_method_id,
       team (
         team_members ( user_id )
       ), 
@@ -118,15 +116,9 @@ export async function GET(req: NextRequest) {
 
     const uniqueData = Array.from(uniqueMap.values());
 
-    // Fetch payment_method lookup (no FK required) for gateway_charge and method_name
-    const { data: paymentMethods } = await adminSupabase
-      .from("payment_method")
-      .select("payment_method_id, method_name, gateway_charge");
-    const paymentMethodMap = new Map(
-      (paymentMethods ?? []).map((pm: any) => [pm.payment_method_id, { method_name: pm.method_name, gateway_charge: pm.gateway_charge }])
-    );
-    const getGateway = (row: any) => (row.payment_method_id != null ? paymentMethodMap.get(row.payment_method_id)?.gateway_charge ?? 0 : 0);
-    const getPaymentMethod = (row: any) => (row.payment_method_id != null ? paymentMethodMap.get(row.payment_method_id) ?? null : null);
+    // Gateway charges and payment method treated as 0/null (payment_method_id column not in event_registrations)
+    const getGateway = (_row: any) => 0;
+    const getPaymentMethod = (_row: any) => null;
 
     // 2. Fetch ALL Data for Summary Statistics (Revenue, Counts)
     // When no filters: use a single direct query (no joins) for reliable counts
@@ -136,7 +128,7 @@ export async function GET(req: NextRequest) {
     if (!hasFilters) {
       const { data: directData, error: directError } = await adminSupabase
         .from("event_registrations")
-        .select("registration_id, payment_status, coordinator_status, gross_amount, payment_method_id");
+        .select("registration_id, payment_status, coordinator_status, gross_amount");
       if (directError) {
         console.error("Direct summary query error:", directError);
       }
@@ -152,7 +144,6 @@ export async function GET(req: NextRequest) {
           payment_status,
           coordinator_status,
           gross_amount,
-          payment_method_id,
           users(user_name,email,college),
           event(event_name)
           `
@@ -180,7 +171,6 @@ export async function GET(req: NextRequest) {
           payment_status,
           coordinator_status,
           gross_amount,
-          payment_method_id,
           event(event_name)
           `
         );

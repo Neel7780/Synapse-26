@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
+import Image from "next/image";
 import {
   Table,
   TableBody,
@@ -113,12 +114,15 @@ export default function AdminDashboard() {
                       Your festival is performing well. You have <span className="text-foreground font-medium">{stats.totalRegistrations} registrations</span> across <span className="text-foreground font-medium">{stats.totalEvents} events</span>.
                     </p>
                   </div>
-                  <img
+                  <Image
                     src="/Synapse Logo.png"
-                    alt="Synapse"
+                    alt="Synapse Logo"
+                    width={64}
+                    height={64}
                     className="h-16 w-16 opacity-20 hidden lg:block"
+                    priority
                   />
-                </div>
+         </div>
 
                 {/* Quick Stats Row */}
                 <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-border/40">
