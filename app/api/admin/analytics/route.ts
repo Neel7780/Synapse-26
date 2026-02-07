@@ -1,4 +1,5 @@
-import { checkAdminFromRequest } from "@/lib/checkAdmin";
+import { checkAdmin } from "@/lib/checkAdmin";
+import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -16,10 +17,11 @@ function calculateChange(current: number, previous: number): string {
   return `${change >= 0 ? "+" : ""}${change.toFixed(1)}%`;
 }
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
-    // Check admin authentication
-    const { isAdmin } = await checkAdminFromRequest(req);
+    // Verify admin authentication using cookie-based session (same as dashboard)
+    const userSupabase = await createClient();
+    const isAdmin = await checkAdmin(userSupabase as Parameters<typeof checkAdmin>[0]);
     if (!isAdmin) {
       return NextResponse.json(
         { error: "Unauthorized" },
