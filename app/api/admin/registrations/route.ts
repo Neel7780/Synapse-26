@@ -116,9 +116,8 @@ export async function GET(req: NextRequest) {
 
     const uniqueData = Array.from(uniqueMap.values());
 
-    // Gateway charges and payment method treated as 0/null (payment_method_id column not in event_registrations)
+    // Gateway charges treated as 0 (payment_method_id column not in event_registrations)
     const getGateway = (_row: any) => 0;
-    const getPaymentMethod = (_row: any) => null;
 
     // 2. Fetch ALL Data for Summary Statistics (Revenue, Counts)
     // When no filters: use a single direct query (no joins) for reliable counts
@@ -237,8 +236,6 @@ export async function GET(req: NextRequest) {
         const price = row.gross_amount ?? 0;
         const gateway = getGateway(row);
         const groupSize = row.team?.team_members?.length ?? 1;
-        const pm = getPaymentMethod(row);
-
         return {
           registration_id: row?.registration_id,
           transaction_id: row?.transaction_id,
@@ -247,7 +244,7 @@ export async function GET(req: NextRequest) {
           event_name: row.event?.event_name,
           category: row.event?.event_category?.category_name,
           participation_type: row.fee?.participation_type,
-          payment_method: pm?.method_name ?? null,
+          payment_method: null,
           group_size: groupSize,
           payment_status: row.payment_status,
           coordinator_status: row.coordinator_status ?? null,
