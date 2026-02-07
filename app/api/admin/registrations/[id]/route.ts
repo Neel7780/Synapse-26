@@ -37,7 +37,7 @@ export async function GET(
         payment_status,
         gross_amount,
         created_at,
-        
+        payment_method_id,
         users (
           user_name,
           email,
@@ -56,10 +56,6 @@ export async function GET(
           fee (
             participation_type
           )
-        ),
-        payment_method (
-          method_name,
-          gateway_charge
         )
         `
       )
@@ -70,8 +66,18 @@ export async function GET(
       return NextResponse.json({ error: error instanceof Error ? error.message : "Internal server error" }, { status: 500 });
     }
 
+    let paymentMethod: { method_name: string; gateway_charge: number | null } | null = null;
+    if (data.payment_method_id != null) {
+      const { data: pm } = await adminSupabase
+        .from("payment_method")
+        .select("method_name, gateway_charge")
+        .eq("payment_method_id", data.payment_method_id)
+        .single();
+      paymentMethod = pm ?? null;
+    }
+
     const price = data.gross_amount ?? 0;
-    const gateway = data.payment_method?.gateway_charge ?? 0;
+    const gateway = paymentMethod?.gateway_charge ?? 0;
     const teamSize = data.team?.team_members?.length ?? 1;
 
     return NextResponse.json({
@@ -90,7 +96,7 @@ export async function GET(
       },
       coordinator_status: data.coordinator_status ?? null,
       payment: {
-        method: data.payment_method?.method_name,
+        method: paymentMethod?.method_name ?? null,
         status: data.payment_status,
       },
       financials: {

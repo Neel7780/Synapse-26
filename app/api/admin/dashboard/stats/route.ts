@@ -44,6 +44,16 @@ export async function GET(_req: NextRequest) {
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStart = yesterday.toISOString();
 
+    // Fetch payment_method lookup for gateway_charge (avoids FK relationship in PostgREST)
+    const { data: paymentMethods } = await supabase
+      .from("payment_method")
+      .select("payment_method_id, gateway_charge");
+    const gatewayByPmId = new Map(
+      (paymentMethods ?? []).map((pm: any) => [pm.payment_method_id, pm.gateway_charge ?? 0])
+    );
+    const getGatewayCharge = (reg: any) =>
+      reg.payment_method_id != null ? (gatewayByPmId.get(reg.payment_method_id) ?? 0) : 0;
+
     // Fetch all stats in parallel for optimal performance
     const [
       eventsResult,
@@ -67,7 +77,7 @@ export async function GET(_req: NextRequest) {
       // Today's registrations (only fetch needed fields)
       supabase
         .from("event_registrations")
-        .select("registration_id, payment_status, coordinator_status, gross_amount, payment_method(gateway_charge)")
+        .select("registration_id, payment_status, coordinator_status, gross_amount, payment_method_id")
         .not("created_at", "is", null)
         .gte("created_at", todayStart)
         .lt("created_at", todayEnd),
@@ -75,7 +85,7 @@ export async function GET(_req: NextRequest) {
       // Yesterday's registrations for comparison
       supabase
         .from("event_registrations")
-        .select("registration_id, payment_status, coordinator_status, gross_amount, payment_method(gateway_charge)")
+        .select("registration_id, payment_status, coordinator_status, gross_amount, payment_method_id")
         .not("created_at", "is", null)
         .gte("created_at", yesterdayStart)
         .lt("created_at", todayStart),
@@ -90,7 +100,7 @@ export async function GET(_req: NextRequest) {
       // All registrations for overall revenue (paid + accepted only)
       supabase
         .from("event_registrations")
-        .select("payment_status, coordinator_status, gross_amount, payment_method(gateway_charge)"),
+        .select("payment_status, coordinator_status, gross_amount, payment_method_id"),
 
       // Accommodation summary (verified revenue)
       supabase
@@ -132,7 +142,7 @@ export async function GET(_req: NextRequest) {
       if (reg.payment_status === "done" && reg.coordinator_status === "accepted") {
         todayPaidCount++;
         todayGross += reg.gross_amount ?? 0;
-        todayGateway += reg.payment_method?.gateway_charge ?? 0;
+        todayGateway += getGatewayCharge(reg);
       }
     });
 
@@ -147,7 +157,7 @@ export async function GET(_req: NextRequest) {
       if (reg.payment_status === "done" && reg.coordinator_status === "accepted") {
         yesterdayPaidCount++;
         yesterdayGross += reg.gross_amount ?? 0;
-        yesterdayGateway += reg.payment_method?.gateway_charge ?? 0;
+        yesterdayGateway += getGatewayCharge(reg);
       }
     });
 
@@ -164,7 +174,7 @@ export async function GET(_req: NextRequest) {
       if (isPaid && cStatus === "accepted") {
         paidCount++;
         overallGross += reg.gross_amount ?? 0;
-        overallGateway += reg.payment_method?.gateway_charge ?? 0;
+        overallGateway += getGatewayCharge(reg);
       }
     });
     const overallNet = overallGross - overallGateway;

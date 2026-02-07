@@ -113,16 +113,26 @@ export const getTodayRevenue = unstable_cache(
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStart = yesterday.toISOString();
 
+    const { data: paymentMethods } = await supabase.from("payment_method").select("payment_method_id, gateway_charge");
+    const gatewayByPmId = new Map(
+      (paymentMethods ?? []).map((pm: { payment_method_id: number; gateway_charge: number | null }) => [
+        pm.payment_method_id,
+        pm.gateway_charge ?? 0,
+      ])
+    );
+    const getGateway = (reg: { payment_method_id?: number | null }) =>
+      reg.payment_method_id != null ? (gatewayByPmId.get(reg.payment_method_id) ?? 0) : 0;
+
     const [todayResult, yesterdayResult] = await Promise.all([
       supabase
         .from("event_registrations")
-        .select("registration_id, payment_status, gross_amount, payment_method(gateway_charge)")
+        .select("registration_id, payment_status, gross_amount, payment_method_id")
         .not("created_at", "is", null)
         .gte("created_at", todayStart)
         .lt("created_at", todayEnd),
       supabase
         .from("event_registrations")
-        .select("registration_id, payment_status, gross_amount, payment_method(gateway_charge)")
+        .select("registration_id, payment_status, gross_amount, payment_method_id")
         .not("created_at", "is", null)
         .gte("created_at", yesterdayStart)
         .lt("created_at", todayStart),
@@ -135,13 +145,13 @@ export const getTodayRevenue = unstable_cache(
       registration_id: number;
       payment_status: "pending" | "done" | "failed" | null;
       gross_amount: number | null;
-      payment_method: { gateway_charge: number | null } | null;
+      payment_method_id: number | null;
     };
 
     (todayResult.data ?? []).forEach((reg: RegistrationWithPayment) => {
       if (reg.payment_status === "done") {
         todayGross += reg.gross_amount ?? 0;
-        todayGateway += reg.payment_method?.gateway_charge ?? 0;
+        todayGateway += getGateway(reg);
       }
     });
 
@@ -151,7 +161,7 @@ export const getTodayRevenue = unstable_cache(
     (yesterdayResult.data ?? []).forEach((reg: RegistrationWithPayment) => {
       if (reg.payment_status === "done") {
         yesterdayGross += reg.gross_amount ?? 0;
-        yesterdayGateway += reg.payment_method?.gateway_charge ?? 0;
+        yesterdayGateway += getGateway(reg);
       }
     });
 
@@ -244,16 +254,26 @@ export const getQuickStats = unstable_cache(
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStart = yesterday.toISOString();
 
+    const { data: paymentMethods } = await supabase.from("payment_method").select("payment_method_id, gateway_charge");
+    const gatewayByPmId = new Map(
+      (paymentMethods ?? []).map((pm: { payment_method_id: number; gateway_charge: number | null }) => [
+        pm.payment_method_id,
+        pm.gateway_charge ?? 0,
+      ])
+    );
+    const getGateway = (reg: { payment_method_id?: number | null }) =>
+      reg.payment_method_id != null ? (gatewayByPmId.get(reg.payment_method_id) ?? 0) : 0;
+
     const [todayResult, yesterdayResult] = await Promise.all([
       supabase
         .from("event_registrations")
-        .select("registration_id, payment_status, gross_amount, payment_method(gateway_charge)")
+        .select("registration_id, payment_status, gross_amount, payment_method_id")
         .not("created_at", "is", null)
         .gte("created_at", todayStart)
         .lt("created_at", todayEnd),
       supabase
         .from("event_registrations")
-        .select("registration_id, payment_status, gross_amount, payment_method(gateway_charge)")
+        .select("registration_id, payment_status, gross_amount, payment_method_id")
         .not("created_at", "is", null)
         .gte("created_at", yesterdayStart)
         .lt("created_at", todayStart),
@@ -263,7 +283,7 @@ export const getQuickStats = unstable_cache(
       registration_id: number;
       payment_status: "pending" | "done" | "failed" | null;
       gross_amount: number | null;
-      payment_method: { gateway_charge: number | null } | null;
+      payment_method_id: number | null;
     };
 
     // Calculate today's stats
@@ -272,7 +292,7 @@ export const getQuickStats = unstable_cache(
     (todayResult.data ?? []).forEach((reg: QuickStatsRegistration) => {
       if (reg.payment_status === "done") {
         todayRegistrations++;
-        todayRevenue += (reg.gross_amount ?? 0) - (reg.payment_method?.gateway_charge ?? 0);
+        todayRevenue += (reg.gross_amount ?? 0) - getGateway(reg);
       }
     });
 
@@ -282,7 +302,7 @@ export const getQuickStats = unstable_cache(
     (yesterdayResult.data ?? []).forEach((reg: QuickStatsRegistration) => {
       if (reg.payment_status === "done") {
         yesterdayRegistrations++;
-        yesterdayRevenue += (reg.gross_amount ?? 0) - (reg.payment_method?.gateway_charge ?? 0);
+        yesterdayRevenue += (reg.gross_amount ?? 0) - getGateway(reg);
       }
     });
 

@@ -44,6 +44,7 @@ export async function GET(req: NextRequest) {
         coordinator_status,
       payment_screenshot_url,
       gross_amount,
+      payment_method_id,
       team (
         team_members ( user_id )
       ), 
@@ -78,6 +79,7 @@ export async function GET(req: NextRequest) {
         coordinator_status,
       payment_screenshot_url,
       gross_amount,
+      payment_method_id,
       team (
         team_members ( user_id )
       ), 
@@ -116,6 +118,16 @@ export async function GET(req: NextRequest) {
 
     const uniqueData = Array.from(uniqueMap.values());
 
+    // Fetch payment_method lookup (no FK required) for gateway_charge and method_name
+    const { data: paymentMethods } = await adminSupabase
+      .from("payment_method")
+      .select("payment_method_id, method_name, gateway_charge");
+    const paymentMethodMap = new Map(
+      (paymentMethods ?? []).map((pm: any) => [pm.payment_method_id, { method_name: pm.method_name, gateway_charge: pm.gateway_charge }])
+    );
+    const getGateway = (row: any) => (row.payment_method_id != null ? paymentMethodMap.get(row.payment_method_id)?.gateway_charge ?? 0 : 0);
+    const getPaymentMethod = (row: any) => (row.payment_method_id != null ? paymentMethodMap.get(row.payment_method_id) ?? null : null);
+
     // 2. Fetch ALL Data for Summary Statistics (Revenue, Counts)
     // When no filters: use a single direct query (no joins) for reliable counts
     const hasFilters = search.trim() !== "" || eventFilter || paymentStatus;
@@ -124,7 +136,7 @@ export async function GET(req: NextRequest) {
     if (!hasFilters) {
       const { data: directData, error: directError } = await adminSupabase
         .from("event_registrations")
-        .select("registration_id, payment_status, coordinator_status, gross_amount, payment_method(gateway_charge)");
+        .select("registration_id, payment_status, coordinator_status, gross_amount, payment_method_id");
       if (directError) {
         console.error("Direct summary query error:", directError);
       }
@@ -140,7 +152,7 @@ export async function GET(req: NextRequest) {
           payment_status,
           coordinator_status,
           gross_amount,
-          payment_method(gateway_charge),
+          payment_method_id,
           users(user_name,email,college),
           event(event_name)
           `
@@ -168,7 +180,7 @@ export async function GET(req: NextRequest) {
           payment_status,
           coordinator_status,
           gross_amount,
-          payment_method(gateway_charge),
+          payment_method_id,
           event(event_name)
           `
         );
@@ -214,7 +226,7 @@ export async function GET(req: NextRequest) {
 
     uniqueSummaryData.forEach((row: any) => {
       const price = row.gross_amount ?? 0;
-      const gateway = row.payment_method?.gateway_charge ?? 0;
+      const gateway = getGateway(row);
       const pStatus = row.payment_status?.toLowerCase();
       const cStatus = row.coordinator_status?.toLowerCase();
 
@@ -233,8 +245,9 @@ export async function GET(req: NextRequest) {
     const rows =
       uniqueData?.map((row: any) => {
         const price = row.gross_amount ?? 0;
-        const gateway = row.payment_method?.gateway_charge ?? 0;
+        const gateway = getGateway(row);
         const groupSize = row.team?.team_members?.length ?? 1;
+        const pm = getPaymentMethod(row);
 
         return {
           registration_id: row?.registration_id,
@@ -244,7 +257,7 @@ export async function GET(req: NextRequest) {
           event_name: row.event?.event_name,
           category: row.event?.event_category?.category_name,
           participation_type: row.fee?.participation_type,
-          payment_method: row.payment_method?.method_name,
+          payment_method: pm?.method_name ?? null,
           group_size: groupSize,
           payment_status: row.payment_status,
           coordinator_status: row.coordinator_status ?? null,
