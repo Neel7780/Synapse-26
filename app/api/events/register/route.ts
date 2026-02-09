@@ -86,10 +86,27 @@ export async function POST(request: NextRequest) {
             .select("event_id, fee_id")
             .eq("event_id", event_id)
             .eq("fee_id", fee_id)
-            .single();
+            .maybeSingle();
 
-        if (eventFeeLinkError || !eventFeeLink) {
-            console.error("Fee not linked to event:", eventFeeLinkError);
+        if (eventFeeLinkError) {
+            console.error("Error checking fee-event link:", eventFeeLinkError);
+            return NextResponse.json(
+                { error: `Error validating participation type. Please try again.` },
+                { status: 500 }
+            );
+        }
+
+        if (!eventFeeLink) {
+            console.error(`Fee ${fee_id} is not linked to event ${event_id}`);
+            // Double-check: fetch all available fees for this event to provide helpful error
+            const { data: availableFees } = await supabase
+                .from("event_fee")
+                .select("fee_id")
+                .eq("event_id", event_id);
+            
+            const availableFeeIds = availableFees?.map(f => f.fee_id) || [];
+            console.error(`Available fee_ids for event ${event_id}:`, availableFeeIds);
+            
             return NextResponse.json(
                 { error: `This participation type (fee_id: ${fee_id}) is not available for this event. Please refresh the page and try again.` },
                 { status: 400 }

@@ -159,6 +159,22 @@ export default function RegisterPage() {
     setSubmitting(true);
     setSubmitError("");
 
+    // Validate required parameters
+    const parsedEventId = parseInt(eventId || "0");
+    const parsedFeeId = parseInt(feeId || "0");
+
+    if (!eventId || !feeId || parsedEventId === 0 || parsedFeeId === 0 || isNaN(parsedEventId) || isNaN(parsedFeeId)) {
+      setSubmitError("Invalid registration parameters. Please go back and try again.");
+      setSubmitting(false);
+      return;
+    }
+
+    if (!user?.id) {
+      setSubmitError("User not authenticated. Please log in again.");
+      setSubmitting(false);
+      return;
+    }
+
     // Check if registration is free (either DAU free or price is 0)
     const isFreeEvent = feePrice === 0;
     const isFreeRegistration = isDauRegistration || isFreeEvent;
@@ -180,9 +196,9 @@ export default function RegisterPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          event_id: parseInt(eventId || "0"),
-          fee_id: parseInt(feeId || "0"),
-          registered_by_user_id: user?.id,
+          event_id: parsedEventId,
+          fee_id: parsedFeeId,
+          registered_by_user_id: user.id,
           team_member_emails:
             feeType !== "solo" ? teamEmails.filter((e) => e.trim()) : [],
           payment_screenshot_url: isFreeRegistration
