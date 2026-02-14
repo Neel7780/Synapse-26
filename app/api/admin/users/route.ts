@@ -32,16 +32,120 @@ export async function GET(req: NextRequest) {
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    const hasEventFilter = Boolean(eventName);
+    const getUserIdsForEventIds = async (eventIds: number[]) => {
+      const { data: registrations, error: regError } = await adminSupabase
+        .from("event_registrations")
+        .select("registration_id, registered_by_user_id")
+        .in("event_id", eventIds);
 
-    // When no event filter, use a simple count for accurate total (complex join can cause edge cases)
-    let totalCount: number | null = null;
-    if (!hasEventFilter) {
-      const { count: simpleCount } = await adminSupabase
-        .from("users")
-        .select("user_id", { count: "exact", head: true });
-      totalCount = simpleCount;
+      if (regError) {
+        console.error("Registration lookup error:", regError);
+        return { error: "Failed to resolve registrations", ids: [] as string[] };
+      }
+
+      const registrationIds = (registrations ?? []).map((row: any) => row.registration_id).filter(Boolean);
+      const leaderIds = (registrations ?? []).map((row: any) => row.registered_by_user_id).filter(Boolean);
+
+      let memberIds: string[] = [];
+      if (registrationIds.length > 0) {
+        const { data: teams, error: teamError } = await adminSupabase
+          .from("team")
+          .select("team_id")
+          .in("registration_id", registrationIds);
+
+        if (teamError) {
+          console.error("Team lookup error:", teamError);
+          return { error: "Failed to resolve teams", ids: [] as string[] };
+        }
+
+        const teamIds = (teams ?? []).map((row: any) => row.team_id).filter(Boolean);
+        if (teamIds.length > 0) {
+          const { data: members, error: memberError } = await adminSupabase
+            .from("team_members")
+            .select("user_id")
+            .in("team_id", teamIds);
+
+          if (memberError) {
+            console.error("Team members lookup error:", memberError);
+            return { error: "Failed to resolve team members", ids: [] as string[] };
+          }
+
+          memberIds = (members ?? []).map((row: any) => row.user_id).filter(Boolean);
+        }
+      }
+
+      return { error: null, ids: Array.from(new Set([...(leaderIds ?? []), ...memberIds])) };
+    };
+
+    let filteredUserIds: string[] | null = null;
+    if (eventName) {
+      const { data: eventRows, error: eventError } = await adminSupabase
+        .from("event")
+        .select("event_id")
+        .eq("event_name", eventName);
+
+      if (eventError) {
+        console.error("Event lookup error:", eventError);
+        return NextResponse.json({ error: "Failed to resolve event filter" }, { status: 500 });
+      }
+
+      const eventIds = (eventRows ?? []).map((row: any) => row.event_id).filter(Boolean);
+      if (eventIds.length === 0) {
+        return NextResponse.json({ total: 0, page, limit, users: [] });
+      }
+
+      const { error: idsError, ids } = await getUserIdsForEventIds(eventIds);
+      if (idsError) {
+        return NextResponse.json({ error: idsError }, { status: 500 });
+      }
+
+      filteredUserIds = ids;
+      if (filteredUserIds.length === 0) {
+        return NextResponse.json({ total: 0, page, limit, users: [] });
+      }
     }
+
+    let searchEventUserIds: string[] = [];
+    if (search.trim() !== "") {
+      const { data: searchEventRows, error: searchEventError } = await adminSupabase
+        .from("event")
+        .select("event_id")
+        .ilike("event_name", `%${search}%`);
+
+      if (searchEventError) {
+        console.error("Event search error:", searchEventError);
+        return NextResponse.json({ error: "Failed to resolve search events" }, { status: 500 });
+      }
+
+      const searchEventIds = (searchEventRows ?? []).map((row: any) => row.event_id).filter(Boolean);
+      if (searchEventIds.length > 0) {
+        const { error: idsError, ids } = await getUserIdsForEventIds(searchEventIds);
+        if (idsError) {
+          return NextResponse.json({ error: idsError }, { status: 500 });
+        }
+        searchEventUserIds = ids;
+      }
+    }
+
+    let countQuery = adminSupabase
+      .from("users")
+      .select("user_id", { count: "exact", head: true });
+
+    if (filteredUserIds) {
+      countQuery = countQuery.in("user_id", filteredUserIds);
+    }
+
+    if (search.trim() !== "") {
+      const searchIds = searchEventUserIds
+        .map((id) => `"${id}"`)
+        .join(",");
+      const searchOr = searchIds.length > 0
+        ? `user_name.ilike.%${search}%,email.ilike.%${search}%,college.ilike.%${search}%,user_id.in.(${searchIds})`
+        : `user_name.ilike.%${search}%,email.ilike.%${search}%,college.ilike.%${search}%`;
+      countQuery = countQuery.or(searchOr);
+    }
+
+    const { count: totalCount } = await countQuery;
 
     let query = adminSupabase.from("users").select(
       `
@@ -51,31 +155,31 @@ export async function GET(req: NextRequest) {
         phone,
         college,
         registration_date,
-        team_members${hasEventFilter ? "!inner" : ""} (
-        team${hasEventFilter ? "!inner" : ""} (
-        event_registrations${hasEventFilter ? "!inner" : ""} (
+        team_members (
+        team (
+        event_registrations (
         registration_id,
-        event${hasEventFilter ? "!inner" : ""} (
+        event (
         event_name
         ))))
-        `,
-      { count: "exact" }
+        `
     );
 
+    if (filteredUserIds) {
+      query = query.in("user_id", filteredUserIds);
+    }
+
     if (search.trim() !== "") {
-      query = query.or(
-        `user_name.ilike.%${search}%,email.ilike.%${search}%,college.ilike.%${search}%`
-      );
+      const searchIds = searchEventUserIds
+        .map((id) => `"${id}"`)
+        .join(",");
+      const searchOr = searchIds.length > 0
+        ? `user_name.ilike.%${search}%,email.ilike.%${search}%,college.ilike.%${search}%,user_id.in.(${searchIds})`
+        : `user_name.ilike.%${search}%,email.ilike.%${search}%,college.ilike.%${search}%`;
+      query = query.or(searchOr);
     }
 
-    if (eventName) {
-      query = query.eq(
-        "team_members.team.event_registrations.event.event_name",
-        eventName
-      );
-    }
-
-    const { data, error, count } = await query.range(from, to);
+    const { data, error } = await query.range(from, to);
 
     if (error) {
       console.error(error);
@@ -117,7 +221,7 @@ export async function GET(req: NextRequest) {
       }) ?? [];
 
     return NextResponse.json({
-      total: totalCount ?? count ?? 0,
+      total: totalCount ?? 0,
       page,
       limit,
       users,

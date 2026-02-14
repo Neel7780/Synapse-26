@@ -29,15 +29,68 @@ export async function GET(req: NextRequest) {
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    const search = searchParams.get("searchParams") ?? ""; //name,email,college,transactionId
+    const search = searchParams.get("searchParams") ?? ""; // name,email,college,transactionId
     const eventFilter = searchParams.get("filter");
     const paymentStatus = searchParams.get("paymentStatus");
+
+    let eventIds: number[] | null = null;
+    if (eventFilter) {
+      const { data: eventRows, error: eventError } = await adminSupabase
+        .from("event")
+        .select("event_id")
+        .eq("event_name", eventFilter);
+
+      if (eventError) {
+        console.error("Event lookup error:", eventError);
+        return NextResponse.json(
+          { error: "Failed to resolve event filter" },
+          { status: 500 }
+        );
+      }
+
+      eventIds = (eventRows ?? []).map((row: any) => row.event_id).filter(Boolean);
+      if (eventIds.length === 0) {
+        return NextResponse.json({
+          page,
+          limit,
+          total: 0,
+          summary: {
+            total_registrations: 0,
+            paid: 0,
+            gross_revenue: 0,
+            gateway_charges: 0,
+            net_revenue: 0,
+          },
+          data: [],
+        });
+      }
+    }
+
+    let searchEventIds: number[] | null = null;
+    if (search.trim() !== "") {
+      const { data: searchEventRows, error: searchEventError } = await adminSupabase
+        .from("event")
+        .select("event_id")
+        .ilike("event_name", `%${search}%`);
+
+      if (searchEventError) {
+        console.error("Event search error:", searchEventError);
+        return NextResponse.json(
+          { error: "Failed to resolve search events" },
+          { status: 500 }
+        );
+      }
+
+      const resolved = (searchEventRows ?? []).map((row: any) => row.event_id).filter(Boolean);
+      searchEventIds = resolved.length > 0 ? resolved : null;
+    }
 
     const buildQueryUsers = () => {
       let q = adminSupabase
         .from("event_registrations")
         .select(
           `
+          registered_by_user_id,
       transaction_id,
       registration_id,
       payment_status,
@@ -61,7 +114,7 @@ export async function GET(req: NextRequest) {
         );
       }
 
-      if (eventFilter) q = q.eq("event.event_name", eventFilter);
+      if (eventIds) q = q.in("event_id", eventIds);
       if (paymentStatus) q = q.eq("payment_status", paymentStatus as any);
 
       return q;
@@ -72,6 +125,7 @@ export async function GET(req: NextRequest) {
         .from("event_registrations")
         .select(
           `
+          registered_by_user_id,
       transaction_id,
       registration_id,
       payment_status,
@@ -92,7 +146,36 @@ export async function GET(req: NextRequest) {
         q = q.ilike("transaction_id", `%${search}%`);
       }
 
-      if (eventFilter) q = q.eq("event.event_name", eventFilter);
+      if (eventIds) q = q.in("event_id", eventIds);
+      if (paymentStatus) q = q.eq("payment_status", paymentStatus as any);
+
+      return q;
+    };
+
+    const buildQueryEvent = () => {
+      let q = adminSupabase
+        .from("event_registrations")
+        .select(
+          `
+          registered_by_user_id,
+      transaction_id,
+      registration_id,
+      payment_status,
+        coordinator_status,
+      payment_screenshot_url,
+      gross_amount,
+      team (
+        team_members ( user_id )
+      ), 
+      users(user_name,email,college),
+      event(event_name,event_category(category_name)),
+      fee(participation_type)
+      `,
+          { count: "exact" }
+        );
+
+      if (searchEventIds) q = q.in("event_id", searchEventIds);
+      if (eventIds) q = q.in("event_id", eventIds);
       if (paymentStatus) q = q.eq("payment_status", paymentStatus as any);
 
       return q;
@@ -101,8 +184,9 @@ export async function GET(req: NextRequest) {
     // 1. Fetch Paginated Data for Table Display
     const { data: d1 } = await buildQueryUsers().range(from, to);
     const { data: d2 } = await buildQueryTxn().range(from, to);
+    const { data: d3 } = searchEventIds ? await buildQueryEvent().range(from, to) : { data: [] };
 
-    const merged = [...(d1 ?? []), ...(d2 ?? [])];
+    const merged = [...(d1 ?? []), ...(d2 ?? []), ...(d3 ?? [])];
 
     const filtered = merged.filter((row: any) => {
       if (eventFilter && row.event?.event_name !== eventFilter) return false;
@@ -155,7 +239,7 @@ export async function GET(req: NextRequest) {
         );
       }
 
-      if (eventFilter) q = q.eq("event.event_name", eventFilter);
+      if (eventIds) q = q.in("event_id", eventIds);
       if (paymentStatus) q = q.eq("payment_status", paymentStatus as any);
 
       return q;
@@ -178,7 +262,27 @@ export async function GET(req: NextRequest) {
         q = q.ilike("transaction_id", `%${search}%`);
       }
 
-      if (eventFilter) q = q.eq("event.event_name", eventFilter);
+      if (eventIds) q = q.in("event_id", eventIds);
+      if (paymentStatus) q = q.eq("payment_status", paymentStatus as any);
+
+      return q;
+    };
+
+    const buildSummaryQueryEvent = () => {
+      let q = adminSupabase
+        .from("event_registrations")
+        .select(
+          `
+          registration_id,
+          payment_status,
+          coordinator_status,
+          gross_amount,
+          event(event_name)
+          `
+        );
+
+      if (searchEventIds) q = q.in("event_id", searchEventIds);
+      if (eventIds) q = q.in("event_id", eventIds);
       if (paymentStatus) q = q.eq("payment_status", paymentStatus as any);
 
       return q;
@@ -186,12 +290,13 @@ export async function GET(req: NextRequest) {
 
     const { data: s1, error: e1 } = await buildSummaryQueryUsers();
     const { data: s2, error: e2 } = await buildSummaryQueryTxn();
+    const { data: s3, error: e3 } = searchEventIds ? await buildSummaryQueryEvent() : { data: [], error: null };
 
-    if (e1 || e2) {
-      console.error("Summary query error:", e1, e2);
+    if (e1 || e2 || e3) {
+      console.error("Summary query error:", e1, e2, e3);
     }
 
-    const mergedSummary = [...(s1 ?? []), ...(s2 ?? [])];
+    const mergedSummary = [...(s1 ?? []), ...(s2 ?? []), ...(s3 ?? [])];
 
     // Filter summary data (same logic as above for event name match if needed)
     const filteredSummary = mergedSummary.filter((row: any) => {
@@ -231,16 +336,47 @@ export async function GET(req: NextRequest) {
       }
     });
 
+    const missingUserIds = Array.from(
+      new Set(
+        (uniqueData ?? [])
+          .filter((row: any) => {
+            const user = Array.isArray(row.users) ? row.users[0] : row.users;
+            return !user?.user_name && row.registered_by_user_id;
+          })
+          .map((row: any) => row.registered_by_user_id)
+      )
+    );
+
+    const fallbackUsers = new Map<string, { user_name?: string; college?: string }>();
+    if (missingUserIds.length > 0) {
+      const { data: userRows, error: userError } = await adminSupabase
+        .from("users")
+        .select("user_id, user_name, college")
+        .in("user_id", missingUserIds);
+
+      if (userError) {
+        console.error("Fallback user lookup error:", userError);
+      }
+
+      (userRows ?? []).forEach((u: any) => {
+        fallbackUsers.set(u.user_id, { user_name: u.user_name, college: u.college });
+      });
+    }
+
     const rows =
       uniqueData?.map((row: any) => {
         const price = row.gross_amount ?? 0;
         const gateway = getGateway(row);
         const groupSize = row.team?.team_members?.length ?? 1;
+        const user = Array.isArray(row.users) ? row.users[0] : row.users;
+        const fallback = row.registered_by_user_id
+          ? fallbackUsers.get(row.registered_by_user_id)
+          : null;
         return {
           registration_id: row?.registration_id,
           transaction_id: row?.transaction_id,
-          user_name: row.users?.user_name,
-          college: row.users?.college,
+          user_name: user?.user_name ?? fallback?.user_name,
+          college: user?.college ?? fallback?.college,
           event_name: row.event?.event_name,
           category: row.event?.event_category?.category_name,
           participation_type: row.fee?.participation_type,
