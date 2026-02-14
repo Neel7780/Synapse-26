@@ -103,10 +103,10 @@ export async function POST(request: NextRequest) {
                 .from("event_fee")
                 .select("fee_id")
                 .eq("event_id", event_id);
-            
+
             const availableFeeIds = availableFees?.map(f => f.fee_id) || [];
             console.error(`Available fee_ids for event ${event_id}:`, availableFeeIds);
-            
+
             return NextResponse.json(
                 { error: `This participation type (fee_id: ${fee_id}) is not available for this event. Please refresh the page and try again.` },
                 { status: 400 }
@@ -132,41 +132,104 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // Create the registration
-        const { data: registration, error: regError } = await supabase
-            .from("event_registrations")
-            .insert({
-                event_id,
-                fee_id,
-                registered_by_user_id,
-                payment_screenshot_url: isFreeRegistration ? (isDauFree && isDauStudent ? "DAU_VERIFIED" : "FREE_EVENT") : payment_screenshot_url.trim(),
-                transaction_id: isFreeRegistration
-                    ? (isDauFree && isDauStudent ? `DAU_FREE_${registered_by_user_id}_${Date.now()}` : `FREE_EVENT_${registered_by_user_id}_${Date.now()}`)
-                    : transaction_id.trim(),
-                payment_status: "done",
-                gross_amount: isFreeRegistration ? 0 : (feeData?.price || 0),
-                registration_date: new Date().toISOString(),
-            })
-            .select("registration_id")
-            .single();
+        // --------------------------------------------------------------------------------
+        // TEAM & MEMBER RESOLUTION LOGIC
+        // --------------------------------------------------------------------------------
 
-        if (regError) {
-            console.error("Error creating registration:", regError);
+        let memberUserIds: string[] = [registered_by_user_id]; // Start with the registrar
+
+        // If there are additional team members, resolve their emails to user_ids
+        if (team_member_emails && team_member_emails.length > 0) {
+            const cleanEmails = team_member_emails
+                .map((e: string) => e.toLowerCase().trim())
+                .filter((e: string) => e !== userData.email?.toLowerCase().trim()); // Exclude registrar if listed
+
+            if (cleanEmails.length > 0) {
+                const { data: memberUsers, error: memberUsersError } = await supabase
+                    .from("users")
+                    .select("user_id, email")
+                    .in("email", cleanEmails);
+
+                if (memberUsersError) {
+                    console.error("Error fetching team members:", memberUsersError);
+                    return NextResponse.json(
+                        { error: "Failed to validate team members" },
+                        { status: 500 }
+                    );
+                }
+
+                // Check if all emails were found
+                const foundEmails = new Set(memberUsers?.map(u => u.email.toLowerCase()) || []);
+                const missingEmails = cleanEmails.filter((e: string) => !foundEmails.has(e));
+
+                if (missingEmails.length > 0) {
+                    return NextResponse.json(
+                        { error: `The following users are not registered: ${missingEmails.join(", ")}` },
+                        { status: 400 }
+                    );
+                }
+
+                // Add found user_ids to the list
+                if (memberUsers) {
+                    memberUserIds = [...memberUserIds, ...memberUsers.map(u => u.user_id)];
+                }
+            }
+        }
+
+        // --------------------------------------------------------------------------------
+        // TRANSACTIONAL REGISTRATION VIA RPC
+        // --------------------------------------------------------------------------------
+
+        // Call the PostgreSQL function to handle all inserts in a transaction
+        // @ts-expect-error - RPC function not yet in generated types
+        const { data: rpcResult, error: rpcError } = await supabase.rpc('register_team', {
+            p_event_id: event_id,
+            p_fee_id: fee_id,
+            p_registered_by_user_id: registered_by_user_id,
+            p_payment_screenshot_url: isFreeRegistration ? (isDauFree && isDauStudent ? "DAU_VERIFIED" : "FREE_EVENT") : payment_screenshot_url.trim(),
+            p_transaction_id: isFreeRegistration
+                ? (isDauFree && isDauStudent ? `DAU_FREE_${registered_by_user_id}_${Date.now()}` : `FREE_EVENT_${registered_by_user_id}_${Date.now()}`)
+                : transaction_id.trim(),
+            p_payment_status: "done",
+            p_gross_amount: isFreeRegistration ? 0 : (feeData?.price || 0),
+            p_team_member_user_ids: memberUserIds
+        });
+
+        if (rpcError) {
+            console.error("Error in register_team RPC:", rpcError);
             return NextResponse.json(
-                { error: "Failed to create registration: " + regError.message },
+                { error: "Failed to process registration: " + rpcError.message },
                 { status: 500 }
             );
         }
 
-        // Log team member emails for now - team association to be implemented
-        if (team_member_emails && team_member_emails.length > 0) {
-            console.log("Team members for registration", registration.registration_id, ":", team_member_emails);
-            // TODO: Implement team member association when schema is finalized
+        // Check the result from the function (it returns JSON)
+        // The function returns { success: boolean, registration_id: ..., team_id: ..., error: ... }
+        // Note: supabase.rpc returns `data` as the return value of the function.
+        // If function returns json, `data` is that json.
+
+        // However, Supabase RPC typing can be tricky.
+        // Let's assume successful execution if rpcError is null, but check specific success flag if mapped.
+        // Casting to any to avoid strict type issues with custom RPC return types if not generated yet.
+        const result = rpcResult as any;
+
+        if (result && result.success === false) {
+            console.error("RPC Logic Error:", result.error);
+            if (result.error && typeof result.error === 'string' && result.error.includes("event_registrations_transaction_id_key")) {
+                return NextResponse.json(
+                    { error: "This Transaction ID has already been used." },
+                    { status: 409 }
+                );
+            }
+            return NextResponse.json(
+                { error: "Registration failed: " + result.error },
+                { status: 500 }
+            );
         }
 
         return NextResponse.json({
             success: true,
-            registration_id: registration.registration_id,
+            registration_id: result?.registration_id,
             message: "Registration submitted successfully! Your payment is pending verification."
         });
     } catch (error: unknown) {
