@@ -60,14 +60,33 @@ const generateFestivalDates = (exclude26Feb = false) => {
   return dates;
 };
 
-const getAvailableDateRanges = (nights: number) => {
+const getAvailableDateRanges = (
+  nights: number,
+  packageStartDate?: string | null,
+  packageEndDate?: string | null,
+) => {
   const exclude26Feb = nights === 2 || nights === 3;
   const allDates = generateFestivalDates(exclude26Feb);
+
+  // If the accommodation_type has start_date/end_date, use them to filter
+  const pkgStart = packageStartDate ? new Date(packageStartDate + "T00:00:00") : null;
+  const pkgEnd = packageEndDate ? new Date(packageEndDate + "T00:00:00") : null;
 
   const ranges = [];
 
   for (let i = 0; i <= allDates.length - nights; i++) {
     const rangeArray = allDates.slice(i, i + nights);
+    const checkInDate = rangeArray[0].date;
+    // Checkout is the morning AFTER the last night (add 1 day)
+    const checkOutDate = new Date(rangeArray[nights - 1].date.getTime() + 86400000);
+
+    // Filter: check_in must be >= package start_date, check_out must be <= package end_date + 1 day
+    if (pkgStart && checkInDate < pkgStart) continue;
+    if (pkgEnd) {
+      const pkgCheckoutLimit = new Date(pkgEnd.getTime() + 86400000);
+      if (checkOutDate > pkgCheckoutLimit) continue;
+    }
+
     const startDay = rangeArray[0].day;
     const endDay = rangeArray[nights - 1].day;
     const months = rangeArray.map((d) => d.month);
@@ -95,8 +114,8 @@ const getAvailableDateRanges = (nights: number) => {
       endDay,
       label,
       days: rangeArray.map((d) => d.day),
-      startDate: rangeArray[0].date,
-      endDate: rangeArray[nights - 1].date,
+      startDate: checkInDate,
+      endDate: checkOutDate,
     });
   }
 
@@ -151,6 +170,7 @@ export function AccommodationComponent() {
   const [pricing, setPricing] =
     useState<Record<number, number>>(DEFAULT_PRICING);
   const [qrCodeMap, setQrCodeMap] = useState<Record<number, string>>({});
+  const [packageDateRangeMap, setPackageDateRangeMap] = useState<Record<number, { start_date: string | null; end_date: string | null }>>({});
   const [dataLoading, setDataLoading] = useState(true);
 
   // Fetch accommodation data from APIs
@@ -170,6 +190,8 @@ export function AccommodationComponent() {
             const newPricing: Record<number, number> = {};
             const newQrCodeMap: Record<number, string> = {};
 
+            const newDateRangeMap: Record<number, { start_date: string | null; end_date: string | null }> = {};
+
             packagesData.packages.forEach((pkg: AccommodationPackage) => {
               // Extract nights from package_name (e.g., "2 Nights", "3 Nights Package")
               const nightsMatch = pkg.package_name.match(/(\d+)\s*nights?/i);
@@ -185,6 +207,14 @@ export function AccommodationComponent() {
                 if (pkg.qr_code) {
                   newQrCodeMap[nights] = pkg.qr_code;
                 }
+
+                // Store date range from accommodation_type
+                if (pkg.start_date || pkg.end_date) {
+                  newDateRangeMap[nights] = {
+                    start_date: pkg.start_date || null,
+                    end_date: pkg.end_date || null,
+                  };
+                }
               }
             });
 
@@ -196,6 +226,11 @@ export function AccommodationComponent() {
             // Update QR code map
             if (Object.keys(newQrCodeMap).length > 0) {
               setQrCodeMap(newQrCodeMap);
+            }
+
+            // Update date range map
+            if (Object.keys(newDateRangeMap).length > 0) {
+              setPackageDateRangeMap(newDateRangeMap);
             }
           }
         }
@@ -218,8 +253,16 @@ export function AccommodationComponent() {
   }, [pricing]);
 
   const availableRanges = useMemo(
-    () => (selectedNights ? getAvailableDateRanges(selectedNights) : []),
-    [selectedNights],
+    () => {
+      if (!selectedNights) return [];
+      const dateRange = packageDateRangeMap[selectedNights];
+      return getAvailableDateRanges(
+        selectedNights,
+        dateRange?.start_date,
+        dateRange?.end_date,
+      );
+    },
+    [selectedNights, packageDateRangeMap],
   );
 
   const totalPrice = useMemo(
@@ -394,13 +437,22 @@ export function AccommodationComponent() {
         screenshotUrl = uploadedUrl;
       }
 
+      // Format date as YYYY-MM-DD using local timezone (not UTC)
+      // toISOString() converts to UTC which shifts dates back in IST
+      const formatLocalDate = (d: Date) => {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      };
+
       const res = await fetch("/api/accommodation/book", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           user_id: user.id,
-          check_in: selectedRange.startDate.toISOString().split("T")[0],
-          check_out: selectedRange.endDate.toISOString().split("T")[0],
+          check_in: formatLocalDate(selectedRange.startDate),
+          check_out: formatLocalDate(selectedRange.endDate),
           nights: selectedNights,
           amount: totalPrice,
           payment_screenshot_url: screenshotUrl,

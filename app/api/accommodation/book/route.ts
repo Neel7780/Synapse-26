@@ -55,6 +55,33 @@ export async function POST(request: NextRequest) {
 
         const supabase = getSupabaseServer();
 
+        // Validate dates against accommodation_type for this night count
+        const { data: accomType, error: accomTypeError } = await supabase
+            .from("accommodation_type")
+            .select("start_date, end_date, price")
+            .eq("is_available", true)
+            .ilike("package_name", `%${nights} Night%`)
+            .maybeSingle();
+
+        if (accomTypeError) {
+            console.error("Error fetching accommodation type:", accomTypeError);
+        }
+
+        if (accomType && accomType.start_date && accomType.end_date) {
+            const checkInDate = new Date(check_in + "T00:00:00");
+            const checkOutDate = new Date(check_out + "T00:00:00");
+            const pkgStartDate = new Date(accomType.start_date + "T00:00:00");
+            // Package end_date is the last night; valid checkout is end_date + 1 day
+            const pkgCheckoutLimit = new Date(new Date(accomType.end_date + "T00:00:00").getTime() + 86400000);
+
+            if (checkInDate < pkgStartDate || checkOutDate > pkgCheckoutLimit) {
+                return NextResponse.json(
+                    { error: `Invalid dates. Check-in must be on or after ${accomType.start_date} and check-out must be on or before ${accomType.end_date} (next morning).` },
+                    { status: 400 }
+                );
+            }
+        }
+
         // Create the booking
         const { data: booking, error: bookingError } = await supabase
             .from("accommodation_bookings")
