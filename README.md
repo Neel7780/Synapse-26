@@ -1,6 +1,6 @@
 # Synapse '26
 
-The official code for the Synapse 2026 Website.
+The official codebase for the Synapse 2026 Website.
 
 ## DA Ka Tyohaar
 
