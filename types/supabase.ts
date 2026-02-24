@@ -268,16 +268,19 @@ export type Database = {
           event_id: number;
           fee_id: number;
           payment_qr_url: string | null;
+          is_registration_open: boolean | null;
         };
         Insert: {
           event_id: number;
           fee_id: number;
           payment_qr_url?: string | null;
+          is_registration_open?: boolean | null;
         };
         Update: {
           event_id?: number;
           fee_id?: number;
           payment_qr_url?: string | null;
+          is_registration_open?: boolean | null;
         };
         Relationships: [
           {

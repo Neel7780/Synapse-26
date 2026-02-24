@@ -72,6 +72,7 @@ export async function GET(request: Request) {
       *,
       event_category ( category_name ),
       event_fee (
+        is_registration_open,
         fee ( fee_id, participation_type, price, min_members, max_members, qr_code )
       )
     `
@@ -247,9 +248,16 @@ export async function POST(request: Request) {
 
       if (feeError) throw feeError;
 
+      // Build a map from participation_type to is_registration_open from the original fees JSON
+      const regOpenMap: Record<string, boolean> = {};
+      fees.forEach((f: any) => {
+        regOpenMap[f.type.toLowerCase()] = f.is_registration_open !== undefined ? f.is_registration_open : true;
+      });
+
       const eventFeeLinks = feeData.map((f: any) => ({
         event_id: eventData.event_id,
         fee_id: f.fee_id,
+        is_registration_open: regOpenMap[f.participation_type.toLowerCase()] ?? true,
       }));
 
       const { error: linkError } = await adminSupabase
@@ -525,16 +533,23 @@ export async function PUT(request: Request) {
 
         if (newFeeError) throw newFeeError;
 
+        // Build a map from participation_type to is_registration_open from the fees JSON
+        const regOpenMap: Record<string, boolean> = {};
+        fees.forEach((f: any) => {
+          regOpenMap[f.type.toLowerCase()] = f.is_registration_open !== undefined ? f.is_registration_open : true;
+        });
+
         // 3. Update or insert event_fee relations
         for (const newFee of newFees) {
           const participationType = newFee.participation_type.toLowerCase();
           const oldFeeId = oldFeeMap[participationType];
+          const feeRegOpen = regOpenMap[participationType] ?? true;
 
           if (oldFeeId) {
             // UPDATE existing event_fee row to point to new fee_id
             await adminSupabase
               .from("event_fee")
-              .update({ fee_id: newFee.fee_id })
+              .update({ fee_id: newFee.fee_id, is_registration_open: feeRegOpen })
               .eq("event_id", Number(event_id))
               .eq("fee_id", oldFeeId);
           } else {
@@ -544,9 +559,17 @@ export async function PUT(request: Request) {
               .insert({
                 event_id: Number(event_id),
                 fee_id: newFee.fee_id,
+                is_registration_open: feeRegOpen,
               });
           }
         }
+
+        // Sync event-level is_registration_open: true if any fee is open
+        const anyFeeOpen = Object.values(regOpenMap).some(v => v === true);
+        await adminSupabase
+          .from("event")
+          .update({ is_registration_open: anyFeeOpen })
+          .eq("event_id", Number(event_id));
 
         // 4. Delete event_fee rows for removed participation types
         const newParticipationTypes = fees.map((f: any) => f.type.toLowerCase());
