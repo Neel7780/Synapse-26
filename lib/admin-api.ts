@@ -47,33 +47,33 @@ async function apiFetch<T>(
 // ============================================================================
 
 export type DashboardStatsResponse = {
-  stats: {
-    totalEvents: number;
-    totalRegistrations: number;
-    totalUsers: number;
-    totalSponsors: number;
-    activeEvents: number;
-  };
-  revenue: {
-    gross: number;
-    net: number;
-    paidCount: number;
-    today: { gross: number; gatewayCharges: number; net: number; change: number };
-  };
-  recentRegistrations: Array<{
-    id: number;
-    userName: string;
-    event: string;
-    date: string;
-    status: string;
-    coordinatorStatus: string | null;
-    amount: number;
-  }>;
-  quickStats: Array<{ label: string; value: string; change: string; positive: boolean }>;
+    stats: {
+        totalEvents: number;
+        totalRegistrations: number;
+        totalUsers: number;
+        totalSponsors: number;
+        activeEvents: number;
+    };
+    revenue: {
+        gross: number;
+        net: number;
+        paidCount: number;
+        today: { gross: number; gatewayCharges: number; net: number; change: number };
+    };
+    recentRegistrations: Array<{
+        id: number;
+        userName: string;
+        event: string;
+        date: string;
+        status: string;
+        coordinatorStatus: string | null;
+        amount: number;
+    }>;
+    quickStats: Array<{ label: string; value: string; change: string; positive: boolean }>;
 };
 
 export const dashboardApi = {
-  getStats: () => apiFetch<DashboardStatsResponse>("/api/admin/dashboard/stats"),
+    getStats: () => apiFetch<DashboardStatsResponse>("/api/admin/dashboard/stats"),
 };
 
 // ============================================================================
@@ -85,6 +85,7 @@ export type EventFee = {
     price: number;
     min?: number;
     max?: number;
+    is_registration_open?: boolean;
 };
 
 export type Event = {
@@ -101,6 +102,7 @@ export type Event = {
     is_dau_free: boolean;
     event_category?: { category_name: string };
     event_fee?: Array<{
+        is_registration_open?: boolean | null;
         fee: {
             fee_id: number;
             participation_type: string;

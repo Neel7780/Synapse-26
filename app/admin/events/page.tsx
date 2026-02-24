@@ -59,7 +59,6 @@ import {
   ExternalLink,
   Tag,
   IndianRupee,
-  CheckCircle2,
   XCircle,
   Loader2,
   AlertCircle,
@@ -73,6 +72,7 @@ type ParticipationCategory = {
   maxParticipants: number;
   qrUrl: string;
   qrCodeFile?: File;
+  isRegistrationOpen: boolean;
 };
 
 type ParticipationCategoryWithCustom = ParticipationCategory & {
@@ -254,7 +254,8 @@ export default function EventsPage() {
 
           const standardTypes = ["solo", "duet", "group"];
           const customFees = fees.filter(
-            (f) => !standardTypes.includes(f.fee.participation_type.toLowerCase())
+            (f) =>
+              !standardTypes.includes(f.fee.participation_type.toLowerCase()),
           );
 
           // Extract time from timestamp
@@ -282,6 +283,7 @@ export default function EventsPage() {
                 minParticipants: solo?.fee.min_members || 1,
                 maxParticipants: solo?.fee.max_members || 1,
                 qrUrl: solo?.fee.qr_code || "",
+                isRegistrationOpen: solo?.is_registration_open !== false,
               },
               duet: {
                 enabled: !!duet,
@@ -289,6 +291,7 @@ export default function EventsPage() {
                 minParticipants: duet?.fee.min_members || 2,
                 maxParticipants: duet?.fee.max_members || 2,
                 qrUrl: duet?.fee.qr_code || "",
+                isRegistrationOpen: duet?.is_registration_open !== false,
               },
               group: {
                 enabled: !!group,
@@ -296,14 +299,16 @@ export default function EventsPage() {
                 minParticipants: group?.fee.min_members || 3,
                 maxParticipants: group?.fee.max_members || 8,
                 qrUrl: group?.fee.qr_code || "",
+                isRegistrationOpen: group?.is_registration_open !== false,
               },
-              custom: customFees.map(c => ({
+              custom: customFees.map((c) => ({
                 enabled: true,
                 name: c.fee.participation_type,
                 fee: c.fee.price,
                 minParticipants: c.fee.min_members,
                 maxParticipants: c.fee.max_members,
                 qrUrl: c.fee.qr_code || "",
+                isRegistrationOpen: c.is_registration_open !== false,
               })),
             },
           };
@@ -400,13 +405,14 @@ export default function EventsPage() {
     }
   };
 
-  // Toggle registration
+  // Toggle registration (flips all fee-level toggles)
   const toggleRegistration = async (event: LocalEvent) => {
+    const newRegState = !event.registrationOpen;
     const fees: EventFee[] = [];
     ["solo", "duet", "group"].forEach((type) => {
       const cat =
         event.participationCategories[
-        type as keyof typeof event.participationCategories
+          type as keyof typeof event.participationCategories
         ];
       if (!Array.isArray(cat) && cat.enabled) {
         fees.push({
@@ -414,21 +420,20 @@ export default function EventsPage() {
           price: cat.fee,
           min: cat.minParticipants,
           max: cat.maxParticipants,
+          is_registration_open: newRegState,
         });
       }
     });
 
     // Handle Custom
     event.participationCategories.custom.forEach((customCat) => {
-      if (customCat.name) { // Assuming if it exists in the array it should be counted, or check enabled?
-        // Current model: custom types array items are enabled if present, or add enabled field logic if needed.
-        // Assuming we kept enabled field:
-        // if (customCat.enabled) 
+      if (customCat.name) {
         fees.push({
           type: customCat.name,
           price: customCat.fee,
           min: customCat.minParticipants,
           max: customCat.maxParticipants,
+          is_registration_open: newRegState,
         });
       }
     });
@@ -440,7 +445,7 @@ export default function EventsPage() {
       event_date: event.date,
       event_time: event.time || undefined,
       coordinator_email: event.coordinatorEmail || undefined,
-      is_registration_open: !event.registrationOpen,
+      is_registration_open: newRegState,
       is_dau_free: event.freeForDau,
       venue: event.venue || undefined,
       rulebook: event.rulebookLink || undefined,
@@ -474,7 +479,7 @@ export default function EventsPage() {
     ["solo", "duet", "group"].forEach((type) => {
       const cat =
         editingEvent.participationCategories[
-        type as keyof typeof editingEvent.participationCategories
+          type as keyof typeof editingEvent.participationCategories
         ];
 
       // Handle standard types
@@ -484,6 +489,7 @@ export default function EventsPage() {
           price: cat.fee,
           min: cat.minParticipants,
           max: cat.maxParticipants,
+          is_registration_open: cat.isRegistrationOpen,
         });
       }
     });
@@ -492,12 +498,14 @@ export default function EventsPage() {
 
     // Handle Custom
     editingEvent.participationCategories.custom.forEach((customCat, index) => {
-      if (customCat.name) { // Assuming check for valid name
+      if (customCat.name) {
+        // Assuming check for valid name
         fees.push({
           type: customCat.name,
           price: customCat.fee,
           min: customCat.minParticipants,
           max: customCat.maxParticipants,
+          is_registration_open: customCat.isRegistrationOpen,
         });
 
         // Handle QR Code
@@ -511,17 +519,17 @@ export default function EventsPage() {
           // BETTER: Use indices and tell backend. But `fees` is an array.
           // Backend iterates fees. If fee matches convention...
 
-          // Going with `qr_code_custom_${index}` and adding a `fileKey` property to the fee object? 
-          // `EventFee` in lib is rigid. 
+          // Going with `qr_code_custom_${index}` and adding a `fileKey` property to the fee object?
+          // `EventFee` in lib is rigid.
 
-          // Let's use the NAME as the key since that's what ties it together. 
+          // Let's use the NAME as the key since that's what ties it together.
           // Risk: Names with spaces/weird chars.
-          // The API endpoint constructs `qrCodeMap[customFee.type] = ...`. 
+          // The API endpoint constructs `qrCodeMap[customFee.type] = ...`.
           // It expects to find the file under a key.
           // In my route.ts plan, I said "look for a fileKey property".
           // But `EventFee` type is strict.
 
-          // Modification: I will use `qr_code_{sanitized_name}`? 
+          // Modification: I will use `qr_code_{sanitized_name}`?
           // Or just `qr_code_custom_${index}` and rely on order? No, order is fragile if backend filters arrays.
 
           // Best approach: Use `qr_code_custom_${index}` and pass this key in the fee object if possible.
@@ -952,38 +960,98 @@ export default function EventsPage() {
                             Group: ₹{event.participationCategories.group.fee}
                           </Badge>
                         )}
-                        {event.participationCategories.custom.map((customCat, idx) => (
-                          <Badge
-                            key={idx}
-                            variant="secondary"
-                            className="text-xs bg-muted/50 border-border/50"
-                          >
-                            {customCat.name}: ₹{customCat.fee}
-                          </Badge>
-                        ))}
+                        {event.participationCategories.custom.map(
+                          (customCat, idx) => (
+                            <Badge
+                              key={idx}
+                              variant="secondary"
+                              className="text-xs bg-muted/50 border-border/50"
+                            >
+                              {customCat.name}: ₹{customCat.fee}
+                            </Badge>
+                          ),
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={event.registrationOpen}
-                          onCheckedChange={() => toggleRegistration(event)}
-                          disabled={updating}
-                        />
-                        <Badge
-                          className={
-                            event.registrationOpen
-                              ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
-                              : "bg-red-500/20 text-red-300 border-red-500/30"
-                          }
-                        >
-                          {event.registrationOpen ? (
-                            <CheckCircle2 className="mr-1 h-3 w-3" />
-                          ) : (
-                            <XCircle className="mr-1 h-3 w-3" />
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={event.registrationOpen}
+                            onCheckedChange={() => toggleRegistration(event)}
+                            disabled={updating}
+                          />
+                          <span className="text-xs text-muted-foreground">
+                            {event.registrationOpen ? "All Open" : "All Closed"}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {event.participationCategories.solo.enabled && (
+                            <Badge
+                              className={`text-[10px] px-1.5 py-0 ${
+                                event.participationCategories.solo
+                                  .isRegistrationOpen
+                                  ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                                  : "bg-red-500/20 text-red-300 border-red-500/30"
+                              }`}
+                            >
+                              Solo:{" "}
+                              {event.participationCategories.solo
+                                .isRegistrationOpen
+                                ? "Open"
+                                : "Closed"}
+                            </Badge>
                           )}
-                          {event.registrationOpen ? "Open" : "Closed"}
-                        </Badge>
+                          {event.participationCategories.duet.enabled && (
+                            <Badge
+                              className={`text-[10px] px-1.5 py-0 ${
+                                event.participationCategories.duet
+                                  .isRegistrationOpen
+                                  ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                                  : "bg-red-500/20 text-red-300 border-red-500/30"
+                              }`}
+                            >
+                              Duet:{" "}
+                              {event.participationCategories.duet
+                                .isRegistrationOpen
+                                ? "Open"
+                                : "Closed"}
+                            </Badge>
+                          )}
+                          {event.participationCategories.group.enabled && (
+                            <Badge
+                              className={`text-[10px] px-1.5 py-0 ${
+                                event.participationCategories.group
+                                  .isRegistrationOpen
+                                  ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                                  : "bg-red-500/20 text-red-300 border-red-500/30"
+                              }`}
+                            >
+                              Group:{" "}
+                              {event.participationCategories.group
+                                .isRegistrationOpen
+                                ? "Open"
+                                : "Closed"}
+                            </Badge>
+                          )}
+                          {event.participationCategories.custom.map(
+                            (customCat, idx) => (
+                              <Badge
+                                key={idx}
+                                className={`text-[10px] px-1.5 py-0 ${
+                                  customCat.isRegistrationOpen
+                                    ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                                    : "bg-red-500/20 text-red-300 border-red-500/30"
+                                }`}
+                              >
+                                {customCat.name}:{" "}
+                                {customCat.isRegistrationOpen
+                                  ? "Open"
+                                  : "Closed"}
+                              </Badge>
+                            ),
+                          )}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
@@ -1237,14 +1305,14 @@ export default function EventsPage() {
                   {/* Image Preview - shown for both new uploads and existing images */}
                   {(editOriginalImageUrl ||
                     (editingEvent.picture && !editingEvent.imageFile)) && (
-                      <div className="w-full">
-                        <ImagePreview
-                          originalUrl={
-                            editOriginalImageUrl || editingEvent.picture
-                          }
-                        />
-                      </div>
-                    )}
+                    <div className="w-full">
+                      <ImagePreview
+                        originalUrl={
+                          editOriginalImageUrl || editingEvent.picture
+                        }
+                      />
+                    </div>
+                  )}
                   <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border/50">
                     <div>
                       <p className="font-medium">Free for DAU Students</p>
@@ -1268,23 +1336,50 @@ export default function EventsPage() {
                         <Users className="h-5 w-5 text-red-400" />
                         <span className="font-medium">Solo Participation</span>
                       </div>
-                      <Switch
-                        checked={
-                          editingEvent.participationCategories.solo.enabled
-                        }
-                        onCheckedChange={(v) =>
-                          setEditingEvent({
-                            ...editingEvent,
-                            participationCategories: {
-                              ...editingEvent.participationCategories,
-                              solo: {
-                                ...editingEvent.participationCategories.solo,
-                                enabled: v,
+                      {editingEvent.participationCategories.solo.enabled ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                          onClick={() =>
+                            setEditingEvent({
+                              ...editingEvent,
+                              participationCategories: {
+                                ...editingEvent.participationCategories,
+                                solo: {
+                                  ...editingEvent.participationCategories.solo,
+                                  enabled: false,
+                                },
                               },
-                            },
-                          })
-                        }
-                      />
+                            })
+                          }
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 text-xs hover:bg-green-500/10 hover:text-green-500"
+                          onClick={() =>
+                            setEditingEvent({
+                              ...editingEvent,
+                              participationCategories: {
+                                ...editingEvent.participationCategories,
+                                solo: {
+                                  ...editingEvent.participationCategories.solo,
+                                  enabled: true,
+                                },
+                              },
+                            })
+                          }
+                        >
+                          <Plus className="mr-1 h-3 w-3" />
+                          Add
+                        </Button>
+                      )}
                     </div>
                     {editingEvent.participationCategories.solo.enabled && (
                       <div className="space-y-3">
@@ -1337,11 +1432,11 @@ export default function EventsPage() {
                               className="flex-1 bg-muted/50 border-border/50"
                             />
                           </div>
-                          {(editingEvent.participationCategories.solo.fee > 0 &&
+                          {editingEvent.participationCategories.solo.fee > 0 &&
                             (editingEvent.participationCategories.solo
                               .qrCodeFile ||
                               editingEvent.participationCategories.solo
-                                .qrUrl)) && (
+                                .qrUrl) && (
                               <div className="mt-3">
                                 {editingEvent.participationCategories.solo
                                   .qrCodeFile ? (
@@ -1349,8 +1444,8 @@ export default function EventsPage() {
                                     <p className="text-xs text-muted-foreground mb-2">
                                       New QR Code:{" "}
                                       {
-                                        editingEvent.participationCategories.solo
-                                          .qrCodeFile.name
+                                        editingEvent.participationCategories
+                                          .solo.qrCodeFile.name
                                       }
                                     </p>
                                     <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
@@ -1384,6 +1479,30 @@ export default function EventsPage() {
                               </div>
                             )}
                         </div>
+                        <div className="flex items-center justify-between p-2 rounded bg-background/50 border border-border/30">
+                          <span className="text-sm text-muted-foreground">
+                            Registration Open
+                          </span>
+                          <Switch
+                            checked={
+                              editingEvent.participationCategories.solo
+                                .isRegistrationOpen
+                            }
+                            onCheckedChange={(v) =>
+                              setEditingEvent({
+                                ...editingEvent,
+                                participationCategories: {
+                                  ...editingEvent.participationCategories,
+                                  solo: {
+                                    ...editingEvent.participationCategories
+                                      .solo,
+                                    isRegistrationOpen: v,
+                                  },
+                                },
+                              })
+                            }
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1394,23 +1513,50 @@ export default function EventsPage() {
                         <Users className="h-5 w-5 text-rose-400" />
                         <span className="font-medium">Duet Participation</span>
                       </div>
-                      <Switch
-                        checked={
-                          editingEvent.participationCategories.duet.enabled
-                        }
-                        onCheckedChange={(v) =>
-                          setEditingEvent({
-                            ...editingEvent,
-                            participationCategories: {
-                              ...editingEvent.participationCategories,
-                              duet: {
-                                ...editingEvent.participationCategories.duet,
-                                enabled: v,
+                      {editingEvent.participationCategories.duet.enabled ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                          onClick={() =>
+                            setEditingEvent({
+                              ...editingEvent,
+                              participationCategories: {
+                                ...editingEvent.participationCategories,
+                                duet: {
+                                  ...editingEvent.participationCategories.duet,
+                                  enabled: false,
+                                },
                               },
-                            },
-                          })
-                        }
-                      />
+                            })
+                          }
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 text-xs hover:bg-green-500/10 hover:text-green-500"
+                          onClick={() =>
+                            setEditingEvent({
+                              ...editingEvent,
+                              participationCategories: {
+                                ...editingEvent.participationCategories,
+                                duet: {
+                                  ...editingEvent.participationCategories.duet,
+                                  enabled: true,
+                                },
+                              },
+                            })
+                          }
+                        >
+                          <Plus className="mr-1 h-3 w-3" />
+                          Add
+                        </Button>
+                      )}
                     </div>
                     {editingEvent.participationCategories.duet.enabled && (
                       <div className="space-y-3">
@@ -1463,11 +1609,11 @@ export default function EventsPage() {
                               className="flex-1 bg-muted/50 border-border/50"
                             />
                           </div>
-                          {(editingEvent.participationCategories.duet.fee > 0 &&
+                          {editingEvent.participationCategories.duet.fee > 0 &&
                             (editingEvent.participationCategories.duet
                               .qrCodeFile ||
                               editingEvent.participationCategories.duet
-                                .qrUrl)) && (
+                                .qrUrl) && (
                               <div className="mt-3">
                                 {editingEvent.participationCategories.duet
                                   .qrCodeFile ? (
@@ -1475,8 +1621,8 @@ export default function EventsPage() {
                                     <p className="text-xs text-muted-foreground mb-2">
                                       New QR Code:{" "}
                                       {
-                                        editingEvent.participationCategories.duet
-                                          .qrCodeFile.name
+                                        editingEvent.participationCategories
+                                          .duet.qrCodeFile.name
                                       }
                                     </p>
                                     <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
@@ -1510,6 +1656,30 @@ export default function EventsPage() {
                               </div>
                             )}
                         </div>
+                        <div className="flex items-center justify-between p-2 rounded bg-background/50 border border-border/30">
+                          <span className="text-sm text-muted-foreground">
+                            Registration Open
+                          </span>
+                          <Switch
+                            checked={
+                              editingEvent.participationCategories.duet
+                                .isRegistrationOpen
+                            }
+                            onCheckedChange={(v) =>
+                              setEditingEvent({
+                                ...editingEvent,
+                                participationCategories: {
+                                  ...editingEvent.participationCategories,
+                                  duet: {
+                                    ...editingEvent.participationCategories
+                                      .duet,
+                                    isRegistrationOpen: v,
+                                  },
+                                },
+                              })
+                            }
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1520,23 +1690,50 @@ export default function EventsPage() {
                         <Users className="h-5 w-5 text-red-400" />
                         <span className="font-medium">Group Participation</span>
                       </div>
-                      <Switch
-                        checked={
-                          editingEvent.participationCategories.group.enabled
-                        }
-                        onCheckedChange={(v) =>
-                          setEditingEvent({
-                            ...editingEvent,
-                            participationCategories: {
-                              ...editingEvent.participationCategories,
-                              group: {
-                                ...editingEvent.participationCategories.group,
-                                enabled: v,
+                      {editingEvent.participationCategories.group.enabled ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                          onClick={() =>
+                            setEditingEvent({
+                              ...editingEvent,
+                              participationCategories: {
+                                ...editingEvent.participationCategories,
+                                group: {
+                                  ...editingEvent.participationCategories.group,
+                                  enabled: false,
+                                },
                               },
-                            },
-                          })
-                        }
-                      />
+                            })
+                          }
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 text-xs hover:bg-green-500/10 hover:text-green-500"
+                          onClick={() =>
+                            setEditingEvent({
+                              ...editingEvent,
+                              participationCategories: {
+                                ...editingEvent.participationCategories,
+                                group: {
+                                  ...editingEvent.participationCategories.group,
+                                  enabled: true,
+                                },
+                              },
+                            })
+                          }
+                        >
+                          <Plus className="mr-1 h-3 w-3" />
+                          Add
+                        </Button>
+                      )}
                     </div>
                     {editingEvent.participationCategories.group.enabled && (
                       <div className="space-y-3">
@@ -1644,11 +1841,11 @@ export default function EventsPage() {
                               className="flex-1 bg-muted/50 border-border/50"
                             />
                           </div>
-                          {(editingEvent.participationCategories.group.fee > 0 &&
+                          {editingEvent.participationCategories.group.fee > 0 &&
                             (editingEvent.participationCategories.group
                               .qrCodeFile ||
                               editingEvent.participationCategories.group
-                                .qrUrl)) && (
+                                .qrUrl) && (
                               <div className="mt-3">
                                 {editingEvent.participationCategories.group
                                   .qrCodeFile ? (
@@ -1656,8 +1853,8 @@ export default function EventsPage() {
                                     <p className="text-xs text-muted-foreground mb-2">
                                       New QR Code:{" "}
                                       {
-                                        editingEvent.participationCategories.group
-                                          .qrCodeFile.name
+                                        editingEvent.participationCategories
+                                          .group.qrCodeFile.name
                                       }
                                     </p>
                                     <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
@@ -1691,6 +1888,30 @@ export default function EventsPage() {
                               </div>
                             )}
                         </div>
+                        <div className="flex items-center justify-between p-2 rounded bg-background/50 border border-border/30">
+                          <span className="text-sm text-muted-foreground">
+                            Registration Open
+                          </span>
+                          <Switch
+                            checked={
+                              editingEvent.participationCategories.group
+                                .isRegistrationOpen
+                            }
+                            onCheckedChange={(v) =>
+                              setEditingEvent({
+                                ...editingEvent,
+                                participationCategories: {
+                                  ...editingEvent.participationCategories,
+                                  group: {
+                                    ...editingEvent.participationCategories
+                                      .group,
+                                    isRegistrationOpen: v,
+                                  },
+                                },
+                              })
+                            }
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1699,27 +1920,33 @@ export default function EventsPage() {
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
                         <Users className="h-5 w-5 text-amber-400" />
-                        <span className="font-medium">Custom Participation</span>
+                        <span className="font-medium">
+                          Custom Participation
+                        </span>
                       </div>
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
                         onClick={() => {
-                          const newCustom = [...editingEvent.participationCategories.custom, {
-                            enabled: true,
-                            name: "",
-                            fee: 0,
-                            minParticipants: 1,
-                            maxParticipants: 1,
-                            qrUrl: "",
-                          }];
+                          const newCustom = [
+                            ...editingEvent.participationCategories.custom,
+                            {
+                              enabled: true,
+                              name: "",
+                              fee: 0,
+                              minParticipants: 1,
+                              maxParticipants: 1,
+                              qrUrl: "",
+                              isRegistrationOpen: true,
+                            },
+                          ];
                           setEditingEvent({
                             ...editingEvent,
                             participationCategories: {
                               ...editingEvent.participationCategories,
-                              custom: newCustom
-                            }
+                              custom: newCustom,
+                            },
                           });
                         }}
                         className="h-8 text-xs hover:bg-amber-500/10 hover:text-amber-500"
@@ -1730,171 +1957,243 @@ export default function EventsPage() {
                     </div>
 
                     <div className="space-y-4">
-                      {editingEvent.participationCategories.custom.map((customCat, index) => (
-                        <div key={index} className="p-3 bg-background/50 rounded-md border border-border/50 relative group">
-                          <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 text-muted-foreground hover:text-red-500"
-                              onClick={() => {
-                                const newCustom = [...editingEvent.participationCategories.custom];
-                                newCustom.splice(index, 1);
-                                setEditingEvent({
-                                  ...editingEvent,
-                                  participationCategories: {
-                                    ...editingEvent.participationCategories,
-                                    custom: newCustom
-                                  }
-                                });
-                              }}
-                            >
-                              <XCircle className="h-4 w-4" />
-                            </Button>
-                          </div>
+                      {editingEvent.participationCategories.custom.map(
+                        (customCat, index) => (
+                          <div
+                            key={index}
+                            className="p-3 bg-background/50 rounded-md border border-border/50 relative group"
+                          >
+                            <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-muted-foreground hover:text-red-500"
+                                onClick={() => {
+                                  const newCustom = [
+                                    ...editingEvent.participationCategories
+                                      .custom,
+                                  ];
+                                  newCustom.splice(index, 1);
+                                  setEditingEvent({
+                                    ...editingEvent,
+                                    participationCategories: {
+                                      ...editingEvent.participationCategories,
+                                      custom: newCustom,
+                                    },
+                                  });
+                                }}
+                              >
+                                <XCircle className="h-4 w-4" />
+                              </Button>
+                            </div>
 
-                          <div className="space-y-3">
-                            <div className="space-y-2">
-                              <label className="text-sm font-medium">Participation Details</label>
-                              <Input
-                                placeholder="Participation Name (e.g. VIP, Spectator)"
-                                value={customCat.name}
-                                onChange={(e) => {
-                                  const newCustom = [...editingEvent.participationCategories.custom];
-                                  newCustom[index] = { ...newCustom[index], name: e.target.value };
-                                  setEditingEvent({
-                                    ...editingEvent,
-                                    participationCategories: {
-                                      ...editingEvent.participationCategories,
-                                      custom: newCustom
-                                    }
-                                  });
-                                }}
-                                className="bg-muted/50 border-border/50"
-                              />
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <IndianRupee className="h-4 w-4 text-muted-foreground" />
-                              <Input
-                                type="number"
-                                value={customCat.fee}
-                                onChange={(e) => {
-                                  const newCustom = [...editingEvent.participationCategories.custom];
-                                  newCustom[index] = { ...newCustom[index], fee: parseInt(e.target.value) || 0 };
-                                  setEditingEvent({
-                                    ...editingEvent,
-                                    participationCategories: {
-                                      ...editingEvent.participationCategories,
-                                      custom: newCustom
-                                    }
-                                  });
-                                }}
-                                className="w-32 bg-muted/50 border-border/50"
-                              />
-                              <span className="text-sm text-muted-foreground">
-                                per team
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-4">
+                            <div className="space-y-3">
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium">
+                                  Participation Details
+                                </label>
+                                <Input
+                                  placeholder="Participation Name (e.g. VIP, Spectator)"
+                                  value={customCat.name}
+                                  onChange={(e) => {
+                                    const newCustom = [
+                                      ...editingEvent.participationCategories
+                                        .custom,
+                                    ];
+                                    newCustom[index] = {
+                                      ...newCustom[index],
+                                      name: e.target.value,
+                                    };
+                                    setEditingEvent({
+                                      ...editingEvent,
+                                      participationCategories: {
+                                        ...editingEvent.participationCategories,
+                                        custom: newCustom,
+                                      },
+                                    });
+                                  }}
+                                  className="bg-muted/50 border-border/50"
+                                />
+                              </div>
                               <div className="flex items-center gap-2">
-                                <span className="text-sm">Min:</span>
+                                <IndianRupee className="h-4 w-4 text-muted-foreground" />
                                 <Input
                                   type="number"
-                                  value={customCat.minParticipants}
+                                  value={customCat.fee}
                                   onChange={(e) => {
-                                    const newCustom = [...editingEvent.participationCategories.custom];
-                                    newCustom[index] = { ...newCustom[index], minParticipants: parseInt(e.target.value) || 1 };
+                                    const newCustom = [
+                                      ...editingEvent.participationCategories
+                                        .custom,
+                                    ];
+                                    newCustom[index] = {
+                                      ...newCustom[index],
+                                      fee: parseInt(e.target.value) || 0,
+                                    };
                                     setEditingEvent({
                                       ...editingEvent,
                                       participationCategories: {
                                         ...editingEvent.participationCategories,
-                                        custom: newCustom
-                                      }
+                                        custom: newCustom,
+                                      },
                                     });
                                   }}
-                                  className="w-20 bg-muted/50 border-border/50"
+                                  className="w-32 bg-muted/50 border-border/50"
                                 />
+                                <span className="text-sm text-muted-foreground">
+                                  per team
+                                </span>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm">Max:</span>
-                                <Input
-                                  type="number"
-                                  value={customCat.maxParticipants}
-                                  onChange={(e) => {
-                                    const newCustom = [...editingEvent.participationCategories.custom];
-                                    newCustom[index] = { ...newCustom[index], maxParticipants: parseInt(e.target.value) || 1 };
-                                    setEditingEvent({
-                                      ...editingEvent,
-                                      participationCategories: {
-                                        ...editingEvent.participationCategories,
-                                        custom: newCustom
-                                      }
-                                    });
-                                  }}
-                                  className="w-20 bg-muted/50 border-border/50"
-                                />
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-2">
-                                <Upload className="h-4 w-4 text-muted-foreground" />
-                                <Input
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0] || null;
-                                    const newCustom = [...editingEvent.participationCategories.custom];
-                                    newCustom[index] = { ...newCustom[index], qrCodeFile: file || undefined };
-                                    setEditingEvent({
-                                      ...editingEvent,
-                                      participationCategories: {
-                                        ...editingEvent.participationCategories,
-                                        custom: newCustom
-                                      }
-                                    });
-                                  }}
-                                  className="flex-1 bg-muted/50 border-border/50"
-                                />
-                              </div>
-                              {(customCat.fee > 0 && (customCat.qrCodeFile || customCat.qrUrl)) && (
-                                <div className="mt-3">
-                                  {customCat.qrCodeFile ? (
-                                    <>
-                                      <p className="text-xs text-muted-foreground mb-2">
-                                        New QR Code: {customCat.qrCodeFile.name}
-                                      </p>
-                                      <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
-                                        <img
-                                          src={URL.createObjectURL(customCat.qrCodeFile)}
-                                          alt="Custom QR Code Preview"
-                                          className="w-full h-full object-contain"
-                                        />
-                                      </div>
-                                    </>
-                                  ) : (
-                                    customCat.qrUrl && (
-                                      <>
-                                        <p className="text-xs text-muted-foreground mb-2">
-                                          Current QR Code
-                                        </p>
-                                        <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
-                                          <img
-                                            src={customCat.qrUrl}
-                                            alt="Custom QR Code"
-                                            className="w-full h-full object-contain"
-                                          />
-                                        </div>
-                                      </>
-                                    )
-                                  )}
+                              <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm">Min:</span>
+                                  <Input
+                                    type="number"
+                                    value={customCat.minParticipants}
+                                    onChange={(e) => {
+                                      const newCustom = [
+                                        ...editingEvent.participationCategories
+                                          .custom,
+                                      ];
+                                      newCustom[index] = {
+                                        ...newCustom[index],
+                                        minParticipants:
+                                          parseInt(e.target.value) || 1,
+                                      };
+                                      setEditingEvent({
+                                        ...editingEvent,
+                                        participationCategories: {
+                                          ...editingEvent.participationCategories,
+                                          custom: newCustom,
+                                        },
+                                      });
+                                    }}
+                                    className="w-20 bg-muted/50 border-border/50"
+                                  />
                                 </div>
-                              )}
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm">Max:</span>
+                                  <Input
+                                    type="number"
+                                    value={customCat.maxParticipants}
+                                    onChange={(e) => {
+                                      const newCustom = [
+                                        ...editingEvent.participationCategories
+                                          .custom,
+                                      ];
+                                      newCustom[index] = {
+                                        ...newCustom[index],
+                                        maxParticipants:
+                                          parseInt(e.target.value) || 1,
+                                      };
+                                      setEditingEvent({
+                                        ...editingEvent,
+                                        participationCategories: {
+                                          ...editingEvent.participationCategories,
+                                          custom: newCustom,
+                                        },
+                                      });
+                                    }}
+                                    className="w-20 bg-muted/50 border-border/50"
+                                  />
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <Upload className="h-4 w-4 text-muted-foreground" />
+                                  <Input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0] || null;
+                                      const newCustom = [
+                                        ...editingEvent.participationCategories
+                                          .custom,
+                                      ];
+                                      newCustom[index] = {
+                                        ...newCustom[index],
+                                        qrCodeFile: file || undefined,
+                                      };
+                                      setEditingEvent({
+                                        ...editingEvent,
+                                        participationCategories: {
+                                          ...editingEvent.participationCategories,
+                                          custom: newCustom,
+                                        },
+                                      });
+                                    }}
+                                    className="flex-1 bg-muted/50 border-border/50"
+                                  />
+                                </div>
+                                {customCat.fee > 0 &&
+                                  (customCat.qrCodeFile || customCat.qrUrl) && (
+                                    <div className="mt-3">
+                                      {customCat.qrCodeFile ? (
+                                        <>
+                                          <p className="text-xs text-muted-foreground mb-2">
+                                            New QR Code:{" "}
+                                            {customCat.qrCodeFile.name}
+                                          </p>
+                                          <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
+                                            <img
+                                              src={URL.createObjectURL(
+                                                customCat.qrCodeFile,
+                                              )}
+                                              alt="Custom QR Code Preview"
+                                              className="w-full h-full object-contain"
+                                            />
+                                          </div>
+                                        </>
+                                      ) : (
+                                        customCat.qrUrl && (
+                                          <>
+                                            <p className="text-xs text-muted-foreground mb-2">
+                                              Current QR Code
+                                            </p>
+                                            <div className="relative w-48 h-48 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
+                                              <img
+                                                src={customCat.qrUrl}
+                                                alt="Custom QR Code"
+                                                className="w-full h-full object-contain"
+                                              />
+                                            </div>
+                                          </>
+                                        )
+                                      )}
+                                    </div>
+                                  )}
+                              </div>
+                              <div className="flex items-center justify-between p-2 rounded bg-background/50 border border-border/30">
+                                <span className="text-sm text-muted-foreground">
+                                  Registration Open
+                                </span>
+                                <Switch
+                                  checked={customCat.isRegistrationOpen}
+                                  onCheckedChange={(v) => {
+                                    const newCustom = [
+                                      ...editingEvent.participationCategories
+                                        .custom,
+                                    ];
+                                    newCustom[index] = {
+                                      ...newCustom[index],
+                                      isRegistrationOpen: v,
+                                    };
+                                    setEditingEvent({
+                                      ...editingEvent,
+                                      participationCategories: {
+                                        ...editingEvent.participationCategories,
+                                        custom: newCustom,
+                                      },
+                                    });
+                                  }}
+                                />
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                      {editingEvent.participationCategories.custom.length === 0 && (
+                        ),
+                      )}
+                      {editingEvent.participationCategories.custom.length ===
+                        0 && (
                         <div className="text-center py-6 text-muted-foreground text-sm border border-dashed border-border/50 rounded-md">
                           No custom participation types added.
                         </div>

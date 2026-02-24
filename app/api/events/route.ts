@@ -45,6 +45,7 @@ export async function GET(request: Request) {
             event_fee (
                 event_id,
                 fee_id,
+                is_registration_open,
                 fee (
                     fee_id,
                     participation_type,

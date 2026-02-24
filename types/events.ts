@@ -27,6 +27,7 @@ export interface FeeDetails {
 export interface EventFeeWithDetails {
     event_id: number;
     fee_id: number;
+    is_registration_open: boolean | null;
     fee: FeeDetails;
 }
 
@@ -81,6 +82,7 @@ export interface FormattedFee {
     max_members: number;
     qr_code: string | null; // From fee table
     event_id: number;
+    is_registration_open: boolean | null; // From event_fee table
 }
 
 // Extract and format fees from event
@@ -99,5 +101,6 @@ export function extractFees(event: EventWithRelations): FormattedFee[] {
             max_members: ef.fee.max_members,
             qr_code: ef.fee.qr_code,
             event_id: event.event_id,
+            is_registration_open: ef.is_registration_open,
         }));
 }
